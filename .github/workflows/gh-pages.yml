@@ -37,7 +37,9 @@ jobs:
           pip3 install setuptools
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          export SETUPTOOLS_USE_DISTUTILS=stdlib
+          poetry install
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Build documentation
