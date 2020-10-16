@@ -36,7 +36,7 @@ jobs:
           poetry config virtualenvs.path ~/.poetry/venv
 
       - name: Install dependencies
-        run: poetry install -E docs
+        run: poetry install
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Build documentation
