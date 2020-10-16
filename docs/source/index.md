@@ -45,3 +45,9 @@ The iSamples project will:
 * Neil Davies, The Regents of the University of California, Berkeley
 * David Vieglais, University of Kansas Biodiversity Institute
 
+## Notes
+
+```{toctree}
+
+notes/igsn_counts
+```
