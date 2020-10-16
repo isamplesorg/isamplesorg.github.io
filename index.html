@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Internet of Samples: iSamples &#8212; iSamples Project</title>
+    
+  <link rel="stylesheet" href="_static/css/index.73d71520a4ca3b99cfee5594769eaaae.css">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+  <link rel="stylesheet"
+    href="_static/vendor/open-sans_all/1.44.1/index.css">
+  <link rel="stylesheet"
+    href="_static/vendor/lato_latin-ext/1.44.1/index.css">
+
+    
+    <link rel="stylesheet" href="_static/sphinx-book-theme.2d2078699c18a0efb88233928e1cf6ed.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.3da636dd464baa7582d2.js">
+
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/sphinx-book-theme.be0a4a0c39cd630af62a2fcf693f3f06.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="en" />
+
+
+
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+    
+        <div class="navbar-brand-box">
+<a class="navbar-brand text-wrap" href="#">
+  
+  
+  <h1 class="site-logo" id="site-title">iSamples Project</h1>
+  
+</a>
+</div>
+
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form>
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  
+</nav>
+
+ <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="row topbar fixed-top container-xl">
+    <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show">
+    </div>
+    <div class="col pl-2 topbar-main">
+        
+        <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
+            data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
+            aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
+            title="Toggle navigation" data-toggle="tooltip" data-placement="left">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-arrow-left"></i>
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        
+        <div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/index.md.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+    
+</div>
+        <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/isamplesorg/isamplesorg.github.io"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new?title=Issue%20on%20page%20%2Findex.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        <a class="edit-button" href="https://github.com/isamplesorg/isamplesorg.github.io/edit/master/docs/index.md"><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Edit this page"><i class="fas fa-pencil-alt"></i>suggest edit</button></a>
+    </div>
+</div>
+
+
+        <!-- Full screen (wrap in <a> to have style consistency -->
+        <a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+                data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+                title="Fullscreen mode"><i
+                    class="fas fa-expand"></i></button></a>
+
+        <!-- Launch buttons -->
+
+    </div>
+
+    <!-- Table of contents -->
+    <div class="d-none d-md-block col-md-2 bd-toc show">
+        
+        <div class="tocsection onthispage pt-5 pb-3">
+            <i class="fas fa-list"></i> Contents
+        </div>
+        <nav id="bd-toc-nav">
+            <ul class="nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#project-objectives">
+   Project Objectives
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#background">
+   Background
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#technical-perspective">
+   Technical perspective
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#principal-investigators">
+   Principal Investigators
+  </a>
+ </li>
+</ul>
+
+        </nav>
+        
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+        
+              <div>
+                
+  <div class="section" id="internet-of-samples-isamples">
+<h1>Internet of Samples: iSamples<a class="headerlink" href="#internet-of-samples-isamples" title="Permalink to this headline">¶</a></h1>
+<p><em>Toward an Interdisciplinary Cyberinfrastructure for Material Samples</em> <a href="https://nsf.gov/awardsearch
+/showAward?AWD_ID=2004839">
+<img style="display:inline" src="https://img.shields.io/badge/NSF-2004839-blue.svg"></img>
+</a></p>
+<p>The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.</p>
+<p><strong>Resources</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://youtu.be/eRUw5NMksFo?t=105">Recording of project presentation at the 2020 SPNHC &amp; ICOM NATHIST Conference</a></p></li>
+<li><p><a class="reference external" href="https://zenodo.org/communities/isamples">Zenodo Community</a></p></li>
+<li><p><a class="reference external" href="https://twitter.com/isamplesorg">Follow us on Twitter</a></p></li>
+</ul>
+<div class="section" id="project-objectives">
+<h2>Project Objectives<a class="headerlink" href="#project-objectives" title="Permalink to this headline">¶</a></h2>
+<ol class="simple">
+<li><p>Design and develop iSamples infrastructure (iSamples in a Box and iSamples Central);</p></li>
+<li><p>Build four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);</p></li>
+<li><p>Conduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.</p></li>
+</ol>
+<p><img alt="iSamples diagram" src="_images/iSamples.png" /></p>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<p>Research frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.</p>
+<p>The iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.</p>
+<p>Leveraging significant national investments, iSamples provides the missing link among</p>
+<ol class="simple">
+<li><p>physical collections (e.g., natural history museums, herbaria, biobanks),</p></li>
+<li><p>field stations, marine laboratories, long-term ecological research sites, and observatories, and</p></li>
+<li><p>data repositories and cyberinfrastructure. iSamples delivers enhanced infrastructure for STEM research and education, decision-makers, and the general public.</p></li>
+</ol>
+<p>iSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).</p>
+</div>
+<div class="section" id="technical-perspective">
+<h2>Technical perspective<a class="headerlink" href="#technical-perspective" title="Permalink to this headline">¶</a></h2>
+<p>The iSamples project will:</p>
+<ul class="simple">
+<li><p>Create a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.</p></li>
+<li><p>Build upon on existing identifier infrastructure such as IGSNs (Global Sample Number;) and ARKs (Archival Resource Keys), but is agnostic to identifier type.</p></li>
+<li><p>Encourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.</p></li>
+<li><p>Extend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.</p></li>
+</ul>
+</div>
+<div class="section" id="principal-investigators">
+<h2>Principal Investigators<a class="headerlink" href="#principal-investigators" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Kerstin Lehnert, Columbia University</p></li>
+<li><p>Ramona Walls, University of Arizona</p></li>
+<li><p>Neil Davies, The Regents of the University of California, Berkeley</p></li>
+<li><p>David Vieglais, University of Kansas Biodiversity Institute</p></li>
+</ul>
+</div>
+</div>
+
+
+              </div>
+              
+        </div>
+    </div>
+    
+    
+    <div class='prev-next-bottom'>
+        
+
+    </div>
+    <footer class="footer mt-5 mt-md-0">
+    <div class="container">
+      <p>
+        
+          By iSamples Project<br/>
+        
+            &copy; Copyright 2020, iSamples Project.<br/>
+          <div class="extra_footer">
+            <small>This material is based upon work supported by the 
+National Science Foundation under Grant Numbers <a href='https://nsf.gov/awardsearch/showAward?AWD_ID=2004839'>2004839</a>,
+<a href='https://nsf.gov/awardsearch/showAward?AWD_ID=2004562'>2004562</a>, 
+<a href='https://nsf.gov/awardsearch/showAward?AWD_ID=2004642'>2004642</a>,
+and <a href='https://nsf.gov/awardsearch/showAward?AWD_ID=2004815'>2004815</a>. Any opinions, findings, and conclusions 
+ or recommendations expressed in this material are those of the author(s) and do not necessarily 
+ reflect the views of the National Science Foundation.</small>
+          </div>
+      </p>
+    </div>
+  </footer>
+</main>
+
+
+      </div>
+    </div>
+
+    
+  <script src="_static/js/index.3da636dd464baa7582d2.js"></script>
+
+
+    
+  </body>
+</html>
