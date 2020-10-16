@@ -46,7 +46,7 @@ jobs:
 
       - name: Commit documentation changes
         run: |
-          git clone git@github.com:isamplesorg/isamplesorg.github.io.git --branch gh-pages --single-branch gh-pages
+          git clone https://github.com/isamplesorg/isamplesorg.github.io.git --branch gh-pages --single-branch gh-pages
           cd gh-pages
           find . -not -path '*/\.*' -delete
           cp -r ../docs/build/html/* .
