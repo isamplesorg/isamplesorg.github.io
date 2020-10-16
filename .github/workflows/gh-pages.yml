@@ -34,6 +34,7 @@ jobs:
           poetry config virtualenvs.in-project false
           poetry config cache-dir ~/.poetry
           poetry config virtualenvs.path ~/.poetry/venv
+          pip3 install setuptools
 
       - name: Install dependencies
         run: poetry install
