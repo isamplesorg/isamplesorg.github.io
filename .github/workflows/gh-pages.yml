@@ -17,7 +17,10 @@ jobs:
           python-version: '3.8'
 
       - name: Install Poetry
-        uses: abatilo/actions-poetry@v2.0.0
+        run: |
+          pip install setuptools
+          pip install poetry
+        shell: bash
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v2
@@ -34,9 +37,12 @@ jobs:
           poetry config virtualenvs.in-project false
           poetry config cache-dir ~/.poetry
           poetry config virtualenvs.path ~/.poetry/venv
+          pip3 install setuptools
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          export SETUPTOOLS_USE_DISTUTILS=stdlib
+          poetry install
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Build documentation
