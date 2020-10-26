@@ -1,5 +1,7 @@
 = isamplesorg.github.io
 
+[![Actions Status](https://github.com/isamplesorg/isamplesorg.github.io/workflows/Build%20Pages/badge.svg)](https://github.com/isamplesorg/isamplesorg.github.io/actions)
+
 This repository provides the https://isamplesorg.github.io/[iSamples web site].
 
 It is a https://www.sphinx-doc.org/en/master/[Sphinx] project configured to used the
