@@ -1,6 +1,6 @@
 = isamplesorg.github.io
 
-[Actions Status](https://github.com/isamplesorg/isamplesorg.github.io/workflows/Build+Pages/badge.svg)
+![Actions Status](https://github.com/isamplesorg/isamplesorg.github.io/workflows/Build+Pages/badge.svg)
 
 This repository provides the https://isamplesorg.github.io/[iSamples web site].
 
