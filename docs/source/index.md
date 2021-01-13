@@ -18,7 +18,7 @@ The Internet of Samples (iSamples) is a multi-disciplinary and multi-institution
 2. Build four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);
 3. Conduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.
 
-![iSamples diagram](/_static/iSamples.png)
+![iSamples diagram](/_static/iSamplesArchitecture.png)
 
 ## Background
 Research frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.
