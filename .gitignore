@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Jupyter cache
+docs/.jupyter_cache
+
 # C extensions
 *.so
 
