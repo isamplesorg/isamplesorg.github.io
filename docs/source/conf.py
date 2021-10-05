@@ -43,6 +43,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "sphinxcontrib.bibtex",
+    "sphinxcontrib.plantuml",
+    "sphinxcontrib.drawio",
     "sphinx_copybutton",
     "sphinx_togglebutton",
     "jupyter_sphinx",
@@ -57,7 +59,7 @@ templates_path = ["_templates"]
 exclude_patterns = []
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.8", None),
+    "python": ("https://docs.python.org/3.9", None),
 }
 
 # -- Options for HTML output -------------------------------------------------

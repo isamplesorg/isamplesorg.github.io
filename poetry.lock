@@ -1169,6 +1169,14 @@ lint = ["flake8", "mypy", "docutils-stubs"]
 test = ["pytest"]
 
 [[package]]
+name = "sphinxcontrib-drawio"
+version = "0.0.13"
+description = "Sphinx Extension to include draw.io files"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "sphinxcontrib-htmlhelp"
 version = "2.0.0"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
@@ -1190,6 +1198,25 @@ python-versions = ">=3.5"
 
 [package.extras]
 test = ["pytest", "flake8", "mypy"]
+
+[[package]]
+name = "sphinxcontrib-mermaid"
+version = "0.7"
+description = "Mermaid diagrams in yours Sphinx powered docs"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "sphinxcontrib-plantuml"
+version = "0.21"
+description = "Sphinx \"plantuml\" extension"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Sphinx = ">=1.6"
 
 [[package]]
 name = "sphinxcontrib-qthelp"
@@ -1347,7 +1374,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e3d0ede384ab015debfc19d58a25e0b2ae77f522416434b6f3d6582884661729"
+content-hash = "d82def2fbe0313c0bbbc9ef3fff8341580be6ba2030c54d0f0a94b7ff917ae99"
 
 [metadata.files]
 alabaster = [
@@ -1862,6 +1889,10 @@ sphinxcontrib-devhelp = [
     {file = "sphinxcontrib-devhelp-1.0.2.tar.gz", hash = "sha256:ff7f1afa7b9642e7060379360a67e9c41e8f3121f2ce9164266f61b9f4b338e4"},
     {file = "sphinxcontrib_devhelp-1.0.2-py2.py3-none-any.whl", hash = "sha256:8165223f9a335cc1af7ffe1ed31d2871f325254c0423bc0c4c7cd1c1e4734a2e"},
 ]
+sphinxcontrib-drawio = [
+    {file = "sphinxcontrib-drawio-0.0.13.tar.gz", hash = "sha256:d54f44a1d9646b4ec21f936433a4dd12057af9691ff4405c4c6b8205ee182798"},
+    {file = "sphinxcontrib_drawio-0.0.13-py3-none-any.whl", hash = "sha256:48858bf7d85a73c9383f0781eca45f5044b08608f8a1d01dcf8e2daded868373"},
+]
 sphinxcontrib-htmlhelp = [
     {file = "sphinxcontrib-htmlhelp-2.0.0.tar.gz", hash = "sha256:f5f8bb2d0d629f398bf47d0d69c07bc13b65f75a81ad9e2f71a63d4b7a2f6db2"},
     {file = "sphinxcontrib_htmlhelp-2.0.0-py2.py3-none-any.whl", hash = "sha256:d412243dfb797ae3ec2b59eca0e52dac12e75a241bf0e4eb861e450d06c6ed07"},
@@ -1869,6 +1900,12 @@ sphinxcontrib-htmlhelp = [
 sphinxcontrib-jsmath = [
     {file = "sphinxcontrib-jsmath-1.0.1.tar.gz", hash = "sha256:a9925e4a4587247ed2191a22df5f6970656cb8ca2bd6284309578f2153e0c4b8"},
     {file = "sphinxcontrib_jsmath-1.0.1-py2.py3-none-any.whl", hash = "sha256:2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c871103178"},
+]
+sphinxcontrib-mermaid = [
+    {file = "sphinxcontrib_mermaid-0.7-py2.py3-none-any.whl", hash = "sha256:d600f5911bbc39491bc4fd611492386f151ed812eb054718aa1a4de4efd02d55"},
+]
+sphinxcontrib-plantuml = [
+    {file = "sphinxcontrib-plantuml-0.21.tar.gz", hash = "sha256:53e1808dc2b1f3ec20c177fa3fa6d438d75ef572a25a489e330bb01130508d87"},
 ]
 sphinxcontrib-qthelp = [
     {file = "sphinxcontrib-qthelp-1.0.3.tar.gz", hash = "sha256:4c33767ee058b70dba89a6fc5c1892c0d57a54be67ddd3e7875a18d14cba5a72"},

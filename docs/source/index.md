@@ -39,6 +39,14 @@ The iSamples project will:
 * Encourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.
 * Extend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.
 
+**Contents**
+
+```{toctree}
+:titlesonly:
+
+architecture/index
+```
+
 ## Principal Investigators
 * Kerstin Lehnert, Columbia University
 * Ramona Walls, University of Arizona

@@ -15,6 +15,9 @@ sphinx-book-theme = "^0.0.38"
 sphinxcontrib-bibtex = "^1.0.0"
 sphinx-togglebutton = "^0.2.2"
 sphinx-copybutton = "^0.3.0"
+sphinxcontrib-plantuml = "^0.21"
+sphinxcontrib-drawio = "^0.0.13"
+sphinxcontrib-mermaid = "^0.7"
 
 [tool.poetry.dev-dependencies]
 
