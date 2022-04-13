@@ -98,3 +98,5 @@ and <a href='https://nsf.gov/awardsearch/showAward?AWD_ID=2004815'>2004815</a>. 
  reflect the views of the National Science Foundation.</small>""",
     # "extra_navbar": "<a href='https://google.com'>Test</a>",
 }
+
+plantuml_output_format = "svg"
