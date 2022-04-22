@@ -1,0 +1,22 @@
+name: Render using Quarto and push to GH-pages
+
+on:
+  push:
+    branches:
+      - quartoinit
+
+jobs:
+  quarto-render-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Install Quarto and render"
+        uses: pommevilla/quarto-render@main
+
+      - name: "Deploy to gh-pages"
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/quartoinit'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
