@@ -1,7 +1,6 @@
 name: Render using Quarto and push to GH-pages
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   build-deploy:
