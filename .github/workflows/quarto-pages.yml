@@ -19,6 +19,11 @@ jobs:
       # Install any computing dependency you may need, usually either python and Jupyter or R
       # More specific examples will be shared on quarto-dev/quarto-actions project
 
+      - uses: actions/setup-python@v3
+      - name: "Install Python deps"
+        run: |
+          pip install -r requirements.txt      
+
       - name: Render book to all format
         # Add any command line argument needed
         run: |
