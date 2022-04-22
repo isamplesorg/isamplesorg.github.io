@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="638px" preserveAspectRatio="none" style="width:734px;height:638px;background:#FFFFFF;" version="1.1" viewBox="0 0 734 638" width="734px" zoomAndPan="magnify"><defs/><g><!--MD5=[2968d4f956806df5d0eddefcff9046f4]
+entity isa--><g id="elem_isa"><rect fill="#1168BD" height="71.8203" rx="2.5" ry="2.5" style="stroke:#3C7FC0;stroke-width:0.5;" width="183" x="287" y="255"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="73" x="342" y="280.4688">iSamples</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="376.5" y="297.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="159" x="301" y="313.8672">iSamples Infrastructure</text></g><!--MD5=[4082e1adf0758e0cb2f286536bd4e6ad]
+entity coll--><g id="elem_coll"><rect fill="#999999" height="71.8203" rx="2.5" ry="2.5" style="stroke:#8A8A8A;stroke-width:0.5;" width="167" x="44" y="39"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="81" x="87" y="64.4688">Collection</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="125.5" y="81.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="143" x="58" y="97.8672">Collection of records</text></g><!--MD5=[0c16e968b1d971e29a1821584eadced8]
+entity ont--><g id="elem_ont"><rect fill="#999999" height="88.3086" rx="2.5" ry="2.5" style="stroke:#8A8A8A;stroke-width:0.5;" width="213" x="7" y="247"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="89" x="69" y="272.4688">Ontologies</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="111.5" y="289.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160" x="33.5" y="305.8672">Community maintained</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="193" x="17" y="322.3555">ontologies and vocabularies</text></g><!--MD5=[79a439086b036a57b90a01d7b2f8bbd1]
+entity admin--><g id="elem_admin"><rect fill="#08427B" height="119.8203" rx="2.5" ry="2.5" style="stroke:#073B6F;stroke-width:0.5;" width="119" x="246" y="15"/><image height="48" width="48" x="281.5" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAACD0lEQVR4Xu2YoU4EMRCGT+4j8Ai8AhaH4QHgAUjQuFMECUgMIUgwJAgMhgQsAYUiJCiQIBBY+EITsjfTdme6V24v4c8vyGbb+ZjOtN0bNcvjQXmkH83WvYBWto6PLm6v7p7uH1/w2fXD+PBycX1Pv2l3IdDm/vn7x+dXQiAubRzoURa7gRZWd0iGRIiJbOnhnfYBQZNJjNbuyY2eJG8fkDE3bbG4ep6MHUAsgYxmE3nVs6VsBWJSGccsOlFPmLIViMzLOB7pCVO2AtHJMohH7Fh6zqitQK7m0rJvAVYgGcEpe//PLdDz65sM4pF9N7ICcXDKIB5Nv6j7tD0NoSdM2QrU9Gg0ewE1LqBhHR3BBdvj2vapnidjHxD/q6vd7Pvhr31AwcY8eXMTXAKECZZJFXuEq27aLgQK5uLMohCenGGuGewOxSjBvYBqeG6B+Nqiblggdjnc+ZXDy+FNFpFzw76O3UBAROuXh6FoiAcf5g9eTvUgzy0nWg6I8cXHRUpg5bOVBCo+KDpFajOf23GgPme7RSQ+lacIENUgJ6gg1k6HjgOlqnLqip4tEuhv0hNEMXUD0clyXE3p6pZA0S2nnvTlXwLJEZWlb7cTQH1+USgTN4VhAenm/wea1OCAOmqo6fE1WCb9WSKBah+rbUWPWAmE2Rvk0ApiB45eOyNAzU8xcTvj8KvkKEoOaIYeHNA3ZuygAvFMUO0AAAAASUVORK5CYII=" y="25"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="55" x="278" y="88.4688">Admin</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="303.5" y="105.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="95" x="260" y="121.8672">Administrator</text></g><!--MD5=[8fc3522a43f8c7199df5e09e5bb0188e]
+entity user--><g id="elem_user"><rect fill="#08427B" height="136.3086" rx="2.5" ry="2.5" style="stroke:#073B6F;stroke-width:0.5;" width="101" x="401" y="7"/><image height="48" width="48" x="427.5" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAACD0lEQVR4Xu2YoU4EMRCGT+4j8Ai8AhaH4QHgAUjQuFMECUgMIUgwJAgMhgQsAYUiJCiQIBBY+EITsjfTdme6V24v4c8vyGbb+ZjOtN0bNcvjQXmkH83WvYBWto6PLm6v7p7uH1/w2fXD+PBycX1Pv2l3IdDm/vn7x+dXQiAubRzoURa7gRZWd0iGRIiJbOnhnfYBQZNJjNbuyY2eJG8fkDE3bbG4ep6MHUAsgYxmE3nVs6VsBWJSGccsOlFPmLIViMzLOB7pCVO2AtHJMohH7Fh6zqitQK7m0rJvAVYgGcEpe//PLdDz65sM4pF9N7ICcXDKIB5Nv6j7tD0NoSdM2QrU9Gg0ewE1LqBhHR3BBdvj2vapnidjHxD/q6vd7Pvhr31AwcY8eXMTXAKECZZJFXuEq27aLgQK5uLMohCenGGuGewOxSjBvYBqeG6B+Nqiblggdjnc+ZXDy+FNFpFzw76O3UBAROuXh6FoiAcf5g9eTvUgzy0nWg6I8cXHRUpg5bOVBCo+KDpFajOf23GgPme7RSQ+lacIENUgJ6gg1k6HjgOlqnLqip4tEuhv0hNEMXUD0clyXE3p6pZA0S2nnvTlXwLJEZWlb7cTQH1+USgTN4VhAenm/wea1OCAOmqo6fE1WCb9WSKBah+rbUWPWAmE2Rvk0ApiB45eOyNAzU8xcTvj8KvkKEoOaIYeHNA3ZuygAvFMUO0AAAAASUVORK5CYII=" y="17"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="37" x="433" y="80.4688">User</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="449.5" y="97.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="418" y="113.8672">Consumer</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="81" x="411" y="130.3555">Contributor</text></g><!--MD5=[042166d0cbcdc4d6f26779c06d24c724]
+entity curator--><g id="elem_curator"><rect fill="#08427B" height="119.8203" rx="2.5" ry="2.5" style="stroke:#073B6F;stroke-width:0.5;" width="81" x="585" y="15"/><image height="48" width="48" x="601.5" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAACD0lEQVR4Xu2YoU4EMRCGT+4j8Ai8AhaH4QHgAUjQuFMECUgMIUgwJAgMhgQsAYUiJCiQIBBY+EITsjfTdme6V24v4c8vyGbb+ZjOtN0bNcvjQXmkH83WvYBWto6PLm6v7p7uH1/w2fXD+PBycX1Pv2l3IdDm/vn7x+dXQiAubRzoURa7gRZWd0iGRIiJbOnhnfYBQZNJjNbuyY2eJG8fkDE3bbG4ep6MHUAsgYxmE3nVs6VsBWJSGccsOlFPmLIViMzLOB7pCVO2AtHJMohH7Fh6zqitQK7m0rJvAVYgGcEpe//PLdDz65sM4pF9N7ICcXDKIB5Nv6j7tD0NoSdM2QrU9Gg0ewE1LqBhHR3BBdvj2vapnidjHxD/q6vd7Pvhr31AwcY8eXMTXAKECZZJFXuEq27aLgQK5uLMohCenGGuGewOxSjBvYBqeG6B+Nqiblggdjnc+ZXDy+FNFpFzw76O3UBAROuXh6FoiAcf5g9eTvUgzy0nWg6I8cXHRUpg5bOVBCo+KDpFajOf23GgPme7RSQ+lacIENUgJ6gg1k6HjgOlqnLqip4tEuhv0hNEMXUD0clyXE3p6pZA0S2nnvTlXwLJEZWlb7cTQH1+USgTN4VhAenm/wea1OCAOmqo6fE1WCb9WSKBah+rbUWPWAmE2Rvk0ApiB45eOyNAzU8xcTvj8KvkKEoOaIYeHNA3ZuygAvFMUO0AAAAASUVORK5CYII=" y="25"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="61" x="595" y="88.4688">Curator</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="623.5" y="105.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53" x="601" y="121.8672">Curator</text></g><!--MD5=[271900d5ad5e24ce138189372e7f57a9]
+entity pid--><g id="elem_pid"><rect fill="#999999" height="88.3086" rx="2.5" ry="2.5" style="stroke:#8A8A8A;stroke-width:0.5;" width="213" x="21" y="439"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="98" x="78.5" y="464.4688">Id Authority</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="125.5" y="481.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185" x="35" y="497.8672">Identifier authorities (IGSN,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123" x="66" y="514.3555">ARK, DOI, ROR, ...)</text></g><!--MD5=[e7744e8fbc1b270a63d01eb8a46af6a2]
+entity identity--><g id="elem_identity"><rect fill="#999999" height="88.3086" rx="2.5" ry="2.5" style="stroke:#8A8A8A;stroke-width:0.5;" width="218" x="269.5" y="439"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="62" x="347.5" y="464.4688">Identity</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="376.5" y="481.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="194" x="283.5" y="497.8672">User identity service (ORCID,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="72" x="342.5" y="514.3555">GitHub, ...)</text></g><!--MD5=[1fe25e6ad2a661c9f8478b5f50e2a15d]
+entity publisher--><g id="elem_publisher"><rect fill="#999999" height="88.3086" rx="2.5" ry="2.5" style="stroke:#8A8A8A;stroke-width:0.5;" width="205" x="523" y="439"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacing" textLength="78" x="586.5" y="464.4688">Publisher</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="623.5" y="481.3789"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="131" x="560" y="497.8672">Source of identifier</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185" x="533" y="514.3555">appareance in publications</text></g><!--MD5=[3beb326620f25c95c600ff3552cdac8e]
+reverse link coll to isa--><g id="link_coll_isa"><path d="M124.52,119.67 C124.81,150.39 130.33,190.57 153.5,217 C155.92,219.76 225.6,242.14 286.78,261.4 " fill="none" id="coll-backto-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="124.57,111.28,121.5129,119.2584,127.5128,119.3012,124.57,111.28" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="125" x="154.5" y="192.6016">Synchronize records</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="30" x="204" y="206.7344">from</text></g><!--MD5=[cd90f07c0e1a778260936dd672092871]
+reverse link ont to isa--><g id="link_ont_isa"><path d="M228.23,291 C247.87,291 268.05,291 286.99,291 " fill="none" id="ont-backto-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="220.14,291,228.14,294,228.14,288,220.14,291" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="30" x="238.5" y="284.6016">Uses</text></g><!--MD5=[60814b50120f9ab9bf4e4959f1706170]
+link admin to isa--><g id="link_admin_isa"><path d="M293.59,135.01 C290.97,161.09 291.66,191.55 302.5,217 C307.55,228.85 315.57,239.7 324.54,249.21 " fill="none" id="admin-to-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="330.23,254.95,326.7338,247.1541,322.4698,251.3752,330.23,254.95" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="104" x="303.5" y="199.6016">Manage systems</text></g><!--MD5=[042a6df0a7b0698c0fb8fdfe2add1770]
+link user to isa--><g id="link_user_isa"><path d="M435.39,143.07 C429.07,166.71 421.23,193.29 412.5,217 C408.8,227.04 404.28,237.59 399.75,247.46 " fill="none" id="user-to-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="396.31,254.86,402.411,248.8785,396.9736,246.3418,396.31,254.86" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="114" x="433.5" y="185.6016">Discover, Retrieve,</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="111" x="435" y="199.7344">Annotate, [Create,</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="132" x="426.5" y="213.8672">Update if authorized]</text></g><!--MD5=[9b1d1457bd851bafc2d0f635f2133be1]
+link curator to isa--><g id="link_curator_isa"><path d="M612.68,135.35 C604.01,163.22 589.92,195.06 567.5,217 C542.95,241.03 509.62,257.35 477.78,268.34 " fill="none" id="curator-to-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="470.16,270.89,478.6981,271.2062,476.8008,265.5141,470.16,270.89" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="98" x="601.5" y="192.6016">Create, Manage,</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="108" x="598.5" y="206.7344">Annotate content</text></g><!--MD5=[820946bdc21aaff6cfb2e5113ad304f9]
+link isa to pid--><g id="link_isa_pid"><path d="M293.97,327.09 C272.62,337.76 250.4,350.55 231.5,365 C206.43,384.16 182.71,410 164.28,432.52 " fill="none" id="isa-to-pid" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="159.22,438.78,166.5796,434.4399,161.9111,430.6709,159.22,438.78" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="103" x="247.5" y="377.6016">Get allocation of</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="133" x="232.5" y="391.7344">identifier value range</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="30" x="286" y="405.8672">from</text></g><!--MD5=[8ae305a45572890cc653e3a5388a13c7]
+link isa to identity--><g id="link_isa_identity"><path d="M378.5,327.29 C378.5,356.38 378.5,398.02 378.5,430.78 " fill="none" id="isa-to-identity" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="378.5,438.9,381.5,430.9,375.5,430.9,378.5,438.9" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="141" x="379.5" y="384.6016">Get user metadata and</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="116" x="394" y="398.7344">authenticate using</text></g><!--MD5=[017f739f13e04c477ece7767ebc549d9]
+link isa to publisher--><g id="link_isa_publisher"><path d="M470.34,326.66 C492.21,337.18 514.65,349.99 533.5,365 C557.05,383.75 578.22,409.66 594.3,432.34 " fill="none" id="isa-to-publisher" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="598.91,438.95,596.7957,430.6717,591.8738,434.1031,598.91,438.95" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="82" x="589" y="384.6016">Get identifier</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="111" x="576.5" y="398.7344">appearances from</text></g><rect height="81.9531" rx="7.5" ry="7.5" style="stroke:#00000000;stroke-width:1.0;fill:none;" width="151" x="561" y="540.3086"/><rect height="16.4883" style="stroke:none;stroke-width:1.0;fill:none;" width="139" x="567" y="548.3086"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="51" x="567" y="561.8438">Legend</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="618" y="561.8438"> </text><rect fill="#08427B" height="16.4883" style="stroke:none;stroke-width:1.0;" width="139" x="567" y="564.7969"/><text fill="#073B6F" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="571" y="578.332">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="579" y="578.332"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="48" x="587" y="578.332">person</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="639" y="578.332"> </text><rect fill="#1168BD" height="16.4883" style="stroke:none;stroke-width:1.0;" width="139" x="567" y="581.2852"/><text fill="#3C7FC0" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="571" y="594.8203">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="579" y="594.8203"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="47" x="587" y="594.8203">system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="638" y="594.8203"> </text><rect fill="#999999" height="16.4883" style="stroke:none;stroke-width:1.0;" width="139" x="567" y="597.7734"/><text fill="#8A8A8A" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="571" y="611.3086">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="579" y="611.3086"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="111" x="587" y="611.3086">external_system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="702" y="611.3086"> </text><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="706" y1="548.3086" y2="548.3086"/><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="706" y1="564.7969" y2="564.7969"/><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="706" y1="581.2852" y2="581.2852"/><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="706" y1="597.7734" y2="597.7734"/><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="706" y1="614.2617" y2="614.2617"/><line style="stroke:#00000000;stroke-width:1.0;" x1="567" x2="567" y1="548.3086" y2="614.2617"/><line style="stroke:#00000000;stroke-width:1.0;" x1="706" x2="706" y1="548.3086" y2="614.2617"/><!--MD5=[fcc247e2a48106b5866b7117efec5668]
+@startuml
+!include <C4/C4_Context>
+
+System(isa, "iSamples", "iSamples Infrastructure")
+System_Ext(coll, "Collection", "Collection of records")
+Rel_U(isa, coll, "Synchronize records from")
+ 
+System_Ext(ont, "Ontologies", "Community maintained ontologies and vocabularies")
+Rel_L(isa, ont, "Uses")
+ 
+Person(admin, "Admin", "Administrator")
+Rel(admin, isa, "Manage systems")
+
+Person(user, "User", "Consumer\nContributor")
+Rel(user, isa, "Discover, Retrieve, Annotate, [Create, Update if authorized]")
+
+Person(curator, "Curator", "Curator")
+Rel(curator, isa, "Create, Manage, Annotate content")
+
+
+ System_Ext(pid, "Id Authority", "Identifier authorities (IGSN, ARK, DOI, ROR, ...)")
+ Rel(isa, pid, "Get allocation of identifier value range from")
+ 
+ System_Ext(identity, "Identity", "User identity service (ORCID, GitHub, ...)")
+Rel(isa, identity, "Get user metadata and authenticate using")
+ 
+System_Ext(publisher, "Publisher", "Source of identifier appareance in publications")
+Rel(isa, publisher, "Get identifier appearances from")
+
+SHOW_LEGEND()
+@enduml
+
+@startuml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+skinparam defaultTextAlignment center
+
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+skinparam LegendBorderColor transparent
+skinparam LegendBackgroundColor transparent
+skinparam LegendFontColor #FFFFFF
+
+skinparam shadowing<<legendArea>> false
+skinparam rectangle<<legendArea>> {
+    backgroundcolor #00000000
+    bordercolor #00000000
+}
+
+skinparam rectangle {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam database {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam queue {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #666666
+    FontSize 12
+}
+
+skinparam actor {
+    StereotypeFontSize 12
+    shadowing false
+    style awesome
+}
+
+skinparam person {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam package {
+    StereotypeFontSize 6
+    StereotypeFontColor transparent
+    FontStyle plain
+    BackgroundColor transparent
+}
+
+skinparam rectangle<<boundary>> {
+    Shadowing false
+    StereotypeFontSize 6
+    StereotypeFontColor transparent
+    FontColor #444444
+    BorderColor #444444
+    BackgroundColor transparent
+    BorderStyle dashed
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+skinparam rectangle<<person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+skinparam database<<person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+skinparam queue<<person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+skinparam actor<<person>> {
+    StereotypeFontColor #08427B
+    FontColor #08427B
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+skinparam person<<person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+
+
+skinparam rectangle<<external_person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+skinparam database<<external_person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+skinparam queue<<external_person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+skinparam actor<<external_person>> {
+    StereotypeFontColor #686868
+    FontColor #686868
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+skinparam person<<external_person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+
+
+skinparam rectangle<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+skinparam database<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+skinparam queue<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+skinparam actor<<system>> {
+    StereotypeFontColor #1168BD
+    FontColor #1168BD
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+skinparam person<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+
+
+skinparam rectangle<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+skinparam database<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+skinparam queue<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+skinparam actor<<external_system>> {
+    StereotypeFontColor #999999
+    FontColor #999999
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+skinparam person<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+
+
+
+
+
+sprite $person [48x48/16] {
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+0000000000000000000049BCCA7200000000000000000000
+0000000000000000006EFFFFFFFFB3000000000000000000
+00000000000000001CFFFFFFFFFFFF700000000000000000
+0000000000000001EFFFFFFFFFFFFFF80000000000000000
+000000000000000CFFFFFFFFFFFFFFFF6000000000000000
+000000000000007FFFFFFFFFFFFFFFFFF100000000000000
+00000000000001FFFFFFFFFFFFFFFFFFF900000000000000
+00000000000006FFFFFFFFFFFFFFFFFFFF00000000000000
+0000000000000BFFFFFFFFFFFFFFFFFFFF40000000000000
+0000000000000EFFFFFFFFFFFFFFFFFFFF70000000000000
+0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
+0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
+0000000000000DFFFFFFFFFFFFFFFFFFFF60000000000000
+0000000000000AFFFFFFFFFFFFFFFFFFFF40000000000000
+00000000000006FFFFFFFFFFFFFFFFFFFE00000000000000
+00000000000000EFFFFFFFFFFFFFFFFFF800000000000000
+000000000000007FFFFFFFFFFFFFFFFFF100000000000000
+000000000000000BFFFFFFFFFFFFFFFF5000000000000000
+0000000000000001DFFFFFFFFFFFFFF70000000000000000
+00000000000000000BFFFFFFFFFFFF500000000000000000
+0000000000000000005DFFFFFFFFA1000000000000000000
+0000000000000000000037ABB96100000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+000000000000025788300000000005886410000000000000
+000000000007DFFFFFFD9643347BFFFFFFFB400000000000
+0000000004EFFFFFFFFFFFFFFFFFFFFFFFFFFB1000000000
+000000007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFD200000000
+00000006FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE10000000
+0000003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB0000000
+000000BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5000000
+000003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD000000
+000009FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF200000
+00000DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF600000
+00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000
+00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA00000
+00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
+00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
+00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
+00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA00000
+00000EFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF700000
+000006FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE100000
+0000008FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD3000000
+000000014555555555555555555555555555555300000000
+000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000
+}
+
+sprite $person2 [48x48/16] {
+0000000000000000000049BCCA7200000000000000000000
+0000000000000000006EFFFFFFFFB3000000000000000000
+00000000000000001CFFFFFFFFFFFF700000000000000000
+0000000000000001EFFFFFFFFFFFFFF80000000000000000
+000000000000000CFFFFFFFFFFFFFFFF6000000000000000
+000000000000007FFFFFFFFFFFFFFFFFF100000000000000
+00000000000001FFFFFFFFFFFFFFFFFFF900000000000000
+00000000000006FFFFFFFFFFFFFFFFFFFF00000000000000
+0000000000000BFFFFFFFFFFFFFFFFFFFF40000000000000
+0000000000000EFFFFFFFFFFFFFFFFFFFF70000000000000
+0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
+0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
+0000000000000DFFFFFFFFFFFFFFFFFFFF60000000000000
+0000000000000AFFFFFFFFFFFFFFFFFFFF40000000000000
+00000000000006FFFFFFFFFFFFFFFFFFFE00000000000000
+00000000000000EFFFFFFFFFFFFFFFFFF800000000000000
+000000000000007FFFFFFFFFFFFFFFFFF100000000000000
+000000000000000BFFFFFFFFFFFFFFFF5000000000000000
+0000000000000001DFFFFFFFFFFFFFF70000000000000000
+00000000000000000BFFFFFFFFFFFF500000000000000000
+0000000000000000005DFFFFFFFFA1000000000000000000
+0000000000000000000037ABB96100000000000000000000
+000000000002578888300000000005888864100000000000
+0000000007DFFFFFFFFD9643347BFFFFFFFFFB4000000000
+00000004EFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB10000000
+0000007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD2000000
+000006FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE100000
+00003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
+0000BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF50000
+0003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD0000
+0009FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2000
+000DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6000
+000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8000
+001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB000
+001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB000
+001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB000
+001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA000
+000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8000
+000DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF6000
+0009FFFFFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFFFFF2000
+0003FFFFFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFFFFD0000
+0000BFFFFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFFFF50000
+00003FFFFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFFFB00000
+000006FFFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFFE100000
+0000007FFFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFFD2000000
+00000004EFFF8FFFFFFFFFFFFFFFFFFFFFF8FFFB10000000
+0000000007DF8FFFFFFFFFFFFFFFFFFFFFF8FB4000000000
+000000000002578888888888888888888864100000000000
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rectangle "==iSamples\n\n iSamples Infrastructure" <<system>> as isa 
+rectangle "==Collection\n\n Collection of records" <<external_system>> as coll 
+isa -UP->> coll : **Synchronize records from**
+ 
+rectangle "==Ontologies\n\n Community maintained ontologies and vocabularies" <<external_system>> as ont 
+isa -LEFT->> ont : **Uses**
+ 
+rectangle "<$person>\n==Admin\n\n Administrator" <<person>> as admin 
+admin - ->> isa : **Manage systems**
+
+rectangle "<$person>\n==User\n\n Consumer\nContributor" <<person>> as user 
+user - ->> isa : **Discover, Retrieve, Annotate, [Create, Update if authorized]**
+
+rectangle "<$person>\n==Curator\n\n Curator" <<person>> as curator 
+curator - ->> isa : **Create, Manage, Annotate content**
+
+
+ rectangle "==Id Authority\n\n Identifier authorities (IGSN, ARK, DOI, ROR, ...)" <<external_system>> as pid 
+ isa - ->> pid : **Get allocation of identifier value range from**
+ 
+ rectangle "==Identity\n\n User identity service (ORCID, GitHub, ...)" <<external_system>> as identity 
+isa - ->> identity : **Get user metadata and authenticate using**
+ 
+rectangle "==Publisher\n\n Source of identifier appareance in publications" <<external_system>> as publisher 
+isa - ->> publisher : **Get identifier appearances from**
+
+hide stereotype
+legend right
+<#00000000,#00000000>|<color:#000000>**Legend**</color> |
+|<#08427B><color:#073B6F> <U+25AF></color> <color:#FFFFFF> person </color> |
+|<#1168BD><color:#3C7FC0> <U+25AF></color> <color:#FFFFFF> system </color> |
+|<#999999><color:#8A8A8A> <U+25AF></color> <color:#FFFFFF> external_system </color> |
+endlegend
+@enduml
+
+PlantUML version 1.2022.2(Sat Mar 05 11:30:19 EST 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>
