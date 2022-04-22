@@ -1,9 +1,6 @@
 name: Build Pages
 
-on:
-  push:
-    branches:
-      - main
+on: workflow_dispatch
 
 jobs:
   docs:
