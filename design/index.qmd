@@ -4,7 +4,7 @@ subtitle: "iSamples use cases, requirements, architecture, and data models"
 ---    
 
 ```{.plantuml}
-!include <C4/C4_Context>
+!include https://raw.githubusercontent.com/datadavev/C4-PlantUML/master/C4_Component.puml
 
 System(isa, "iSamples", "iSamples Infrastructure")
 System_Ext(coll, "Collection", "Collection of records")
