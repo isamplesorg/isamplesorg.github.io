@@ -9,7 +9,7 @@ Some pages use the Jupyter kernel to fetch and render content on some pages, and
 1. Install quarto
 2. Create python virtual envronment (to avoid polluting your global environment with dependencies)
 3. Install dependencies
-4. Install a python kernel named "isampled-quarto":
+4. Install a python kernel named "isamples-quarto":
    ```
    python -m ipykernel install --name isamples-quarto
    ```
