@@ -1,0 +1,63 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "iSamples"  
+  sidebar:
+    style: "docked"
+    search: true
+    logo: assets/isampleslogopetal.png
+    tools:
+      - icon: table
+        href: https://hyde.cyverse.org/isamples_central/ui/
+      - icon: github
+        href: https://github.com/isamplesorg
+      - icon: slack
+        href: https://isamples.slack.com/
+      - icon: twitter
+        href: https://twitter.com/isamplesorg
+    contents:
+      - href: index.qmd
+        text: Home
+        aria-label: "iSamples home"
+      - href: about.qmd
+        text: About
+        aria-label: "About the iSamples project"
+      - section: "Design"
+        contents:
+          - design/index.qmd
+          - design/requirements.md
+          - models/index.qmd
+      - section: "Resources"
+        contents:
+        - text: Publications
+          href: pubs.qmd
+        - icon: github
+          text: Github
+          href: "https://github.com/isamplesorg/"
+        
+
+
+  repo-url: https://github.com/isamplesorg/isamples.github.io
+  repo-actions: [edit, issue]
+
+  page-footer: 
+    left: >
+        © Copyright 2020, iSamples Project.
+        
+        This material is based upon work supported by the National Science Foundation under Grant Numbers 
+        [2004839](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839), 
+        [2004562](https://nsf.gov/awardsearch/showAward?AWD_ID=2004562), 
+        [2004642](https://nsf.gov/awardsearch/showAward?AWD_ID=2004642), 
+        and [2004815](https://nsf.gov/awardsearch/showAward?AWD_ID=2004815). 
+        Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the [National Science Foundation](https://nsf.gov/).
+  
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+
+filters:
+  - pandoc-plantuml
+

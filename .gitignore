@@ -1,7 +1,14 @@
+.DS_Store
+plantuml-images
+docs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Jupyter cache
+docs/.jupyter_cache
 
 # C extensions
 *.so
@@ -129,3 +136,5 @@ dmypy.json
 .pyre/
 
 .idea
+
+/.quarto/
