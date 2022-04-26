@@ -27,7 +27,7 @@ jobs:
         run: wget -O plantuml.jar "https://github.com/plantuml/plantuml/releases/download/v1.2022.4/plantuml-1.2022.4.jar" 
 
       - name: Whereami
-        run: pwd; ls -lah
+        run: pwd; ls -lah; java -version; java -jar plantuml.jar -version
 
       - uses: actions/setup-python@v3
       - name: "Install Python deps"
@@ -37,7 +37,7 @@ jobs:
       - name: Render book to all format
         # Add any command line argument needed
         env: 
-          PLANTUML_BIN: "${{ github.workspace }}/plantuml.sh"
+          PLANTUML_BIN: "java -jar ${{ github.workspace }}/plantuml.jar"
         run: |
           quarto render
       - name: Deploy 🚀
