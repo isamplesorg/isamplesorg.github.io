@@ -19,8 +19,11 @@ jobs:
       # Install any computing dependency you may need, usually either python and Jupyter or R
       # More specific examples will be shared on quarto-dev/quarto-actions project
 
+      - name: Install plantuml deps
+        run: sudo apt-get install -y default-jre graphviz
+
       - name: Install plantuml
-        run: sudo apt-get install -y plantuml graphviz
+        run: wget -O plantuml.jar "https://github.com/plantuml/plantuml/releases/download/v1.2022.4/plantuml-1.2022.4.jar" 
 
       - uses: actions/setup-python@v3
       - name: "Install Python deps"
