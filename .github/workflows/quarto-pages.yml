@@ -37,7 +37,7 @@ jobs:
       - name: Render book to all format
         # Add any command line argument needed
         env: 
-          PLANTUML_BIN: "${{ github.workspace }}/plantuml"
+          PLANTUML_BIN: "${{ github.workspace }}/plantuml.sh"
         run: |
           quarto render
       - name: Deploy 🚀
