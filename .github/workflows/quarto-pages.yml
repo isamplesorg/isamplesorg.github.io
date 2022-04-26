@@ -1,10 +1,12 @@
 name: Render using Quarto and push to GH-pages
 
 on: workflow_dispatch
+env: 
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
 
@@ -35,6 +37,8 @@ jobs:
 
       - name: Render book to all format
         # Add any command line argument needed
+        env: 
+          PLANTUML_BIN: "${GITHUB_WORKSPACE}/plantuml"
         run: |
           quarto render
       - name: Deploy 🚀
