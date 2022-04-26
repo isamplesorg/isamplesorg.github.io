@@ -1,2 +1,2 @@
-#/bin/bash
+#!/bin/bash
 java -jar plantuml.jar "$@"
