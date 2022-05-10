@@ -1,0 +1,10 @@
+[
+  {
+    "listing": "/models/index.html",
+    "items": [
+      "/models/generated/vocabularies/sampledFeature.html",
+      "/models/generated/vocabularies/materialType.html",
+      "/models/generated/vocabularies/specimenType.html"
+    ]
+  }
+]

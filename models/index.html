@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>iSamples - Internet of Samples: iSamples</title>
+<title>iSamples - iSamples Core Model</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -17,22 +17,24 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 </style>
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link id="quarto-text-highlighting-styles" href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<script src="../site_libs/quarto-listing/list.min.js"></script>
+<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link id="quarto-text-highlighting-styles" href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -52,9 +54,55 @@ ul.task-list{list-style: none;}
     "search-submit-button-title": "Submit"
   }
 }</script>
+<script>
 
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-vocabulary-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
 
-<link rel="stylesheet" href="styles.css">
+    const options = {
+      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-vocabulary-listing'] = new List('listing-vocabulary-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+  
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-model-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-filename","listing-file-modified"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-model-listing'] = new List('listing-model-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-sidebar docked fullcontent">
@@ -64,7 +112,7 @@ ul.task-list{list-style: none;}
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">Internet of Samples: iSamples</h1>
+      <h1 class="quarto-secondary-nav-title">iSamples Core Model</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -76,8 +124,8 @@ ul.task-list{list-style: none;}
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
-      <a href="./" class="sidebar-logo-link">
-      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      <a href="../" class="sidebar-logo-link">
+      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
     <a href="https://hyde.cyverse.org/isamples_central/ui/" title="" class="sidebar-tool px-1"><i class="bi bi-table"></i></a>
@@ -95,12 +143,12 @@ ul.task-list{list-style: none;}
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">Home</a>
+  <a href="../index.html" class="sidebar-item-text sidebar-link">Home</a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./about.html" class="sidebar-item-text sidebar-link">About</a>
+  <a href="../about.html" class="sidebar-item-text sidebar-link">About</a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -113,17 +161,17 @@ ul.task-list{list-style: none;}
     <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./design/index.html" class="sidebar-item-text sidebar-link">Overview</a>
+  <a href="../design/index.html" class="sidebar-item-text sidebar-link">Overview</a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./design/requirements.html" class="sidebar-item-text sidebar-link">Requirements</a>
+  <a href="../design/requirements.html" class="sidebar-item-text sidebar-link">Requirements</a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./models/index.html" class="sidebar-item-text sidebar-link">iSamples Core Model</a>
+  <a href="../models/index.html" class="sidebar-item-text sidebar-link active">iSamples Core Model</a>
   </div>
 </li>
     </ul>
@@ -138,7 +186,7 @@ ul.task-list{list-style: none;}
     <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pubs.html" class="sidebar-item-text sidebar-link">Publications</a>
+  <a href="../pubs.html" class="sidebar-item-text sidebar-link">Publications</a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -158,8 +206,8 @@ ul.task-list{list-style: none;}
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Internet of Samples: iSamples</h1>
-<p class="subtitle lead">Toward an Interdisciplinary Cyberinfrastructure for Material Samples <a href="https://nsf.gov/awardsearch%20/showAward?AWD_ID=2004839"><img src="https://img.shields.io/badge/NSF-2004839-blue.svg" class="img-fluid"></a></p>
+<h1 class="title d-none d-lg-block">iSamples Core Model</h1>
+<p class="subtitle lead">A model for core properties of physical samples</p>
 </div>
 
 
@@ -175,16 +223,74 @@ ul.task-list{list-style: none;}
 
 </header>
 
-<p>The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.</p>
-<p><strong>Resources</strong></p>
-<ul>
-<li><a href="https://youtu.be/eRUw5NMksFo?t=105">Recording of project presentation at the 2020 SPNHC &amp; ICOM NATHIST Conference</a></li>
-<li><a href="https://zenodo.org/communities/isamples">Zenodo Community</a></li>
-</ul>
+<section id="taxonomies" class="level2">
+<h2 class="anchored" data-anchor-id="taxonomies">Taxonomies</h2>
+<p>The iSamples core taxonomies are controlled vocabularies with terms related by <a href="https://www.w3.org/2009/08/skos-reference/skos.html#broader"><code>SKOS:broader</code></a> and <a href="https://www.w3.org/2009/08/skos-reference/skos.html#narrower"><code>SKOS:narrower</code></a>. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using <code>SKOS:broader</code> and <code>SKOS:narrower</code>.</p>
+<p>Three taxonomies are currently defined:</p>
+<div id="listing-vocabulary-listing" class="quarto-listing quarto-listing-container-table">
+
+<table class="quarto-listing-table table">
+<thead>
+<tr>
+<th>
+Title
+</th>
+<th>
+Subtitle
+</th>
+</tr>
+</thead>
+<tbody class="list">
+<tr data-index="0" data-categories="vocabulary" data-listing-date-sort="1652182067557" data-listing-file-modified-sort="1652196683673" data-listing-reading-time-sort="3.605" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampledFeature.md">
+<td class="listing-title">
+<a href="../models/generated/vocabularies/sampledFeature.html" class="title">Sampled Feature Type vocabulary</a>
+</td>
+<td class="listing-subtitle">
+Categories to specify the broad context that a sample is intended to represent.
+</td>
+</tr>
+<tr data-index="1" data-categories="vocabulary" data-listing-date-sort="1652182066654" data-listing-file-modified-sort="1652196683673" data-listing-reading-time-sort="5.89" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="materialType.md">
+<td class="listing-title">
+<a href="../models/generated/vocabularies/materialType.html" class="title">iSamples Materials Vocabulary</a>
+</td>
+<td class="listing-subtitle">
+High level vocabulary to specify the kind of material that constitutes a physical sample
+</td>
+</tr>
+<tr data-index="2" data-categories="vocabulary" data-listing-date-sort="1652182068419" data-listing-file-modified-sort="1652196683673" data-listing-reading-time-sort="4.44" data-listing-title-sort="iSamples Specimen Type Vocabulary" data-listing-filename-sort="specimenType.md">
+<td class="listing-title">
+<a href="../models/generated/vocabularies/specimenType.html" class="title">iSamples Specimen Type Vocabulary</a>
+</td>
+<td class="listing-subtitle">
+Broad categories to classify any kind of physical specimen
+</td>
+</tr>
+</tbody>
+
+</table>
+<div class="listing-no-matching d-none">
+No matching items
+</div>
+</div>
 
 
 
-</main> <!-- /main -->
+</section>
+
+<div class="quarto-listing quarto-listing-container-grid" id="listing-model-listing">
+<div class="list grid quarto-listing-cols-3">
+<div class="g-col-1" data-index="0" data-listing-file-modified-sort="1652196748706">
+<a href="../models/generated/vocabularies" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+
+</div>
+</a>
+</div>
+</div>
+<div class="listing-no-matching d-none">
+No matching items
+</div>
+</div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const icon = "";

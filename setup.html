@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>iSamples - Internet of Samples: iSamples</title>
+<title>iSamples - Setup document editing</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -64,7 +64,7 @@ ul.task-list{list-style: none;}
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">Internet of Samples: iSamples</h1>
+      <h1 class="quarto-secondary-nav-title">Setup document editing</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -95,7 +95,7 @@ ul.task-list{list-style: none;}
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">Home</a>
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Home</a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -158,8 +158,7 @@ ul.task-list{list-style: none;}
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Internet of Samples: iSamples</h1>
-<p class="subtitle lead">Toward an Interdisciplinary Cyberinfrastructure for Material Samples <a href="https://nsf.gov/awardsearch%20/showAward?AWD_ID=2004839"><img src="https://img.shields.io/badge/NSF-2004839-blue.svg" class="img-fluid"></a></p>
+<h1 class="title d-none d-lg-block">Setup document editing</h1>
 </div>
 
 
@@ -175,12 +174,16 @@ ul.task-list{list-style: none;}
 
 </header>
 
-<p>The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.</p>
-<p><strong>Resources</strong></p>
-<ul>
-<li><a href="https://youtu.be/eRUw5NMksFo?t=105">Recording of project presentation at the 2020 SPNHC &amp; ICOM NATHIST Conference</a></li>
-<li><a href="https://zenodo.org/communities/isamples">Zenodo Community</a></li>
-</ul>
+<p>These documents are rendered using Quarto.</p>
+<p>Some pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.</p>
+<ol type="1">
+<li><p>Install quarto</p></li>
+<li><p>Create python virtual envronment (to avoid polluting your global environment with dependencies)</p></li>
+<li><p>Install dependencies</p></li>
+<li><p>Install a python kernel named “isamples-quarto”:</p>
+<pre><code>python -m ipykernel install --name isamples-quarto</code></pre></li>
+<li><p>Render preview using <code>quarto preview</code> in the root folder of this repository.</p></li>
+</ol>
 
 
 
