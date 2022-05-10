@@ -39,7 +39,7 @@ jobs:
         env: 
           PLANTUML_BIN: "java -jar ${{ github.workspace }}/plantuml.jar"
         run: |
-          scripts/generate_vocabs.sh; quarto render
+          quarto render
       - name: Deploy 🚀
         # only deploy when push to main
         if: github.event_name != 'pull_request'

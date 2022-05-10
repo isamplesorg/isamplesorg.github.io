@@ -2,7 +2,7 @@
 comment: | 
   WARNING: This file is generated. Any edits will be lost!
 title: "iSamples Materials Vocabulary"
-date: "2022-05-10T10:01:06.016006+00:00"
+date: "2022-05-10T11:27:46.654336+00:00"
 subtitle: |
   High level vocabulary to specify the kind of material that constitutes a physical sample
 execute:
