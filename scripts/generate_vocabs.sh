@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Regenerates the vocabulary markdown files from the GH sources
 #
