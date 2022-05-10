@@ -1,0 +1,18 @@
+---
+title: Publications
+subtitle: Publications, presentations, and other project outcomes
+bibliography: isamples-outcomes.bib
+csl: cite-full-inline.csl
+nocite: |
+  @*
+---
+
+TODO:
+
+- Figure out grouping by reference type
+- Automate update of the .bib file
+- Adjust the bib stlye
+
+
+::: {#refs}
+:::

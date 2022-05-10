@@ -1,0 +1,36 @@
+---
+title: iSamples Core Model
+subtitle: A model for core properties of physical samples
+listing:
+  - id: vocabulary-listing
+    contents: "generated/vocabularies"
+    page-size: 33
+    sort-ui: false
+    filter-ui: false
+    sort: "title asc"
+    fields: [title, subtitle]
+    type: table
+  - id: model-listing
+    contents: 
+      - "generated/**!(vocabularies)"
+    page-size: 33
+    sort: "title asc"
+    fields: [title, subtitle]
+    type: grid   
+    sort-ui: false
+    filter-ui: false
+
+---
+
+## Taxonomies
+
+The iSamples core taxonomies are controlled vocabularies with terms related by [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader) and [`SKOS:narrower`](https://www.w3.org/2009/08/skos-reference/skos.html#narrower). In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
+
+Three taxonomies are currently defined:
+
+::: {#vocabulary-listing}
+:::
+
+
+
+

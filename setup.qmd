@@ -1,0 +1,17 @@
+---
+title: Setup document editing
+---
+
+These documents are rendered using Quarto.
+
+Some pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.
+
+1. Install quarto
+2. Create python virtual envronment (to avoid polluting your global environment with dependencies)
+3. Install dependencies
+4. Install a python kernel named "isamples-quarto":
+   ```
+   python -m ipykernel install --name isamples-quarto
+   ```
+5. Render preview using `quarto preview` in the root folder of this repository.
+
