@@ -3,6 +3,24 @@ title: "Overview"
 subtitle: "iSamples use cases, requirements, architecture, and data models"
 ---    
 
+Physical samples are represented by a digital record.
+
+Each digital record is addressable by at least one identifier that is unique to the record.
+
+A collection of digital records can be represented by a list of the record identifiers.
+
+A list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.
+
+Digital records may be presented in different serializations (media type).
+
+Digital records of a serialization may present different views of the same information (profile).
+
+iSamples has defined a profile applicable to all physical samples.
+
+iSamples has defined a programmatic interface
+
+
+
 ```{.plantuml}
 !include https://raw.githubusercontent.com/datadavev/C4-PlantUML/master/C4_Component.puml
 

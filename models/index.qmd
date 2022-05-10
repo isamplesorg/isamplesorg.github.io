@@ -1,49 +1,36 @@
-# Mapping from sources to core
-
-
-In general the process is :
-
-```{uml} assets/mapping_general.puml
 ---
-scale: 50%
+title: iSamples Core Model
+subtitle: A model for core properties of physical samples
+listing:
+  - id: vocabulary-listing
+    contents: "generated/vocabularies"
+    page-size: 33
+    sort-ui: false
+    filter-ui: false
+    sort: "title asc"
+    fields: [title, subtitle]
+    type: table
+  - id: model-listing
+    contents: 
+      - "generated/**!(vocabularies)"
+    page-size: 33
+    sort: "title asc"
+    fields: [title, subtitle]
+    type: grid   
+    sort-ui: false
+    filter-ui: false
+
 ---
-```
 
+## Taxonomies
 
-## GEOME
+The iSamples core taxonomies are controlled vocabularies with terms related by [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader) and [`SKOS:narrower`](https://www.w3.org/2009/08/skos-reference/skos.html#narrower). In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
 
-| s | p | o | Label | Source |
-| --- | --- | --- | --- | --- |
-| ARK | has_record | _id | event | GEOME | 
-| ARK | has_record | _id | sample | GEOME |
-| ARK | has_record | _id | tissue | GEOME |
-| IGSN | has_record | _id | sample | SESAR |
-| ARK | has_record | _id | SMITHSONIAN |
+Three taxonomies are currently defined:
+
+::: {#vocabulary-listing}
+:::
 
 
 
-```{figure} assets/geome_mapping.drawio.svg
----
-align: left
----
-Source record representation.
-```
 
-```{figure} assets/geome_mapping_1.drawio.svg
----
-align: left
----
-Mapping to individual core records and relation records. 
-```
-
-Relations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target. 
-
-
-```{figure} assets/geome_mapping_2.drawio.svg
----
-align: left
----
-Mapping to individual core records and including relations in the records.
-```
-
-Relations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers.
