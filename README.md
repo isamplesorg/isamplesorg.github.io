@@ -1,4 +1,9 @@
-= isamplesorg.github.io
+---
+title: isamples.github.io
+subtitle: README for the isamples.github.io source
+---
+
+# isamplesorg.github.io
 
 image:https://github.com/isamplesorg/isamplesorg.github.io/workflows/Build%20Pages/badge.svg[Action Status]
 
@@ -15,7 +20,7 @@ after a commit to the main branch. The automated build process is performed
 using https://github.com/isamplesorg/isamplesorg.github.io/actions[GitHub Actions]
 using the workflow at link:blob/main/.github/workflows/gh-pages.yml[`.github/workflows/gh-pages.yml`].
 
-== Development
+## Development
 
 Dependencies are managed using https://python-poetry.org/[Poetry]. To setup a local
 work environment:
