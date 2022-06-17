@@ -2,13 +2,17 @@
 comment: | 
   WARNING: This file is generated. Any edits will be lost!
 title: "iSamples Materials Vocabulary"
-date: "2022-05-10T11:27:46.654336+00:00"
+date: "2022-06-17T10:49:27.782957+00:00"
 subtitle: |
   High level vocabulary to specify the kind of material that constitutes a physical sample
 execute:
   echo: false
 categories: ["vocabulary"]
 ---
+
+Source: 
+[`https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/materialType.ttl`](https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/materialType.ttl)
+
 
 Namespace: 
 [`https://w3id.org/isample/vocabulary/material/0.9/materialsvocabulary`](https://w3id.org/isample/vocabulary/material/0.9/materialsvocabulary)

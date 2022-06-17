@@ -26,7 +26,13 @@ listing:
 
 The iSamples core taxonomies are controlled vocabularies with terms related by [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader) and [`SKOS:narrower`](https://www.w3.org/2009/08/skos-reference/skos.html#narrower). In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
 
-Three taxonomies are currently defined:
+The iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:
+
+1. What material is the sample composed of?
+2. What feature is the sample representative of?
+3. What kind of thing is the sample?
+
+Three taxonomies are currently defined :
 
 ::: {#vocabulary-listing}
 :::

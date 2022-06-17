@@ -35,7 +35,7 @@ Vocabulary documentation is generated from the vocabulary source ttl files using
 scripts/generate_vocab_docs.sh
 ```
 
-The output is placed under `models/generated/vocabularies`
+The generated docs are placed under `models/generated/vocabularies`
 
 After editing, push the sources to GitHub. The rendered pages are generated using the `Render using Quarto and push to GH-pages` GitHub action that is currently manually triggered.
 

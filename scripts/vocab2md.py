@@ -301,7 +301,7 @@ def describeNarrowerTerms(g, v, r, depth=0, level=[]):
         res += describeNarrowerTerms(g, v, term, depth=depth+1)
     return res
 
-def describeVocabulary(G, V):
+def describeVocabulary(G, V, source_location=None):
     res = []
     level = [1, ]
     title = getObjects(G, V, skosT("prefLabel"))[0]
@@ -316,6 +316,10 @@ def describeVocabulary(G, V):
     res.append("  echo: false")
     res.append("categories: [\"vocabulary\"]")
     res.append("---")
+    res.append("")
+    res.append("Source: ")
+    res.append(f"[`{source_location}`]({source_location})")
+    res.append("")
     res.append("")
     res.append("Namespace: ")
     res.append(f"[`{V}`]({V})")
@@ -361,7 +365,7 @@ def main(ttl):
     vocabs = listVocabularies(vgraph)
     res = []
     for vocab in vocabs:
-        res.append(describeVocabulary(vgraph, vocab))
+        res.append(describeVocabulary(vgraph, vocab, source_location=ttl))
     for doc in res:
         for line in doc:
             print(line)

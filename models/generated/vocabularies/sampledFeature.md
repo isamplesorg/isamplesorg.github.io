@@ -2,13 +2,17 @@
 comment: | 
   WARNING: This file is generated. Any edits will be lost!
 title: "Sampled Feature Type vocabulary"
-date: "2022-05-10T11:27:47.557590+00:00"
+date: "2022-06-17T10:49:28.721017+00:00"
 subtitle: |
   Categories to specify the broad context that a sample is intended to represent.
 execute:
   echo: false
 categories: ["vocabulary"]
 ---
+
+Source: 
+[`https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/sampledFeature.ttl`](https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/sampledFeature.ttl)
+
 
 Namespace: 
 [`https://w3id.org/isample/vocabulary/sampledfeature/0.9/sampledfeaturevocabulary`](https://w3id.org/isample/vocabulary/sampledfeature/0.9/sampledfeaturevocabulary)
