@@ -5,46 +5,35 @@ subtitle: README for the isamples.github.io source
 
 # isamplesorg.github.io
 
-image:https://github.com/isamplesorg/isamplesorg.github.io/workflows/Build%20Pages/badge.svg[Action Status]
+This repository provides the source for [isamplesorg.github.io](https://isamplesorg.github.io). 
 
-This repository provides the https://isamplesorg.github.io/[iSamples web site].
+The site uses the [Quarto](https://quarto.org/) and is built using GitHub actions.
 
-It is a https://www.sphinx-doc.org/en/master/[Sphinx] project configured to used the
-https://sphinx-book-theme.readthedocs.io/en/latest/[sphinx-book-theme] and supports
-both Markdown footnote:[Markdown support is provided by https://myst-nb.readthedocs.io/en/latest/[MyST-NB]
-which is an extension to https://myst-parser.readthedocs.io/en/latest/[MyST]] and
-reStructuredText footnote:[See: Sphinx https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html[reStructuredText]] formats.
-
-The pages are built automatically and published to the `gh-pages` branch 
-after a commit to the main branch. The automated build process is performed 
-using https://github.com/isamplesorg/isamplesorg.github.io/actions[GitHub Actions]
-using the workflow at link:blob/main/.github/workflows/gh-pages.yml[`.github/workflows/gh-pages.yml`].
+Sources are in markdown or "quarto markdown" (`.qmd` files), and may include content computed at build time.
 
 ## Development
 
-Dependencies are managed using https://python-poetry.org/[Poetry]. To setup a local
-work environment:
+For simple editing tasks, the sources may be edited directly on GitHub. A local setup will be beneficial for larger or more complex changes.
 
-----
-git clone
-cd isamplesorg.github.io
-poetry install
-----
+To setup a development environment:
 
-Building the docs:
+1. [Install Quarto](https://quarto.org/docs/get-started/)
+2. Create a python virtual environment, e.g. `mkvirtualenv isamples-quarto`
+3. `git clone https://github.com/isamplesorg/isamplesorg.github.io.git`
+4. `cd isamplesorg.github.io`
 
-----
-cd docs
-make html
-----
+Preview the site:
+```
+quarto preview
+```
 
-or to start a webserver locally and and automatically
-refresh pages on edit:
+Vocabulary documentation is generated from the vocabulary source ttl files using a python script, `scripts/vocab2md.py` and a convenience shell script wrapper, `scripts/generate_vocab_docs.sh`. To regenerate the vocabulary documentation, first `cd` to the root folder of the documentation, then:
 
-----
-cd docs
-make livehtml
-----
+```
+scripts/generate_vocab_docs.sh
+```
 
+The output is placed under `models/generated/vocabularies`
 
+After editing, push the sources to GitHub. The rendered pages are generated using the `Render using Quarto and push to GH-pages` GitHub action that is currently manually triggered.
 
