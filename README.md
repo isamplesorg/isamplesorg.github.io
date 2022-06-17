@@ -11,6 +11,8 @@ The site uses the [Quarto](https://quarto.org/) and is built using GitHub action
 
 Sources are in markdown or "quarto markdown" (`.qmd` files), and may include content computed at build time.
 
+Visit the [Quarto site](https://quarto.org/docs/guide/) for documentation on using the Quarto environment and features.
+
 ## Development
 
 For simple editing tasks, the sources may be edited directly on GitHub. A local setup will be beneficial for larger or more complex changes.
@@ -37,3 +39,4 @@ The output is placed under `models/generated/vocabularies`
 
 After editing, push the sources to GitHub. The rendered pages are generated using the `Render using Quarto and push to GH-pages` GitHub action that is currently manually triggered.
 
+Updating dependencies using `pip -U <<package name>>` and regenerate `requirements.txt` with `pip freeze > requirements.txt`.
