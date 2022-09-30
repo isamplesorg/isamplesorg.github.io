@@ -5,7 +5,7 @@
 #
 SCRIPT_FOLDER="$(dirname ${0})"
 SOURCE_BASE="https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/"
-SOURCES=("materialType.ttl" "sampledFeature.ttl" "specimenType.ttl")
+SOURCES=("materialType.ttl" "sampledFeature.ttl" "materialSampleType.ttl")
 DEST_FOLDER="models/generated/vocabularies/"
 mkdir -p "${DEST_FOLDER}"
 for src in ${SOURCES[@]}; do
