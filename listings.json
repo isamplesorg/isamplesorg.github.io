@@ -4,7 +4,8 @@
     "items": [
       "/models/generated/vocabularies/sampledFeature.html",
       "/models/generated/vocabularies/materialType.html",
-      "/models/generated/vocabularies/specimenType.html"
+      "/models/generated/vocabularies/specimenType.html",
+      "/models/generated/vocabularies/materialSampleType.html"
     ]
   }
 ]
