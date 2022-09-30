@@ -15,7 +15,7 @@ link user to isa--><g id="link_user_isa"><path d="M450.69,143.22 C444.38,170.67 
 link curator to isa--><g id="link_curator_isa"><path d="M634.45,134.87 C627.28,166.71 613.8,204.62 588.5,230 C559.87,258.73 519.23,276.19 481.6,286.79 " fill="none" id="curator-to-isa" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="473.62,288.95,482.1257,289.758,480.5597,283.966,473.62,288.95" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="119" x="624.5" y="199.1387">Create, Manage,</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="125" x="623.5" y="213.1074">Annotate content</text></g><!--MD5=[820946bdc21aaff6cfb2e5113ad304f9]
 link isa to pid--><g id="link_isa_pid"><path d="M308.88,339.51 C289.23,350.41 268.7,363.46 251.5,378 C228.99,397.03 208.06,422.16 191.77,444.16 " fill="none" id="isa-to-pid" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="186.87,450.88,194.0102,446.1878,189.1643,442.6498,186.87,450.88" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="117" x="252.5" y="390.1387">Get allocation of</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="107" x="257.5" y="404.1074">identifier value</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="78" x="274" y="418.0762">range from</text></g><!--MD5=[8ae305a45572890cc653e3a5388a13c7]
 link isa to identity--><g id="link_isa_identity"><path d="M382.5,339.67 C382.5,368.55 382.5,410.1 382.5,442.81 " fill="none" id="isa-to-identity" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="382.5,450.93,385.5,442.93,379.5,442.93,382.5,450.93" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="134" x="383.5" y="390.1387">Get user metadata</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="123" x="389" y="404.1074">and authenticate</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="39" x="433" y="418.0762">using</text></g><!--MD5=[017f739f13e04c477ece7767ebc549d9]
-link isa to publisher--><g id="link_isa_publisher"><path d="M472.42,339.5 C492.9,349.93 513.58,362.75 530.5,378 C550.75,396.26 567.5,421.42 579.83,443.64 " fill="none" id="isa-to-publisher" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="583.67,450.73,582.5043,442.2659,577.2263,445.1194,583.67,450.73" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="94" x="580" y="397.1387">Get identifier</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="129" x="564.5" y="411.1074">appearances from</text></g><rect height="81.1875" rx="7.5" ry="7.5" style="stroke:#00000000;stroke-width:1.0;fill:none;" width="152" x="582.5" y="551.5156"/><rect height="16.2969" style="stroke:none;stroke-width:1.0;fill:none;" width="140" x="588.5" y="559.5156"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="59" x="588.5" y="572.5107">Legend</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="647.5" y="572.5107"> </text><rect fill="#08427B" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="575.8125"/><text fill="#073B6F" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="588.8076">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="588.8076"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="49" x="608.5" y="588.8076">person</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="661.5" y="588.8076"> </text><rect fill="#1168BD" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="592.1094"/><text fill="#3C7FC0" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="605.1045">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="605.1045"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="50" x="608.5" y="605.1045">system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="662.5" y="605.1045"> </text><rect fill="#999999" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="608.4063"/><text fill="#8A8A8A" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="621.4014">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="621.4014"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="112" x="608.5" y="621.4014">external_system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="724.5" y="621.4014"> </text><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="559.5156" y2="559.5156"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="575.8125" y2="575.8125"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="592.1094" y2="592.1094"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="608.4063" y2="608.4063"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="624.7031" y2="624.7031"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="588.5" y1="559.5156" y2="624.7031"/><line style="stroke:#00000000;stroke-width:1.0;" x1="728.5" x2="728.5" y1="559.5156" y2="624.7031"/><!--MD5=[d65cba73199e458122d5e442dc836c36]
+link isa to publisher--><g id="link_isa_publisher"><path d="M472.42,339.5 C492.9,349.93 513.58,362.75 530.5,378 C550.75,396.26 567.5,421.42 579.83,443.64 " fill="none" id="isa-to-publisher" style="stroke:#666666;stroke-width:1.0;"/><polygon fill="#666666" points="583.67,450.73,582.5043,442.2659,577.2263,445.1194,583.67,450.73" style="stroke:#666666;stroke-width:1.0;"/><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="94" x="580" y="397.1387">Get identifier</text><text fill="#666666" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacing" textLength="129" x="564.5" y="411.1074">appearances from</text></g><rect height="81.1875" rx="7.5" ry="7.5" style="stroke:#00000000;stroke-width:1.0;fill:none;" width="152" x="582.5" y="551.5156"/><rect height="16.2969" style="stroke:none;stroke-width:1.0;fill:none;" width="140" x="588.5" y="559.5156"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="59" x="588.5" y="572.5107">Legend</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="647.5" y="572.5107"> </text><rect fill="#08427B" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="575.8125"/><text fill="#073B6F" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="588.8076">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="588.8076"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="49" x="608.5" y="588.8076">person</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="661.5" y="588.8076"> </text><rect fill="#1168BD" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="592.1094"/><text fill="#3C7FC0" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="605.1045">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="605.1045"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="50" x="608.5" y="605.1045">system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="662.5" y="605.1045"> </text><rect fill="#999999" height="16.2969" style="stroke:none;stroke-width:1.0;" width="140" x="588.5" y="608.4063"/><text fill="#8A8A8A" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="8" x="592.5" y="621.4014">▯</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="600.5" y="621.4014"> </text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="112" x="608.5" y="621.4014">external_system</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="4" x="724.5" y="621.4014"> </text><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="559.5156" y2="559.5156"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="575.8125" y2="575.8125"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="592.1094" y2="592.1094"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="608.4063" y2="608.4063"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="728.5" y1="624.7031" y2="624.7031"/><line style="stroke:#00000000;stroke-width:1.0;" x1="588.5" x2="588.5" y1="559.5156" y2="624.7031"/><line style="stroke:#00000000;stroke-width:1.0;" x1="728.5" x2="728.5" y1="559.5156" y2="624.7031"/><!--MD5=[06c9b6933fcebf600328913dd67bebec]
 @startuml
 !include https://raw.githubusercontent.com/datadavev/C4-PlantUML/master/C4_Component.puml
 
@@ -112,6 +112,13 @@ skinparam person {
     shadowing false
 }
 
+skinparam rectangle<<boundary>> {
+    Shadowing false
+    StereotypeFontSize 6
+    StereotypeFontColor transparent
+    BorderStyle dashed
+}
+
 skinparam package {
     StereotypeFontSize 6
     StereotypeFontColor transparent
@@ -119,88 +126,201 @@ skinparam package {
     BackgroundColor transparent
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 skinparam rectangle<<boundary>> {
-    Shadowing false
-    StereotypeFontSize 6
-    StereotypeFontColor transparent
     FontColor #444444
-    BorderColor #444444
     BackgroundColor transparent
-    BorderStyle dashed
+    BorderColor #444444
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+skinparam database<<boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<boundary>>StereotypeFontColor transparent
+skinparam rectangle<<boundary>>StereotypeFontColor transparent
+
+
+skinparam rectangle<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<enterprise_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<enterprise_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<enterprise_boundary>>StereotypeFontColor transparent
+
+
+
+skinparam rectangle<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<system_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<system_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<system_boundary>>StereotypeFontColor transparent
+
+
+
+skinparam rectangle<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<container_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<container_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<container_boundary>>StereotypeFontColor transparent
 
 
 
@@ -359,6 +479,68 @@ skinparam person<<external_system>> {
     BackgroundColor #999999
     BorderColor #8A8A8A
 }
+
+
+
+skinparam rectangle<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<enterprise_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<enterprise_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<enterprise_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<enterprise_boundary>>StereotypeFontColor transparent
+
+
+
+skinparam rectangle<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<system_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<system_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<system_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<system_boundary>>StereotypeFontColor transparent
+
+
 
 
 
@@ -553,6 +735,38 @@ skinparam person<<external_container>> {
     BackgroundColor #B3B3B3
     BorderColor #A6A6A6
 }
+
+
+
+skinparam rectangle<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam database<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam queue<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam actor<<container_boundary>> {
+    FontColor transparent
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam person<<container_boundary>> {
+    FontColor #444444
+    BackgroundColor transparent
+    BorderColor #444444
+}
+skinparam package<<container_boundary>>StereotypeFontColor transparent
+skinparam rectangle<<container_boundary>>StereotypeFontColor transparent
+
+
 
 
 
