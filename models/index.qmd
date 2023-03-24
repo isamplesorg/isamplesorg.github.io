@@ -28,9 +28,9 @@ The iSamples core taxonomies are controlled vocabularies with terms related by [
 
 Three taxonomies are currently defined:
 
-::: {#vocabulary-listing}
-:::
+[Material Sample (specimen) Type Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/specimentype.html)
 
+[Materials Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/materialtype.html)
 
-
+[Sampled Feature (context) Type vocabulary](https://isamplesorg.github.io/metadata/vocabularies/sampledfeature.html)
 
