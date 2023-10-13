@@ -28,14 +28,15 @@ The iSamples core taxonomies are controlled vocabularies with terms related by [
 
 The iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:
 
-1. What material is the sample composed of?
-2. What feature is the sample representative of?
-3. What kind of thing is the sample?
+1. The "iSamples Materials vocabulary" is a taxonomy of terms used to categorize the composition of a physical sample, that is "What material is the sample composed of?"
+2. The "Sampled Feature Type Vocabulary" is a taxonomy of terms used to indicate what the sample is representative of.
+3. The "iSamples Specimen Type Vocabulary" is a taxonomy of broad categories that classify what type of spcimen the physical sample record represents.
 
 Three taxonomies are currently defined :
 
 ::: {#vocabulary-listing}
 :::
+
 
 
 
