@@ -14,4 +14,3 @@ for src in ${SOURCES[@]}; do
     python "${SCRIPT_FOLDER}/vocab2md.py" "${SOURCE_BASE}${src}" > "${DEST_FOLDER}${fname}"
 done
 echo "Done."
-

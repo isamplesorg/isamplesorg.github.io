@@ -22,6 +22,10 @@ listing:
 
 ---
 
+## Model
+
+see [description of model](https://isamplesorg.github.io/metadata/) at https://isamplesorg.github.io/metadata/
+
 ## Taxonomies
 
 The iSamples core taxonomies are controlled vocabularies with terms related by [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader) and [`SKOS:narrower`](https://www.w3.org/2009/08/skos-reference/skos.html#narrower). In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
@@ -34,10 +38,10 @@ The iSamples taxonomies are used to characterize three fundamental concepts pert
 
 Three taxonomies are currently defined :
 
-::: {#vocabulary-listing}
-:::
+[Material Sample (specimen) Type Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/specimentype.html)
 
+[Materials Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/materialtype.html)
 
-
+[Sampled Feature (context) Type vocabulary](https://isamplesorg.github.io/metadata/vocabularies/sampledfeature.html)
 
 
