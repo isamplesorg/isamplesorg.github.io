@@ -35,7 +35,7 @@ jobs:
       #    pip install -r requirements.txt      
       
       - name: "install pipx"
-        run: pip install -r pipx
+        run: pip install pipx
 
       - name: "install vocab_tools"
         run: pipx install git+https://github.com/isamplesorg/vocab_tools.git@main
