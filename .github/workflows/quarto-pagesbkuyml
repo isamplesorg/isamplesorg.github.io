@@ -33,14 +33,6 @@ jobs:
       - name: "Install Python deps"
         run: |
           pip install -r requirements.txt      
-      
-      - name: "install pipx"
-        run: pip install -r pipx
-
-      - name: "install vocab_tools"
-        run: pipx install git+https://github.com/isamplesorg/vocab_tools.git@main
-          # sets up python code to convert skos to markdown; code is run
-          # in generate_vocab_docs.sh
 
       - name: Render book to all format
         # Add any command line argument needed
