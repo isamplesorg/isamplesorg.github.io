@@ -1,98 +1,14 @@
 [
   {
-    "objectID": "models/mapping_sources.html",
-    "href": "models/mapping_sources.html",
-    "title": "Mapping Source Records",
-    "section": "",
-    "text": "In general the process is :"
-  },
-  {
-    "objectID": "models/mapping_sources.html#geome",
-    "href": "models/mapping_sources.html#geome",
-    "title": "Mapping Source Records",
-    "section": "GEOME",
-    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```{figure} assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```{figure} assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
-  },
-  {
-    "objectID": "models/namespaces.html",
-    "href": "models/namespaces.html",
-    "title": "iSamples",
-    "section": "",
-    "text": "Namespaces are used to uniquely address resources offered by the project.\nIn order to support introspection, all namespace IRIs are to be resolvable. Resolution involves three variables: the IRI, the requested content type, and an optional profile.\nThe IRI provides the location of the resource. Reference to specific items within a resource can be made in two ways: by path (e.g. /resource/element) and by fragment (e.g. resource#element). IRI fragments are not transmitted to a server by a client, hence a fragment identifier is always relative to the retrieved document. The basic rule is thus, the path element reference is used to reference a specific document, then a fragment is used to reference a specific component of the document.\nThe requested content type is presented by a client in the Accept header. If no Accept header is presented by the client or the Accept header is ambiguous (e.g. */*), then the default content type is returned. If a specific content type can not be matched, then a 406 Not Acceptable status is returned.\n\n\n\nIRI\n\nhttps://w3id.org/isamples/\n\n\nThe namespace base provides the root for project IRIs. The project will utilize the w3id.org infrastructure to enable abstraction of the advertised location and the physical location of the resource. Such abstraction is especially important early in the project as locations of resources are in flux.\n\n\n\nThe default format for definitions is JSON-LD. Other formats may be requested using the Accept header.\n\nIRI\n\niss: <https://w3id.org/isamples/models/>\n\n\nDefinitions include static content such as vocabularies, ontologies, schemas, and other documents providing machine and human actionable documents describing resources.\n\nVocabularies\n\nhttps://w3id.org/isamples/models/vocab/\n\nSpecimen Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/specimen_type/\n\nSampled Feature Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/sampled_feature/\n\nMaterial Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/material_type/\n\n\n\n\n\n\nIRI\n\nhttps://w3id.org/isamples/svc/\n\n\n\n\n\nIRI\n\nhttps://w3id.org/isamples/svc/meta/"
-  },
-  {
-    "objectID": "models/index.html",
-    "href": "models/index.html",
-    "title": "iSamples Core Model",
-    "section": "",
-    "text": "No matching items"
-  },
-  {
-    "objectID": "models/generated/vocabularies/specimenType.html",
-    "href": "models/generated/vocabularies/specimenType.html",
-    "title": "iSamples Specimen Type Vocabulary",
-    "section": "",
-    "text": "Namespace: https://w3id.org/isample/vocabulary/specimentype/0.9/specimentypevocabulary\nHistory\nConcepts"
-  },
-  {
-    "objectID": "models/generated/vocabularies/specimenType.html#physical-specimen",
-    "href": "models/generated/vocabularies/specimenType.html#physical-specimen",
-    "title": "iSamples Specimen Type Vocabulary",
-    "section": "Physical specimen",
-    "text": "Physical specimen\n\nConcept: physicalspecimen\ntop concept in specimen type hierarchy. Represents any physical specimen.\n\nAny aggregation specimen\n\nConcept: anyaggregation\nChild of: physicalspecimen\nSample consists of a bunch of material fragments, not related to the same object (e.g. not a bunch of broken pot sherds that might be reassembled), but taken together representative of the sampled feature. Examples: loose soil, sediment, crushed rock, particulate, bunches of unrelated pot sherd, human production waste, filtrates and residues. The sample requires some kind of container to keep it together. Cores of loosely consolidated material are considered ‘piece of solid material’ because the internal parts have spatial relationships (e.g. upper part, lower part).\n\nAnthropogenic aggregation\n\nConcept: anthropogenicaggregation\nChild of: anyaggregation\nAggregation consists of fragments of material produced by human activity, not described individually, and generally not all originating from the same object. Includes pottery in an excavation unit that gets an aggregate description, production waste, production raw-materials, or other residues (broken bits of plaster from an destroyed wall), synthetic powders.\n\n\nBiome aggregation specimen\n\nConcept: biomeaggregation\nChild of: anyaggregation biologicalspecimen\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site.\n\n\nAggregation\n\nConcept: genericaggregation\nChild of: anyaggregation\nAn aggregate specimen that is not biogenic or composed of anthropogenic material fragments. Examples: loose soil or sediment (e.g. in a bag), rock chips, particulate filtrate or precipitate; rock powders.\n\n\n\nArtifact\n\nConcept: artifact\nChild of: physicalspecimen\nAn object made (manufactured, shaped, modified) by a human being, or precursor hominid. Include a set of pieces belonging originally to a single object and treated as a single specimen.\n\n\nAny biological specimen\n\nConcept: biologicalspecimen\nChild of: physicalspecimen\nSpecimen for which the sampled feature is one or more living organisms from a particular biome context, megascopic or microscopic\n\nBiome aggregation specimen\n\nConcept: biomeaggregation\nChild of: anyaggregation biologicalspecimen\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site.\n\n\nOrganism part\n\nConcept: organismpart\nChild of: biologicalspecimen\nPart of an organism, e.g. a tissue sample, plant leaf, flower, bird feather. Include internal parts not composed of organic material (e.g. teeth, bone), and hard body parts that are not shed (hoof, horn, tusk, claw). Hair is tricky, include here for now. Does not necessarily imply existance of parent sample. Not fossilized; generally includes organism parts native to deposits of Holocene to Recent age.\n\n\nOrganism product\n\nConcept: organismproduct\nChild of: biologicalspecimen\nSpecimen is a thing produced by some organism, generally not composed of organic material or including biological tissue, e.g. Shell, antler, egg shell, coral skeleton (organic tissue not included), fecal matter, cocoon, web. Consider internal parts not composed of organic material (e.g. teeth, bone) and hard body parts that are not shed (hoof, horn, tusk) to be organism parts.\n\n\nWhole organism specimen\n\nConcept: wholeorganism\nChild of: biologicalspecimen\nSpecimen consists of the bodies of one or more entire organisms of the same species, from any kingdom. Note that are also ‘solid object’\n\n\n\nFossil\n\nConcept: fossil\nChild of: physicalspecimen\nSpecimen is the remains of one or more organisms preserved in rock; includes whole body, body parts (usually bone or shell), and trace fossils. An organism or organism part becomes a fossil when it has undergone some fossilization process that generally entails physical and chemical changes akin to diagenesis in a sedimentary rock. Trace fossils are manifestations of biologic activity preserved in a rock body (typically sedimentary), without included preserved body parts.\n\n\nLiquid or gas\n\nConcept: liquidorgas\nChild of: physicalspecimen\nLiquid, gas, or mixed dominantly fluid phases, necessarily in some kind of container to maintain identity. Might include minor solid particles. Container typically human made, but also includes natural fluid container, e.g. fluid inclusion in a mineral grain. Includes colloids, foams, gels, suspensions. The sampled feature is the fluid substance; fluid samples collected to analyze the contained biome should be considered Biome Aggregation\n\n\nOther solid object\n\nConcept: othersolidobject\nChild of: physicalspecimen\nSingle piece of material not one of the other types, e.g. rock specimen, mineral specimen, core. Ice and permafrost are considered solid materials.\n\n\nResearch product\n\nConcept: researchproduct\nChild of: physicalspecimen\nSpecimen is a product of some research workflow, e.g. a thin section, an XRF pellet, a grain mount, SEM stub, synthetic rock or mineral … In general there should be a link to a parent specimen from which this was derived. Might be aggregation (e.g. a synthetic material powder) or a solid object.\n\nAnalytical preparation\n\nConcept: analyticalpreparation\nChild of: researchproduct\nSpecimen is a product of processing required for some observation procedure, e.g. thin section, XRF bead, SEM stub, rock powder. If identified separately, this should have a ‘parent’ link to the original sample\n\n\nExperiment product\n\nConcept: experimentalproduct\nChild of: researchproduct\nSpecimen is product of an experimental procedure (e.g. synthetic material)"
-  },
-  {
-    "objectID": "models/generated/vocabularies/materialSampleType.html",
-    "href": "models/generated/vocabularies/materialSampleType.html",
-    "title": "iSamples Specimen Type Vocabulary",
-    "section": "",
-    "text": "Namespace: https://w3id.org/isample/vocabulary/specimentype/0.9/specimentypevocabulary\nHistory\nConcepts"
-  },
-  {
-    "objectID": "models/generated/vocabularies/materialSampleType.html#material-sample",
-    "href": "models/generated/vocabularies/materialSampleType.html#material-sample",
-    "title": "iSamples Specimen Type Vocabulary",
-    "section": "Material sample",
-    "text": "Material sample\n\nConcept: physicalspecimen\ntop concept in specimen type hierarchy. Represents any physical specimen.\n\nAny aggregation sample\n\nConcept: anyaggregation\nChild of: physicalspecimen\nSample consists of a bunch of material fragments, not related to the same object (e.g. not a bunch of broken pot sherds that might be reassembled), but taken together representative of the sampled feature. Examples: loose soil, sediment, crushed rock, particulate, bunches of unrelated pot sherd, human production waste, filtrates and residues. The sample requires some kind of container to keep it together. Cores of loosely consolidated material are considered ‘piece of solid material’ because the internal parts have spatial relationships (e.g. upper part, lower part).\n\nAnthropogenic aggregation\n\nConcept: anthropogenicaggregation\nChild of: anyaggregation\nAggregation consists of fragments of material produced by human activity, not described individually, and generally not all originating from the same object. Includes pottery in an excavation unit that gets an aggregate description, production waste, production raw-materials, or other residues (broken bits of plaster from an destroyed wall), synthetic powders.\n\n\nBiome aggregation sample\n\nConcept: biomeaggregation\nChild of: anyaggregation biologicalspecimen\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site.\n\n\nAggregation\n\nConcept: genericaggregation\nChild of: anyaggregation\nAn aggregate specimen that is not biogenic or composed of anthropogenic material fragments. Examples: loose soil or sediment (e.g. in a bag), rock chips, particulate filtrate or precipitate; rock powders.\n\n\n\nArtifact\n\nConcept: artifact\nChild of: physicalspecimen\nAn object made (manufactured, shaped, modified) by a human being, or precursor hominid. Include a set of pieces belonging originally to a single object and treated as a single specimen.\n\n\nAny biological sample\n\nConcept: biologicalspecimen\nChild of: physicalspecimen\nSpecimen for which the sampled feature is one or more living organisms from a particular biome context, megascopic or microscopic\n\nBiome aggregation sample\n\nConcept: biomeaggregation\nChild of: anyaggregation biologicalspecimen\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site.\n\n\nOrganism part\n\nConcept: organismpart\nChild of: biologicalspecimen\nPart of an organism, e.g. a tissue sample, plant leaf, flower, bird feather. Include internal parts not composed of organic material (e.g. teeth, bone), and hard body parts that are not shed (hoof, horn, tusk, claw). Hair is tricky, include here for now. Does not necessarily imply existance of parent sample. Not fossilized; generally includes organism parts native to deposits of Holocene to Recent age.\n\n\nOrganism product\n\nConcept: organismproduct\nChild of: biologicalspecimen\nSpecimen is a thing produced by some organism, generally not composed of organic material or including biological tissue, e.g. Shell, antler, egg shell, coral skeleton (organic tissue not included), fecal matter, cocoon, web. Consider internal parts not composed of organic material (e.g. teeth, bone) and hard body parts that are not shed (hoof, horn, tusk) to be organism parts.\n\n\nWhole organism specimen\n\nConcept: wholeorganism\nChild of: biologicalspecimen\nSpecimen consists of the bodies of one or more entire organisms of the same species, from any kingdom. Note that are also ‘solid object’\n\n\n\nFluid in container\n\nConcept: fluidincontainer\nChild of: physicalspecimen\nLiquid, gas, or mixed dominantly fluid phases, necessarily in some kind of container to maintain identity. Might include minor solid particles. Container typically human made, but also includes natural fluid container, e.g. fluid inclusion in a mineral grain. Includes colloids, foams, gels, suspensions. The sampled feature is the fluid substance; fluid samples collected to analyze the contained biome should be considered Biome Aggregation\n\n\nFossil\n\nConcept: fossil\nChild of: physicalspecimen\nSpecimen is the remains of one or more organisms preserved in rock; includes whole body, body parts (usually bone or shell), and trace fossils. An organism or organism part becomes a fossil when it has undergone some fossilization process that generally entails physical and chemical changes akin to diagenesis in a sedimentary rock. Trace fossils are manifestations of biologic activity preserved in a rock body (typically sedimentary), without included preserved body parts.\n\n\nOther solid object\n\nConcept: othersolidobject\nChild of: physicalspecimen\nSingle piece of material not one of the other types, e.g. rock specimen, mineral specimen, core. Ice and permafrost are considered solid materials.\n\n\nResearch product\n\nConcept: researchproduct\nChild of: physicalspecimen\nSpecimen is a product of some research workflow, e.g. a thin section, an XRF pellet, a grain mount, SEM stub, synthetic rock or mineral … In general there should be a link to a parent specimen from which this was derived. Might be aggregation (e.g. a synthetic material powder) or a solid object.\n\nAnalytical preparation\n\nConcept: analyticalpreparation\nChild of: researchproduct\nSpecimen is a product of processing required for some observation procedure, e.g. thin section, XRF bead, SEM stub, rock powder. If identified separately, this should have a ‘parent’ link to the original sample\n\n\nExperiment product\n\nConcept: experimentalproduct\nChild of: researchproduct\nSpecimen is product of an experimental procedure (e.g. synthetic material)"
-  },
-  {
-    "objectID": "models/generated/vocabularies/materialType.html",
-    "href": "models/generated/vocabularies/materialType.html",
-    "title": "iSamples Materials Vocabulary",
-    "section": "",
-    "text": "Namespace: https://w3id.org/isample/vocabulary/material/0.9/materialsvocabulary\nHistory\nConcepts"
-  },
-  {
-    "objectID": "models/generated/vocabularies/materialType.html#material",
-    "href": "models/generated/vocabularies/materialType.html#material",
-    "title": "iSamples Materials Vocabulary",
-    "section": "Material",
-    "text": "Material\n\nConcept: material\nTop Concept in iSamples Material Category scheme\n\nAny anthropogenic material\n\nConcept: anyanthropogenicmaterial\nChild of: material\nMaterial produced by human activity.\n\nAnthropogenic metal material\n\nConcept: anthropogenicmetal\nChild of: anyanthropogenicmaterial\nSpecimen is dominantly composed of metal that has been produced or used by humans; subclass of anthropogenic material. Samples of naturally occuring metallic material (e.g. native copper, gold nuggets) should be considered mineral material. Metallic material is material that when polished or fractured, shows a lustrous appearance, and conducts electricity and heat relatively well. Metals are typically malleable (they can be hammered into thin sheets) or ductile (can be drawn into wires). The boundaries between metals, nonmetals, and metalloids fluctuate slightly due to a lack of universally accepted definitions of the categories involved. (https://en.wikipedia.org/wiki/Metal). c.f. http://purl.obolibrary.org/obo/ENVO_01001069\n\n\nAnthropogenic material\n\nConcept: otheranthropogenicmaterial\nChild of: anyanthropogenicmaterial\nNon-metallic material produced by human activity. Organic products of agricultural activity are both anthropogenic and organic. Include lab preparations like XRF pellet and rock powders. Examples: ceramics, brick, concrete, slag, (anthropogenic) glass, mine tailing, plaster, waste.\n\n\n\nAny ice\n\nConcept: anyice\nChild of: material\na solid material that is normally a liquid or gas at Standard Temperature and Pressre (STP) that is in a solid state under the observed temperature and pressure conditions.\n\nFrozen water\n\nConcept: waterice\nChild of: anyice\nWater that is in a solid state.\n\n\n\nBiogenic non-organic material\n\nConcept: biogenicnonorganicmaterial\nChild of: material\nMaterial produced by an organism but not composed of ‘very large molecules of biological origin.’ E.g. bone, tooth, shell, coral skeleton,\n\n\nDispersed media\n\nConcept: dispersedmedia\nChild of: material\nA material contains discrete elements of one medium that are dispersed in a continuous fluid medium. The dispersed component can be a gas, a liquid or a solid (based on https://en.wikipedia.org/wiki/Dispersed_media). Does not include mixtures of granular material like soil, sediment, particulate, or solids that would be considered a rock. E.g. aerosol ENVO_00010505, foam ENVO_00005738, emulsion ENVO_00010506, colloidal suspension ENVO_01001560, scum(?)ENVO:00003930, clathrate?\n\n\nNatural Solid Material\n\nConcept: earthmaterial\nChild of: material\nUndifferentiated, soil, sediment, rock, or natural particulates. Typically (nessarily?) a granular aggregate that might include any of the previous constiturents. Use for Earth Material aggregates of uncertain origin\n\nMineral\n\nConcept: mineral\nChild of: earthmaterial\nMaterial consists of a single mineral or mineraloid phase. . ‘A mineral is an element or chemical compound that is normally crystalline and that has been formed as a result of geological processes.’ (Nickel, Ernest H. (1995), The definition of a mineral, The Canadian Mineralogist. 33 (3): 689–90). Include mineraloids. … A material primarily composed of some substance that is naturally occurring, solid and stable at room temperature, representable by a chemical formula, usually abiogenic, and that has an ordered atomic structure. (http://purl.obolibrary.org/obo/ENVO_01000256). Comment: the identity of a mineral species is defined by a crystal structure and a chemical composition that might include various specific elemental substitutions in that structure. Mineraloid: A naturally occurring mineral-like substance that does not demonstrate crystallinity. Mineraloids possess chemical compositions that vary beyond the generally accepted ranges for specific minerals. Examples: obsidian, Opal. (https://en.wikipedia.org/wiki/Mineraloid)\n\n\nMixed soil, sediment or rock\n\nConcept: mixedsoilsedimentrock\nChild of: earthmaterial\nMaterial is mixed aggregation of fragments of undifferentiated soil, sediment or rock origin. e.g. cuttings from some boreholes (rock fragments and caved soil or sediment),\n\n\nParticulate\n\nConcept: particulate\nChild of: earthmaterial\nMaterial consists of microscopic particulate material derived by precipitation, filtering, or settling from suspension in a fluid, e.g. filtrate from water, deposition from atmosphere, astro material particles. Might include mineral, organic, or biological material. ENVO definition (ENVO_01000060) has “composed of microscopic portions of solid or liquid material suspended in another environmental material.”, refine here to define as the solid particles, distinct from a material in which they are suspended. A material that includes solid or liquid particles suspended in another material would be a dispersed_media in this scheme, not defined in ENVO. Human manufactured particulates (e.g. rock powder) should be categorized as ‘anthropogenic material’ as well as ‘Particulate’\n\n\nSoil\n\nConcept: soil\nChild of: earthmaterial\nMixed granular mineral and organic matter modified by interaction between earth material, biosphere, and atmosphere, consisting mostly of varying proportions of sand, silt, and clay, organic material such as humus, gases, liquids, and a broad range of resident micro- and macroorganisms. (https://en.wikipedia.org/wiki/Soil) Soil consists of horizons near the Earth’s surface that, in contrast to the underlying parent material, have been altered by the interactions of climate, relief, and living organisms over time. (http://www.nrcs.usda.gov/wps/ portal/nrcs/detail/soils/edu/?cid=nrcs142p2_054280) (http://purl.obolibrary.org/obo/ENVO_00001998)\nSee Also:\n\n<http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/?cid=nrcs142p2_054280>\n\n\n\n\nFluid material\n\nConcept: fluid\nChild of: material\na substance that continually deforms (flows) under an applied shear stress, or external force. Fluids are a phase of matter and include liquids, gases and plasmas. They are substances with zero shear modulus, or, in simpler terms, substances that cannot resist any shear force applied to them. (https://en.wikipedia.org/wiki/Fluid)\n\nGaseous material\n\nConcept: gas\nChild of: fluid\nMaterial composed of one or more chemical entities that has neither independent shape nor volume but tends to expand indefinitely (http://purl.obolibrary.org/obo/ENVO_01000797). Infer that the sample is curated in some kind of container.\n\n\nLiquid water\n\nConcept: liquidwater\nChild of: fluid\nA material primarily composed of dihydrogen oxide in its liquid form; infer that the sample is curated in some kind of container.\n\n\nNon-aqueous liquid material\n\nConcept: nonaqueousliquid\nChild of: fluid\nLiquid composed dominantly of material other than water. Includes liquids that do not fit in any other category. E.g. alcohol, petroleum.\n\n\n\nOrganic Compounds\n\nConcept: organiccompounds\nChild of: material\nConsisted of a salts of organic acids, hydrocarbons, and miscellaneous organic minerals.\n\n\nOrganic material\n\nConcept: organicmaterial\nChild of: material\nEnvironmental material derived from living organisms and composed primarily of one or more very large molecules of biological origin. Examples: body (animal or plant), body part, fecal matter, seeds, wood, tissue, biological fluids, biological waste, algal material, biofilm, necromass, plankton. source: http://purl.obolibrary.org/obo/ENVO_01000155"
-  },
-  {
-    "objectID": "models/generated/vocabularies/sampledFeature.html",
-    "href": "models/generated/vocabularies/sampledFeature.html",
-    "title": "Sampled Feature Type vocabulary",
-    "section": "",
-    "text": "Namespace: https://w3id.org/isample/vocabulary/sampledfeature/0.9/sampledfeaturevocabulary\nHistory\nConcepts"
-  },
-  {
-    "objectID": "models/generated/vocabularies/sampledFeature.html#any-sampled-feature",
-    "href": "models/generated/vocabularies/sampledFeature.html#any-sampled-feature",
-    "title": "Sampled Feature Type vocabulary",
-    "section": "Any sampled feature",
-    "text": "Any sampled feature\n\nConcept: anysampledfeature\nTop concept in sampled feature type vocabulary.\n\nAnthropogenic environment\n\nConcept: anthropogenicenvironment\nChild of: anysampledfeature\nSampled feature is produced by or related to human activity past or present.\n\nActive human occupation site\n\nConcept: activehumanoccupationsite\nChild of: anthropogenicenvironment\nSpecimen samples materials or objects produced by current or ongoing human activity\n\nExperiment setting\n\nConcept: experimentsetting\nChild of: activehumanoccupationsite\nSampled feature is the expermental set up that produced the sample.\n\n\nLaboratory or curatorial environment\n\nConcept: laboratorycuratorialenvironment\nChild of: activehumanoccupationsite\nspecimen samples environment in a laboratory; e.g. lab blank measurements.\n\n\n\nSite of past human activities\n\nConcept: pasthumanoccupationsite\nChild of: anthropogenicenvironment\nspecimen samples a place where humans have been and left evidence of their activity. Includes prehistoric and paleo hominid sites\n\n\n\nEarth environment\n\nConcept: earthenvironment\nChild of: anysampledfeature\nspecimen samples the natural earth environment\nSee Also:\n\n<http://semanticscience.org/resource/SIO_000955>\n\n\nAtmosphere\n\nConcept: atmosphere\nChild of: earthenvironment\nspecimen samples the Earth’s atmosphere\n\n\nEarth interior\n\nConcept: earthinterior\nChild of: earthenvironment\nSpecimen samples solid material within the earth (fluids in pore space in earth interior sample ‘subsurface fluid reservoir’\n\n\nEarth Surface\n\nConcept: earthsurface\nChild of: earthenvironment\nSpecimen samples the interface between solid earth and hydrosphere or atmosphere. Includes samples representing things collected on the surface, or in the uppermost part of the material below the surface. Not including recently deposited sediment that has not been modified by interaction with the surface environment.\n\nLake, river, or stream bed\n\nConcept: lakeriverstreambottom\nChild of: earthsurface\nSpecimen samples the solid Earth interface with a lake or flowing water body\n\n\nMarine water body bottom\n\nConcept: marinewaterbodybottom\nChild of: earthsurface\nSpecimen samples the solid Earth interface with marine or brackish water body. Includes benthic boundary layer: the bottom layer of water and the uppermost layer of sediment directly influenced by the overlying water\n\n\nSubaerial surface environment\n\nConcept: subaerialsurfaceenvironment\nChild of: earthsurface\nSpecimen samples the interface between solid Earth and atmosphere. Sample is collected on the surface, or immediately below surface (zone of bioturbation). Include soil ‘O’ horizon and ‘biomantle’. Soil horizons below surface, or sediment in active deposition (no soil development) is considered part of solid Earth.\n\n\n\nGlacier environment\n\nConcept: glacierenvironment\nChild of: earthenvironment\nSample of ice or water from a glacier, ice sheet, ice shelf, iceberg. Does not include various environments adjacent to glacier.\n\n\nSubsurface fluid reservoir\n\nConcept: subsurfacefluidreservoir\nChild of: earthenvironment\nSpecimen samples fluid that resides in fractures or intergranular porosity in the solid earth.\n\n\nWater body\n\nConcept: waterbody\nChild of: earthenvironment\nspecimen samples the hydrosphere\n\nMarine environment\n\nConcept: marinewaterbody\nChild of: waterbody\nspecimen samples marine hydrosphere\nSee Also:\n\nobo:ENVO_01000686\n\n\n\nTerrestrial water body\n\nConcept: terrestrialwaterbody\nChild of: waterbody\nspecimen samples terrestrial hydrosphere– lake, other standing water, or a flowing water body (river, stream..) Include saline water in terrestrial evaporite environments.\n\n\n\n\nExtraterrestrial environment\n\nConcept: extraterrestrialenvironment\nChild of: anysampledfeature\nspecimen samples environment outside of solid earth, hydrosphere, or atmosphere."
-  },
-  {
-    "objectID": "setup.html",
-    "href": "setup.html",
-    "title": "Setup document editing",
-    "section": "",
-    "text": "Some pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.\n\nInstall quarto\nCreate python virtual envronment (to avoid polluting your global environment with dependencies)\nInstall dependencies\nInstall a python kernel named “isamples-quarto”:\npython -m ipykernel install --name isamples-quarto\nRender preview using quarto preview in the root folder of this repository."
-  },
-  {
     "objectID": "design/requirements.html",
     "href": "design/requirements.html",
+    "title": "Requirements",
+    "section": "",
+    "text": "Mint identifiers and manage record.\nRecords are never deleted in SESAR. Sometimes they are deactivated.\nMetadata will need to be updated.\nDerived from\nActors\n\nCurator\nResearch Contributor\n\nComponents\n\niSB\nOriginal Source"
+  },
+  {
+    "objectID": "design/requirements.html#mint-identifiers",
+    "href": "design/requirements.html#mint-identifiers",
     "title": "Requirements",
     "section": "",
     "text": "Mint identifiers and manage record.\nRecords are never deleted in SESAR. Sometimes they are deactivated.\nMetadata will need to be updated.\nDerived from\nActors\n\nCurator\nResearch Contributor\n\nComponents\n\niSB\nOriginal Source"
@@ -151,7 +67,7 @@
     "href": "design/requirements.html#content-must-be-programmatically-accessible-and-transferable-to-different-systems",
     "title": "Requirements",
     "section": "09 Content must be programmatically accessible and transferable to different systems",
-    "text": "09 Content must be programmatically accessible and transferable to different systems\nAll content should be accessible through API and should exhibit no loss of information in the transfer to another system.\nNote that it is expected that collections of content will be large (>> 10E6 items) so efficient paging, windowing and other subset selection mechanisms are needed.\nThe web publishing pattern (i.e. robots.txt -> sitemap -> schema.org) should be available for all resources appropriate for broad discovery.\nSee also Services support content negotiation, alternate renderings\nDerived from:\n\nO6, R04, R05, R06, R08, R10, R12, R17, G1, G9, G11\n\nActors\n\nResearch-consumer\n\nComponents\n\nAny components exposing APIs"
+    "text": "09 Content must be programmatically accessible and transferable to different systems\nAll content should be accessible through API and should exhibit no loss of information in the transfer to another system.\nNote that it is expected that collections of content will be large (&gt;&gt; 10E6 items) so efficient paging, windowing and other subset selection mechanisms are needed.\nThe web publishing pattern (i.e. robots.txt -&gt; sitemap -&gt; schema.org) should be available for all resources appropriate for broad discovery.\nSee also Services support content negotiation, alternate renderings\nDerived from:\n\nO6, R04, R05, R06, R08, R10, R12, R17, G1, G9, G11\n\nActors\n\nResearch-consumer\n\nComponents\n\nAny components exposing APIs"
   },
   {
     "objectID": "design/requirements.html#user-interfaces-for-discovery-and-display-of-information-should-be-efficient-and-practical-for-research-use-and-expose-relationships-between-items-as-appropriate.",
@@ -214,34 +130,587 @@
     "href": "design/index.html",
     "title": "Overview",
     "section": "",
-    "text": "Each digital record is addressable by at least one identifier that is unique to the record.\nA collection of digital records can be represented by a list of the record identifiers.\nA list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.\nDigital records may be presented in different serializations (media type).\nDigital records of a serialization may present different views of the same information (profile).\niSamples has defined a profile applicable to all physical samples.\niSamples has defined a programmatic interface"
+    "text": "Physical samples are represented by a digital record.\nEach digital record is addressable by at least one identifier that is unique to the record.\nA collection of digital records can be represented by a list of the record identifiers.\nA list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.\nDigital records may be presented in different serializations (media type).\nDigital records of a serialization may present different views of the same information (profile).\niSamples has defined a profile applicable to all physical samples.\niSamples has defined a programmatic interface\nPlantUML diagram removed for testing [SMR 2024-01-04]"
   },
   {
-    "objectID": "design/actors.html",
-    "href": "design/actors.html",
-    "title": "Actors in the iSamples environment",
+    "objectID": "models/namespaces.html",
+    "href": "models/namespaces.html",
+    "title": "Namespaces defined by iSamples",
     "section": "",
-    "text": "Consumer\nContributor\nPortal Manager\nAdministrator"
+    "text": "Namespaces are used to uniquely address resources offered by the project.\nIn order to support introspection, all namespace IRIs are to be resolvable. Resolution involves three variables: the IRI, the requested content type, and an optional profile.\nThe IRI provides the location of the resource. Reference to specific items within a resource can be made in two ways: by path (e.g. /resource/element) and by fragment (e.g. resource#element). IRI fragments are not transmitted to a server by a client, hence a fragment identifier is always relative to the retrieved document. The basic rule is thus, the path element reference is used to reference a specific document, then a fragment is used to reference a specific component of the document.\nThe requested content type is presented by a client in the Accept header. If no Accept header is presented by the client or the Accept header is ambiguous (e.g. */*), then the default content type is returned. If a specific content type can not be matched, then a 406 Not Acceptable status is returned.\n\n\n\nIRI\n\nhttps://w3id.org/isamples/\n\n\nThe namespace base provides the root for project IRIs. The project will utilize the w3id.org infrastructure to enable abstraction of the advertised location and the physical location of the resource. Such abstraction is especially important early in the project as locations of resources are in flux.\n\n\n\nThe default format for definitions is JSON-LD. Other formats may be requested using the Accept header.\n\nIRI\n\niss: &lt;https://w3id.org/isamples/models/&gt;\n\n\nDefinitions include static content such as vocabularies, ontologies, schemas, and other documents providing machine and human actionable documents describing resources.\n\nVocabularies\n\nhttps://w3id.org/isamples/models/vocab/\n\nSpecimen Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/specimen_type/\n\nSampled Feature Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/sampled_feature/\n\nMaterial Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/material_type/\n\n\n\n\n\n\nIRI\n\nhttps://w3id.org/isamples/svc/\n\n\n\n\n\nIRI\n\nhttps://w3id.org/isamples/svc/meta/"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Internet of Samples: iSamples",
+    "objectID": "models/namespaces.html#namespace-base",
+    "href": "models/namespaces.html#namespace-base",
+    "title": "Namespaces defined by iSamples",
     "section": "",
-    "text": "Resources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community"
+    "text": "IRI\n\nhttps://w3id.org/isamples/\n\n\nThe namespace base provides the root for project IRIs. The project will utilize the w3id.org infrastructure to enable abstraction of the advertised location and the physical location of the resource. Such abstraction is especially important early in the project as locations of resources are in flux."
+  },
+  {
+    "objectID": "models/namespaces.html#definitions",
+    "href": "models/namespaces.html#definitions",
+    "title": "Namespaces defined by iSamples",
+    "section": "",
+    "text": "The default format for definitions is JSON-LD. Other formats may be requested using the Accept header.\n\nIRI\n\niss: &lt;https://w3id.org/isamples/models/&gt;\n\n\nDefinitions include static content such as vocabularies, ontologies, schemas, and other documents providing machine and human actionable documents describing resources.\n\nVocabularies\n\nhttps://w3id.org/isamples/models/vocab/\n\nSpecimen Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/specimen_type/\n\nSampled Feature Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/sampled_feature/\n\nMaterial Type Vocabulary:\n\nhttps://w3id.org/isamples/models/vocab/material_type/"
+  },
+  {
+    "objectID": "models/namespaces.html#services",
+    "href": "models/namespaces.html#services",
+    "title": "Namespaces defined by iSamples",
+    "section": "",
+    "text": "IRI\n\nhttps://w3id.org/isamples/svc/\n\n\n\n\n\nIRI\n\nhttps://w3id.org/isamples/svc/meta/"
+  },
+  {
+    "objectID": "models/generated/vocabularies/readme.html",
+    "href": "models/generated/vocabularies/readme.html",
+    "title": "iSamples",
+    "section": "",
+    "text": "target for generated markdwon files. Quarto does not render readme files."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html",
+    "href": "models/generated/vocabularies/sampled_feature_type.html",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\n2021-12-10 SMR add missing skos:inScheme statements  2022-01-07 SMR change to https://w3id.org/isample/ uri base, make the ConceptScheme an ontology as well. For uploading to ESIP COR and w3id resolution redirect set up. Add some mappings to other ontologies using seeAlso, closeMatch, narrowMatch.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies. Fix typo in glacierenvrionment URI (changed the URI to glacierenvironment)  2022-09-07 SMR update some of the skos mappings to other vocabularies; remove references to other vocabularies as NamedIndividual. Remove rocksample class, it was not linked in hierarchy and inconsistent with design.  2022-09-30 add biological entity as sampled feature, per issue https://github.com/isamplesorg/metadata/issues/107. This update was lost at some point and added back in 2022-12-09.  2023-11-05 SMR update version to 1.0, prep for release  Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environemtn subclasses of Active human occupation site.\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#any-sampled-feature",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#any-sampled-feature",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Any sampled feature",
+    "text": "Any sampled feature\n\nThe concept Any sampled feature  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nAnthropogenic environment, Biological entity, Earth environment, Extraterrestrial environment\nDefinition:\nAny thing that can be sampled. Top concept in sampled feature type vocabulary."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#anthropogenic-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#anthropogenic-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Anthropogenic environment",
+    "text": "Anthropogenic environment\n\nThe concept Anthropogenic environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/anthropogenicenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Anthropogenic environment\nImmediately narrower concepts:\nActive human occupation site, Site of past human activities\nDefinition:\nSampled feature is produced by or related to human activity past or present."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#active-human-occupation-site",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#active-human-occupation-site",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Active human occupation site",
+    "text": "Active human occupation site\n\nThe concept Active human occupation site  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/activehumanoccupationsite  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Anthropogenic environment-&gt;Active human occupation site\nImmediately narrower concepts:\nExperiment setting, Laboratory or curatorial environment\nDefinition:\nSpecimen samples materials or objects produced by current or ongoing human activity"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#experiment-setting",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#experiment-setting",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Experiment setting",
+    "text": "Experiment setting\n\nThe concept Experiment setting  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/experimentsetting  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Anthropogenic environment-&gt;Active human occupation site-&gt;Experiment setting\nDefinition:\nSampled feature is the experimental set up that produced the sample."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#laboratory-or-curatorial-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#laboratory-or-curatorial-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Laboratory or curatorial environment",
+    "text": "Laboratory or curatorial environment\n\nThe concept Laboratory or curatorial environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/laboratorycuratorialenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Anthropogenic environment-&gt;Active human occupation site-&gt;Laboratory or curatorial environment\nDefinition:\nSpecimen samples environment in a laboratory; e.g. lab blank measurements."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#site-of-past-human-activities",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#site-of-past-human-activities",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Site of past human activities",
+    "text": "Site of past human activities\n\nThe concept Site of past human activities  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Anthropogenic environment-&gt;Site of past human activities\nDefinition:\nspecimen samples a place where humans have been and left evidence of their activity. Includes prehistoric and paleo hominid sites"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#biological-entity",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#biological-entity",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Biological entity",
+    "text": "Biological entity\n\nThe concept Biological entity  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/biologicalentity  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Biological entity\nDefinition:\nSampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature for which the focus is not the environment that the organism inhabits."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#earth-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#earth-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Earth environment",
+    "text": "Earth environment\n\nThe concept Earth environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment\nImmediately narrower concepts:\nAtmosphere, Earth interior, Earth surface, Glacier environment, Subsurface fluid reservoir, Water body\nDefinition:\nspecimen samples the natural Earth environment"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#atmosphere",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#atmosphere",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Atmosphere",
+    "text": "Atmosphere\n\nThe concept Atmosphere  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/atmosphere  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Atmosphere\nDefinition:\nspecimen samples the Earth’s atmosphere"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#earth-interior",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#earth-interior",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Earth interior",
+    "text": "Earth interior\n\nThe concept Earth interior  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthinterior  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Earth interior\nDefinition:\nSpecimen samples solid material within the earth"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#earth-surface",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#earth-surface",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Earth surface",
+    "text": "Earth surface\n\nThe concept Earth surface  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthsurface  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Earth surface\nImmediately narrower concepts:\nLake river or stream bottom, Marine water body bottom, Subaerial surface environment\nDefinition:\nSpecimen samples the interface between solid earth and hydrosphere or atmosphere. Includes samples representing things collected on the surface, or in the uppermost part of the material below the surface. Not including recently deposited sediment that has not been modified by interaction with the surface environment."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#lake-river-or-stream-bottom",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#lake-river-or-stream-bottom",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Lake river or stream bottom",
+    "text": "Lake river or stream bottom\n\nThe concept Lake river or stream bottom  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Earth surface-&gt;Lake river or stream bottom\nDefinition:\nSpecimen samples the solid Earth interface with a lake or flowing water body"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#marine-water-body-bottom",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#marine-water-body-bottom",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Marine water body bottom",
+    "text": "Marine water body bottom\n\nThe concept Marine water body bottom  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbodybottom  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Earth surface-&gt;Marine water body bottom\nDefinition:\nSpecimen samples the solid Earth interface with marine or brackish water body. Includes benthic boundary layer: the bottom layer of water and the uppermost layer of sediment directly influenced by the overlying water"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#subaerial-surface-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#subaerial-surface-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Subaerial surface environment",
+    "text": "Subaerial surface environment\n\nThe concept Subaerial surface environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Earth surface-&gt;Subaerial surface environment\nDefinition:\nSpecimen samples the interface between solid Earth and atmosphere. Sample is collected on the surface, or immediately below surface (zone of bioturbation). Include soil and recently deposited subaerial sediment at the surface."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#glacier-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#glacier-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Glacier environment",
+    "text": "Glacier environment\n\nThe concept Glacier environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/glacierenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Glacier environment\nDefinition:\nSample of ice, water, or other thing from a glacier, ice sheet, ice shelf, iceberg. Does not include various environments adjacent to glacier."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#subsurface-fluid-reservoir",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#subsurface-fluid-reservoir",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Subsurface fluid reservoir",
+    "text": "Subsurface fluid reservoir\n\nThe concept Subsurface fluid reservoir  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/subsurfacefluidreservoir  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Subsurface fluid reservoir\nDefinition:\nSpecimen samples fluid that resides in fractures or intergranular porosity in the solid earth."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#water-body",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#water-body",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Water body",
+    "text": "Water body\n\nThe concept Water body  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/waterbody  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Water body\nImmediately narrower concepts:\nMarine environment, Terrestrial water body\nDefinition:\nSpecimen samples the hydrosphere"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#marine-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#marine-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Marine environment",
+    "text": "Marine environment\n\nThe concept Marine environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Water body-&gt;Marine environment\nDefinition:\nspecimen samples marine hydrosphere"
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#terrestrial-water-body",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#terrestrial-water-body",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Terrestrial water body",
+    "text": "Terrestrial water body\n\nThe concept Terrestrial water body  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/terrestrialwaterbody  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Earth environment-&gt;Water body-&gt;Terrestrial water body\nDefinition:\nSpecimen samples terrestrial hydrosphere– lake, other standing water, or a flowing water body (river, stream..) Include saline water in terrestrial evaporite environments."
+  },
+  {
+    "objectID": "models/generated/vocabularies/sampled_feature_type.html#extraterrestrial-environment",
+    "href": "models/generated/vocabularies/sampled_feature_type.html#extraterrestrial-environment",
+    "title": "Sampled Feature Type vocabulary",
+    "section": "Extraterrestrial environment",
+    "text": "Extraterrestrial environment\n\nThe concept Extraterrestrial environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/extraterrestrialenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Extraterrestrial environment\nDefinition:\nspecimen samples environment outside of solid earth, hydrosphere, or atmosphere."
+  },
+  {
+    "objectID": "models/mapping_sources.html",
+    "href": "models/mapping_sources.html",
+    "title": "Mapping Source Records",
+    "section": "",
+    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+  },
+  {
+    "objectID": "models/mapping_sources.html#mapping-from-sources-to-core",
+    "href": "models/mapping_sources.html#mapping-from-sources-to-core",
+    "title": "Mapping Source Records",
+    "section": "",
+    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+  },
+  {
+    "objectID": "models/mapping_sources.html#geome",
+    "href": "models/mapping_sources.html#geome",
+    "title": "Mapping Source Records",
+    "section": "GEOME",
+    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```dxutycqe assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```dxutycqe assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "about.html",
     "href": "about.html",
     "title": "About iSamples",
     "section": "",
-    "text": "Background\nResearch frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.\nThe iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.\nLeveraging significant national investments, iSamples provides the missing link among:\n\nphysical collections (e.g., natural history museums, herbaria, biobanks),\nfield stations, marine laboratories, long-term ecological research sites, and observatories, and\ndata repositories and cyberinfrastructure. iSamples delivers enhanced infrastructure for STEM research and education, decision-makers, and the general public.\n\niSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).\n\n\nTechnical perspective\nThe iSamples project will:\n\nCreate a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.\nBuild upon on existing identifier infrastructure such as IGSNs (Global Sample Number;) and ARKs (Archival Resource Keys), but is agnostic to identifier type.\nEncourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.\nExtend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.\n\n\n\nPrincipal Investigators\n\nKerstin Lehnert, Columbia University\nRamona Walls, University of Arizona\nNeil Davies, The Regents of the University of California, Berkeley\nDavid Vieglais, University of Kansas Biodiversity Institute"
+    "text": "Project Objectives\n\nDesign and develop iSamples infrastructure (iSamples in a Box and iSamples Central);\nBuild four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);\nConduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.\n\n\n\n\niSamples diagram\n\n\n\n\nBackground\nResearch frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.\nThe iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.\nLeveraging significant national investments, iSamples provides the missing link among:\n\nphysical collections (e.g., natural history museums, herbaria, biobanks),\nfield stations, marine laboratories, long-term ecological research sites, and observatories, and\ndata repositories and cyberinfrastructure. iSamples delivers enhanced infrastructure for STEM research and education, decision-makers, and the general public.\n\niSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).\n\n\nTechnical perspective\nThe iSamples project will:\n\nCreate a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.\nBuild upon on existing identifier infrastructure such as IGSNs (Global Sample Number;) and ARKs (Archival Resource Keys), but is agnostic to identifier type.\nEncourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.\nExtend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.\n\n\n\nPrincipal Investigators\n\nKerstin Lehnert, Columbia University\nRamona Walls, University of Arizona\nNeil Davies, The Regents of the University of California, Berkeley\nDavid Vieglais, University of Kansas Biodiversity Institute"
   },
   {
     "objectID": "pubs.html",
     "href": "pubs.html",
     "title": "Publications",
     "section": "",
-    "text": "Figure out grouping by reference type\nAutomate update of the .bib file\nAdjust the bib stlye\n\n\n\n\n\nReferences\n\n1. Davies N, Deck J, Kansa EC, Kansa SW, Kunze J, Meyer C, Orrell T, Ramdeen S, Snyder R, Vieglais D, Walls RL, Lehnert K (2021) Internet of Samples (iSamples): Toward an interdisciplinary cyberinfrastructure for material samples. GigaScience, 10(5)https://doi.org/10.1093/gigascience/giab028"
+    "text": "TODO:\n\nFigure out grouping by reference type\nAutomate update of the .bib file\nAdjust the bib stlye\n\n\n\n1. Davies N, Deck J, Kansa EC, Kansa SW, Kunze J, Meyer C, Orrell T, Ramdeen S, Snyder R, Vieglais D, Walls RL, Lehnert K (2021) Internet of Samples (iSamples): Toward an interdisciplinary cyberinfrastructure for material samples. GigaScience, 10(5)https://doi.org/10.1093/gigascience/giab028"
+  },
+  {
+    "objectID": "setup.html",
+    "href": "setup.html",
+    "title": "Setup document editing",
+    "section": "",
+    "text": "These documents are rendered using Quarto.\nSome pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.\n\nInstall quarto\nCreate python virtual envronment (to avoid polluting your global environment with dependencies)\nInstall dependencies\nInstall a python kernel named “isamples-quarto”:\npython -m ipykernel install --name isamples-quarto\nRender preview using quarto preview in the root folder of this repository."
+  },
+  {
+    "objectID": "models/index.html",
+    "href": "models/index.html",
+    "title": "iSamples Core Model",
+    "section": "",
+    "text": "see description of model at https://isamplesorg.github.io/metadata/"
+  },
+  {
+    "objectID": "models/index.html#model",
+    "href": "models/index.html#model",
+    "title": "iSamples Core Model",
+    "section": "",
+    "text": "see description of model at https://isamplesorg.github.io/metadata/"
+  },
+  {
+    "objectID": "models/index.html#taxonomies",
+    "href": "models/index.html#taxonomies",
+    "title": "iSamples Core Model",
+    "section": "Taxonomies",
+    "text": "Taxonomies\nThe iSamples core taxonomies are controlled vocabularies with terms related by SKOS:broader and SKOS:narrower. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:\nMaterial Sample (specimen) Type Vocabulary\nMaterials Vocabulary\nSampled Feature (context) Type vocabulary"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html",
+    "href": "models/generated/vocabularies/material_type.html",
+    "title": "iSamples Materials Vocabulary",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\n2022-01-05 SMR version 0.9, change base uri to https://w3id.org/isample/vocabulary/material/0.9/ for testing with ESIP COR and w3id uri resolution  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes to some definitions. Add skos matches to URIs from other vocabularies; 2023-11-05 version 1.0, in preparation for release.\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#material",
+    "href": "models/generated/vocabularies/material_type.html#material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Material",
+    "text": "Material\n\nThe concept Material  with URI https://w3id.org/isample/vocabulary/material/1.0/material  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nAny anthropogenic material, Any ice, Biogenic non-organic material, Dispersed media, Natural Solid Material, Fluid material, Organic material\nDefinition:\nTop Concept in iSamples Material Category scheme"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#any-anthropogenic-material",
+    "href": "models/generated/vocabularies/material_type.html#any-anthropogenic-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Any anthropogenic material",
+    "text": "Any anthropogenic material\n\nThe concept Any anthropogenic material  with URI https://w3id.org/isample/vocabulary/material/1.0/anyanthropogenicmaterial  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Any anthropogenic material\nImmediately narrower concepts:\nAnthropogenic metal material, Anthropogenic material\nDefinition:\nMaterial produced by human activity."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#anthropogenic-metal-material",
+    "href": "models/generated/vocabularies/material_type.html#anthropogenic-metal-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Anthropogenic metal material",
+    "text": "Anthropogenic metal material\n\nThe concept Anthropogenic metal material  with URI https://w3id.org/isample/vocabulary/material/1.0/anthropogenicmetal  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Any anthropogenic material-&gt;Anthropogenic metal material\nDefinition:\nSpecimen is dominantly composed of metal that has been produced or used by humans; subclass of anthropogenic material. Samples of naturally occuring metallic material (e.g. native copper, gold nuggets) should be considered mineral material. Metallic material is material that when polished or fractured, shows a lustrous appearance, and conducts electricity and heat relatively well. Metals are typically malleable (they can be hammered into thin sheets) or ductile (can be drawn into wires). The boundaries between metals, nonmetals, and metalloids fluctuate slightly due to a lack of universally accepted definitions of the categories involved. (https://en.wikipedia.org/wiki/Metal). c.f. http://purl.obolibrary.org/obo/ENVO_01001069"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#anthropogenic-material",
+    "href": "models/generated/vocabularies/material_type.html#anthropogenic-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Anthropogenic material",
+    "text": "Anthropogenic material\n\nThe concept Anthropogenic material  with URI https://w3id.org/isample/vocabulary/material/1.0/otheranthropogenicmaterial  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Any anthropogenic material-&gt;Anthropogenic material\nDefinition:\nNon-metallic material produced by human activity. Organic products of agricultural activity are both anthropogenic and organic. Include lab preparations like XRF pellet and rock powders. Examples: ceramics, concrete, slag, (anthropogenic) glass, mine tailing, plaster, waste."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#any-ice",
+    "href": "models/generated/vocabularies/material_type.html#any-ice",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Any ice",
+    "text": "Any ice\n\nThe concept Any ice  with URI https://w3id.org/isample/vocabulary/material/1.0/anyice  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Any ice\nImmediately narrower concepts:\nFrozen water\nDefinition:\na solid material that is normally a liquid or gas at Standard Temperature and Pressre (STP) that is in a solid state under the observed temperature and pressure conditions."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#frozen-water",
+    "href": "models/generated/vocabularies/material_type.html#frozen-water",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Frozen water",
+    "text": "Frozen water\n\nThe concept Frozen water  with URI https://w3id.org/isample/vocabulary/material/1.0/waterice  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Any ice-&gt;Frozen water\nDefinition:\nWater that is in a solid state.\nAlternate labels:\nWater ice"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#biogenic-non-organic-material",
+    "href": "models/generated/vocabularies/material_type.html#biogenic-non-organic-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Biogenic non-organic material",
+    "text": "Biogenic non-organic material\n\nThe concept Biogenic non-organic material  with URI https://w3id.org/isample/vocabulary/material/1.0/biogenicnonorganicmaterial  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Biogenic non-organic material\nDefinition:\nMaterial produced by an organism but not composed of ‘very large molecules of biological origin.’ E.g. bone, tooth, shell, coral skeleton,"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#dispersed-media",
+    "href": "models/generated/vocabularies/material_type.html#dispersed-media",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Dispersed media",
+    "text": "Dispersed media\n\nThe concept Dispersed media  with URI https://w3id.org/isample/vocabulary/material/1.0/dispersedmedia  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Dispersed media\nDefinition:\nA material contains discrete elements of one medium that are dispersed in a continuous fluid medium. The dispersed component can be a gas, a liquid or a solid (based on https://en.wikipedia.org/wiki/Dispersed_media). Does not include mixtures of granular material like soil, sediment, particulate, or solids that would be considered a rock."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#natural-solid-material",
+    "href": "models/generated/vocabularies/material_type.html#natural-solid-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Natural Solid Material",
+    "text": "Natural Solid Material\n\nThe concept Natural Solid Material  with URI https://w3id.org/isample/vocabulary/material/1.0/earthmaterial  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material\nImmediately narrower concepts:\nMineral, Mixed soil sediment or rock, Particulate, Rock or sediment, Soil\nDefinition:\nUndifferentiated soil, sediment, rock, or natural particulates. Typically (nessarily?) a granular aggregate that might include any of the previous constiturents. Use for Earth Material aggregates of uncertain origin"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#mineral",
+    "href": "models/generated/vocabularies/material_type.html#mineral",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Mineral",
+    "text": "Mineral\n\nThe concept Mineral  with URI https://w3id.org/isample/vocabulary/material/1.0/mineral  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Mineral\nDefinition:\nMaterial consists of a single mineral or mineraloid phase. . ‘A mineral is an element or chemical compound that is normally crystalline and that has been formed as a result of geological processes.’ (Nickel, Ernest H. (1995), The definition of a mineral, The Canadian Mineralogist. 33 (3): 689–90). Include mineraloids. … A material primarily composed of some substance that is naturally occurring, solid and stable at room temperature, representable by a chemical formula, usually abiogenic, and that has an ordered atomic structure. (http://purl.obolibrary.org/obo/ENVO_01000256). Comment: the identity of a mineral species is defined by a crystal structure and a chemical composition that might include various specific elemental substitutions in that structure. Mineraloid: A naturally occurring mineral-like substance that does not demonstrate crystallinity. Mineraloids possess chemical compositions that vary beyond the generally accepted ranges for specific minerals. Examples: obsidian, Opal. (https://en.wikipedia.org/wiki/Mineraloid)"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#mixed-soil-sediment-or-rock",
+    "href": "models/generated/vocabularies/material_type.html#mixed-soil-sediment-or-rock",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Mixed soil sediment or rock",
+    "text": "Mixed soil sediment or rock\n\nThe concept Mixed soil sediment or rock  with URI https://w3id.org/isample/vocabulary/material/1.0/mixedsoilsedimentrock  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Mixed soil sediment or rock\nDefinition:\nMaterial is mixed aggregation of fragments of undifferentiated soil, sediment or rock origin. e.g. cuttings from some boreholes (rock fragments and caved soil or sediment)."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#particulate",
+    "href": "models/generated/vocabularies/material_type.html#particulate",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Particulate",
+    "text": "Particulate\n\nThe concept Particulate  with URI https://w3id.org/isample/vocabulary/material/1.0/particulate  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Particulate\nDefinition:\nMaterial consists of microscopic particulate material derived by precipitation, filtering, or settling from suspension in a fluid, e.g. filtrate from water, deposition from atmosphere, astro material particles. Might include mineral, organic, or biological material. ENVO definition (ENVO_01000060) has “composed of microscopic portions of solid or liquid material suspended in another environmental material.”, refine here to define as the solid particles, distinct from a material in which they are suspended. A material that includes solid or liquid particles suspended in another material would be a dispersed_media in this scheme, not defined in ENVO. Human manufactured particulates (e.g. rock powder) should be categorized as ‘anthropogenic material’ as well as ‘Particulate’"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#rock-or-sediment",
+    "href": "models/generated/vocabularies/material_type.html#rock-or-sediment",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Rock or sediment",
+    "text": "Rock or sediment\n\nThe concept Rock or sediment  with URI https://w3id.org/isample/vocabulary/material/1.0/rockorsediment  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Rock or sediment\nImmediately narrower concepts:\nRock, Sediment\nDefinition:\nMaterial is rock or sediment. E.g. for samples from subsurface cores that are not well described, from drill holes that likely penetrate sediment near the surface an might be sampling rock at greater depth.\nNotes:\nUse for sample like dredge hauls and ROV scoops that mix rock and sediment from a water body bottom.\nUse for samples described as rock&gt;sedimentary AND sediment, where it is unclear whether the sample is a consolidated ‘rock’ object, or loose disaggregated material in a bag."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#rock",
+    "href": "models/generated/vocabularies/material_type.html#rock",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Rock",
+    "text": "Rock\n\nThe concept Rock  with URI https://w3id.org/isample/vocabulary/material/1.0/rock  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Rock or sediment-&gt;Rock\nDefinition:\nConsolidated aggregate of particles (grains) of rock, mineral (including native elements), mineraloid, or solid organic material. Includes mineral aggregates such as granite, shale, marble; natural glass such as obsidian; organic material formed by geologic processes such a coal; extraterrestrial material in meteorites; and crushed rock fragments like drill cuttings from rock. (based on http://resource.geosciml.org/classifier/cgi/lithology/rock, same as http://purl.obolibrary.org/obo/ENVO_00001995)"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#sediment",
+    "href": "models/generated/vocabularies/material_type.html#sediment",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Sediment",
+    "text": "Sediment\n\nThe concept Sediment  with URI https://w3id.org/isample/vocabulary/material/1.0/sediment  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Rock or sediment-&gt;Sediment\nDefinition:\nSolid granular material transported by wind, water, or gravity, not modified by interaction with biosphere or atmosphere (to differentiate from soil). Particles derived by erosion of pre-existing rock, from shell or other body parts from organisms, precipitated chemically in the surficial environment, or generated by explosive volcanic activity. (http://resource.geosciml.org/classifier/cgi/lithology/sediment). Sediment is not consolidated, i.e. Particulate constituents of a compound material do not adhere to each other strongly enough that the aggregate can be considered a solid material in its own right. Similar to http://purl.obolibrary.org/obo/ENVO_00002007\nNotes:\nNote that this category includes chemical sediments that might preciptate to form a solid mass, e.g. preciptitates forming vents at submarine hot springs, or gypsum and halite deposites formed by evaporation in hypersaline lakes. (http://resource.geosciml.org/classifier/cgi/consolidationdegree/consolidated).\nTephra is subclass of sediment because it is generally not lithified, in which case it would be considered Rock."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#soil",
+    "href": "models/generated/vocabularies/material_type.html#soil",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Soil",
+    "text": "Soil\n\nThe concept Soil  with URI https://w3id.org/isample/vocabulary/material/1.0/soil  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Natural Solid Material-&gt;Soil\nDefinition:\nMixed granular mineral and organic matter modified by interaction between earth material, biosphere, and atmosphere, consisting mostly of varying proportions of sand, silt, and clay, organic material such as humus, gases, liquids, and a broad range of resident micro- and macroorganisms. (https://en.wikipedia.org/wiki/Soil) Soil consists of horizons near the Earth’s surface that, in contrast to the underlying parent material, have been altered by the interactions of climate, relief, and living organisms over time. (http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/?cid=nrcs142p2_054280) (http://purl.obolibrary.org/obo/ENVO_00001998)"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#fluid-material",
+    "href": "models/generated/vocabularies/material_type.html#fluid-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Fluid material",
+    "text": "Fluid material\n\nThe concept Fluid material  with URI https://w3id.org/isample/vocabulary/material/1.0/fluid  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Fluid material\nImmediately narrower concepts:\nGaseous material, Liquid water, Non-aqueous liquid material\nDefinition:\na substance that continually deforms (flows) under an applied shear stress, or external force. Fluids are a phase of matter and include liquids, gases and plasmas. They are substances with zero shear modulus, or, in simpler terms, substances that cannot resist any shear force applied to them. (https://en.wikipedia.org/wiki/Fluid)"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#gaseous-material",
+    "href": "models/generated/vocabularies/material_type.html#gaseous-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Gaseous material",
+    "text": "Gaseous material\n\nThe concept Gaseous material  with URI https://w3id.org/isample/vocabulary/material/1.0/gas  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Fluid material-&gt;Gaseous material\nDefinition:\nMaterial composed of one or more chemical entities that has neither independent shape nor volume but tends to expand indefinitely (http://purl.obolibrary.org/obo/ENVO_01000797). Infer that the sample is curated in some kind of container."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#liquid-water",
+    "href": "models/generated/vocabularies/material_type.html#liquid-water",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Liquid water",
+    "text": "Liquid water\n\nThe concept Liquid water  with URI https://w3id.org/isample/vocabulary/material/1.0/liquidwater  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Fluid material-&gt;Liquid water\nDefinition:\nA material primarily composed of dihydrogen oxide in its liquid form; infer that the sample is curated in some kind of container."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#non-aqueous-liquid-material",
+    "href": "models/generated/vocabularies/material_type.html#non-aqueous-liquid-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Non-aqueous liquid material",
+    "text": "Non-aqueous liquid material\n\nThe concept Non-aqueous liquid material  with URI https://w3id.org/isample/vocabulary/material/1.0/nonaqueousliquid  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Fluid material-&gt;Non-aqueous liquid material\nDefinition:\nLiquid composed dominantly of material other than water. Includes liquids that do not fit in any other category. E.g. alcohol, petroleum."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_type.html#organic-material",
+    "href": "models/generated/vocabularies/material_type.html#organic-material",
+    "title": "iSamples Materials Vocabulary",
+    "section": "Organic material",
+    "text": "Organic material\n\nThe concept Organic material  with URI https://w3id.org/isample/vocabulary/material/1.0/organicmaterial  is defined in vocabulary https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary\nPath from the top concept:  Material-&gt;Organic material\nDefinition:\nEnvironmental material derived from living organisms and composed primarily of one or more very large molecules of biological origin. Examples: body (animal or plant), body part, fecal matter, seeds, wood, tissue, biological fluids, biological waste, algal material, biofilm, necromass, plankton. source: http://purl.obolibrary.org/obo/ENVO_01000155"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html",
+    "href": "models/generated/vocabularies/material_sample_type.html",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\n2022-01-07 SMR Change base URI to https://w3id.org/isample/vocabulary/, setting up resolution using w3id. Make the conceptScheme and ontology. Add Dublin core imports.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies.  2022-09-30 SMR per https://github.com/isamplesorg/metadata/issues/109, change specimen to sample in vocabulary names and labels. Add ‘Slurry biome aggregation’ and ‘Bundle biome aggregation’ (github issue 110). Rename ‘liquid or gas’ sample type to ‘fluid in container’ (github issue 108).  2023-07-27 SMR modify base specimen type vocabulary, add ‘Non biologic solid object’ change broader relations in this vocab to use that as parent class where appropriate. Intention is a specimen category for solid objects that are not biologic; this subsumes ‘Fossil’ and ‘Artifact’, but excludes living organism, their parts and products. Obviously there is some overlap with Research specimens.  2023-11-06 SMR add missing inScheme on Non-biologic solid object and solid materal specimen. Update version number in URI to 1.0\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#physical-specimen",
+    "href": "models/generated/vocabularies/material_sample_type.html#physical-specimen",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Physical specimen",
+    "text": "Physical specimen\n\nThe concept Physical specimen  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nAny aggregation specimen, Any biological specimen, Fluid in container, Non biologic solid object, Research product\nDefinition:\nA material entity that represents an entity of interest in whole or in part (http://rs.tdwg.org/dwc/terms/MaterialSample) . Top concept in material sample type type hierarchy. Represents any physical specimen (matrial sample).\nAlternate labels:\nmaterial sample"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#any-aggregation-specimen",
+    "href": "models/generated/vocabularies/material_sample_type.html#any-aggregation-specimen",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Any aggregation specimen",
+    "text": "Any aggregation specimen\n\nThe concept Any aggregation specimen  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/anyaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any aggregation specimen\nImmediately narrower concepts:\nAnthropogenic aggregation, Biome aggregation sample, Aggregation\nDefinition:\nSample consists of a bunch of material fragments, not related to the same object (e.g. not a bunch of broken pot sherds that might be reassembled), but taken together representative of the sampled feature. Examples: loose soil, sediment, crushed rock, particulate, bunches of unrelated pot sherd, human production waste, filtrates and residues. The sample requires some kind of container to keep it together. Cores of loosely consolidated material are considered ‘Solid material specimen’ because the internal parts have spatial relationships (e.g. upper part, lower part, sedimentary structures)."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#anthropogenic-aggregation",
+    "href": "models/generated/vocabularies/material_sample_type.html#anthropogenic-aggregation",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Anthropogenic aggregation",
+    "text": "Anthropogenic aggregation\n\nThe concept Anthropogenic aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/anthropogenicaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any aggregation specimen-&gt;Anthropogenic aggregation\nDefinition:\nAggregation consists of fragments of material produced by human activity, not described individually, and generally not all originating from the same object. Includes pottery in an excavation unit that gets an aggregate description, production waste, production raw-materials, or other residues (broken bits of plaster from a destroyed wall), synthetic powders."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#biome-aggregation-sample",
+    "href": "models/generated/vocabularies/material_sample_type.html#biome-aggregation-sample",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Biome aggregation sample",
+    "text": "Biome aggregation sample\n\nThe concept Biome aggregation sample  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/biomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample\nImmediately narrower concepts:\nBundle biome aggregation, Slurry biome aggregation\nDefinition:\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#bundle-biome-aggregation",
+    "href": "models/generated/vocabularies/material_sample_type.html#bundle-biome-aggregation",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Bundle biome aggregation",
+    "text": "Bundle biome aggregation\n\nThe concept Bundle biome aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/bundlebiomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample-&gt;Bundle biome aggregation\nDefinition:\nAn aggregation of whole organisms representative of some biome"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#slurry-biome-aggregation",
+    "href": "models/generated/vocabularies/material_sample_type.html#slurry-biome-aggregation",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Slurry biome aggregation",
+    "text": "Slurry biome aggregation\n\nThe concept Slurry biome aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/slurrybiomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample-&gt;Slurry biome aggregation\nDefinition:\nspecimen consists of mixed organic and inorganic material, including whole organisms and organism fragments."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#aggregation",
+    "href": "models/generated/vocabularies/material_sample_type.html#aggregation",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Aggregation",
+    "text": "Aggregation\n\nThe concept Aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/genericaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any aggregation specimen-&gt;Aggregation\nDefinition:\nAn aggregate specimen that is not biogenic or composed of anthropogenic material fragments. Examples: loose soil or sediment (e.g. in a bag), rock chips, particulate filtrate or precipitate; rock powders."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#any-biological-specimen",
+    "href": "models/generated/vocabularies/material_sample_type.html#any-biological-specimen",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Any biological specimen",
+    "text": "Any biological specimen\n\nThe concept Any biological specimen  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/biologicalspecimen  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen\nImmediately narrower concepts:\nBiome aggregation sample, Organism part, Organism product, Whole organism specimen\nDefinition:\nSpecimen for which the sampled feature is one or more living organisms from a particular biome context, megascopic or microscopic"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#biome-aggregation-sample-1",
+    "href": "models/generated/vocabularies/material_sample_type.html#biome-aggregation-sample-1",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Biome aggregation sample",
+    "text": "Biome aggregation sample\n\nThe concept Biome aggregation sample  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/biomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample\nImmediately narrower concepts:\nBundle biome aggregation, Slurry biome aggregation\nDefinition:\nSpecimen is an aggregation of whole or fragmentary parts of multiple organisms, microscopic or megascopic, representative of some site."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#bundle-biome-aggregation-1",
+    "href": "models/generated/vocabularies/material_sample_type.html#bundle-biome-aggregation-1",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Bundle biome aggregation",
+    "text": "Bundle biome aggregation\n\nThe concept Bundle biome aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/bundlebiomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample-&gt;Bundle biome aggregation\nDefinition:\nAn aggregation of whole organisms representative of some biome"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#slurry-biome-aggregation-1",
+    "href": "models/generated/vocabularies/material_sample_type.html#slurry-biome-aggregation-1",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Slurry biome aggregation",
+    "text": "Slurry biome aggregation\n\nThe concept Slurry biome aggregation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/slurrybiomeaggregation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Physical specimen-&gt;Any aggregation specimen-&gt;Biome aggregation sample-&gt;Slurry biome aggregation\nDefinition:\nspecimen consists of mixed organic and inorganic material, including whole organisms and organism fragments."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#organism-part",
+    "href": "models/generated/vocabularies/material_sample_type.html#organism-part",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Organism part",
+    "text": "Organism part\n\nThe concept Organism part  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/organismpart  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Organism part\nDefinition:\nPart of an organism, e.g. a tissue sample, plant leaf, flower, bird feather. Include internal parts not composed of organic material (e.g. teeth, bone), and hard body parts that are not shed (hoof, horn, tusk, claw). Hair is tricky, include here for now. Does not necessarily imply existance of parent sample. Not fossilized; generally includes organism parts native to deposits of Holocene to Recent age."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#organism-product",
+    "href": "models/generated/vocabularies/material_sample_type.html#organism-product",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Organism product",
+    "text": "Organism product\n\nThe concept Organism product  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/organismproduct  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Organism product\nDefinition:\nSpecimen is a thing produced by some organism, generally not composed of organic material or including biological tissue, e.g. Shell, antler, egg shell, coral skeleton (organic tissue not included), fecal matter, cocoon, web. Consider internal parts not composed of organic material (e.g. teeth, bone) and hard body parts that are not shed (hoof, horn, tusk) to be organism parts."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#whole-organism-specimen",
+    "href": "models/generated/vocabularies/material_sample_type.html#whole-organism-specimen",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Whole organism specimen",
+    "text": "Whole organism specimen\n\nThe concept Whole organism specimen  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/wholeorganism  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Any biological specimen-&gt;Whole organism specimen\nDefinition:\nSpecimen consists of the bodies of one or more entire organisms of the same species, from any kingdom. Note that these are also inherently ‘solid object’"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#fluid-in-container",
+    "href": "models/generated/vocabularies/material_sample_type.html#fluid-in-container",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Fluid in container",
+    "text": "Fluid in container\n\nThe concept Fluid in container  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/fluidincontainer  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Fluid in container\nDefinition:\nSpecimen is a container whose contents are liquid, gas, or mixed dominantly fluid phases that is the actual sample material. Fluid might include minor solid particles. Container typically human made, but also includes natural fluid container, e.g. fluid inclusion in a mineral grain. Includes colloids, foams, gels, suspensions. The sample is the fluid substance; fluid samples collected to analyze the contained biome should be considered ‘Biome Aggregation’"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#non-biologic-solid-object",
+    "href": "models/generated/vocabularies/material_sample_type.html#non-biologic-solid-object",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Non biologic solid object",
+    "text": "Non biologic solid object\n\nThe concept Non biologic solid object  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/nonbiologicsolidobject  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Non biologic solid object\nImmediately narrower concepts:\nArtifact, Fossil, Other solid object, Solid material specimen\nDefinition:\nIndividual solid object, not formed directly by or part of a living organism"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#artifact",
+    "href": "models/generated/vocabularies/material_sample_type.html#artifact",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Artifact",
+    "text": "Artifact\n\nThe concept Artifact  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/artifact  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Non biologic solid object-&gt;Artifact\nDefinition:\nAn object made (manufactured, shaped, modified) by a human being, or precursor hominid. Include a set of pieces belonging originally to a single object and treated as a single specimen."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#fossil",
+    "href": "models/generated/vocabularies/material_sample_type.html#fossil",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Fossil",
+    "text": "Fossil\n\nThe concept Fossil  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/fossil  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Non biologic solid object-&gt;Fossil\nDefinition:\nSpecimen is the remains of one or more organisms preserved in rock; includes whole body, body parts (usually bone or shell), and trace fossils. An organism or organism part becomes a fossil when it has undergone some fossilization process that generally entails physical and chemical changes akin to diagenesis in a sedimentary rock. Includes trace fossils, which are manifestations of biologic activity preserved in a rock body (typically sedimentary), without included preserved body parts."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#other-solid-object",
+    "href": "models/generated/vocabularies/material_sample_type.html#other-solid-object",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Other solid object",
+    "text": "Other solid object\n\nThe concept Other solid object  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/othersolidobject  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Non biologic solid object-&gt;Other solid object\nDefinition:\nSingle piece of material not one of the other types."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#solid-material-specimen",
+    "href": "models/generated/vocabularies/material_sample_type.html#solid-material-specimen",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Solid material specimen",
+    "text": "Solid material specimen\n\nThe concept Solid material specimen  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/solidmaterialspecimen  is defined in vocabulary None\nPath from the top concept:  Physical specimen-&gt;Non biologic solid object-&gt;Solid material specimen\nDefinition:\nIndividual solid object, not formed directly by or part of a living organism, that is representative of some material.\nNotes:\nMany sediment cores consist of non-consolidated or weakly consolidated material, but are considered solid objects if the core is preserved intact to observe the sedimentary structures and particle relationships within the sediment. If this material were ‘disaggregated’ into a mass of granular material to put in a bag, it would become an aggregate (spec:genericaggregation).\ne.g. a rock or mineral specimen, a specimen of some manufactured material, a meteorite. Ice and permafrost are considered solid materials."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#research-product",
+    "href": "models/generated/vocabularies/material_sample_type.html#research-product",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Research product",
+    "text": "Research product\n\nThe concept Research product  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/researchproduct  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Research product\nImmediately narrower concepts:\nAnalytical preparation, Experiment product\nDefinition:\nSpecimen is a product of some research workflow, e.g. a thin section, an XRF pellet, a grain mount, SEM stub, synthetic rock or mineral … In general there should be a link to a parent specimen from which this was derived. Might be aggregation (e.g. a synthetic material powder) or a solid object."
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#analytical-preparation",
+    "href": "models/generated/vocabularies/material_sample_type.html#analytical-preparation",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Analytical preparation",
+    "text": "Analytical preparation\n\nThe concept Analytical preparation  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/analyticalpreparation  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Research product-&gt;Analytical preparation\nDefinition:\nSpecimen is a product of processing required for some observation procedure, e.g. thin section, XRF bead, SEM stub, rock powder. If identified separately, this should have a ‘parent’ link to the original sample"
+  },
+  {
+    "objectID": "models/generated/vocabularies/material_sample_type.html#experiment-product",
+    "href": "models/generated/vocabularies/material_sample_type.html#experiment-product",
+    "title": "iSamples Material Sample Type Vocabulary",
+    "section": "Experiment product",
+    "text": "Experiment product\n\nThe concept Experiment product  with URI https://w3id.org/isample/vocabulary/specimentype/1.0/experimentalproduct  is defined in vocabulary https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary\nPath from the top concept:  Physical specimen-&gt;Research product-&gt;Experiment product\nDefinition:\nSpecimen is product of an experimental procedure (e.g. synthetic material)"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Internet of Samples: iSamples",
+    "section": "",
+    "text": "The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.\nResources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community"
+  },
+  {
+    "objectID": "design/actors.html",
+    "href": "design/actors.html",
+    "title": "Actors in the iSamples environment",
+    "section": "",
+    "text": "Curator\nConsumer\nContributor\nPortal Manager\nAdministrator"
   }
 ]
