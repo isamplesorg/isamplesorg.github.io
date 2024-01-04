@@ -333,7 +333,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "GEOME",
-    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```dxutycqe assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```dxutycqe assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```hjibhbqz assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```hjibhbqz assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "about.html",
@@ -371,11 +371,11 @@
     "text": "see description of model at https://isamplesorg.github.io/metadata/"
   },
   {
-    "objectID": "models/index.html#taxonomies",
-    "href": "models/index.html#taxonomies",
+    "objectID": "models/index.html#vocabularies",
+    "href": "models/index.html#vocabularies",
     "title": "iSamples Core Model",
-    "section": "Taxonomies",
-    "text": "Taxonomies\nThe iSamples core taxonomies are controlled vocabularies with terms related by SKOS:broader and SKOS:narrower. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:\nMaterial Sample (specimen) Type Vocabulary\nMaterials Vocabulary\nSampled Feature (context) Type vocabulary"
+    "section": "Vocabularies",
+    "text": "Vocabularies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:"
   },
   {
     "objectID": "models/generated/vocabularies/material_type.html",
