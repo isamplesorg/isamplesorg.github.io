@@ -58,6 +58,6 @@ format:
     theme: cosmo
     css: styles.css
 
-filters:
-  - pandoc-plantuml
-
+#filters:
+#  - pandoc-plantuml
+#  comment out for testing
