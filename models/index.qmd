@@ -10,9 +10,18 @@ listing:
     sort: "title asc"
     fields: [title, subtitle]
     type: table
+  - id: extension-listing
+    contents: "generated/extensions"
+    page-size: 33
+    sort-ui: false
+    filter-ui: false
+    sort: "title asc"
+    fields: [title, subtitle]
+    type: table
   - id: model-listing
     contents: 
       - "generated/**!(vocabularies)"
+      - "generated/**!(extensions)"
     page-size: 33
     sort: "title asc"
     fields: [title, subtitle]
