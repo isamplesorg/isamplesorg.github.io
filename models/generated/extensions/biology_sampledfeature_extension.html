@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-01-05">
+
+<title>iSamples - Biology Extension: Basic taxon classes for biological entity</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../../styles.css">
+</head>
+
+<body class="nav-sidebar docked fullcontent">
+
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Biology Extension: Basic taxon classes for biological entity</li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../../../index.html" class="sidebar-logo-link">
+      <img src="../../../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
+      <div class="sidebar-tools-main tools-wide">
+    <a href="https://hyde.cyverse.org/isamples_central/ui/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
+    <a href="https://github.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+</div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">About</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">Design</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Core Model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text">Resources</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../pubs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Publications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text">Github</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Biology Extension: Basic taxon classes for biological entity</h1>
+<p class="subtitle lead"></p><p>This is a vocabulary to categorize sampled organisms (whole or part) according to taxonomic classes. Classes are based largely on taxonomy found in Wikipedia, particularly Whittaker’s five kingdom system (1969) (https://en.wikipedia.org/wiki/Kingdom_(biology), https://doi.org/10.1126%2Fscience.163.3863.150). The intended use is in iSamples cross domain categorization of material samples, recognizing that there are multiple view for taxonaomy and cladistist for the tree of life. This is a high level view intended for cross domain purposes, not expert analysis. Other extension vocablaries should be used for other taxonomic schemes</p><p></p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 5, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Vocabularies and extensions:</p>
+<ul>
+<li><code>Biology Extension: Basic taxon classes for biological entity</code> <a href="https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary"><code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></a></li>
+</ul>
+<p><strong>History:</strong></p>
+<p>Based on draft DiSSCo specimen &amp; collection classification, table 2, https://docs.google.com/document/d/19OPyOm9VF2qfI3M6RmJPvRfo8JlZ3tt0II05aGCyBHQ/ , with added classes to attempt a logical hierarchy.</p>
+<p><strong>Concept Hierarchy:</strong></p>
+<ul>
+<li><a href="#biological-entity">Biological entity</a>
+<ul>
+<li><a href="#eukaryote">Eukaryote</a>
+<ul>
+<li><a href="#animalia">Animalia</a>
+<ul>
+<li><a href="#vertebrate">Vertebrate</a>
+<ul>
+<li><a href="#amphibian">Amphibian</a></li>
+<li><a href="#bird">Bird</a></li>
+<li><a href="#fish">Fish</a></li>
+<li><a href="#mammal">Mammal</a></li>
+<li><a href="#reptile">Reptile</a></li>
+</ul></li>
+<li><a href="#arthropod">Arthropod</a>
+<ul>
+<li><a href="#arachnid">Arachnid</a></li>
+<li><a href="#crustaceans">Crustaceans</a></li>
+<li><a href="#insect">Insect</a></li>
+<li><a href="#myriapod">Myriapod</a></li>
+<li><a href="#other-arthropod">Other arthropod</a></li>
+</ul></li>
+<li><a href="#mollusca">Mollusca</a></li>
+<li><a href="#other-invertebrate">Other invertebrate</a></li>
+<li><a href="#porifera">Porifera</a></li>
+</ul></li>
+<li><a href="#fungi">Fungi</a>
+<ul>
+<li><a href="#macrofungi">Macrofungi</a></li>
+<li><a href="#microfungi">Microfungi</a></li>
+</ul></li>
+<li><a href="#plantae">Plantae</a>
+<ul>
+<li><a href="#bryophyte">Bryophyte</a></li>
+<li><a href="#other-plant">Other plant</a></li>
+<li><a href="#pteridophyte">Pteridophyte</a></li>
+<li><a href="#seed-plant">Seed plant</a></li>
+</ul></li>
+<li><a href="#protista">Protista</a>
+<ul>
+<li><a href="#amoebozoa">Amoebozoa</a>
+<ul>
+<li><a href="#myxomycetes">Myxomycetes</a></li>
+</ul></li>
+<li><a href="#protozoa">Protozoa</a></li>
+</ul></li>
+<li><a href="#algae">Algae</a></li>
+<li><a href="#eukaryotic-microorganisms">Eukaryotic microorganisms</a></li>
+</ul></li>
+<li><a href="#lichen">Lichen</a></li>
+<li><a href="#plasmid">Plasmid</a></li>
+<li><a href="#prokaryote">Prokaryote</a>
+<ul>
+<li><a href="#archaea">Archaea</a></li>
+<li><a href="#bacteria">Bacteria</a></li>
+</ul></li>
+<li><a href="#virus">Virus</a>
+<ul>
+<li><a href="#other-virus">Other Virus</a></li>
+<li><a href="#phage">Phage</a></li>
+</ul></li>
+</ul></li>
+</ul>
+<section id="biological-entity" class="level2">
+<h2 class="anchored" data-anchor-id="biological-entity">Biological entity</h2>
+<p><span id="biological-entity"></span></p>
+<p>The concept <code>Biological entity</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/biologicalentity</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#eukaryote"><code>Eukaryote</code></a>, <a href="#lichen"><code>Lichen</code></a>, <a href="#plasmid"><code>Plasmid</code></a>, <a href="#prokaryote"><code>Prokaryote</code></a>, <a href="#virus"><code>Virus</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Sampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature for which the focus is not the environment that the organism inhabits.</p>
+</section>
+<section id="eukaryote" class="level2">
+<h2 class="anchored" data-anchor-id="eukaryote">Eukaryote</h2>
+<p><span id="eukaryote"></span></p>
+<p>The concept <code>Eukaryote</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/eukaryote</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#animalia"><code>Animalia</code></a>, <a href="#fungi"><code>Fungi</code></a>, <a href="#plantae"><code>Plantae</code></a>, <a href="#protista"><code>Protista</code></a>, <a href="#algae"><code>Algae</code></a>, <a href="#eukaryotic-microorganisms"><code>Eukaryotic microorganisms</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>organism whose cells have a nucleus. Includes all animals, plants, fungi, and many unicellular organisms (https://en.wikipedia.org/wiki/Eukaryote)</p>
+</section>
+<section id="animalia" class="level2">
+<h2 class="anchored" data-anchor-id="animalia">Animalia</h2>
+<p><span id="animalia"></span></p>
+<p>The concept <code>Animalia</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/Animalia</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#vertebrate"><code>Vertebrate</code></a>, <a href="#arthropod"><code>Arthropod</code></a>, <a href="#mollusca"><code>Mollusca</code></a>, <a href="#other-invertebrate"><code>Other invertebrate</code></a>, <a href="#porifera"><code>Porifera</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Animals are distinguished from other eukaryotes based on several key characteristics, including: 1) <br> animals are multicellular organisms 2) Animals are heterotrophic, they obtain their food by consuming other organisms or organic matter; 3) Animals lack cell walls; 4) Many animals have a nervous system; 5) Most animals reproduce sexually (Chat GPT)</p>
+</section>
+<section id="vertebrate" class="level2">
+<h2 class="anchored" data-anchor-id="vertebrate">Vertebrate</h2>
+<p><span id="vertebrate"></span></p>
+<p>The concept <code>Vertebrate</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/Vertebrate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#amphibian"><code>Amphibian</code></a>, <a href="#bird"><code>Bird</code></a>, <a href="#fish"><code>Fish</code></a>, <a href="#mammal"><code>Mammal</code></a>, <a href="#reptile"><code>Reptile</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Animals that have a vertebral column, a cranium, an endoskeleton, a well-developed muscular system, and an advanced nervous system (ChatGPT);</p>
+</section>
+<section id="amphibian" class="level2">
+<h2 class="anchored" data-anchor-id="amphibian">Amphibian</h2>
+<p><span id="amphibian"></span></p>
+<p>The concept <code>Amphibian</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/amphibian</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a><code>-&gt;</code><a href="#amphibian"><code>Amphibian</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Vertebrates that have a dual life cycle, semi-permeable skin, absence of scales and claws, a three-chambered heart, and dependence on water for reproduction and survival (ChatGPT)</p>
+</section>
+<section id="bird" class="level2">
+<h2 class="anchored" data-anchor-id="bird">Bird</h2>
+<p><span id="bird"></span></p>
+<p>The concept <code>Bird</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/bird</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a><code>-&gt;</code><a href="#bird"><code>Bird</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Vertebrates that have feathers, lightweight, hollow bones, a beak, an efficient respiratory system, and are warm-blooded. (ChatGPT) {<span class="citation" data-cites="en">@en</span>}</p>
+</section>
+<section id="fish" class="level2">
+<h2 class="anchored" data-anchor-id="fish">Fish</h2>
+<p><span id="fish"></span></p>
+<p>The concept <code>Fish</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/fish</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a><code>-&gt;</code><a href="#fish"><code>Fish</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Vertebrates that have gills, scales, fins, are cold-blooded, and commonly have a swim bladder; includes jawless fish, cartilaginous fish and bony fish. (ChatGPT)</p>
+</section>
+<section id="mammal" class="level2">
+<h2 class="anchored" data-anchor-id="mammal">Mammal</h2>
+<p><span id="mammal"></span></p>
+<p>The concept <code>Mammal</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/mammal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a><code>-&gt;</code><a href="#mammal"><code>Mammal</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>vertebrates that have mammary glands, hair or fur, three middle ear bones, specialized teeth, and are warm-blooded. (ChatGPT)</p>
+</section>
+<section id="reptile" class="level2">
+<h2 class="anchored" data-anchor-id="reptile">Reptile</h2>
+<p><span id="reptile"></span></p>
+<p>The concept <code>Reptile</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/reptile</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#vertebrate"><code>Vertebrate</code></a><code>-&gt;</code><a href="#reptile"><code>Reptile</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Vertebrates that have scaly skin and claws, amniotic eggs, are cold-blooded, and are ectothermic (ChatGPT)</p>
+</section>
+<section id="arthropod" class="level2">
+<h2 class="anchored" data-anchor-id="arthropod">Arthropod</h2>
+<p><span id="arthropod"></span></p>
+<p>The concept <code>Arthropod</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/arthropod</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#arachnid"><code>Arachnid</code></a>, <a href="#crustaceans"><code>Crustaceans</code></a>, <a href="#insect"><code>Insect</code></a>, <a href="#myriapod"><code>Myriapod</code></a>, <a href="#other-arthropod"><code>Other arthropod</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>invertebrate animals with an exoskeleton, a segmented body, and paired jointed appendages. Arthropods form the phylum Arthropoda. They are distinguished by their jointed limbs and cuticle made of chitin, often mineralised with calcium carbonate. The arthropod body plan consists of segments, each with a pair of appendages. Arthropods are bilaterally symmetrical and their body possesses an external skeleton. (https://en.wikipedia.org/wiki/Arthropod)</p>
+</section>
+<section id="arachnid" class="level2">
+<h2 class="anchored" data-anchor-id="arachnid">Arachnid</h2>
+<p><span id="arachnid"></span></p>
+<p>The concept <code>Arachnid</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/arachnid</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a><code>-&gt;</code><a href="#arachnid"><code>Arachnid</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>a group of arthropods that share several key characteristics, including two main body segments, four pairs of legs, lack of antennae, simple eyes, and specialized feeding and defense structures called chelicerae (ChatGPT)</p>
+</section>
+<section id="crustaceans" class="level2">
+<h2 class="anchored" data-anchor-id="crustaceans">Crustaceans</h2>
+<p><span id="crustaceans"></span></p>
+<p>The concept <code>Crustaceans</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/crustacea</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a><code>-&gt;</code><a href="#crustaceans"><code>Crustaceans</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>arthropod taxon which includes such animals as decapods, seed shrimp, branchiopods, fish lice, krill, remipedes, isopods, barnacles, copepods, amphipods and mantis shrimp. crustaceans have an exoskeleton, which they moult to grow. They are distinguished from other groups of arthropods, such as insects, myriapods and chelicerates, by the possession of biramous (two-parted) limbs, and by their larval forms, such as the nauplius stage of branchiopods and copepods. (https://en.wikipedia.org/wiki/Crustacean)</p>
+</section>
+<section id="insect" class="level2">
+<h2 class="anchored" data-anchor-id="insect">Insect</h2>
+<p><span id="insect"></span></p>
+<p>The concept <code>Insect</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/hexapoda</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a><code>-&gt;</code><a href="#insect"><code>Insect</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Include all hexapoda here; Insects are a group of hexapod arthropods characterized by having three main body segments (head, thorax, and abdomen), six legs, and wings in many species. All other hexapod arthropods, such as springtails and diplurans, are not classified as insects, but they share the same body plan of three main body segments and six legs. However, they lack wings and other features that are unique to insects. Therefore, all insects are hexapods, but not all hexapods are insects. (ChatGPT)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>Hexapoda</code></p>
+</section>
+<section id="myriapod" class="level2">
+<h2 class="anchored" data-anchor-id="myriapod">Myriapod</h2>
+<p><span id="myriapod"></span></p>
+<p>The concept <code>Myriapod</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/myriapod</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a><code>-&gt;</code><a href="#myriapod"><code>Myriapod</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Arthropods such as millipedes and centipedes. (https://en.wikipedia.org/wiki/Myriapoda). A group of arthropods that have long, segmented body with numerous pairs of legs, simple eyes, specialized mouthparts, and a primarily terrestrial habitat, which distinguishes them from other arthropod groups such as insects and crustaceans. (ChatGPT)</p>
+</section>
+<section id="other-arthropod" class="level2">
+<h2 class="anchored" data-anchor-id="other-arthropod">Other arthropod</h2>
+<p><span id="other-arthropod"></span></p>
+<p>The concept <code>Other arthropod</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/otherarthropod</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#arthropod"><code>Arthropod</code></a><code>-&gt;</code><a href="#other-arthropod"><code>Other arthropod</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>includes Chelicerata (horseshoe crabs, scorpions, and sea spiders), Trilobitomorpha ( extinct trilobites), and Pentastomida (parasitic arthropods that infect the respiratory systems of reptiles and mammals). (ChatGPT)</p>
+</section>
+<section id="mollusca" class="level2">
+<h2 class="anchored" data-anchor-id="mollusca">Mollusca</h2>
+<p><span id="mollusca"></span></p>
+<p>The concept <code>Mollusca</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/mollusca</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#mollusca"><code>Mollusca</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>animals that have a soft body with a mantle, a radula (ribbon-like structure covered in tiny teeth that is used to scrape food), a muscular foot, an open circulatory system, and a visceral mass that contains the internal organs, including the digestive, excretory, and reproductive systems. (ChatGPT)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>bivalves</code>, <code>cephalopods</code>, <code>gastropods</code></p>
+</section>
+<section id="other-invertebrate" class="level2">
+<h2 class="anchored" data-anchor-id="other-invertebrate">Other invertebrate</h2>
+<p><span id="other-invertebrate"></span></p>
+<p>The concept <code>Other invertebrate</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/otherinvertebrate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#other-invertebrate"><code>Other invertebrate</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Includes Cnidaria (jellyfish, coral, anemones), Echinodermata (starfish, sea urchins, sea cucumbers), Nematoda (roundworms), Platyhelminthes (flatworms), Annelida (segmented worms), Ctenophora (comb jellies), Brachiopoda (lamp shells), Bryozoa (moss animals), Chaetognatha (arrow worms), Hemichordata (acorn worms), Xenacoelomorpha (simple-bodied worms) (ChatGPT)</p>
+</section>
+<section id="porifera" class="level2">
+<h2 class="anchored" data-anchor-id="porifera">Porifera</h2>
+<p><span id="porifera"></span></p>
+<p>The concept <code>Porifera</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/porifera</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#animalia"><code>Animalia</code></a><code>-&gt;</code><a href="#porifera"><code>Porifera</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>multicellular animals that have bodies full of pores and channels allowing water to circulate through them, consisting of jelly-like mesohyl sandwiched between two thin layers of cells. (https://en.wikipedia.org/wiki/Sponge)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>sponges</code></p>
+</section>
+<section id="fungi" class="level2">
+<h2 class="anchored" data-anchor-id="fungi">Fungi</h2>
+<p><span id="fungi"></span></p>
+<p>The concept <code>Fungi</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/Fungi</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#fungi"><code>Fungi</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#macrofungi"><code>Macrofungi</code></a>, <a href="#microfungi"><code>Microfungi</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>eukaryotic organisms that contain chitin in their cell walls, are heterotrophs (they obtain their nutrients by absorbing organic material from their environment, either as decomposers, parasites, or symbionts) , lack chloroplasts, reproduce both sexually and asexually, and can take on a variety of growth forms, including single-celled yeasts, multicellular molds, and complex, specialized fruiting bodies. (ChatGPT)</p>
+</section>
+<section id="macrofungi" class="level2">
+<h2 class="anchored" data-anchor-id="macrofungi">Macrofungi</h2>
+<p><span id="macrofungi"></span></p>
+<p>The concept <code>Macrofungi</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/macrofungi</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#fungi"><code>Fungi</code></a><code>-&gt;</code><a href="#macrofungi"><code>Macrofungi</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Macrofungi refers to all fungi that produce visible fruiting bodies. These fungi are evolutionarily and ecologically very divergent. Evolutionarily, they belong to two main phyla, Ascomycota and Basidiomycota, and many of them have relatives that cannot form visible fruiting bodies.(https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6106070/)</p>
+</section>
+<section id="microfungi" class="level2">
+<h2 class="anchored" data-anchor-id="microfungi">Microfungi</h2>
+<p><span id="microfungi"></span></p>
+<p>The concept <code>Microfungi</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/microfungi</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#fungi"><code>Fungi</code></a><code>-&gt;</code><a href="#microfungi"><code>Microfungi</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Microfungi or micromycetes are fungi—eukaryotic organisms such as molds, mildews and rusts, which have microscopic spore-producing structures. They exhibit tube tip-growth and have cell walls composed of chitin, a polymer of N-acetylglucosamine. Microfungi are a paraphyletic group, distinguished from macrofungi only by the absence of a large, multicellular fruiting body. Include moulds, yeasts. (https://en.wikipedia.org/wiki/Microfungi)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>micromycetes</code></p>
+</section>
+<section id="plantae" class="level2">
+<h2 class="anchored" data-anchor-id="plantae">Plantae</h2>
+<p><span id="plantae"></span></p>
+<p>The concept <code>Plantae</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/Plantae</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#plantae"><code>Plantae</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#bryophyte"><code>Bryophyte</code></a>, <a href="#other-plant"><code>Other plant</code></a>, <a href="#pteridophyte"><code>Pteridophyte</code></a>, <a href="#seed-plant"><code>Seed plant</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Plants are eukaryotes that have cell walls made of cellulose, specialized organelles called chloroplasts, which contain chlorophyll and other pigments that allow plants to perform photosynthesis and produce their own food; a unique life cycle that involves alternating between a haploid gametophyte stage and a diploid sporophyte stage; specialized regions called apical meristems at the tips of their roots and shoots, which allow for growth and the development of new tissues; specialized structures for reproduction, including flowers, cones, and spores, and most plants have specialized tissues called xylem and phloem, which transport water, nutrients, and other substances throughout the plant. (ChatGPT)</p>
+</section>
+<section id="bryophyte" class="level2">
+<h2 class="anchored" data-anchor-id="bryophyte">Bryophyte</h2>
+<p><span id="bryophyte"></span></p>
+<p>The concept <code>Bryophyte</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/bryophyte</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#plantae"><code>Plantae</code></a><code>-&gt;</code><a href="#bryophyte"><code>Bryophyte</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Non-vascular plants that do not have specialized tissues for transporting water and nutrients; includes mosses, Marchantiophyta (liverworts), and Anthocerotophyta (hornworts). (ChatGPT)</p>
+</section>
+<section id="other-plant" class="level2">
+<h2 class="anchored" data-anchor-id="other-plant">Other plant</h2>
+<p><span id="other-plant"></span></p>
+<p>The concept <code>Other plant</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/otherplant</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#plantae"><code>Plantae</code></a><code>-&gt;</code><a href="#other-plant"><code>Other plant</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>plants that do not fit in other plant sub class. Includes Lycopodiophyta (clubmosses) and <br> Equisetophyta (horsetails)</p>
+</section>
+<section id="pteridophyte" class="level2">
+<h2 class="anchored" data-anchor-id="pteridophyte">Pteridophyte</h2>
+<p><span id="pteridophyte"></span></p>
+<p>The concept <code>Pteridophyte</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/pteridophyte</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#plantae"><code>Plantae</code></a><code>-&gt;</code><a href="#pteridophyte"><code>Pteridophyte</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>a vascular plant (with xylem and phloem) that disperses spores; they produce neither flowers nor seeds, Includes Ferns, horsetails (often treated as ferns), and lycophytes (clubmosses, spikemosses, and quillworts)</p>
+</section>
+<section id="seed-plant" class="level2">
+<h2 class="anchored" data-anchor-id="seed-plant">Seed plant</h2>
+<p><span id="seed-plant"></span></p>
+<p>The concept <code>Seed plant</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/spermatophyte</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#plantae"><code>Plantae</code></a><code>-&gt;</code><a href="#seed-plant"><code>Seed plant</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Plant that produces seeds, hence the alternative name seed plant. Spermatophytes are a subset of the embryophytes or land plants. They include most familiar types of plants, including all flowers and most trees, but exclude some other types of plants such as ferns, mosses, algae. (https://en.wikipedia.org/wiki/Spermatophyte). Includes Gymnosperms (naked-seed plants) and Angiosperms (flowering plants).</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>spermatophyte</code></p>
+</section>
+<section id="protista" class="level2">
+<h2 class="anchored" data-anchor-id="protista">Protista</h2>
+<p><span id="protista"></span></p>
+<p>The concept <code>Protista</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/Protista</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#protista"><code>Protista</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#amoebozoa"><code>Amoebozoa</code></a>, <a href="#protozoa"><code>Protozoa</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>any organism whose cells contain a cell nucleus (a eucaryote) that is not an animal, plant, or fungus. (https://en.wikipedia.org/wiki/Protist). Protista is not a specific taxonomic group, but a term that historically referred to a group of eukaryotic organisms that did not fit into the other kingdoms of plants, animals, and fungi. (ChatGPT)</p>
+</section>
+<section id="amoebozoa" class="level2">
+<h2 class="anchored" data-anchor-id="amoebozoa">Amoebozoa</h2>
+<p><span id="amoebozoa"></span></p>
+<p>The concept <code>Amoebozoa</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/amoebozoa</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#protista"><code>Protista</code></a><code>-&gt;</code><a href="#amoebozoa"><code>Amoebozoa</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#myxomycetes"><code>Myxomycetes</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>a diverse group of organisms that share certain characteristics, such as the ability to move using pseudopodia, temporary extensions of the cell membrane and cytoplasm that allow the cell to crawl or engulf food particles, the lack of rigid cell walls, presence of mitochondria, which are organelles that generate energy for the cell through cellular respiration (chatGPT)</p>
+</section>
+<section id="myxomycetes" class="level2">
+<h2 class="anchored" data-anchor-id="myxomycetes">Myxomycetes</h2>
+<p><span id="myxomycetes"></span></p>
+<p>The concept <code>Myxomycetes</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/myxomycete</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#protista"><code>Protista</code></a><code>-&gt;</code><a href="#amoebozoa"><code>Amoebozoa</code></a><code>-&gt;</code><a href="#myxomycetes"><code>Myxomycetes</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Aclass of slime molds. All species pass through several, very different morphologic phases, such as microscopic individual cells, slimy amorphous organisms visible with the naked eye and conspicuously shaped fruit bodies. Although they are monocellular, they can reach immense widths and weights. Some consider the Myxomycota to be a separate kingdom, with an unsettled phylogeny because of conflicting molecular and developmental data. The relations among Myxogastrid orders are as yet unclear. (https://en.wikipedia.org/wiki/Mycetozoa). Mycetozoa includes the slime molds, which are a group of organisms that have both amoeboid and fungal-like characteristics. The Mycetozoa can be further subdivided into two groups: the plasmodial slime molds and the cellular slime molds. Myxomycetes are unique among the Amoebozoa in that they have a complex life cycle involving the formation of spore-bearing structures called fruiting bodies, which is a key feature that distinguishes them from other amoebae. (ChatGPT)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>Mycetozoa</code></p>
+</section>
+<section id="protozoa" class="level2">
+<h2 class="anchored" data-anchor-id="protozoa">Protozoa</h2>
+<p><span id="protozoa"></span></p>
+<p>The concept <code>Protozoa</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/protozoa</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#protista"><code>Protista</code></a><code>-&gt;</code><a href="#protozoa"><code>Protozoa</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A single-celled eukaryote, either free-living or parasitic, that feed on organic matter such as other microorganisms or organic tissues and debris. Historically, protozoans were regarded as ‘one-celled animals’, because they often possess animal-like behaviours, such as motility and predation, and lack a cell wall, as found in plants and many algae. (https://en.wikipedia.org/wiki/Protozoa)</p>
+</section>
+<section id="algae" class="level2">
+<h2 class="anchored" data-anchor-id="algae">Algae</h2>
+<p><span id="algae"></span></p>
+<p>The concept <code>Algae</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/algae</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#algae"><code>Algae</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>informal term for a large and diverse group of photosynthetic eukaryotic organisms. Included organisms range from unicellular microalgae, such as Chlorella, Prototheca and the diatoms, to multicellular forms, such as the giant kelp, a large brown alga which may grow up to 50 metres (160 ft) in length. Most are aquatic and autotrophic (they generate food internally) and lack many of the distinct cell and tissue types, such as stomata, xylem and phloem that are found in land plants. Includes red algae (Rhodophycophyta), brown algae (Phaeophycophyta), and green algae (Chlorophycophyta). https://en.wikipedia.org/wiki/Algae</p>
+</section>
+<section id="eukaryotic-microorganisms" class="level2">
+<h2 class="anchored" data-anchor-id="eukaryotic-microorganisms">Eukaryotic microorganisms</h2>
+<p><span id="eukaryotic-microorganisms"></span></p>
+<p>The concept <code>Eukaryotic microorganisms</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/eukaryoticmicroorganisms</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#eukaryote"><code>Eukaryote</code></a><code>-&gt;</code><a href="#eukaryotic-microorganisms"><code>Eukaryotic microorganisms</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Eukaryote single-cell organisms that does not fit in one of the other classes.</p>
+</section>
+<section id="lichen" class="level2">
+<h2 class="anchored" data-anchor-id="lichen">Lichen</h2>
+<p><span id="lichen"></span></p>
+<p>The concept <code>Lichen</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/lichen</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#lichen"><code>Lichen</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A composite organism that arises from algae or cyanobacteria living among filaments of multiple fungi species in a mutualistic relationship. (https://en.wikipedia.org/wiki/Lichen). Lichens are not classified under a specific kingdom as they are a symbiotic association between a fungus and either an alga or a cyanobacterium. The fungal partner belongs to the kingdom Fungi, while the algal or cyanobacterial partner belongs to either the kingdom Plantae or the kingdom Bacteria, respectively. (ChatGPT)</p>
+</section>
+<section id="plasmid" class="level2">
+<h2 class="anchored" data-anchor-id="plasmid">Plasmid</h2>
+<p><span id="plasmid"></span></p>
+<p>The concept <code>Plasmid</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/plasmid</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#plasmid"><code>Plasmid</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A plasmid is a small, extrachromosomal DNA molecule within a cell that is physically separated from chromosomal DNA and can replicate independently. While chromosomes are large and contain all the essential genetic information for living under normal conditions, plasmids are usually very small and contain only additional genes that may be useful in certain situations or conditions. (https://en.wikipedia.org/wiki/Plasmid)</p>
+</section>
+<section id="prokaryote" class="level2">
+<h2 class="anchored" data-anchor-id="prokaryote">Prokaryote</h2>
+<p><span id="prokaryote"></span></p>
+<p>The concept <code>Prokaryote</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/prokaryote</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#prokaryote"><code>Prokaryote</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#archaea"><code>Archaea</code></a>, <a href="#bacteria"><code>Bacteria</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>single-celled organisms that lack a nucleus and other membrane-bound organelles. Unlike cells of animals and other eukaryotes, bacterial cells do not contain a nucleus and rarely harbour membrane-bound organelles. Molecular systematics showed prokaryotic life to consist of two separate domains, originally called Eubacteria and Archaebacteria, but now called Bacteria and Archaea that evolved independently from an ancient common ancestor. Almost all prokaryotes have a cell wall, a protective structure that allows them to survive in extreme conditions, which is located outside of their plasma membrane. Archaea and bacteria cannot reproduce sexually.</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>Monera</code></p>
+</section>
+<section id="archaea" class="level2">
+<h2 class="anchored" data-anchor-id="archaea">Archaea</h2>
+<p><span id="archaea"></span></p>
+<p>The concept <code>Archaea</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/archaea</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#prokaryote"><code>Prokaryote</code></a><code>-&gt;</code><a href="#archaea"><code>Archaea</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>archaeal cell walls are composed of polysaccharides (sugars). they never have peptidoglycan in their cell walls, their cell membranes contain lipids of unique composition (glycerol molecules are mirror images of those found in other cells, and form ether linkages to isoprenoid side chains), and their 16S ribosomal- RNA nucleotide sequences are unlike those of bacteria. (https://quizlet.com/234154298/archaea-and-bacteria-flash-cards/). The common characteristics of Archaebacteria known to date are these: (1) the presence of characteristic tRNAs and ribosomal RNAs; (2) the absence of peptidoglycan cell walls, with in many cases, replacement by a largely proteinaceous coat; (3) the occurrence of ether linked lipids built from phytanyl chains and (4) in all cases known so far, their occurrence only in unusual habitats. (https://pubmed.ncbi.nlm.nih.gov/691075/)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>Archaebacteria</code></p>
+</section>
+<section id="bacteria" class="level2">
+<h2 class="anchored" data-anchor-id="bacteria">Bacteria</h2>
+<p><span id="bacteria"></span></p>
+<p>The concept <code>Bacteria</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/bacteria</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#prokaryote"><code>Prokaryote</code></a><code>-&gt;</code><a href="#bacteria"><code>Bacteria</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>a large domain of prokaryotic microorganisms. Bacterial cells do not contain a nucleus and rarely harbour membrane-bound organelles. The bacterial cell is surrounded by a cell membrane, which is made primarily of phospholipids. This membrane encloses the contents of the cell and acts as a barrier to hold nutrients, proteins and other essential components of the cytoplasm within the cell. Bacterial cell walls are composed of peptidoglycan, a complex of protein and sugars, while archaeal cell walls are composed of polysaccharides (sugars). (https://en.wikipedia.org/wiki/Bacteria)</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>Eubacteria</code></p>
+</section>
+<section id="virus" class="level2">
+<h2 class="anchored" data-anchor-id="virus">Virus</h2>
+<p><span id="virus"></span></p>
+<p>The concept <code>Virus</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/virus</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#virus"><code>Virus</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#other-virus"><code>Other Virus</code></a>, <a href="#phage"><code>Phage</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A virus is a submicroscopic infectious agent that replicates only inside the living cells of an organism. Realms are Adnaviria, Duplodnaviria, Monodnaviria, Riboviria, Ribozyviria, Varidnaviria (https://en.wikipedia.org/wiki/Virus). Viruses are not cells at all, so they are neither prokaryotes nor eukaryotes. (https://bio.libretexts.org/Bookshelves/Introductory_and_General_Biology/Book)</p>
+</section>
+<section id="other-virus" class="level2">
+<h2 class="anchored" data-anchor-id="other-virus">Other Virus</h2>
+<p><span id="other-virus"></span></p>
+<p>The concept <code>Other Virus</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/othervirus</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#virus"><code>Virus</code></a><code>-&gt;</code><a href="#other-virus"><code>Other Virus</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Virus that is not a member of order Caudovirales (e.g., bacteriophage T4, lambda phage).</p>
+</section>
+<section id="phage" class="level2">
+<h2 class="anchored" data-anchor-id="phage">Phage</h2>
+<p><span id="phage"></span></p>
+<p>The concept <code>Phage</code> <br> with URI <code>https://w3id.org/isample/biology/biosampledfeature/1.0/phage</code> <br> is defined in vocabulary <code>https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#biological-entity"><code>Biological entity</code></a><code>-&gt;</code><a href="#virus"><code>Virus</code></a><code>-&gt;</code><a href="#phage"><code>Phage</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A bacteriophage, also known informally as a phage, is a duplodnaviria virus that infects and replicates within bacteria and archaea. Bacteriophages are composed of proteins that encapsulate a DNA or RNA genome, and may have structures that are either simple or elaborate. Their genomes may encode as few as four genes (e.g.&nbsp;MS2) and as many as hundreds of genes. Phages replicate within the bacterium following the injection of their genome into its cytoplasm. (https://en.wikipedia.org/wiki/Bacteriophage). Includes all virus in order Caudovirales (e.g., bacteriophage T4, lambda phage).</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>bacteriophage</code></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/models/generated/extensions/biology_sampledfeature_extension.md" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+</body></html>

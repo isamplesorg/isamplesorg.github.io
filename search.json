@@ -315,46 +315,368 @@
     "text": "Extraterrestrial environment\n\nThe concept Extraterrestrial environment  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/extraterrestrialenvironment  is defined in vocabulary https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary\nPath from the top concept:  Any sampled feature-&gt;Extraterrestrial environment\nDefinition:\nspecimen samples environment outside of solid earth, hydrosphere, or atmosphere."
   },
   {
-    "objectID": "models/mapping_sources.html",
-    "href": "models/mapping_sources.html",
-    "title": "Mapping Source Records",
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
     "section": "",
-    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
   },
   {
-    "objectID": "models/mapping_sources.html#mapping-from-sources-to-core",
-    "href": "models/mapping_sources.html#mapping-from-sources-to-core",
-    "title": "Mapping Source Records",
-    "section": "",
-    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-borate",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-borate",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Borate",
+    "text": "Mineral-Borate\n\nThe concept Mineral-Borate  with URI https://w3id.org/isample/earthenv/mingroup/1.0/boratemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nMinerals which contain a borate anion group.\nAlternate labels:\nNickel-Strunz class 06"
   },
   {
-    "objectID": "models/mapping_sources.html#geome",
-    "href": "models/mapping_sources.html#geome",
-    "title": "Mapping Source Records",
-    "section": "GEOME",
-    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```hjibhbqz assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```hjibhbqz assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-carbonate-or-nitrate",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-carbonate-or-nitrate",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Carbonate or Nitrate",
+    "text": "Mineral-Carbonate or Nitrate\n\nThe concept Mineral-Carbonate or Nitrate  with URI https://w3id.org/isample/earthenv/mingroup/1.0/carbonatenitratemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nCarbonate minerals are those minerals containing the carbonate ion\nAlternate labels:\nNickel-Strunz class 05"
   },
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About iSamples",
-    "section": "",
-    "text": "Project Objectives\n\nDesign and develop iSamples infrastructure (iSamples in a Box and iSamples Central);\nBuild four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);\nConduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.\n\n\n\n\niSamples diagram\n\n\n\n\nBackground\nResearch frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.\nThe iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.\nLeveraging significant national investments, iSamples provides the missing link among:\n\nphysical collections (e.g., natural history museums, herbaria, biobanks),\nfield stations, marine laboratories, long-term ecological research sites, and observatories, and\ndata repositories and cyberinfrastructure. iSamples delivers enhanced infrastructure for STEM research and education, decision-makers, and the general public.\n\niSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).\n\n\nTechnical perspective\nThe iSamples project will:\n\nCreate a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.\nBuild upon on existing identifier infrastructure such as IGSNs (Global Sample Number;) and ARKs (Archival Resource Keys), but is agnostic to identifier type.\nEncourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.\nExtend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.\n\n\n\nPrincipal Investigators\n\nKerstin Lehnert, Columbia University\nRamona Walls, University of Arizona\nNeil Davies, The Regents of the University of California, Berkeley\nDavid Vieglais, University of Kansas Biodiversity Institute"
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-halide",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-halide",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Halide",
+    "text": "Mineral-Halide\n\nThe concept Mineral-Halide  with URI https://w3id.org/isample/earthenv/mingroup/1.0/halidemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nMinerals with a dominant halide anion.\nAlternate labels:\nNickel-Strunz class 03"
   },
   {
-    "objectID": "pubs.html",
-    "href": "pubs.html",
-    "title": "Publications",
-    "section": "",
-    "text": "TODO:\n\nFigure out grouping by reference type\nAutomate update of the .bib file\nAdjust the bib stlye\n\n\n\n1. Davies N, Deck J, Kansa EC, Kansa SW, Kunze J, Meyer C, Orrell T, Ramdeen S, Snyder R, Vieglais D, Walls RL, Lehnert K (2021) Internet of Samples (iSamples): Toward an interdisciplinary cyberinfrastructure for material samples. GigaScience, 10(5)https://doi.org/10.1093/gigascience/giab028"
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-native-element",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-native-element",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Native Element",
+    "text": "Mineral-Native Element\n\nThe concept Mineral-Native Element  with URI https://w3id.org/isample/earthenv/mingroup/1.0/nativeelementmineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nElements that occur in nature in uncombined form with a distinct mineral structure. Includes metals and intermetallic alloys; metalloids and nonmetals; carbides, silicides, nitrides, phosphides\nAlternate labels:\nNickel-Strunz class 01"
   },
   {
-    "objectID": "setup.html",
-    "href": "setup.html",
-    "title": "Setup document editing",
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-organic-compound",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-organic-compound",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Organic Compound",
+    "text": "Mineral-Organic Compound\n\nThe concept Mineral-Organic Compound  with URI https://w3id.org/isample/earthenv/mingroup/1.0/organicmineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nSalts of organic acids, hydrocarbons, and miscellaneous organic minerals formed as a result of geological processes. Includes hydrocarbons, formates, acetates, oxalates, benzine salts, cyanates. Chemical compounds in which one or more atoms of carbon are covalently linked to atoms of other elements, most commonly hydrogen, oxygen, or nitrogen (https://www.britannica.com/science/organic-compound).\nAlternate labels:\nNickel-Strunz class 10, Organic mineral"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-oxide",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-oxide",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Oxide",
+    "text": "Mineral-Oxide\n\nThe concept Mineral-Oxide  with URI https://w3id.org/isample/earthenv/mingroup/1.0/oxidemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nIncludes class oxides, hydroxides, and arsenties. Oxides are minerals in which the oxide anion is bonded to one or more metal alloys. The hydroxide-bearing minerals are typically included in the oxide class. Arsenite minerals are very rare oxygen-bearing arsenic minerals.\nAlternate labels:\nNickel-Strunz class 04"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-phosphate-arsenate-or-vanadate",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-phosphate-arsenate-or-vanadate",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Phosphate, Arsenate, or Vanadate",
+    "text": "Mineral-Phosphate, Arsenate, or Vanadate\n\nThe concept Mineral-Phosphate, Arsenate, or Vanadate  with URI https://w3id.org/isample/earthenv/mingroup/1.0/phosphatearsenatevanadatemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nPhosphate minerals contain the phosphate anion along sometimes with arsenate and vanadate substitutions, and chloride, fluoride, and hydroxide anions that also fit into the crystal structure. Arsenate minerals usually refer to the naturally occurring orthoarsenates.\nAlternate labels:\nNickel-Strunz class 08"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-silicate-or-germanate",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-silicate-or-germanate",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Silicate or Germanate",
+    "text": "Mineral-Silicate or Germanate\n\nThe concept Mineral-Silicate or Germanate  with URI https://w3id.org/isample/earthenv/mingroup/1.0/silicategermanatemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nRock-forming minerals made up of silicate groups\nAlternate labels:\nNickel-Strunz class 09"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-sulfate-selenate-or-tellurate",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-sulfate-selenate-or-tellurate",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Sulfate, Selenate, or Tellurate",
+    "text": "Mineral-Sulfate, Selenate, or Tellurate\n\nThe concept Mineral-Sulfate, Selenate, or Tellurate  with URI https://w3id.org/isample/earthenv/mingroup/1.0/sulfateselenatetelluratemineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nclass of minerals that include the sulfate ion within their structure.\nAlternate labels:\nNickel-Strunz class 07"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-sulfide-or-sulfosalt",
+    "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral-sulfide-or-sulfosalt",
+    "title": "Earth and Environmental Science extension - Mineral group vocabulary",
+    "section": "Mineral-Sulfide or Sulfosalt",
+    "text": "Mineral-Sulfide or Sulfosalt\n\nThe concept Mineral-Sulfide or Sulfosalt  with URI https://w3id.org/isample/earthenv/mingroup/1.0/sulfidesulfosaltmineral  is defined in vocabulary https://w3id.org/isample/earthenv/mingroup/1.0/mineralgroupvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nSulfide minerals are a class of minerals containing sulfide or disulfide as the major anion. Sulfosalt minerals are those complex sulfide minerals with the general formula: AmBnSp; where A represents a metal such as copper, lead, silver, iron, and rarely mercury, zinc, vanadium; B usually represents semi-metal such as arsenic, antimony, bismuth, and rarely germanium, or metals like tin and rarely vanadium; and S is sulfur or rarely selenium or/and tellurium (m, n, and p are integer formula subscripts). Includes sulfides, selenides, tellurides; arsenides, antimonides, bismuthides; sulfarsenites, sulfantimonites, sulfbismuthites\nAlternate labels:\nNickel-Strunz class 02"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
     "section": "",
-    "text": "These documents are rendered using Quarto.\nSome pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.\n\nInstall quarto\nCreate python virtual envronment (to avoid polluting your global environment with dependencies)\nInstall dependencies\nInstall a python kernel named “isamples-quarto”:\npython -m ipykernel install --name isamples-quarto\nRender preview using quarto preview in the root folder of this repository."
+    "text": "Vocabularies and extensions:\nHistory:\nBased on draft DiSSCo specimen & collection classification, table 2, https://docs.google.com/document/d/19OPyOm9VF2qfI3M6RmJPvRfo8JlZ3tt0II05aGCyBHQ/ , with added classes to attempt a logical hierarchy.\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#biological-entity",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#biological-entity",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Biological entity",
+    "text": "Biological entity\n\nThe concept Biological entity  with URI https://w3id.org/isample/vocabulary/sampledfeature/1.0/biologicalentity  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nEukaryote, Lichen, Plasmid, Prokaryote, Virus\nDefinition:\nSampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature for which the focus is not the environment that the organism inhabits."
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#eukaryote",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#eukaryote",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Eukaryote",
+    "text": "Eukaryote\n\nThe concept Eukaryote  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/eukaryote  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote\nImmediately narrower concepts:\nAnimalia, Fungi, Plantae, Protista, Algae, Eukaryotic microorganisms\nDefinition:\norganism whose cells have a nucleus. Includes all animals, plants, fungi, and many unicellular organisms (https://en.wikipedia.org/wiki/Eukaryote)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#animalia",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#animalia",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Animalia",
+    "text": "Animalia\n\nThe concept Animalia  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/Animalia  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia\nImmediately narrower concepts:\nVertebrate, Arthropod, Mollusca, Other invertebrate, Porifera\nDefinition:\nAnimals are distinguished from other eukaryotes based on several key characteristics, including: 1)  animals are multicellular organisms 2) Animals are heterotrophic, they obtain their food by consuming other organisms or organic matter; 3) Animals lack cell walls; 4) Many animals have a nervous system; 5) Most animals reproduce sexually (Chat GPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#vertebrate",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#vertebrate",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Vertebrate",
+    "text": "Vertebrate\n\nThe concept Vertebrate  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/Vertebrate  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate\nImmediately narrower concepts:\nAmphibian, Bird, Fish, Mammal, Reptile\nDefinition:\nAnimals that have a vertebral column, a cranium, an endoskeleton, a well-developed muscular system, and an advanced nervous system (ChatGPT);"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#amphibian",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#amphibian",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Amphibian",
+    "text": "Amphibian\n\nThe concept Amphibian  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/amphibian  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate-&gt;Amphibian\nDefinition:\nVertebrates that have a dual life cycle, semi-permeable skin, absence of scales and claws, a three-chambered heart, and dependence on water for reproduction and survival (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#bird",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#bird",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Bird",
+    "text": "Bird\n\nThe concept Bird  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/bird  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate-&gt;Bird\nDefinition:\nVertebrates that have feathers, lightweight, hollow bones, a beak, an efficient respiratory system, and are warm-blooded. (ChatGPT) {@en}"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#fish",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#fish",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Fish",
+    "text": "Fish\n\nThe concept Fish  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/fish  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate-&gt;Fish\nDefinition:\nVertebrates that have gills, scales, fins, are cold-blooded, and commonly have a swim bladder; includes jawless fish, cartilaginous fish and bony fish. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#mammal",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#mammal",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Mammal",
+    "text": "Mammal\n\nThe concept Mammal  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/mammal  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate-&gt;Mammal\nDefinition:\nvertebrates that have mammary glands, hair or fur, three middle ear bones, specialized teeth, and are warm-blooded. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#reptile",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#reptile",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Reptile",
+    "text": "Reptile\n\nThe concept Reptile  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/reptile  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Vertebrate-&gt;Reptile\nDefinition:\nVertebrates that have scaly skin and claws, amniotic eggs, are cold-blooded, and are ectothermic (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#arthropod",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#arthropod",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Arthropod",
+    "text": "Arthropod\n\nThe concept Arthropod  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/arthropod  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod\nImmediately narrower concepts:\nArachnid, Crustaceans, Insect, Myriapod, Other arthropod\nDefinition:\ninvertebrate animals with an exoskeleton, a segmented body, and paired jointed appendages. Arthropods form the phylum Arthropoda. They are distinguished by their jointed limbs and cuticle made of chitin, often mineralised with calcium carbonate. The arthropod body plan consists of segments, each with a pair of appendages. Arthropods are bilaterally symmetrical and their body possesses an external skeleton. (https://en.wikipedia.org/wiki/Arthropod)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#arachnid",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#arachnid",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Arachnid",
+    "text": "Arachnid\n\nThe concept Arachnid  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/arachnid  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod-&gt;Arachnid\nDefinition:\na group of arthropods that share several key characteristics, including two main body segments, four pairs of legs, lack of antennae, simple eyes, and specialized feeding and defense structures called chelicerae (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#crustaceans",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#crustaceans",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Crustaceans",
+    "text": "Crustaceans\n\nThe concept Crustaceans  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/crustacea  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod-&gt;Crustaceans\nDefinition:\narthropod taxon which includes such animals as decapods, seed shrimp, branchiopods, fish lice, krill, remipedes, isopods, barnacles, copepods, amphipods and mantis shrimp. crustaceans have an exoskeleton, which they moult to grow. They are distinguished from other groups of arthropods, such as insects, myriapods and chelicerates, by the possession of biramous (two-parted) limbs, and by their larval forms, such as the nauplius stage of branchiopods and copepods. (https://en.wikipedia.org/wiki/Crustacean)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#insect",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#insect",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Insect",
+    "text": "Insect\n\nThe concept Insect  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/hexapoda  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod-&gt;Insect\nDefinition:\nInclude all hexapoda here; Insects are a group of hexapod arthropods characterized by having three main body segments (head, thorax, and abdomen), six legs, and wings in many species. All other hexapod arthropods, such as springtails and diplurans, are not classified as insects, but they share the same body plan of three main body segments and six legs. However, they lack wings and other features that are unique to insects. Therefore, all insects are hexapods, but not all hexapods are insects. (ChatGPT)\nAlternate labels:\nHexapoda"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#myriapod",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#myriapod",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Myriapod",
+    "text": "Myriapod\n\nThe concept Myriapod  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/myriapod  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod-&gt;Myriapod\nDefinition:\nArthropods such as millipedes and centipedes. (https://en.wikipedia.org/wiki/Myriapoda). A group of arthropods that have long, segmented body with numerous pairs of legs, simple eyes, specialized mouthparts, and a primarily terrestrial habitat, which distinguishes them from other arthropod groups such as insects and crustaceans. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#other-arthropod",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#other-arthropod",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Other arthropod",
+    "text": "Other arthropod\n\nThe concept Other arthropod  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/otherarthropod  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Arthropod-&gt;Other arthropod\nDefinition:\nincludes Chelicerata (horseshoe crabs, scorpions, and sea spiders), Trilobitomorpha ( extinct trilobites), and Pentastomida (parasitic arthropods that infect the respiratory systems of reptiles and mammals). (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#mollusca",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#mollusca",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Mollusca",
+    "text": "Mollusca\n\nThe concept Mollusca  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/mollusca  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Mollusca\nDefinition:\nanimals that have a soft body with a mantle, a radula (ribbon-like structure covered in tiny teeth that is used to scrape food), a muscular foot, an open circulatory system, and a visceral mass that contains the internal organs, including the digestive, excretory, and reproductive systems. (ChatGPT)\nAlternate labels:\nbivalves, cephalopods, gastropods"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#other-invertebrate",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#other-invertebrate",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Other invertebrate",
+    "text": "Other invertebrate\n\nThe concept Other invertebrate  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/otherinvertebrate  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Other invertebrate\nDefinition:\nIncludes Cnidaria (jellyfish, coral, anemones), Echinodermata (starfish, sea urchins, sea cucumbers), Nematoda (roundworms), Platyhelminthes (flatworms), Annelida (segmented worms), Ctenophora (comb jellies), Brachiopoda (lamp shells), Bryozoa (moss animals), Chaetognatha (arrow worms), Hemichordata (acorn worms), Xenacoelomorpha (simple-bodied worms) (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#porifera",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#porifera",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Porifera",
+    "text": "Porifera\n\nThe concept Porifera  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/porifera  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Animalia-&gt;Porifera\nDefinition:\nmulticellular animals that have bodies full of pores and channels allowing water to circulate through them, consisting of jelly-like mesohyl sandwiched between two thin layers of cells. (https://en.wikipedia.org/wiki/Sponge)\nAlternate labels:\nsponges"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#fungi",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#fungi",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Fungi",
+    "text": "Fungi\n\nThe concept Fungi  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/Fungi  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Fungi\nImmediately narrower concepts:\nMacrofungi, Microfungi\nDefinition:\neukaryotic organisms that contain chitin in their cell walls, are heterotrophs (they obtain their nutrients by absorbing organic material from their environment, either as decomposers, parasites, or symbionts) , lack chloroplasts, reproduce both sexually and asexually, and can take on a variety of growth forms, including single-celled yeasts, multicellular molds, and complex, specialized fruiting bodies. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#macrofungi",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#macrofungi",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Macrofungi",
+    "text": "Macrofungi\n\nThe concept Macrofungi  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/macrofungi  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Fungi-&gt;Macrofungi\nDefinition:\nMacrofungi refers to all fungi that produce visible fruiting bodies. These fungi are evolutionarily and ecologically very divergent. Evolutionarily, they belong to two main phyla, Ascomycota and Basidiomycota, and many of them have relatives that cannot form visible fruiting bodies.(https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6106070/)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#microfungi",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#microfungi",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Microfungi",
+    "text": "Microfungi\n\nThe concept Microfungi  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/microfungi  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Fungi-&gt;Microfungi\nDefinition:\nMicrofungi or micromycetes are fungi—eukaryotic organisms such as molds, mildews and rusts, which have microscopic spore-producing structures. They exhibit tube tip-growth and have cell walls composed of chitin, a polymer of N-acetylglucosamine. Microfungi are a paraphyletic group, distinguished from macrofungi only by the absence of a large, multicellular fruiting body. Include moulds, yeasts. (https://en.wikipedia.org/wiki/Microfungi)\nAlternate labels:\nmicromycetes"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#plantae",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#plantae",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Plantae",
+    "text": "Plantae\n\nThe concept Plantae  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/Plantae  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Plantae\nImmediately narrower concepts:\nBryophyte, Other plant, Pteridophyte, Seed plant\nDefinition:\nPlants are eukaryotes that have cell walls made of cellulose, specialized organelles called chloroplasts, which contain chlorophyll and other pigments that allow plants to perform photosynthesis and produce their own food; a unique life cycle that involves alternating between a haploid gametophyte stage and a diploid sporophyte stage; specialized regions called apical meristems at the tips of their roots and shoots, which allow for growth and the development of new tissues; specialized structures for reproduction, including flowers, cones, and spores, and most plants have specialized tissues called xylem and phloem, which transport water, nutrients, and other substances throughout the plant. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#bryophyte",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#bryophyte",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Bryophyte",
+    "text": "Bryophyte\n\nThe concept Bryophyte  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/bryophyte  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Plantae-&gt;Bryophyte\nDefinition:\nNon-vascular plants that do not have specialized tissues for transporting water and nutrients; includes mosses, Marchantiophyta (liverworts), and Anthocerotophyta (hornworts). (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#other-plant",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#other-plant",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Other plant",
+    "text": "Other plant\n\nThe concept Other plant  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/otherplant  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Plantae-&gt;Other plant\nDefinition:\nplants that do not fit in other plant sub class. Includes Lycopodiophyta (clubmosses) and  Equisetophyta (horsetails)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#pteridophyte",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#pteridophyte",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Pteridophyte",
+    "text": "Pteridophyte\n\nThe concept Pteridophyte  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/pteridophyte  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Plantae-&gt;Pteridophyte\nDefinition:\na vascular plant (with xylem and phloem) that disperses spores; they produce neither flowers nor seeds, Includes Ferns, horsetails (often treated as ferns), and lycophytes (clubmosses, spikemosses, and quillworts)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#seed-plant",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#seed-plant",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Seed plant",
+    "text": "Seed plant\n\nThe concept Seed plant  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/spermatophyte  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Plantae-&gt;Seed plant\nDefinition:\nPlant that produces seeds, hence the alternative name seed plant. Spermatophytes are a subset of the embryophytes or land plants. They include most familiar types of plants, including all flowers and most trees, but exclude some other types of plants such as ferns, mosses, algae. (https://en.wikipedia.org/wiki/Spermatophyte). Includes Gymnosperms (naked-seed plants) and Angiosperms (flowering plants).\nAlternate labels:\nspermatophyte"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#protista",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#protista",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Protista",
+    "text": "Protista\n\nThe concept Protista  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/Protista  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Protista\nImmediately narrower concepts:\nAmoebozoa, Protozoa\nDefinition:\nany organism whose cells contain a cell nucleus (a eucaryote) that is not an animal, plant, or fungus. (https://en.wikipedia.org/wiki/Protist). Protista is not a specific taxonomic group, but a term that historically referred to a group of eukaryotic organisms that did not fit into the other kingdoms of plants, animals, and fungi. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#amoebozoa",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#amoebozoa",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Amoebozoa",
+    "text": "Amoebozoa\n\nThe concept Amoebozoa  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/amoebozoa  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Protista-&gt;Amoebozoa\nImmediately narrower concepts:\nMyxomycetes\nDefinition:\na diverse group of organisms that share certain characteristics, such as the ability to move using pseudopodia, temporary extensions of the cell membrane and cytoplasm that allow the cell to crawl or engulf food particles, the lack of rigid cell walls, presence of mitochondria, which are organelles that generate energy for the cell through cellular respiration (chatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#myxomycetes",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#myxomycetes",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Myxomycetes",
+    "text": "Myxomycetes\n\nThe concept Myxomycetes  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/myxomycete  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Protista-&gt;Amoebozoa-&gt;Myxomycetes\nDefinition:\nAclass of slime molds. All species pass through several, very different morphologic phases, such as microscopic individual cells, slimy amorphous organisms visible with the naked eye and conspicuously shaped fruit bodies. Although they are monocellular, they can reach immense widths and weights. Some consider the Myxomycota to be a separate kingdom, with an unsettled phylogeny because of conflicting molecular and developmental data. The relations among Myxogastrid orders are as yet unclear. (https://en.wikipedia.org/wiki/Mycetozoa). Mycetozoa includes the slime molds, which are a group of organisms that have both amoeboid and fungal-like characteristics. The Mycetozoa can be further subdivided into two groups: the plasmodial slime molds and the cellular slime molds. Myxomycetes are unique among the Amoebozoa in that they have a complex life cycle involving the formation of spore-bearing structures called fruiting bodies, which is a key feature that distinguishes them from other amoebae. (ChatGPT)\nAlternate labels:\nMycetozoa"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#protozoa",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#protozoa",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Protozoa",
+    "text": "Protozoa\n\nThe concept Protozoa  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/protozoa  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Protista-&gt;Protozoa\nDefinition:\nA single-celled eukaryote, either free-living or parasitic, that feed on organic matter such as other microorganisms or organic tissues and debris. Historically, protozoans were regarded as ‘one-celled animals’, because they often possess animal-like behaviours, such as motility and predation, and lack a cell wall, as found in plants and many algae. (https://en.wikipedia.org/wiki/Protozoa)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#algae",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#algae",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Algae",
+    "text": "Algae\n\nThe concept Algae  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/algae  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Algae\nDefinition:\ninformal term for a large and diverse group of photosynthetic eukaryotic organisms. Included organisms range from unicellular microalgae, such as Chlorella, Prototheca and the diatoms, to multicellular forms, such as the giant kelp, a large brown alga which may grow up to 50 metres (160 ft) in length. Most are aquatic and autotrophic (they generate food internally) and lack many of the distinct cell and tissue types, such as stomata, xylem and phloem that are found in land plants. Includes red algae (Rhodophycophyta), brown algae (Phaeophycophyta), and green algae (Chlorophycophyta). https://en.wikipedia.org/wiki/Algae"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#eukaryotic-microorganisms",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#eukaryotic-microorganisms",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Eukaryotic microorganisms",
+    "text": "Eukaryotic microorganisms\n\nThe concept Eukaryotic microorganisms  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/eukaryoticmicroorganisms  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Eukaryote-&gt;Eukaryotic microorganisms\nDefinition:\nEukaryote single-cell organisms that does not fit in one of the other classes."
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#lichen",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#lichen",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Lichen",
+    "text": "Lichen\n\nThe concept Lichen  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/lichen  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Lichen\nDefinition:\nA composite organism that arises from algae or cyanobacteria living among filaments of multiple fungi species in a mutualistic relationship. (https://en.wikipedia.org/wiki/Lichen). Lichens are not classified under a specific kingdom as they are a symbiotic association between a fungus and either an alga or a cyanobacterium. The fungal partner belongs to the kingdom Fungi, while the algal or cyanobacterial partner belongs to either the kingdom Plantae or the kingdom Bacteria, respectively. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#plasmid",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#plasmid",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Plasmid",
+    "text": "Plasmid\n\nThe concept Plasmid  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/plasmid  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Plasmid\nDefinition:\nA plasmid is a small, extrachromosomal DNA molecule within a cell that is physically separated from chromosomal DNA and can replicate independently. While chromosomes are large and contain all the essential genetic information for living under normal conditions, plasmids are usually very small and contain only additional genes that may be useful in certain situations or conditions. (https://en.wikipedia.org/wiki/Plasmid)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#prokaryote",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#prokaryote",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Prokaryote",
+    "text": "Prokaryote\n\nThe concept Prokaryote  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/prokaryote  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Prokaryote\nImmediately narrower concepts:\nArchaea, Bacteria\nDefinition:\nsingle-celled organisms that lack a nucleus and other membrane-bound organelles. Unlike cells of animals and other eukaryotes, bacterial cells do not contain a nucleus and rarely harbour membrane-bound organelles. Molecular systematics showed prokaryotic life to consist of two separate domains, originally called Eubacteria and Archaebacteria, but now called Bacteria and Archaea that evolved independently from an ancient common ancestor. Almost all prokaryotes have a cell wall, a protective structure that allows them to survive in extreme conditions, which is located outside of their plasma membrane. Archaea and bacteria cannot reproduce sexually.\nAlternate labels:\nMonera"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#archaea",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#archaea",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Archaea",
+    "text": "Archaea\n\nThe concept Archaea  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/archaea  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Prokaryote-&gt;Archaea\nDefinition:\narchaeal cell walls are composed of polysaccharides (sugars). they never have peptidoglycan in their cell walls, their cell membranes contain lipids of unique composition (glycerol molecules are mirror images of those found in other cells, and form ether linkages to isoprenoid side chains), and their 16S ribosomal- RNA nucleotide sequences are unlike those of bacteria. (https://quizlet.com/234154298/archaea-and-bacteria-flash-cards/). The common characteristics of Archaebacteria known to date are these: (1) the presence of characteristic tRNAs and ribosomal RNAs; (2) the absence of peptidoglycan cell walls, with in many cases, replacement by a largely proteinaceous coat; (3) the occurrence of ether linked lipids built from phytanyl chains and (4) in all cases known so far, their occurrence only in unusual habitats. (https://pubmed.ncbi.nlm.nih.gov/691075/)\nAlternate labels:\nArchaebacteria"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#bacteria",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#bacteria",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Bacteria",
+    "text": "Bacteria\n\nThe concept Bacteria  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/bacteria  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Prokaryote-&gt;Bacteria\nDefinition:\na large domain of prokaryotic microorganisms. Bacterial cells do not contain a nucleus and rarely harbour membrane-bound organelles. The bacterial cell is surrounded by a cell membrane, which is made primarily of phospholipids. This membrane encloses the contents of the cell and acts as a barrier to hold nutrients, proteins and other essential components of the cytoplasm within the cell. Bacterial cell walls are composed of peptidoglycan, a complex of protein and sugars, while archaeal cell walls are composed of polysaccharides (sugars). (https://en.wikipedia.org/wiki/Bacteria)\nAlternate labels:\nEubacteria"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#virus",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#virus",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Virus",
+    "text": "Virus\n\nThe concept Virus  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/virus  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Virus\nImmediately narrower concepts:\nOther Virus, Phage\nDefinition:\nA virus is a submicroscopic infectious agent that replicates only inside the living cells of an organism. Realms are Adnaviria, Duplodnaviria, Monodnaviria, Riboviria, Ribozyviria, Varidnaviria (https://en.wikipedia.org/wiki/Virus). Viruses are not cells at all, so they are neither prokaryotes nor eukaryotes. (https://bio.libretexts.org/Bookshelves/Introductory_and_General_Biology/Book)"
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#other-virus",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#other-virus",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Other Virus",
+    "text": "Other Virus\n\nThe concept Other Virus  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/othervirus  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Virus-&gt;Other Virus\nDefinition:\nVirus that is not a member of order Caudovirales (e.g., bacteriophage T4, lambda phage)."
+  },
+  {
+    "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#phage",
+    "href": "models/generated/extensions/biology_sampledfeature_extension.html#phage",
+    "title": "Biology Extension: Basic taxon classes for biological entity",
+    "section": "Phage",
+    "text": "Phage\n\nThe concept Phage  with URI https://w3id.org/isample/biology/biosampledfeature/1.0/phage  is defined in vocabulary https://w3id.org/isample/biology/biosampledfeature/1.0/biologicentityvocabulary\nPath from the top concept:  Biological entity-&gt;Virus-&gt;Phage\nDefinition:\nA bacteriophage, also known informally as a phage, is a duplodnaviria virus that infects and replicates within bacteria and archaea. Bacteriophages are composed of proteins that encapsulate a DNA or RNA genome, and may have structures that are either simple or elaborate. Their genomes may encode as few as four genes (e.g. MS2) and as many as hundreds of genes. Phages replicate within the bacterium following the injection of their genome into its cytoplasm. (https://en.wikipedia.org/wiki/Bacteriophage). Includes all virus in order Caudovirales (e.g., bacteriophage T4, lambda phage).\nAlternate labels:\nbacteriophage"
   },
   {
     "objectID": "models/index.html",
@@ -376,6 +698,1196 @@
     "title": "iSamples Core Model",
     "section": "Vocabularies",
     "text": "Vocabularies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:"
+  },
+  {
+    "objectID": "setup.html",
+    "href": "setup.html",
+    "title": "Setup document editing",
+    "section": "",
+    "text": "These documents are rendered using Quarto.\nSome pages use the Jupyter kernel to fetch and render content on some pages, and so python and dependencies need to be installed.\n\nInstall quarto\nCreate python virtual envronment (to avoid polluting your global environment with dependencies)\nInstall dependencies\nInstall a python kernel named “isamples-quarto”:\npython -m ipykernel install --name isamples-quarto\nRender preview using quarto preview in the root folder of this repository."
+  },
+  {
+    "objectID": "pubs.html",
+    "href": "pubs.html",
+    "title": "Publications",
+    "section": "",
+    "text": "TODO:\n\nFigure out grouping by reference type\nAutomate update of the .bib file\nAdjust the bib stlye\n\n\n\n1. Davies N, Deck J, Kansa EC, Kansa SW, Kunze J, Meyer C, Orrell T, Ramdeen S, Snyder R, Vieglais D, Walls RL, Lehnert K (2021) Internet of Samples (iSamples): Toward an interdisciplinary cyberinfrastructure for material samples. GigaScience, 10(5)https://doi.org/10.1093/gigascience/giab028"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About iSamples",
+    "section": "",
+    "text": "Project Objectives\n\nDesign and develop iSamples infrastructure (iSamples in a Box and iSamples Central);\nBuild four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);\nConduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.\n\n\n\n\niSamples diagram\n\n\n\n\nBackground\nResearch frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.\nThe iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.\nLeveraging significant national investments, iSamples provides the missing link among:\n\nphysical collections (e.g., natural history museums, herbaria, biobanks),\nfield stations, marine laboratories, long-term ecological research sites, and observatories, and\ndata repositories and cyberinfrastructure. iSamples delivers enhanced infrastructure for STEM research and education, decision-makers, and the general public.\n\niSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).\n\n\nTechnical perspective\nThe iSamples project will:\n\nCreate a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.\nBuild upon on existing identifier infrastructure such as IGSNs (Global Sample Number;) and ARKs (Archival Resource Keys), but is agnostic to identifier type.\nEncourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.\nExtend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.\n\n\n\nPrincipal Investigators\n\nKerstin Lehnert, Columbia University\nRamona Walls, University of Arizona\nNeil Davies, The Regents of the University of California, Berkeley\nDavid Vieglais, University of Kansas Biodiversity Institute"
+  },
+  {
+    "objectID": "models/mapping_sources.html",
+    "href": "models/mapping_sources.html",
+    "title": "Mapping Source Records",
+    "section": "",
+    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+  },
+  {
+    "objectID": "models/mapping_sources.html#mapping-from-sources-to-core",
+    "href": "models/mapping_sources.html#mapping-from-sources-to-core",
+    "title": "Mapping Source Records",
+    "section": "",
+    "text": "In general the process is :\nRemove plantuml diagram… [smr 2024-01-04]"
+  },
+  {
+    "objectID": "models/mapping_sources.html#geome",
+    "href": "models/mapping_sources.html#geome",
+    "title": "Mapping Source Records",
+    "section": "GEOME",
+    "text": "GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```jrrifjqm assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```jrrifjqm assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html",
+    "href": "models/generated/extensions/opencontext_material_extension.html",
+    "title": "OpenContext material type extension draft",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#amber",
+    "href": "models/generated/extensions/opencontext_material_extension.html#amber",
+    "title": "OpenContext material type extension draft",
+    "section": "amber",
+    "text": "amber\n\nThe concept amber  with URI https://w3id.org/isample/opencontext/material/0.1/amber  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#anthropogenic-organic-material",
+    "href": "models/generated/extensions/opencontext_material_extension.html#anthropogenic-organic-material",
+    "title": "OpenContext material type extension draft",
+    "section": "anthropogenic organic material",
+    "text": "anthropogenic organic material\n\nThe concept anthropogenic organic material  with URI https://w3id.org/isample/opencontext/material/0.1/anthropogenicorganicmaterial  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nplastic (material)\nDefinition:\nOrganic material manufactured by humans"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#basalt",
+    "href": "models/generated/extensions/opencontext_material_extension.html#basalt",
+    "title": "OpenContext material type extension draft",
+    "section": "basalt",
+    "text": "basalt\n\nThe concept basalt  with URI https://w3id.org/isample/opencontext/material/0.1/basalt  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#bone",
+    "href": "models/generated/extensions/opencontext_material_extension.html#bone",
+    "title": "OpenContext material type extension draft",
+    "section": "bone",
+    "text": "bone\n\nThe concept bone  with URI https://w3id.org/isample/opencontext/material/0.1/bone  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#brass",
+    "href": "models/generated/extensions/opencontext_material_extension.html#brass",
+    "title": "OpenContext material type extension draft",
+    "section": "brass",
+    "text": "brass\n\nThe concept brass  with URI https://w3id.org/isample/opencontext/material/0.1/brass  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nalloy of copper (Cu) and zinc (Zn)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#bronze",
+    "href": "models/generated/extensions/opencontext_material_extension.html#bronze",
+    "title": "OpenContext material type extension draft",
+    "section": "bronze",
+    "text": "bronze\n\nThe concept bronze  with URI https://w3id.org/isample/opencontext/material/0.1/bronze  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nalloy consisting primarily of copper with subordinate tin; often includes other metals"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#ceramic-clay",
+    "href": "models/generated/extensions/opencontext_material_extension.html#ceramic-clay",
+    "title": "OpenContext material type extension draft",
+    "section": "ceramic clay",
+    "text": "ceramic clay\n\nThe concept ceramic clay  with URI https://w3id.org/isample/opencontext/material/0.1/ceramicclay  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nbrick clay, bucchero, faience, porcelain, terracotta, terra sigilata\nDefinition:\nAny of the various hard, brittle, heat-resistant and corrosion-resistant materials made by shaping and then firing an inorganic, nonmetallic material, such as clay, at a high temperature. Common examples are earthenware, porcelain, and brick. (https://en.wikipedia.org/wiki/Ceramic)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#charcoal",
+    "href": "models/generated/extensions/opencontext_material_extension.html#charcoal",
+    "title": "OpenContext material type extension draft",
+    "section": "charcoal",
+    "text": "charcoal\n\nThe concept charcoal  with URI https://w3id.org/isample/opencontext/material/0.1/charcoal  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#chert",
+    "href": "models/generated/extensions/opencontext_material_extension.html#chert",
+    "title": "OpenContext material type extension draft",
+    "section": "chert",
+    "text": "chert\n\nThe concept chert  with URI https://w3id.org/isample/opencontext/material/0.1/chert  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nflint\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#copper",
+    "href": "models/generated/extensions/opencontext_material_extension.html#copper",
+    "title": "OpenContext material type extension draft",
+    "section": "copper",
+    "text": "copper\n\nThe concept copper  with URI https://w3id.org/isample/opencontext/material/0.1/copper  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\ncopper metal, includes copper-rich alloys not identifiable as brass or bronze."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#dolomite",
+    "href": "models/generated/extensions/opencontext_material_extension.html#dolomite",
+    "title": "OpenContext material type extension draft",
+    "section": "dolomite",
+    "text": "dolomite\n\nThe concept dolomite  with URI https://w3id.org/isample/opencontext/material/0.1/dolomite  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nAlternate labels:\ndolostone"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#fiber-material",
+    "href": "models/generated/extensions/opencontext_material_extension.html#fiber-material",
+    "title": "OpenContext material type extension draft",
+    "section": "fiber material",
+    "text": "fiber material\n\nThe concept fiber material  with URI https://w3id.org/isample/opencontext/material/0.1/fibermaterial  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nmaterial composed of fibers twisted or woved togther. Fibers might be plant material or Anthropogenic Organic material."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#gabbro",
+    "href": "models/generated/extensions/opencontext_material_extension.html#gabbro",
+    "title": "OpenContext material type extension draft",
+    "section": "gabbro",
+    "text": "gabbro\n\nThe concept gabbro  with URI https://w3id.org/isample/opencontext/material/0.1/gabbro  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#glass",
+    "href": "models/generated/extensions/opencontext_material_extension.html#glass",
+    "title": "OpenContext material type extension draft",
+    "section": "glass",
+    "text": "glass\n\nThe concept glass  with URI https://w3id.org/isample/opencontext/material/0.1/glass  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nA non-crystalline, often transparent amorphous solid, most often formed by rapid cooling (quenching) of the molten silca rich material. (https://en.wikipedia.org/wiki/Glass)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#gold",
+    "href": "models/generated/extensions/opencontext_material_extension.html#gold",
+    "title": "OpenContext material type extension draft",
+    "section": "gold",
+    "text": "gold\n\nThe concept gold  with URI https://w3id.org/isample/opencontext/material/0.1/gold  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\na chemical element with atomic number 79; a dense, soft metal that is easily malleable and ductile. It has a melting point of 1064 degrees Celsius and a boiling point of 2,807 degrees Celsius. (ChatGPT)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#greywacke",
+    "href": "models/generated/extensions/opencontext_material_extension.html#greywacke",
+    "title": "OpenContext material type extension draft",
+    "section": "greywacke",
+    "text": "greywacke\n\nThe concept greywacke  with URI https://w3id.org/isample/opencontext/material/0.1/greywacke  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nAlternate labels:\ngraywacke"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#hematite",
+    "href": "models/generated/extensions/opencontext_material_extension.html#hematite",
+    "title": "OpenContext material type extension draft",
+    "section": "hematite",
+    "text": "hematite\n\nThe concept hematite  with URI https://w3id.org/isample/opencontext/material/0.1/hematite  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#iron",
+    "href": "models/generated/extensions/opencontext_material_extension.html#iron",
+    "title": "OpenContext material type extension draft",
+    "section": "iron",
+    "text": "iron\n\nThe concept iron  with URI https://w3id.org/isample/opencontext/material/0.1/iron  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nIron or iron-rich alloy"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#kaolin",
+    "href": "models/generated/extensions/opencontext_material_extension.html#kaolin",
+    "title": "OpenContext material type extension draft",
+    "section": "kaolin",
+    "text": "kaolin\n\nThe concept kaolin  with URI https://w3id.org/isample/opencontext/material/0.1/kaolin  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#lead",
+    "href": "models/generated/extensions/opencontext_material_extension.html#lead",
+    "title": "OpenContext material type extension draft",
+    "section": "lead",
+    "text": "lead\n\nThe concept lead  with URI https://w3id.org/isample/opencontext/material/0.1/lead  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nlead or lead-rich alloy"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#limestone",
+    "href": "models/generated/extensions/opencontext_material_extension.html#limestone",
+    "title": "OpenContext material type extension draft",
+    "section": "limestone",
+    "text": "limestone\n\nThe concept limestone  with URI https://w3id.org/isample/opencontext/material/0.1/limestone  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#marble",
+    "href": "models/generated/extensions/opencontext_material_extension.html#marble",
+    "title": "OpenContext material type extension draft",
+    "section": "marble",
+    "text": "marble\n\nThe concept marble  with URI https://w3id.org/isample/opencontext/material/0.1/marble  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#mica",
+    "href": "models/generated/extensions/opencontext_material_extension.html#mica",
+    "title": "OpenContext material type extension draft",
+    "section": "mica",
+    "text": "mica\n\nThe concept mica  with URI https://w3id.org/isample/opencontext/material/0.1/mica  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#obsidian",
+    "href": "models/generated/extensions/opencontext_material_extension.html#obsidian",
+    "title": "OpenContext material type extension draft",
+    "section": "obsidian",
+    "text": "obsidian\n\nThe concept obsidian  with URI https://w3id.org/isample/opencontext/material/0.1/obsidian  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#organic-animal-material",
+    "href": "models/generated/extensions/opencontext_material_extension.html#organic-animal-material",
+    "title": "OpenContext material type extension draft",
+    "section": "organic animal material",
+    "text": "organic animal material\n\nThe concept organic animal material  with URI https://w3id.org/isample/opencontext/material/0.1/organicanimalmaterial  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nhair, leather\nDefinition:\nMaterial that is (or was) a constituent of an animal organisms, composed primarily of one or more very large molecules of biological origin."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#organic-plant-material",
+    "href": "models/generated/extensions/opencontext_material_extension.html#organic-plant-material",
+    "title": "OpenContext material type extension draft",
+    "section": "organic plant material",
+    "text": "organic plant material\n\nThe concept organic plant material  with URI https://w3id.org/isample/opencontext/material/0.1/organicplantmaterial  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nplant fiber, wood\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#paper",
+    "href": "models/generated/extensions/opencontext_material_extension.html#paper",
+    "title": "OpenContext material type extension draft",
+    "section": "paper",
+    "text": "paper\n\nThe concept paper  with URI https://w3id.org/isample/opencontext/material/0.1/paper  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nthin matted or felted sheets or webs of fiber formed and dried on a fine screen from a pulpy water suspension. The fibers may be animal, such as hair, silk or wool, or mineral, such as asbestos, or synthetic. However most paper is made from cellulosic plant fiber, such as from wood pulp, grass, cotton, linen, and straw. (http://vocab.getty.edu/page/aat/300014109)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#pewter",
+    "href": "models/generated/extensions/opencontext_material_extension.html#pewter",
+    "title": "OpenContext material type extension draft",
+    "section": "pewter",
+    "text": "pewter\n\nThe concept pewter  with URI https://w3id.org/isample/opencontext/material/0.1/pewter  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nalloy consisting of mostly tin, with antimony, minor copper or bismuth, and sometimes silver."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#plaster",
+    "href": "models/generated/extensions/opencontext_material_extension.html#plaster",
+    "title": "OpenContext material type extension draft",
+    "section": "plaster",
+    "text": "plaster\n\nThe concept plaster  with URI https://w3id.org/isample/opencontext/material/0.1/plaster  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nplaster or mortar"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#plaster-or-mortar",
+    "href": "models/generated/extensions/opencontext_material_extension.html#plaster-or-mortar",
+    "title": "OpenContext material type extension draft",
+    "section": "plaster or mortar",
+    "text": "plaster or mortar\n\nThe concept plaster or mortar  with URI https://w3id.org/isample/opencontext/material/0.1/plasterormortar  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nPlaster is a pasty material that hardens on drying and is used for coating walls, ceilings, and partitions. Mortar is a similar pasty material used for cementing bricks or block together or coating walls in building construction."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#pumice",
+    "href": "models/generated/extensions/opencontext_material_extension.html#pumice",
+    "title": "OpenContext material type extension draft",
+    "section": "pumice",
+    "text": "pumice\n\nThe concept pumice  with URI https://w3id.org/isample/opencontext/material/0.1/pumice  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#quartz",
+    "href": "models/generated/extensions/opencontext_material_extension.html#quartz",
+    "title": "OpenContext material type extension draft",
+    "section": "quartz",
+    "text": "quartz\n\nThe concept quartz  with URI https://w3id.org/isample/opencontext/material/0.1/quartz  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#rubber",
+    "href": "models/generated/extensions/opencontext_material_extension.html#rubber",
+    "title": "OpenContext material type extension draft",
+    "section": "rubber",
+    "text": "rubber\n\nThe concept rubber  with URI https://w3id.org/isample/opencontext/material/0.1/rubber  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nAn elastomer, synthesized from petroleum byproducts or from latex harvested from the rubber tree (Hevea brasiliensis)."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#shell",
+    "href": "models/generated/extensions/opencontext_material_extension.html#shell",
+    "title": "OpenContext material type extension draft",
+    "section": "shell",
+    "text": "shell\n\nThe concept shell  with URI https://w3id.org/isample/opencontext/material/0.1/shell  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nHard outer covering of invertebrate creatures, composed of calcareous or chitinous material (http://vocab.getty.edu/page/aat/300011829)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#slate",
+    "href": "models/generated/extensions/opencontext_material_extension.html#slate",
+    "title": "OpenContext material type extension draft",
+    "section": "slate",
+    "text": "slate\n\nThe concept slate  with URI https://w3id.org/isample/opencontext/material/0.1/slate  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#travertine",
+    "href": "models/generated/extensions/opencontext_material_extension.html#travertine",
+    "title": "OpenContext material type extension draft",
+    "section": "travertine",
+    "text": "travertine\n\nThe concept travertine  with URI https://w3id.org/isample/opencontext/material/0.1/travertine  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nThis is the top concept of the vocabulary.\nDefinition:\nA limestone consisting of a massive usually layered calcium carbonate (such as aragonite or calcite) formed by deposition from spring waters, especially from hot springs. (https://www.mindat.org/min-39057.html)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#plastic-material",
+    "href": "models/generated/extensions/opencontext_material_extension.html#plastic-material",
+    "title": "OpenContext material type extension draft",
+    "section": "plastic (material)",
+    "text": "plastic (material)\n[]{#plastic-(material)}\nThe concept plastic (material)  with URI https://w3id.org/isample/opencontext/material/0.1/plastic  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  anthropogenic organic material-&gt;plastic (material)\nDefinition:\nSynthetic or semi-synthetic material that uses organic polymers as a main ingredient."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#brick-clay",
+    "href": "models/generated/extensions/opencontext_material_extension.html#brick-clay",
+    "title": "OpenContext material type extension draft",
+    "section": "brick clay",
+    "text": "brick clay\n\nThe concept brick clay  with URI https://w3id.org/isample/opencontext/material/0.1/brickclay  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;brick clay\nDefinition:\ndried or low-fired clay-rich material used to make blocks for construction"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#bucchero",
+    "href": "models/generated/extensions/opencontext_material_extension.html#bucchero",
+    "title": "OpenContext material type extension draft",
+    "section": "bucchero",
+    "text": "bucchero\n\nThe concept bucchero  with URI https://w3id.org/isample/opencontext/material/0.1/bucchero  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;bucchero\nDefinition:\nceramic with black fabric and glossy, black surface achieved through reduction firing"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#faience",
+    "href": "models/generated/extensions/opencontext_material_extension.html#faience",
+    "title": "OpenContext material type extension draft",
+    "section": "faience",
+    "text": "faience\n\nThe concept faience  with URI https://w3id.org/isample/opencontext/material/0.1/faience  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;faience\nDefinition:\nfine white-glazed ceramic (tin oxide based glaze)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#porcelain",
+    "href": "models/generated/extensions/opencontext_material_extension.html#porcelain",
+    "title": "OpenContext material type extension draft",
+    "section": "porcelain",
+    "text": "porcelain\n\nThe concept porcelain  with URI https://w3id.org/isample/opencontext/material/0.1/porcelain  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;porcelain\nDefinition:\nKaolin rich high-fired ceramic; In China, it includes any such ware that is highly fired enough to produce a ringing sound when struck. In Europe, it is limited to hard-fired ceramic that is translucent. (https://vocab.getty.edu/aat/scopeNote/45436)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#terracotta",
+    "href": "models/generated/extensions/opencontext_material_extension.html#terracotta",
+    "title": "OpenContext material type extension draft",
+    "section": "terracotta",
+    "text": "terracotta\n\nThe concept terracotta  with URI https://w3id.org/isample/opencontext/material/0.1/terracotta  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;terracotta\nDefinition:\nclay-based unglazed or glazed, porous ceramic"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#terra-sigilata",
+    "href": "models/generated/extensions/opencontext_material_extension.html#terra-sigilata",
+    "title": "OpenContext material type extension draft",
+    "section": "terra sigilata",
+    "text": "terra sigilata\n\nThe concept terra sigilata  with URI https://w3id.org/isample/opencontext/material/0.1/terrasigilata  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  ceramic clay-&gt;terra sigilata\nDefinition:\nFine red Ancient Roman pottery with glossy surface slips"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#flint",
+    "href": "models/generated/extensions/opencontext_material_extension.html#flint",
+    "title": "OpenContext material type extension draft",
+    "section": "flint",
+    "text": "flint\n\nThe concept flint  with URI https://w3id.org/isample/opencontext/material/0.1/flint  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  chert-&gt;flint\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#hair",
+    "href": "models/generated/extensions/opencontext_material_extension.html#hair",
+    "title": "OpenContext material type extension draft",
+    "section": "hair",
+    "text": "hair\n\nThe concept hair  with URI https://w3id.org/isample/opencontext/material/0.1/hair  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  organic animal material-&gt;hair\nDefinition:\nMaterial comprising the cylindrical filaments that grow from follicles embedded in the skin of mammals. Hair is a column of overlapping, fused cells that are composed of the protein keratin; hair is composed of three parts: the innermost column is the medula, the surrounding live cells (the cortex) contain pigment, and the outermost dead transparent cells are the cuticular scales. The portion of the hair outside of the skin is called the shaft. Fine, closely spaced hair that covers most of an animal’s body is called fur. Dense, soft, curled hair is called wool. Coarse, stiff hairs are called bristles, spines, or quills. Horsehair and cattle hair have been used for brushes, plaster binders, haircloth, and upholstery stuffing. Rabbit hair, often called rabbit fur, has been used to make felt hats. (http://vocab.getty.edu/page/aat/300011814)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#leather",
+    "href": "models/generated/extensions/opencontext_material_extension.html#leather",
+    "title": "OpenContext material type extension draft",
+    "section": "leather",
+    "text": "leather\n\nThe concept leather  with URI https://w3id.org/isample/opencontext/material/0.1/leather  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  organic animal material-&gt;leather\nDefinition:\nThe skin or hide of an animal that has been tanned to render it resistant to putrefication and relatively soft and flexible when dry. (http://vocab.getty.edu/page/aat/300011845)"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#plant-fiber",
+    "href": "models/generated/extensions/opencontext_material_extension.html#plant-fiber",
+    "title": "OpenContext material type extension draft",
+    "section": "plant fiber",
+    "text": "plant fiber\n\nThe concept plant fiber  with URI https://w3id.org/isample/opencontext/material/0.1/plantfiber  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  organic plant material-&gt;plant fiber\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_material_extension.html#wood",
+    "href": "models/generated/extensions/opencontext_material_extension.html#wood",
+    "title": "OpenContext material type extension draft",
+    "section": "wood",
+    "text": "wood\n\nThe concept wood  with URI https://w3id.org/isample/opencontext/material/0.1/wood  is defined in vocabulary https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab\nPath from the top concept:  organic plant material-&gt;wood\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#architectural-element",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#architectural-element",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Architectural element",
+    "text": "Architectural element\n\nThe concept Architectural element  with URI https://w3id.org/isample/opencontext/specimentype/0.1/architecturalelement  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nArtifact that was part of a building."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#clothing",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#clothing",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Clothing",
+    "text": "Clothing\n\nThe concept Clothing  with URI https://w3id.org/isample/opencontext/specimentype/0.1/clothing  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nItem intended to be worn to cover the (human) body"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#coin",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#coin",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Coin",
+    "text": "Coin\n\nThe concept Coin  with URI https://w3id.org/isample/opencontext/specimentype/0.1/coin  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\npeice of metal issued by some authority and recognized as money."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#container-object",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#container-object",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Container object",
+    "text": "Container object\n\nThe concept Container object  with URI https://w3id.org/isample/opencontext/specimentype/0.1/containerobject  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nItem designed to contain some fluid, granular material, or other items for preservation, transportation or display."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#domestic-item",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#domestic-item",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Domestic item",
+    "text": "Domestic item\n\nThe concept Domestic item  with URI https://w3id.org/isample/opencontext/specimentype/0.1/domesticitem  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nitem intended for household use."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#ornament",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#ornament",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Ornament",
+    "text": "Ornament\n\nThe concept Ornament  with URI https://w3id.org/isample/opencontext/specimentype/0.1/ornament  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nitem intended for decoration."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#bone-object",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#bone-object",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Bone object",
+    "text": "Bone object\n\nThe concept Bone object  with URI https://w3id.org/isample/opencontext/specimentype/0.1/peiceofbone  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nSample is an individual bone or part of a bone from an animal."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#photograph",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#photograph",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Photograph",
+    "text": "Photograph\n\nThe concept Photograph  with URI https://w3id.org/isample/opencontext/specimentype/0.1/photograph  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nimage produced by the action of light on a chemically sensitive surface, preserved on paper, glass or other physical substrate."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#pot-sherd",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#pot-sherd",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Pot sherd",
+    "text": "Pot sherd\n\nThe concept Pot sherd  with URI https://w3id.org/isample/opencontext/specimentype/0.1/sherd  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nfragment of pottery"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#tile",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#tile",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Tile",
+    "text": "Tile\n\nThe concept Tile  with URI https://w3id.org/isample/opencontext/specimentype/0.1/tile  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nflat or curved piece of fired clay, stone, or concrete used especially for roofs, floors, or walls and often for ornamental work"
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#utility-item",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#utility-item",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Utility item",
+    "text": "Utility item\n\nThe concept Utility item  with URI https://w3id.org/isample/opencontext/specimentype/0.1/utilityitem  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nItem intended for use in manufacture, construction, agriculture or other work activity."
+  },
+  {
+    "objectID": "models/generated/extensions/opencontext_materialsampletype.html#weapon",
+    "href": "models/generated/extensions/opencontext_materialsampletype.html#weapon",
+    "title": "Open Context vocabulary extension for material sample type",
+    "section": "Weapon",
+    "text": "Weapon\n\nThe concept Weapon  with URI https://w3id.org/isample/opencontext/specimentype/0.1/weapon  is defined in vocabulary https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab\nThis is the top concept of the vocabulary.\nDefinition:\nItem for use in combat, hunting, or self defense"
+  },
+  {
+    "objectID": "models/generated/extensions/readme.html",
+    "href": "models/generated/extensions/readme.html",
+    "title": "iSamples",
+    "section": "",
+    "text": "this folder contains markdown output for extension vocabularies"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "",
+    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#aphanite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#aphanite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "aphanite",
+    "text": "aphanite\n\nThe concept aphanite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Aphanite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#biogenic-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#biogenic-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "biogenic sediment",
+    "text": "biogenic sediment\n\nThe concept biogenic sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Biogenic_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#breccia",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#breccia",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "breccia",
+    "text": "breccia\n\nThe concept breccia  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Breccia  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#carbonate-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#carbonate-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "carbonate sediment",
+    "text": "carbonate sediment\n\nThe concept carbonate sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Carbonate_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#chemical-sedimentary-material",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#chemical-sedimentary-material",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "chemical sedimentary material",
+    "text": "chemical sedimentary material\n\nThe concept chemical sedimentary material  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Chemical_Sedimentary_Material  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#clastic-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#clastic-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "clastic sediment",
+    "text": "clastic sediment\n\nThe concept clastic sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Clastic_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\ndiamicton\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fault-related-material",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fault-related-material",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "fault related material",
+    "text": "fault related material\n\nThe concept fault related material  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Fault_Related_Material  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\ncataclasite series, mylonitic rock, breccia gouge series\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gravel-size-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gravel-size-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "gravel size sediment",
+    "text": "gravel size sediment\n\nThe concept gravel size sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Gravel_Size_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hybrid-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hybrid-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "hybrid sediment",
+    "text": "hybrid sediment\n\nThe concept hybrid sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Hybrid_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "igneous rock",
+    "text": "igneous rock\n\nThe concept igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\nacidic igneous rock, basic igneous rock, doleritic rock, exotic composition igneous rock, fine grained igneous rock, fragmental igneous rock, glass rich igneous rock, hypabyssal intrusive rock, intermediate composition igneous rock, phaneritic igneous rock, plutonic rock, porphyry, ultrabasic igneous rock, ultramafic igneous rock, volcanic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#impact-generated-material",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#impact-generated-material",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "impact generated material",
+    "text": "impact generated material\n\nThe concept impact generated material  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Impact_Generated_Material  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#iron-rich-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#iron-rich-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "iron rich sediment",
+    "text": "iron rich sediment\n\nThe concept iron rich sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Iron_Rich_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#massive-sulphide",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#massive-sulphide",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "massive sulphide",
+    "text": "massive sulphide\n\nThe concept massive sulphide  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Massive_Sulphide  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nAlternate labels:\nmassive Sulfide"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#metamorphic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#metamorphic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "metamorphic rock",
+    "text": "metamorphic rock\n\nThe concept metamorphic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Metamorphic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#metasomatic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#metasomatic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "metasomatic rock",
+    "text": "metasomatic rock\n\nThe concept metasomatic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Metasomatic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#mud-size-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#mud-size-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "mud size sediment",
+    "text": "mud size sediment\n\nThe concept mud size sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Mud_Size_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#non-clastic-siliceous-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#non-clastic-siliceous-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "non clastic siliceous sediment",
+    "text": "non clastic siliceous sediment\n\nThe concept non clastic siliceous sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Non_Clastic_Siliceous_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phosphate-rich-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phosphate-rich-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "phosphate rich sediment",
+    "text": "phosphate rich sediment\n\nThe concept phosphate rich sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Phosphate_Rich_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#sand-size-sediment",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#sand-size-sediment",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "sand size sediment",
+    "text": "sand size sediment\n\nThe concept sand size sediment  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Sand_Size_Sediment  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "sedimentary rock",
+    "text": "sedimentary rock\n\nThe concept sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nImmediately narrower concepts:\ncarbonate sedimentary rock, clastic sedimentary rock, generic conglomerate, generic mudstone, generic sandstone, hybrid sedimentary rock, iron rich sedimentary rock, non clastic siliceous sedimentary rock, organic rich sedimentary rock, phosphorite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tephra",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tephra",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "tephra",
+    "text": "tephra\n\nThe concept tephra  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Tephra  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tuffit",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tuffit",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "tuffit",
+    "text": "tuffit\n\nThe concept tuffit  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Tuffite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:\nAlternate labels:\ntuffite"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#residual-material",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#residual-material",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "residual material",
+    "text": "residual material\n\nThe concept residual material  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/residual_material  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nThis is the top concept of the vocabulary.\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#diamicton",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#diamicton",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "diamicton",
+    "text": "diamicton\n\nThe concept diamicton  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Diamicton  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  clastic sediment-&gt;diamicton\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#cataclasite-series",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#cataclasite-series",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "cataclasite series",
+    "text": "cataclasite series\n\nThe concept cataclasite series  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Cataclasite_Series  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  fault related material-&gt;cataclasite series\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#mylonitic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#mylonitic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "mylonitic rock",
+    "text": "mylonitic rock\n\nThe concept mylonitic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Mylonitic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  fault related material-&gt;mylonitic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#breccia-gouge-series",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#breccia-gouge-series",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "breccia gouge series",
+    "text": "breccia gouge series\n\nThe concept breccia gouge series  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/breccia_gouge_series  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  fault related material-&gt;breccia gouge series\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#acidic-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#acidic-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "acidic igneous rock",
+    "text": "acidic igneous rock\n\nThe concept acidic igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Acidic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;acidic igneous rock\nImmediately narrower concepts:\ndacite, granitoid, quartz rich igneous rock, rhyolitoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dacite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dacite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "dacite",
+    "text": "dacite\n\nThe concept dacite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Dacite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;dacite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granitoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granitoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granitoid",
+    "text": "granitoid\n\nThe concept granitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid\nImmediately narrower concepts:\nalkali feldspar granite, granite, granodiorite, tonalite\nDefinition:\nAlternate labels:\ngranitic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#alkali-feldspar-granite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#alkali-feldspar-granite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "alkali feldspar granite",
+    "text": "alkali feldspar granite\n\nThe concept alkali feldspar granite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Alkali_Feldspar_Granite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;alkali feldspar granite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granite",
+    "text": "granite\n\nThe concept granite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;granite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granodiorite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granodiorite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granodiorite",
+    "text": "granodiorite\n\nThe concept granodiorite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granodiorite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;granodiorite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tonalite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tonalite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "tonalite",
+    "text": "tonalite\n\nThe concept tonalite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Tonalite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;tonalite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#quartz-rich-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#quartz-rich-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "quartz rich igneous rock",
+    "text": "quartz rich igneous rock\n\nThe concept quartz rich igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Quartz_Rich_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;quartz rich igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#rhyolitoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#rhyolitoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "rhyolitoid",
+    "text": "rhyolitoid\n\nThe concept rhyolitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Rhyolitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;rhyolitoid\nDefinition:\nAlternate labels:\nrhyolitic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basic-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basic-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "basic igneous rock",
+    "text": "basic igneous rock\n\nThe concept basic igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Basic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;basic igneous rock\nImmediately narrower concepts:\nbasalt, gabbroic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basalt",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basalt",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "basalt",
+    "text": "basalt\n\nThe concept basalt  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Basalt  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;basic igneous rock-&gt;basalt\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "gabbroic rock",
+    "text": "gabbroic rock\n\nThe concept gabbroic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Gabbroic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;gabbroid-&gt;igneous rock-&gt;basic igneous rock-&gt;gabbroic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#doleritic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#doleritic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "doleritic rock",
+    "text": "doleritic rock\n\nThe concept doleritic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Doleritic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;doleritic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#exotic-composition-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#exotic-composition-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "exotic composition igneous rock",
+    "text": "exotic composition igneous rock\n\nThe concept exotic composition igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Exotic_Composition_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;exotic composition igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fine-grained-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fine-grained-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "fine grained igneous rock",
+    "text": "fine grained igneous rock\n\nThe concept fine grained igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Fine_Grained_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock\nImmediately narrower concepts:\nandesite, basalt, dacite, foiditoid, high magnesium fine grained igneous rock, phonolitoid, rhyolitoid, tephritoid, trachytoid\nDefinition:\nAlternate labels:\nvolcanic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#andesite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#andesite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "andesite",
+    "text": "andesite\n\nThe concept andesite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Andesite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;intermediate composition igneous rock-&gt;igneous rock-&gt;fine grained igneous rock-&gt;andesite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basalt-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#basalt-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "basalt",
+    "text": "basalt\n\nThe concept basalt  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Basalt  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;basic igneous rock-&gt;basalt\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dacite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dacite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "dacite",
+    "text": "dacite\n\nThe concept dacite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Dacite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;dacite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foiditoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foiditoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "foiditoid",
+    "text": "foiditoid\n\nThe concept foiditoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Foiditoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;foiditoid\nDefinition:\nAlternate labels:\nfoidite (sensu lato), foiditic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#high-magnesium-fine-grained-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#high-magnesium-fine-grained-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "high magnesium fine grained igneous rock",
+    "text": "high magnesium fine grained igneous rock\n\nThe concept high magnesium fine grained igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/High_Magnesium_Fine_Grained_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;high magnesium fine grained igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phonolitoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phonolitoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "phonolitoid",
+    "text": "phonolitoid\n\nThe concept phonolitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Phonolitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;phonolitoid\nDefinition:\nAlternate labels:\nphonolitic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#rhyolitoid-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#rhyolitoid-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "rhyolitoid",
+    "text": "rhyolitoid\n\nThe concept rhyolitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Rhyolitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;rhyolitoid\nDefinition:\nAlternate labels:\nrhyolitic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tephritoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tephritoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "tephritoid",
+    "text": "tephritoid\n\nThe concept tephritoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Tephritoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;tephritoid\nDefinition:\nAlternate labels:\ntephritic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#trachytoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#trachytoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "trachytoid",
+    "text": "trachytoid\n\nThe concept trachytoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Trachytoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fine grained igneous rock-&gt;trachytoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fragmental-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#fragmental-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "fragmental igneous rock",
+    "text": "fragmental igneous rock\n\nThe concept fragmental igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Fragmental_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fragmental igneous rock\nImmediately narrower concepts:\npyroclastic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroclastic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroclastic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "pyroclastic rock",
+    "text": "pyroclastic rock\n\nThe concept pyroclastic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Pyroclastic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;fragmental igneous rock-&gt;pyroclastic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#glass-rich-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#glass-rich-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "glass rich igneous rock",
+    "text": "glass rich igneous rock\n\nThe concept glass rich igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Glass_Rich_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;glass rich igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hypabyssal-intrusive-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hypabyssal-intrusive-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "hypabyssal intrusive rock",
+    "text": "hypabyssal intrusive rock\n\nThe concept hypabyssal intrusive rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Hypabyssal_Intrusive_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;hypabyssal intrusive rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#intermediate-composition-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#intermediate-composition-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "intermediate composition igneous rock",
+    "text": "intermediate composition igneous rock\n\nThe concept intermediate composition igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Intermediate_Composition_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;intermediate composition igneous rock\nImmediately narrower concepts:\nandesite, dioritoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#andesite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#andesite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "andesite",
+    "text": "andesite\n\nThe concept andesite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Andesite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;intermediate composition igneous rock-&gt;igneous rock-&gt;fine grained igneous rock-&gt;andesite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dioritoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dioritoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "dioritoid",
+    "text": "dioritoid\n\nThe concept dioritoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Dioritoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;intermediate composition igneous rock-&gt;dioritoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phaneritic-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phaneritic-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "phaneritic igneous rock",
+    "text": "phaneritic igneous rock\n\nThe concept phaneritic igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Phaneritic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock\nImmediately narrower concepts:\nanorthositic rock, aplite, dioritoid, foid dioritoid, foid gabbroid, foid syenitoid, foidolite, gabbroid, granitoid, hornblendite, pegmatite, peridotite, pyroxenite, quartz rich igneous rock, syenitoid\nDefinition:\nAlternate labels:\ncoarse grained crystalline igneous rock, plutonic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#anorthositic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#anorthositic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "anorthositic rock",
+    "text": "anorthositic rock\n\nThe concept anorthositic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Anorthositic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;anorthositic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#aplite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#aplite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "aplite",
+    "text": "aplite\n\nThe concept aplite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Aplite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;aplite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dioritoid-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#dioritoid-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "dioritoid",
+    "text": "dioritoid\n\nThe concept dioritoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Dioritoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;intermediate composition igneous rock-&gt;dioritoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-dioritoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-dioritoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "foid dioritoid",
+    "text": "foid dioritoid\n\nThe concept foid dioritoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Foid_Dioritoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;foid dioritoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-gabbroid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-gabbroid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "foid gabbroid",
+    "text": "foid gabbroid\n\nThe concept foid gabbroid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Foid_Gabbroid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;foid gabbroid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-syenitoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foid-syenitoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "foid syenitoid",
+    "text": "foid syenitoid\n\nThe concept foid syenitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Foid_Syenitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;foid syenitoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foidolite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#foidolite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "foidolite",
+    "text": "foidolite\n\nThe concept foidolite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Foidolite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;foidolite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "gabbroid",
+    "text": "gabbroid\n\nThe concept gabbroid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Gabbroid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;gabbroid\nImmediately narrower concepts:\ngabbroic rock, monzogabbroic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroic-rock-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#gabbroic-rock-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "gabbroic rock",
+    "text": "gabbroic rock\n\nThe concept gabbroic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Gabbroic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;gabbroid-&gt;igneous rock-&gt;basic igneous rock-&gt;gabbroic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#monzogabbroic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#monzogabbroic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "monzogabbroic rock",
+    "text": "monzogabbroic rock\n\nThe concept monzogabbroic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Monzogabbroic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;gabbroid-&gt;monzogabbroic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granitoid-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granitoid-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granitoid",
+    "text": "granitoid\n\nThe concept granitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid\nImmediately narrower concepts:\nalkali feldspar granite, granite, granodiorite, tonalite\nDefinition:\nAlternate labels:\ngranitic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#alkali-feldspar-granite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#alkali-feldspar-granite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "alkali feldspar granite",
+    "text": "alkali feldspar granite\n\nThe concept alkali feldspar granite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Alkali_Feldspar_Granite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;alkali feldspar granite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granite",
+    "text": "granite\n\nThe concept granite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;granite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granodiorite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#granodiorite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "granodiorite",
+    "text": "granodiorite\n\nThe concept granodiorite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Granodiorite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;granodiorite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tonalite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#tonalite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "tonalite",
+    "text": "tonalite\n\nThe concept tonalite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Tonalite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;granitoid-&gt;tonalite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hornblendite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hornblendite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "hornblendite",
+    "text": "hornblendite\n\nThe concept hornblendite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Hornblendite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;hornblendite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pegmatite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pegmatite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "pegmatite",
+    "text": "pegmatite\n\nThe concept pegmatite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Pegmatite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;pegmatite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#peridotite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#peridotite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "peridotite",
+    "text": "peridotite\n\nThe concept peridotite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Peridotite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;peridotite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroxenite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroxenite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "pyroxenite",
+    "text": "pyroxenite\n\nThe concept pyroxenite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Pyroxenite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;pyroxenite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#quartz-rich-igneous-rock-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#quartz-rich-igneous-rock-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "quartz rich igneous rock",
+    "text": "quartz rich igneous rock\n\nThe concept quartz rich igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Quartz_Rich_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;igneous rock-&gt;acidic igneous rock-&gt;quartz rich igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#syenitoid",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#syenitoid",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "syenitoid",
+    "text": "syenitoid\n\nThe concept syenitoid  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Syenitoid  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;phaneritic igneous rock-&gt;syenitoid\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#plutonic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#plutonic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "plutonic rock",
+    "text": "plutonic rock\n\nThe concept plutonic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Plutonic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;plutonic rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#porphyry",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#porphyry",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "porphyry",
+    "text": "porphyry\n\nThe concept porphyry  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Porphyry  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;porphyry\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#ultrabasic-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#ultrabasic-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "ultrabasic igneous rock",
+    "text": "ultrabasic igneous rock\n\nThe concept ultrabasic igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Ultrabasic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultrabasic igneous rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#ultramafic-igneous-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#ultramafic-igneous-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "ultramafic igneous rock",
+    "text": "ultramafic igneous rock\n\nThe concept ultramafic igneous rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Ultramafic_Igneous_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock\nImmediately narrower concepts:\nhornblendite, peridotite, pyroxenite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hornblendite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hornblendite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "hornblendite",
+    "text": "hornblendite\n\nThe concept hornblendite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Hornblendite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;hornblendite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#peridotite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#peridotite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "peridotite",
+    "text": "peridotite\n\nThe concept peridotite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Peridotite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;peridotite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroxenite-1",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#pyroxenite-1",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "pyroxenite",
+    "text": "pyroxenite\n\nThe concept pyroxenite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Pyroxenite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;ultramafic igneous rock-&gt;igneous rock-&gt;phaneritic igneous rock-&gt;pyroxenite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#volcanic-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#volcanic-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "volcanic rock",
+    "text": "volcanic rock\n\nThe concept volcanic rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Volcanic_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  igneous rock-&gt;volcanic rock\nDefinition:\nRock that exhibits direct evidence of extrusive igneous processes in its genesis.\nNotes:\nHand-sample level evidence for extrusive origin includes vesiculation, inclusion of supracrustal fragments, eutaxitic foliation, bread-crust surfaces; weaker evidence includes glassy texture or fragmentation interpreted to be related to flow or eruption processes. In many cases, rocks are classified as volcanic based on the context in which they are collected; as such the assignement of volcanic genesis is not based on properties directly observable in the sample.\nThis class will overlap with various other classes, including exotic compoistion, fine-grained igneous, glass-rich igneous, intermediate-composition, porphyry, ultrabasic, ultramafic, depending on how much information is available\nAlternate labels:\nvolcanic rock"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#carbonate-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#carbonate-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "carbonate sedimentary rock",
+    "text": "carbonate sedimentary rock\n\nThe concept carbonate sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Carbonate_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;carbonate sedimentary rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#clastic-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#clastic-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "clastic sedimentary rock",
+    "text": "clastic sedimentary rock\n\nThe concept clastic sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Clastic_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;clastic sedimentary rock\nImmediately narrower concepts:\ndiamictite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#diamictite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#diamictite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "diamictite",
+    "text": "diamictite\n\nThe concept diamictite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Diamictite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;clastic sedimentary rock-&gt;diamictite\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-conglomerate",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-conglomerate",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "generic conglomerate",
+    "text": "generic conglomerate\n\nThe concept generic conglomerate  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Generic_Conglomerate  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;generic conglomerate\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-mudstone",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-mudstone",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "generic mudstone",
+    "text": "generic mudstone\n\nThe concept generic mudstone  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Generic_Mudstone  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;generic mudstone\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-sandstone",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#generic-sandstone",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "generic sandstone",
+    "text": "generic sandstone\n\nThe concept generic sandstone  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Generic_Sandstone  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;generic sandstone\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hybrid-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#hybrid-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "hybrid sedimentary rock",
+    "text": "hybrid sedimentary rock\n\nThe concept hybrid sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Hybrid_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;hybrid sedimentary rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#iron-rich-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#iron-rich-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "iron rich sedimentary rock",
+    "text": "iron rich sedimentary rock\n\nThe concept iron rich sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Iron_Rich_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;iron rich sedimentary rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#non-clastic-siliceous-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#non-clastic-siliceous-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "non clastic siliceous sedimentary rock",
+    "text": "non clastic siliceous sedimentary rock\n\nThe concept non clastic siliceous sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Non_Clastic_Siliceous_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;non clastic siliceous sedimentary rock\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#organic-rich-sedimentary-rock",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#organic-rich-sedimentary-rock",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "organic rich sedimentary rock",
+    "text": "organic rich sedimentary rock\n\nThe concept organic rich sedimentary rock  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Organic_Rich_Sedimentary_Rock  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;organic rich sedimentary rock\nImmediately narrower concepts:\ncoal\nDefinition:"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#coal",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#coal",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "coal",
+    "text": "coal\n\nThe concept coal  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Coal  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;organic rich sedimentary rock-&gt;coal\nDefinition:\nAlternate labels:\nkohle"
+  },
+  {
+    "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phosphorite",
+    "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#phosphorite",
+    "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
+    "section": "phosphorite",
+    "text": "phosphorite\n\nThe concept phosphorite  with URI https://w3id.org/isample/earthenv/rocksediment/1.0/Phosphorite  is defined in vocabulary https://w3id.org/isample/earthenv/rocksediment/1.0/rocksedimentvocabulary\nPath from the top concept:  sedimentary rock-&gt;phosphorite\nDefinition:"
   },
   {
     "objectID": "models/generated/vocabularies/material_type.html",

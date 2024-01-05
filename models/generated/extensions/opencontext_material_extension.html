@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-01-05">
+
+<title>iSamples - OpenContext material type extension draft</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../../styles.css">
+</head>
+
+<body class="nav-sidebar docked fullcontent">
+
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">OpenContext material type extension draft</li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../../../index.html" class="sidebar-logo-link">
+      <img src="../../../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
+      <div class="sidebar-tools-main tools-wide">
+    <a href="https://hyde.cyverse.org/isamples_central/ui/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
+    <a href="https://github.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+</div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">About</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">Design</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Core Model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text">Resources</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../pubs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Publications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text">Github</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">OpenContext material type extension draft</h1>
+<p class="subtitle lead"></p><p>vocabulary of materials typical of archeological samples</p><p></p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 5, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Vocabularies and extensions:</p>
+<ul>
+<li><code>OpenContext material type extension draft</code> <a href="https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab"><code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></a></li>
+</ul>
+<p><strong>History:</strong></p>
+<p><strong>Concept Hierarchy:</strong></p>
+<blockquote class="blockquote">
+<p><strong>Note</strong> No top level concept is available in the loaded vocabularies. Hierarchy is generated from the broadest concepts available.</p>
+</blockquote>
+<ul>
+<li><p><a href="#amber">amber</a></p></li>
+<li><p><a href="#anthropogenic-organic-material">anthropogenic organic material</a></p>
+<ul>
+<li><a href="#plastic-(material)">plastic (material)</a></li>
+</ul></li>
+<li><p><a href="#basalt">basalt</a></p></li>
+<li><p><a href="#bone">bone</a></p></li>
+<li><p><a href="#brass">brass</a></p></li>
+<li><p><a href="#bronze">bronze</a></p></li>
+<li><p><a href="#ceramic-clay">ceramic clay</a></p>
+<ul>
+<li><a href="#brick-clay">brick clay</a></li>
+<li><a href="#bucchero">bucchero</a></li>
+<li><a href="#faience">faience</a></li>
+<li><a href="#porcelain">porcelain</a></li>
+<li><a href="#terracotta">terracotta</a></li>
+<li><a href="#terra-sigilata">terra sigilata</a></li>
+</ul></li>
+<li><p><a href="#charcoal">charcoal</a></p></li>
+<li><p><a href="#chert">chert</a></p>
+<ul>
+<li><a href="#flint">flint</a></li>
+</ul></li>
+<li><p><a href="#copper">copper</a></p></li>
+<li><p><a href="#dolomite">dolomite</a></p></li>
+<li><p><a href="#fiber-material">fiber material</a></p></li>
+<li><p><a href="#gabbro">gabbro</a></p></li>
+<li><p><a href="#glass">glass</a></p></li>
+<li><p><a href="#gold">gold</a></p></li>
+<li><p><a href="#greywacke">greywacke</a></p></li>
+<li><p><a href="#hematite">hematite</a></p></li>
+<li><p><a href="#iron">iron</a></p></li>
+<li><p><a href="#kaolin">kaolin</a></p></li>
+<li><p><a href="#lead">lead</a></p></li>
+<li><p><a href="#limestone">limestone</a></p></li>
+<li><p><a href="#marble">marble</a></p></li>
+<li><p><a href="#mica">mica</a></p></li>
+<li><p><a href="#obsidian">obsidian</a></p></li>
+<li><p><a href="#organic-animal-material">organic animal material</a></p>
+<ul>
+<li><a href="#hair">hair</a></li>
+<li><a href="#leather">leather</a></li>
+</ul></li>
+<li><p><a href="#organic-plant-material">organic plant material</a></p>
+<ul>
+<li><a href="#plant-fiber">plant fiber</a></li>
+<li><a href="#wood">wood</a></li>
+</ul></li>
+<li><p><a href="#paper">paper</a></p></li>
+<li><p><a href="#pewter">pewter</a></p></li>
+<li><p><a href="#plaster">plaster</a></p></li>
+<li><p><a href="#plaster-or-mortar">plaster or mortar</a></p></li>
+<li><p><a href="#pumice">pumice</a></p></li>
+<li><p><a href="#quartz">quartz</a></p></li>
+<li><p><a href="#rubber">rubber</a></p></li>
+<li><p><a href="#shell">shell</a></p></li>
+<li><p><a href="#slate">slate</a></p></li>
+<li><p><a href="#travertine">travertine</a></p></li>
+</ul>
+<section id="amber" class="level2">
+<h2 class="anchored" data-anchor-id="amber">amber</h2>
+<p><span id="amber"></span></p>
+<p>The concept <code>amber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/amber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="anthropogenic-organic-material" class="level2">
+<h2 class="anchored" data-anchor-id="anthropogenic-organic-material">anthropogenic organic material</h2>
+<p><span id="anthropogenic-organic-material"></span></p>
+<p>The concept <code>anthropogenic organic material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/anthropogenicorganicmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#plastic-(material)"><code>plastic (material)</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Organic material manufactured by humans</p>
+</section>
+<section id="basalt" class="level2">
+<h2 class="anchored" data-anchor-id="basalt">basalt</h2>
+<p><span id="basalt"></span></p>
+<p>The concept <code>basalt</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/basalt</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="bone" class="level2">
+<h2 class="anchored" data-anchor-id="bone">bone</h2>
+<p><span id="bone"></span></p>
+<p>The concept <code>bone</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bone</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="brass" class="level2">
+<h2 class="anchored" data-anchor-id="brass">brass</h2>
+<p><span id="brass"></span></p>
+<p>The concept <code>brass</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/brass</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>alloy of copper (Cu) and zinc (Zn)</p>
+</section>
+<section id="bronze" class="level2">
+<h2 class="anchored" data-anchor-id="bronze">bronze</h2>
+<p><span id="bronze"></span></p>
+<p>The concept <code>bronze</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bronze</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>alloy consisting primarily of copper with subordinate tin; often includes other metals</p>
+</section>
+<section id="ceramic-clay" class="level2">
+<h2 class="anchored" data-anchor-id="ceramic-clay">ceramic clay</h2>
+<p><span id="ceramic-clay"></span></p>
+<p>The concept <code>ceramic clay</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/ceramicclay</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#brick-clay"><code>brick clay</code></a>, <a href="#bucchero"><code>bucchero</code></a>, <a href="#faience"><code>faience</code></a>, <a href="#porcelain"><code>porcelain</code></a>, <a href="#terracotta"><code>terracotta</code></a>, <a href="#terra-sigilata"><code>terra sigilata</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Any of the various hard, brittle, heat-resistant and corrosion-resistant materials made by shaping and then firing an inorganic, nonmetallic material, such as clay, at a high temperature. Common examples are earthenware, porcelain, and brick. (https://en.wikipedia.org/wiki/Ceramic)</p>
+</section>
+<section id="charcoal" class="level2">
+<h2 class="anchored" data-anchor-id="charcoal">charcoal</h2>
+<p><span id="charcoal"></span></p>
+<p>The concept <code>charcoal</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/charcoal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="chert" class="level2">
+<h2 class="anchored" data-anchor-id="chert">chert</h2>
+<p><span id="chert"></span></p>
+<p>The concept <code>chert</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/chert</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#flint"><code>flint</code></a></p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="copper" class="level2">
+<h2 class="anchored" data-anchor-id="copper">copper</h2>
+<p><span id="copper"></span></p>
+<p>The concept <code>copper</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/copper</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>copper metal, includes copper-rich alloys not identifiable as brass or bronze.</p>
+</section>
+<section id="dolomite" class="level2">
+<h2 class="anchored" data-anchor-id="dolomite">dolomite</h2>
+<p><span id="dolomite"></span></p>
+<p>The concept <code>dolomite</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/dolomite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>dolostone</code></p>
+</section>
+<section id="fiber-material" class="level2">
+<h2 class="anchored" data-anchor-id="fiber-material">fiber material</h2>
+<p><span id="fiber-material"></span></p>
+<p>The concept <code>fiber material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/fibermaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>material composed of fibers twisted or woved togther. Fibers might be plant material or Anthropogenic Organic material.</p>
+</section>
+<section id="gabbro" class="level2">
+<h2 class="anchored" data-anchor-id="gabbro">gabbro</h2>
+<p><span id="gabbro"></span></p>
+<p>The concept <code>gabbro</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/gabbro</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="glass" class="level2">
+<h2 class="anchored" data-anchor-id="glass">glass</h2>
+<p><span id="glass"></span></p>
+<p>The concept <code>glass</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/glass</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>A non-crystalline, often transparent amorphous solid, most often formed by rapid cooling (quenching) of the molten silca rich material. (https://en.wikipedia.org/wiki/Glass)</p>
+</section>
+<section id="gold" class="level2">
+<h2 class="anchored" data-anchor-id="gold">gold</h2>
+<p><span id="gold"></span></p>
+<p>The concept <code>gold</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/gold</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>a chemical element with atomic number 79; a dense, soft metal that is easily malleable and ductile. It has a melting point of 1064 degrees Celsius and a boiling point of 2,807 degrees Celsius. (ChatGPT)</p>
+</section>
+<section id="greywacke" class="level2">
+<h2 class="anchored" data-anchor-id="greywacke">greywacke</h2>
+<p><span id="greywacke"></span></p>
+<p>The concept <code>greywacke</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/greywacke</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>graywacke</code></p>
+</section>
+<section id="hematite" class="level2">
+<h2 class="anchored" data-anchor-id="hematite">hematite</h2>
+<p><span id="hematite"></span></p>
+<p>The concept <code>hematite</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/hematite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="iron" class="level2">
+<h2 class="anchored" data-anchor-id="iron">iron</h2>
+<p><span id="iron"></span></p>
+<p>The concept <code>iron</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/iron</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>Iron or iron-rich alloy</p>
+</section>
+<section id="kaolin" class="level2">
+<h2 class="anchored" data-anchor-id="kaolin">kaolin</h2>
+<p><span id="kaolin"></span></p>
+<p>The concept <code>kaolin</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/kaolin</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="lead" class="level2">
+<h2 class="anchored" data-anchor-id="lead">lead</h2>
+<p><span id="lead"></span></p>
+<p>The concept <code>lead</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/lead</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>lead or lead-rich alloy</p>
+</section>
+<section id="limestone" class="level2">
+<h2 class="anchored" data-anchor-id="limestone">limestone</h2>
+<p><span id="limestone"></span></p>
+<p>The concept <code>limestone</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/limestone</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="marble" class="level2">
+<h2 class="anchored" data-anchor-id="marble">marble</h2>
+<p><span id="marble"></span></p>
+<p>The concept <code>marble</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/marble</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="mica" class="level2">
+<h2 class="anchored" data-anchor-id="mica">mica</h2>
+<p><span id="mica"></span></p>
+<p>The concept <code>mica</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/mica</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="obsidian" class="level2">
+<h2 class="anchored" data-anchor-id="obsidian">obsidian</h2>
+<p><span id="obsidian"></span></p>
+<p>The concept <code>obsidian</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/obsidian</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="organic-animal-material" class="level2">
+<h2 class="anchored" data-anchor-id="organic-animal-material">organic animal material</h2>
+<p><span id="organic-animal-material"></span></p>
+<p>The concept <code>organic animal material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/organicanimalmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#hair"><code>hair</code></a>, <a href="#leather"><code>leather</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material that is (or was) a constituent of an animal organisms, composed primarily of one or more very large molecules of biological origin.</p>
+</section>
+<section id="organic-plant-material" class="level2">
+<h2 class="anchored" data-anchor-id="organic-plant-material">organic plant material</h2>
+<p><span id="organic-plant-material"></span></p>
+<p>The concept <code>organic plant material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/organicplantmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#plant-fiber"><code>plant fiber</code></a>, <a href="#wood"><code>wood</code></a></p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="paper" class="level2">
+<h2 class="anchored" data-anchor-id="paper">paper</h2>
+<p><span id="paper"></span></p>
+<p>The concept <code>paper</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/paper</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>thin matted or felted sheets or webs of fiber formed and dried on a fine screen from a pulpy water suspension. The fibers may be animal, such as hair, silk or wool, or mineral, such as asbestos, or synthetic. However most paper is made from cellulosic plant fiber, such as from wood pulp, grass, cotton, linen, and straw. (http://vocab.getty.edu/page/aat/300014109)</p>
+</section>
+<section id="pewter" class="level2">
+<h2 class="anchored" data-anchor-id="pewter">pewter</h2>
+<p><span id="pewter"></span></p>
+<p>The concept <code>pewter</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/pewter</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>alloy consisting of mostly tin, with antimony, minor copper or bismuth, and sometimes silver.</p>
+</section>
+<section id="plaster" class="level2">
+<h2 class="anchored" data-anchor-id="plaster">plaster</h2>
+<p><span id="plaster"></span></p>
+<p>The concept <code>plaster</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plaster</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>plaster or mortar</p>
+</section>
+<section id="plaster-or-mortar" class="level2">
+<h2 class="anchored" data-anchor-id="plaster-or-mortar">plaster or mortar</h2>
+<p><span id="plaster-or-mortar"></span></p>
+<p>The concept <code>plaster or mortar</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plasterormortar</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>Plaster is a pasty material that hardens on drying and is used for coating walls, ceilings, and partitions. Mortar is a similar pasty material used for cementing bricks or block together or coating walls in building construction.</p>
+</section>
+<section id="pumice" class="level2">
+<h2 class="anchored" data-anchor-id="pumice">pumice</h2>
+<p><span id="pumice"></span></p>
+<p>The concept <code>pumice</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/pumice</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="quartz" class="level2">
+<h2 class="anchored" data-anchor-id="quartz">quartz</h2>
+<p><span id="quartz"></span></p>
+<p>The concept <code>quartz</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/quartz</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="rubber" class="level2">
+<h2 class="anchored" data-anchor-id="rubber">rubber</h2>
+<p><span id="rubber"></span></p>
+<p>The concept <code>rubber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/rubber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>An elastomer, synthesized from petroleum byproducts or from latex harvested from the rubber tree (Hevea brasiliensis).</p>
+</section>
+<section id="shell" class="level2">
+<h2 class="anchored" data-anchor-id="shell">shell</h2>
+<p><span id="shell"></span></p>
+<p>The concept <code>shell</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/shell</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>Hard outer covering of invertebrate creatures, composed of calcareous or chitinous material (http://vocab.getty.edu/page/aat/300011829)</p>
+</section>
+<section id="slate" class="level2">
+<h2 class="anchored" data-anchor-id="slate">slate</h2>
+<p><span id="slate"></span></p>
+<p>The concept <code>slate</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/slate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="travertine" class="level2">
+<h2 class="anchored" data-anchor-id="travertine">travertine</h2>
+<p><span id="travertine"></span></p>
+<p>The concept <code>travertine</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/travertine</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p><strong>Definition:</strong></p>
+<p>A limestone consisting of a massive usually layered calcium carbonate (such as aragonite or calcite) formed by deposition from spring waters, especially from hot springs. (https://www.mindat.org/min-39057.html)</p>
+</section>
+<section id="plastic-material" class="level2">
+<h2 class="anchored" data-anchor-id="plastic-material">plastic (material)</h2>
+<p>[]{#plastic-(material)}</p>
+<p>The concept <code>plastic (material)</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plastic</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-organic-material"><code>anthropogenic organic material</code></a><code>-&gt;</code><a href="#plastic-(material)"><code>plastic (material)</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Synthetic or semi-synthetic material that uses organic polymers as a main ingredient.</p>
+</section>
+<section id="brick-clay" class="level2">
+<h2 class="anchored" data-anchor-id="brick-clay">brick clay</h2>
+<p><span id="brick-clay"></span></p>
+<p>The concept <code>brick clay</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/brickclay</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#brick-clay"><code>brick clay</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>dried or low-fired clay-rich material used to make blocks for construction</p>
+</section>
+<section id="bucchero" class="level2">
+<h2 class="anchored" data-anchor-id="bucchero">bucchero</h2>
+<p><span id="bucchero"></span></p>
+<p>The concept <code>bucchero</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bucchero</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#bucchero"><code>bucchero</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>ceramic with black fabric and glossy, black surface achieved through reduction firing</p>
+</section>
+<section id="faience" class="level2">
+<h2 class="anchored" data-anchor-id="faience">faience</h2>
+<p><span id="faience"></span></p>
+<p>The concept <code>faience</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/faience</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#faience"><code>faience</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>fine white-glazed ceramic (tin oxide based glaze)</p>
+</section>
+<section id="porcelain" class="level2">
+<h2 class="anchored" data-anchor-id="porcelain">porcelain</h2>
+<p><span id="porcelain"></span></p>
+<p>The concept <code>porcelain</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/porcelain</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#porcelain"><code>porcelain</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Kaolin rich high-fired ceramic; In China, it includes any such ware that is highly fired enough to produce a ringing sound when struck. In Europe, it is limited to hard-fired ceramic that is translucent. (https://vocab.getty.edu/aat/scopeNote/45436)</p>
+</section>
+<section id="terracotta" class="level2">
+<h2 class="anchored" data-anchor-id="terracotta">terracotta</h2>
+<p><span id="terracotta"></span></p>
+<p>The concept <code>terracotta</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/terracotta</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#terracotta"><code>terracotta</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>clay-based unglazed or glazed, porous ceramic</p>
+</section>
+<section id="terra-sigilata" class="level2">
+<h2 class="anchored" data-anchor-id="terra-sigilata">terra sigilata</h2>
+<p><span id="terra-sigilata"></span></p>
+<p>The concept <code>terra sigilata</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/terrasigilata</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#terra-sigilata"><code>terra sigilata</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Fine red Ancient Roman pottery with glossy surface slips</p>
+</section>
+<section id="flint" class="level2">
+<h2 class="anchored" data-anchor-id="flint">flint</h2>
+<p><span id="flint"></span></p>
+<p>The concept <code>flint</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/flint</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#chert"><code>chert</code></a><code>-&gt;</code><a href="#flint"><code>flint</code></a></p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="hair" class="level2">
+<h2 class="anchored" data-anchor-id="hair">hair</h2>
+<p><span id="hair"></span></p>
+<p>The concept <code>hair</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/hair</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-animal-material"><code>organic animal material</code></a><code>-&gt;</code><a href="#hair"><code>hair</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material comprising the cylindrical filaments that grow from follicles embedded in the skin of mammals. Hair is a column of overlapping, fused cells that are composed of the protein keratin; hair is composed of three parts: the innermost column is the medula, the surrounding live cells (the cortex) contain pigment, and the outermost dead transparent cells are the cuticular scales. The portion of the hair outside of the skin is called the shaft. Fine, closely spaced hair that covers most of an animal’s body is called fur. Dense, soft, curled hair is called wool. Coarse, stiff hairs are called bristles, spines, or quills. Horsehair and cattle hair have been used for brushes, plaster binders, haircloth, and upholstery stuffing. Rabbit hair, often called rabbit fur, has been used to make felt hats. (http://vocab.getty.edu/page/aat/300011814)</p>
+</section>
+<section id="leather" class="level2">
+<h2 class="anchored" data-anchor-id="leather">leather</h2>
+<p><span id="leather"></span></p>
+<p>The concept <code>leather</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/leather</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-animal-material"><code>organic animal material</code></a><code>-&gt;</code><a href="#leather"><code>leather</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>The skin or hide of an animal that has been tanned to render it resistant to putrefication and relatively soft and flexible when dry. (http://vocab.getty.edu/page/aat/300011845)</p>
+</section>
+<section id="plant-fiber" class="level2">
+<h2 class="anchored" data-anchor-id="plant-fiber">plant fiber</h2>
+<p><span id="plant-fiber"></span></p>
+<p>The concept <code>plant fiber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plantfiber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-plant-material"><code>organic plant material</code></a><code>-&gt;</code><a href="#plant-fiber"><code>plant fiber</code></a></p>
+<p><strong>Definition:</strong></p>
+</section>
+<section id="wood" class="level2">
+<h2 class="anchored" data-anchor-id="wood">wood</h2>
+<p><span id="wood"></span></p>
+<p>The concept <code>wood</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/wood</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-plant-material"><code>organic plant material</code></a><code>-&gt;</code><a href="#wood"><code>wood</code></a></p>
+<p><strong>Definition:</strong></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/models/generated/extensions/opencontext_material_extension.md" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+</body></html>
