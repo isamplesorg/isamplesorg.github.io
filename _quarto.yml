@@ -55,7 +55,12 @@ website:
   
 format:
   html:
-    theme: cosmo
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    anchor-sections: false
+    number-depth: 8
+    theme: sandstone
     css: styles.css
 
 #filters:
