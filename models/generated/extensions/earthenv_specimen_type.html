@@ -34,7 +34,6 @@ ul.task-list li input[type="checkbox"] {
 <script src="../../../site_libs/quarto-html/quarto.js"></script>
 <script src="../../../site_libs/quarto-html/popper.min.js"></script>
 <script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
@@ -65,7 +64,7 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="../../../styles.css">
 </head>
 
-<body class="nav-sidebar docked fullcontent">
+<body class="nav-sidebar docked">
 
 
 <div id="quarto-search-results"></div>
@@ -176,7 +175,96 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#analytical-preparation" id="toc-analytical-preparation" class="nav-link active" data-scroll-target="#analytical-preparation"><span class="header-section-number">1</span> Analytical preparation</a></li>
+  <li><a href="#bundle-biome-aggregation" id="toc-bundle-biome-aggregation" class="nav-link" data-scroll-target="#bundle-biome-aggregation"><span class="header-section-number">2</span> Bundle biome aggregation</a></li>
+  <li><a href="#fluid-in-container" id="toc-fluid-in-container" class="nav-link" data-scroll-target="#fluid-in-container"><span class="header-section-number">3</span> Fluid in container</a></li>
+  <li><a href="#genericaggregation" id="toc-genericaggregation" class="nav-link" data-scroll-target="#genericaggregation"><span class="header-section-number">4</span> genericAggregation</a></li>
+  <li><a href="#other-solid-object" id="toc-other-solid-object" class="nav-link" data-scroll-target="#other-solid-object"><span class="header-section-number">5</span> Other solid Object</a></li>
+  <li><a href="#solid-material-specimen" id="toc-solid-material-specimen" class="nav-link" data-scroll-target="#solid-material-specimen"><span class="header-section-number">6</span> Solid material specimen</a></li>
+  <li><a href="#cell-culture" id="toc-cell-culture" class="nav-link" data-scroll-target="#cell-culture"><span class="header-section-number">7</span> Cell culture</a></li>
+  <li><a href="#dissolved-chemical-fraction" id="toc-dissolved-chemical-fraction" class="nav-link" data-scroll-target="#dissolved-chemical-fraction"><span class="header-section-number">8</span> Dissolved chemical fraction</a></li>
+  <li><a href="#eluate" id="toc-eluate" class="nav-link" data-scroll-target="#eluate"><span class="header-section-number">9</span> Eluate</a></li>
+  <li><a href="#fib-lamella" id="toc-fib-lamella" class="nav-link" data-scroll-target="#fib-lamella"><span class="header-section-number">10</span> FIB lamella</a></li>
+  <li><a href="#glass-slide-smear" id="toc-glass-slide-smear" class="nav-link" data-scroll-target="#glass-slide-smear"><span class="header-section-number">11</span> Glass slide smear</a></li>
+  <li><a href="#individual-solid-cube" id="toc-individual-solid-cube" class="nav-link" data-scroll-target="#individual-solid-cube"><span class="header-section-number">12</span> Individual solid cube</a></li>
+  <li><a href="#magnetic-fraction" id="toc-magnetic-fraction" class="nav-link" data-scroll-target="#magnetic-fraction"><span class="header-section-number">13</span> Magnetic fraction</a></li>
+  <li><a href="#mechanical-fraction" id="toc-mechanical-fraction" class="nav-link" data-scroll-target="#mechanical-fraction"><span class="header-section-number">14</span> Mechanical fraction</a></li>
+  <li><a href="#mineral-separate" id="toc-mineral-separate" class="nav-link" data-scroll-target="#mineral-separate"><span class="header-section-number">15</span> Mineral separate</a></li>
+  <li><a href="#magnetic-fraction-1" id="toc-magnetic-fraction-1" class="nav-link" data-scroll-target="#magnetic-fraction-1"><span class="header-section-number">16</span> Magnetic fraction</a></li>
+  <li><a href="#non-magnetic-fraction" id="toc-non-magnetic-fraction" class="nav-link" data-scroll-target="#non-magnetic-fraction"><span class="header-section-number">17</span> Non-magnetic fraction</a></li>
+  <li><a href="#sectioned-specimen" id="toc-sectioned-specimen" class="nav-link" data-scroll-target="#sectioned-specimen"><span class="header-section-number">18</span> Sectioned specimen</a></li>
+  <li><a href="#thick-section" id="toc-thick-section" class="nav-link" data-scroll-target="#thick-section"><span class="header-section-number">19</span> Thick section</a></li>
+  <li><a href="#thin-section" id="toc-thin-section" class="nav-link" data-scroll-target="#thin-section"><span class="header-section-number">20</span> Thin section</a></li>
+  <li><a href="#polished-thin-section" id="toc-polished-thin-section" class="nav-link" data-scroll-target="#polished-thin-section"><span class="header-section-number">21</span> Polished thin section</a></li>
+  <li><a href="#ultra-thin-section" id="toc-ultra-thin-section" class="nav-link" data-scroll-target="#ultra-thin-section"><span class="header-section-number">22</span> Ultra thin section</a></li>
+  <li><a href="#non-magnetic-fraction-1" id="toc-non-magnetic-fraction-1" class="nav-link" data-scroll-target="#non-magnetic-fraction-1"><span class="header-section-number">23</span> Non-magnetic fraction</a></li>
+  <li><a href="#peel" id="toc-peel" class="nav-link" data-scroll-target="#peel"><span class="header-section-number">24</span> Peel</a></li>
+  <li><a href="#prepared-powder" id="toc-prepared-powder" class="nav-link" data-scroll-target="#prepared-powder"><span class="header-section-number">25</span> Prepared powder</a></li>
+  <li><a href="#prepared-rock-powder" id="toc-prepared-rock-powder" class="nav-link" data-scroll-target="#prepared-rock-powder"><span class="header-section-number">26</span> Prepared rock powder</a></li>
+  <li><a href="#pressed-pellet" id="toc-pressed-pellet" class="nav-link" data-scroll-target="#pressed-pellet"><span class="header-section-number">27</span> Pressed pellet</a></li>
+  <li><a href="#residual-material" id="toc-residual-material" class="nav-link" data-scroll-target="#residual-material"><span class="header-section-number">28</span> Residual material</a></li>
+  <li><a href="#slab" id="toc-slab" class="nav-link" data-scroll-target="#slab"><span class="header-section-number">29</span> Slab</a></li>
+  <li><a href="#cell-culture-1" id="toc-cell-culture-1" class="nav-link" data-scroll-target="#cell-culture-1"><span class="header-section-number">30</span> Cell culture</a></li>
+  <li><a href="#direct-fluid-sample" id="toc-direct-fluid-sample" class="nav-link" data-scroll-target="#direct-fluid-sample"><span class="header-section-number">31</span> Direct fluid sample</a></li>
+  <li><a href="#dissolved-chemical-fraction-1" id="toc-dissolved-chemical-fraction-1" class="nav-link" data-scroll-target="#dissolved-chemical-fraction-1"><span class="header-section-number">32</span> Dissolved chemical fraction</a></li>
+  <li><a href="#eluate-1" id="toc-eluate-1" class="nav-link" data-scroll-target="#eluate-1"><span class="header-section-number">33</span> Eluate</a></li>
+  <li><a href="#processed-fluid-sample" id="toc-processed-fluid-sample" class="nav-link" data-scroll-target="#processed-fluid-sample"><span class="header-section-number">34</span> Processed fluid sample</a></li>
+  <li><a href="#filtrate" id="toc-filtrate" class="nav-link" data-scroll-target="#filtrate"><span class="header-section-number">35</span> Filtrate</a></li>
+  <li><a href="#boxed-core" id="toc-boxed-core" class="nav-link" data-scroll-target="#boxed-core"><span class="header-section-number">36</span> Boxed core</a></li>
+  <li><a href="#composite-sample" id="toc-composite-sample" class="nav-link" data-scroll-target="#composite-sample"><span class="header-section-number">37</span> Composite sample</a></li>
+  <li><a href="#chip-channel-sample" id="toc-chip-channel-sample" class="nav-link" data-scroll-target="#chip-channel-sample"><span class="header-section-number">38</span> Chip Channel Sample</a></li>
+  <li><a href="#high-grade-sample" id="toc-high-grade-sample" class="nav-link" data-scroll-target="#high-grade-sample"><span class="header-section-number">39</span> High Grade Sample</a></li>
+  <li><a href="#site-composite-sample" id="toc-site-composite-sample" class="nav-link" data-scroll-target="#site-composite-sample"><span class="header-section-number">40</span> Site composite sample</a></li>
+  <li><a href="#core-catcher" id="toc-core-catcher" class="nav-link" data-scroll-target="#core-catcher"><span class="header-section-number">41</span> Core Catcher</a></li>
+  <li><a href="#cuttings" id="toc-cuttings" class="nav-link" data-scroll-target="#cuttings"><span class="header-section-number">42</span> Cuttings</a></li>
+  <li><a href="#dredge" id="toc-dredge" class="nav-link" data-scroll-target="#dredge"><span class="header-section-number">43</span> Dredge</a></li>
+  <li><a href="#material-captured-in-filter" id="toc-material-captured-in-filter" class="nav-link" data-scroll-target="#material-captured-in-filter"><span class="header-section-number">44</span> Material Captured in Filter</a></li>
+  <li><a href="#mechanical-fraction-1" id="toc-mechanical-fraction-1" class="nav-link" data-scroll-target="#mechanical-fraction-1"><span class="header-section-number">45</span> Mechanical fraction</a></li>
+  <li><a href="#mineral-separate-1" id="toc-mineral-separate-1" class="nav-link" data-scroll-target="#mineral-separate-1"><span class="header-section-number">46</span> Mineral separate</a></li>
+  <li><a href="#magnetic-fraction-2" id="toc-magnetic-fraction-2" class="nav-link" data-scroll-target="#magnetic-fraction-2"><span class="header-section-number">47</span> Magnetic fraction</a></li>
+  <li><a href="#non-magnetic-fraction-2" id="toc-non-magnetic-fraction-2" class="nav-link" data-scroll-target="#non-magnetic-fraction-2"><span class="header-section-number">48</span> Non-magnetic fraction</a></li>
+  <li><a href="#natural-aggregate-specimen" id="toc-natural-aggregate-specimen" class="nav-link" data-scroll-target="#natural-aggregate-specimen"><span class="header-section-number">49</span> Natural aggregate specimen</a></li>
+  <li><a href="#prepared-powder-1" id="toc-prepared-powder-1" class="nav-link" data-scroll-target="#prepared-powder-1"><span class="header-section-number">50</span> Prepared powder</a></li>
+  <li><a href="#prepared-rock-powder-1" id="toc-prepared-rock-powder-1" class="nav-link" data-scroll-target="#prepared-rock-powder-1"><span class="header-section-number">51</span> Prepared rock powder</a></li>
+  <li><a href="#trawl" id="toc-trawl" class="nav-link" data-scroll-target="#trawl"><span class="header-section-number">52</span> Trawl</a></li>
+  <li><a href="#tem-grod" id="toc-tem-grod" class="nav-link" data-scroll-target="#tem-grod"><span class="header-section-number">53</span> TEM grod</a></li>
+  <li><a href="#dust-wipe" id="toc-dust-wipe" class="nav-link" data-scroll-target="#dust-wipe"><span class="header-section-number">54</span> Dust wipe</a></li>
+  <li><a href="#glass-slide-smear-1" id="toc-glass-slide-smear-1" class="nav-link" data-scroll-target="#glass-slide-smear-1"><span class="header-section-number">55</span> Glass slide smear</a></li>
+  <li><a href="#peel-1" id="toc-peel-1" class="nav-link" data-scroll-target="#peel-1"><span class="header-section-number">56</span> Peel</a></li>
+  <li><a href="#core" id="toc-core" class="nav-link" data-scroll-target="#core"><span class="header-section-number">57</span> Core</a></li>
+  <li><a href="#core-half-round" id="toc-core-half-round" class="nav-link" data-scroll-target="#core-half-round"><span class="header-section-number">58</span> Core half round</a></li>
+  <li><a href="#core-peice" id="toc-core-peice" class="nav-link" data-scroll-target="#core-peice"><span class="header-section-number">59</span> Core peice</a></li>
+  <li><a href="#core-quarter-round" id="toc-core-quarter-round" class="nav-link" data-scroll-target="#core-quarter-round"><span class="header-section-number">60</span> Core quarter round</a></li>
+  <li><a href="#core-section" id="toc-core-section" class="nav-link" data-scroll-target="#core-section"><span class="header-section-number">61</span> Core section</a></li>
+  <li><a href="#core-subpeice" id="toc-core-subpeice" class="nav-link" data-scroll-target="#core-subpeice"><span class="header-section-number">62</span> Core subpeice</a></li>
+  <li><a href="#fib-lamella-1" id="toc-fib-lamella-1" class="nav-link" data-scroll-target="#fib-lamella-1"><span class="header-section-number">63</span> FIB lamella</a></li>
+  <li><a href="#individual-solid-cube-1" id="toc-individual-solid-cube-1" class="nav-link" data-scroll-target="#individual-solid-cube-1"><span class="header-section-number">64</span> Individual solid cube</a></li>
+  <li><a href="#individual-solid-cylinder" id="toc-individual-solid-cylinder" class="nav-link" data-scroll-target="#individual-solid-cylinder"><span class="header-section-number">65</span> Individual solid cylinder</a></li>
+  <li><a href="#meteorite" id="toc-meteorite" class="nav-link" data-scroll-target="#meteorite"><span class="header-section-number">66</span> Meteorite</a></li>
+  <li><a href="#mineral-specimen" id="toc-mineral-specimen" class="nav-link" data-scroll-target="#mineral-specimen"><span class="header-section-number">67</span> Mineral specimen</a></li>
+  <li><a href="#sectioned-specimen-1" id="toc-sectioned-specimen-1" class="nav-link" data-scroll-target="#sectioned-specimen-1"><span class="header-section-number">68</span> Sectioned specimen</a></li>
+  <li><a href="#thick-section-1" id="toc-thick-section-1" class="nav-link" data-scroll-target="#thick-section-1"><span class="header-section-number">69</span> Thick section</a></li>
+  <li><a href="#thin-section-1" id="toc-thin-section-1" class="nav-link" data-scroll-target="#thin-section-1"><span class="header-section-number">70</span> Thin section</a></li>
+  <li><a href="#polished-thin-section-1" id="toc-polished-thin-section-1" class="nav-link" data-scroll-target="#polished-thin-section-1"><span class="header-section-number">71</span> Polished thin section</a></li>
+  <li><a href="#ultra-thin-section-1" id="toc-ultra-thin-section-1" class="nav-link" data-scroll-target="#ultra-thin-section-1"><span class="header-section-number">72</span> Ultra thin section</a></li>
+  <li><a href="#pressed-pellet-1" id="toc-pressed-pellet-1" class="nav-link" data-scroll-target="#pressed-pellet-1"><span class="header-section-number">73</span> Pressed pellet</a></li>
+  <li><a href="#rock-hand-sample" id="toc-rock-hand-sample" class="nav-link" data-scroll-target="#rock-hand-sample"><span class="header-section-number">74</span> Rock hand sample</a></li>
+  <li><a href="#slab-1" id="toc-slab-1" class="nav-link" data-scroll-target="#slab-1"><span class="header-section-number">75</span> Slab</a></li>
+  <li><a href="#u-channel-sample" id="toc-u-channel-sample" class="nav-link" data-scroll-target="#u-channel-sample"><span class="header-section-number">76</span> U-channel sample</a></li>
+  <li><a href="#atom-probe-tip" id="toc-atom-probe-tip" class="nav-link" data-scroll-target="#atom-probe-tip"><span class="header-section-number">77</span> Atom probe tip</a></li>
+  <li><a href="#chip" id="toc-chip" class="nav-link" data-scroll-target="#chip"><span class="header-section-number">78</span> Chip</a></li>
+  <li><a href="#microtome-slice" id="toc-microtome-slice" class="nav-link" data-scroll-target="#microtome-slice"><span class="header-section-number">79</span> Microtome slice</a></li>
+  <li><a href="#mounted-specimen" id="toc-mounted-specimen" class="nav-link" data-scroll-target="#mounted-specimen"><span class="header-section-number">80</span> Mounted specimen</a></li>
+  <li><a href="#polished-mounted-specimen" id="toc-polished-mounted-specimen" class="nav-link" data-scroll-target="#polished-mounted-specimen"><span class="header-section-number">81</span> Polished mounted specimen</a></li>
+  <li><a href="#particle" id="toc-particle" class="nav-link" data-scroll-target="#particle"><span class="header-section-number">82</span> Particle</a></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/models/generated/extensions/earthenv_specimen_type.md" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -333,8 +421,8 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="#particle">Particle</a></li>
 </ul></li>
 </ul>
-<section id="analytical-preparation" class="level2">
-<h2 class="anchored" data-anchor-id="analytical-preparation">Analytical preparation</h2>
+<section id="analytical-preparation" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="analytical-preparation"><span class="header-section-number">1</span> Analytical preparation</h2>
 <p><span id="analytical-preparation"></span></p>
 <p>The concept <code>Analytical preparation</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/analyticalpreparation</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -343,8 +431,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>Specimen is a product of processing required for some observation procedure, e.g.&nbsp;thin section, XRF bead, SEM stub, rock powder. If identified separately, this should have a ‘parent’ link to the original sample</p>
 </section>
-<section id="bundle-biome-aggregation" class="level2">
-<h2 class="anchored" data-anchor-id="bundle-biome-aggregation">Bundle biome aggregation</h2>
+<section id="bundle-biome-aggregation" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="bundle-biome-aggregation"><span class="header-section-number">2</span> Bundle biome aggregation</h2>
 <p><span id="bundle-biome-aggregation"></span></p>
 <p>The concept <code>Bundle biome aggregation</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/bundlebiomeaggregation</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -353,8 +441,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>An aggregation of whole organisms representative of some biome</p>
 </section>
-<section id="fluid-in-container" class="level2">
-<h2 class="anchored" data-anchor-id="fluid-in-container">Fluid in container</h2>
+<section id="fluid-in-container" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="fluid-in-container"><span class="header-section-number">3</span> Fluid in container</h2>
 <p><span id="fluid-in-container"></span></p>
 <p>The concept <code>Fluid in container</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/fluidincontainer</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -363,8 +451,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>Specimen is a container whose contents are liquid, gas, or mixed dominantly fluid phases that is the actual sample material. Fluid might include minor solid particles. Container typically human made, but also includes natural fluid container, e.g.&nbsp;fluid inclusion in a mineral grain. Includes colloids, foams, gels, suspensions. The sample is the fluid substance; fluid samples collected to analyze the contained biome should be considered ‘Biome Aggregation’</p>
 </section>
-<section id="genericaggregation" class="level2">
-<h2 class="anchored" data-anchor-id="genericaggregation">genericAggregation</h2>
+<section id="genericaggregation" class="level2" data-number="4">
+<h2 data-number="4" data-anchor-id="genericaggregation"><span class="header-section-number">4</span> genericAggregation</h2>
 <p><span id="genericaggregation"></span></p>
 <p>The concept <code>genericAggregation</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/genericaggregation</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -373,8 +461,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>An aggregate specimen that is not biogenic or composed of anthropogenic material fragments. Examples: loose soil or sediment (e.g.&nbsp;in a bag), rock chips, particulate filtrate or precipitate; rock powders.</p>
 </section>
-<section id="other-solid-object" class="level2">
-<h2 class="anchored" data-anchor-id="other-solid-object">Other solid Object</h2>
+<section id="other-solid-object" class="level2" data-number="5">
+<h2 data-number="5" data-anchor-id="other-solid-object"><span class="header-section-number">5</span> Other solid Object</h2>
 <p><span id="other-solid-object"></span></p>
 <p>The concept <code>Other solid Object</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/othersolidobject</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -383,8 +471,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>Single piece of material not one of the other types.</p>
 </section>
-<section id="solid-material-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="solid-material-specimen">Solid material specimen</h2>
+<section id="solid-material-specimen" class="level2" data-number="6">
+<h2 data-number="6" data-anchor-id="solid-material-specimen"><span class="header-section-number">6</span> Solid material specimen</h2>
 <p><span id="solid-material-specimen"></span></p>
 <p>The concept <code>Solid material specimen</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/solidmaterialspecimen</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
 <p>This is the top concept of the vocabulary.</p>
@@ -393,16 +481,16 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>Individual solid object, not formed directly by or part of a living organism, that is representative of some material.</p>
 </section>
-<section id="cell-culture" class="level2">
-<h2 class="anchored" data-anchor-id="cell-culture">Cell culture</h2>
+<section id="cell-culture" class="level2" data-number="7">
+<h2 data-number="7" data-anchor-id="cell-culture"><span class="header-section-number">7</span> Cell culture</h2>
 <p><span id="cell-culture"></span></p>
 <p>The concept <code>Cell culture</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/cellculture</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#bundle-biome-aggregation"><code>Bundle biome aggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#cell-culture"><code>Cell culture</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a collection of cells are grown under controlled conditions, generally outside of their natural environment</p>
 </section>
-<section id="dissolved-chemical-fraction" class="level2">
-<h2 class="anchored" data-anchor-id="dissolved-chemical-fraction">Dissolved chemical fraction</h2>
+<section id="dissolved-chemical-fraction" class="level2" data-number="8">
+<h2 data-number="8" data-anchor-id="dissolved-chemical-fraction"><span class="header-section-number">8</span> Dissolved chemical fraction</h2>
 <p><span id="dissolved-chemical-fraction"></span></p>
 <p>The concept <code>Dissolved chemical fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/dissolvedchemicalfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#dissolved-chemical-fraction"><code>Dissolved chemical fraction</code></a></p>
@@ -411,56 +499,56 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>A fluid concentrating some constituent of interest from a parent sample. The dissolved constituent is actually the sample material of interest.</p>
 </section>
-<section id="eluate" class="level2">
-<h2 class="anchored" data-anchor-id="eluate">Eluate</h2>
+<section id="eluate" class="level2" data-number="9">
+<h2 data-number="9" data-anchor-id="eluate"><span class="header-section-number">9</span> Eluate</h2>
 <p><span id="eluate"></span></p>
 <p>The concept <code>Eluate</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/eluate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#dissolved-chemical-fraction"><code>Dissolved chemical fraction</code></a><code>-&gt;</code><a href="#eluate"><code>Eluate</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>The fluid product that contains the analyte of interest washed from a chromatography column</p>
 </section>
-<section id="fib-lamella" class="level2">
-<h2 class="anchored" data-anchor-id="fib-lamella">FIB lamella</h2>
+<section id="fib-lamella" class="level2" data-number="10">
+<h2 data-number="10" data-anchor-id="fib-lamella"><span class="header-section-number">10</span> FIB lamella</h2>
 <p><span id="fib-lamella"></span></p>
 <p>The concept <code>FIB lamella</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/fiblamella</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#fib-lamella"><code>FIB lamella</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>very thin sheet of solid material milled from a larger sample using a focused ion beam. Used for TEM analysis.</p>
 </section>
-<section id="glass-slide-smear" class="level2">
-<h2 class="anchored" data-anchor-id="glass-slide-smear">Glass slide smear</h2>
+<section id="glass-slide-smear" class="level2" data-number="11">
+<h2 data-number="11" data-anchor-id="glass-slide-smear"><span class="header-section-number">11</span> Glass slide smear</h2>
 <p><span id="glass-slide-smear"></span></p>
 <p>The concept <code>Glass slide smear</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/glassslidesmear</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#other-solid-object"><code>Other solid Object</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#glass-slide-smear"><code>Glass slide smear</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>sample from a cell culture (or other microparticulate suspension) spread into a thin layer on a glass slide for optical investigation</p>
 </section>
-<section id="individual-solid-cube" class="level2">
-<h2 class="anchored" data-anchor-id="individual-solid-cube">Individual solid cube</h2>
+<section id="individual-solid-cube" class="level2" data-number="12">
+<h2 data-number="12" data-anchor-id="individual-solid-cube"><span class="header-section-number">12</span> Individual solid cube</h2>
 <p><span id="individual-solid-cube"></span></p>
 <p>The concept <code>Individual solid cube</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/individualsolidcube</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#individual-solid-cube"><code>Individual solid cube</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A sample that is a prepared cube of material, intended as a sample of that material.</p>
 </section>
-<section id="magnetic-fraction" class="level2">
-<h2 class="anchored" data-anchor-id="magnetic-fraction">Magnetic fraction</h2>
+<section id="magnetic-fraction" class="level2" data-number="13">
+<h2 data-number="13" data-anchor-id="magnetic-fraction"><span class="header-section-number">13</span> Magnetic fraction</h2>
 <p><span id="magnetic-fraction"></span></p>
 <p>The concept <code>Magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/magneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#magnetic-fraction"><code>Magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a collection of particles separated from a crushed rock sample based on their attraction to a magnet.</p>
 </section>
-<section id="mechanical-fraction" class="level2">
-<h2 class="anchored" data-anchor-id="mechanical-fraction">Mechanical fraction</h2>
+<section id="mechanical-fraction" class="level2" data-number="14">
+<h2 data-number="14" data-anchor-id="mechanical-fraction"><span class="header-section-number">14</span> Mechanical fraction</h2>
 <p><span id="mechanical-fraction"></span></p>
 <p>The concept <code>Mechanical fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mechanicalfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mechanical-fraction"><code>Mechanical fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>defined by sample preparation involving mechanical processing, e.g.&nbsp;grain size, density, or grain shape separation.</p>
 </section>
-<section id="mineral-separate" class="level2">
-<h2 class="anchored" data-anchor-id="mineral-separate">Mineral separate</h2>
+<section id="mineral-separate" class="level2" data-number="15">
+<h2 data-number="15" data-anchor-id="mineral-separate"><span class="header-section-number">15</span> Mineral separate</h2>
 <p><span id="mineral-separate"></span></p>
 <p>The concept <code>Mineral separate</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mineralseparate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a></p>
@@ -469,24 +557,24 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>an aggregation of particles of the same mineral extracted and concentrated from a rock.</p>
 </section>
-<section id="magnetic-fraction-1" class="level2">
-<h2 class="anchored" data-anchor-id="magnetic-fraction-1">Magnetic fraction</h2>
+<section id="magnetic-fraction-1" class="level2" data-number="16">
+<h2 data-number="16" data-anchor-id="magnetic-fraction-1"><span class="header-section-number">16</span> Magnetic fraction</h2>
 <p><span id="magnetic-fraction"></span></p>
 <p>The concept <code>Magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/magneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#magnetic-fraction"><code>Magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a collection of particles separated from a crushed rock sample based on their attraction to a magnet.</p>
 </section>
-<section id="non-magnetic-fraction" class="level2">
-<h2 class="anchored" data-anchor-id="non-magnetic-fraction">Non-magnetic fraction</h2>
+<section id="non-magnetic-fraction" class="level2" data-number="17">
+<h2 data-number="17" data-anchor-id="non-magnetic-fraction"><span class="header-section-number">17</span> Non-magnetic fraction</h2>
 <p><span id="non-magnetic-fraction"></span></p>
 <p>The concept <code>Non-magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/nonmagneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#non-magnetic-fraction"><code>Non-magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>collection of particles from a crushed rock sample based on their lack of attraction to a magnet</p>
 </section>
-<section id="sectioned-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="sectioned-specimen">Sectioned specimen</h2>
+<section id="sectioned-specimen" class="level2" data-number="18">
+<h2 data-number="18" data-anchor-id="sectioned-specimen"><span class="header-section-number">18</span> Sectioned specimen</h2>
 <p><span id="sectioned-specimen"></span></p>
 <p>The concept <code>Sectioned specimen</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mountedsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a></p>
@@ -495,16 +583,16 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>a thin slice of a solid material that has been mounted on a glass slide for study</p>
 </section>
-<section id="thick-section" class="level2">
-<h2 class="anchored" data-anchor-id="thick-section">Thick section</h2>
+<section id="thick-section" class="level2" data-number="19">
+<h2 data-number="19" data-anchor-id="thick-section"><span class="header-section-number">19</span> Thick section</h2>
 <p><span id="thick-section"></span></p>
 <p>The concept <code>Thick section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/thicksection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thick-section"><code>Thick section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Thick sections are like thin sections, but milled to a greater thickness. Typcially polished on one or both sides and used for fluid or melt inclusion studies, Raman analyses, and infrared spectroscopy analyses, and SEM or electron microprobe. The standard thickness for a fluid inclusion thick section is 50 micrometers, but thick sections can be made at any thickness. Thick sections can be attached to a glass slide, or can be prepared so that they can be removed from their mount as a stand-alone slice of rock.</p>
 </section>
-<section id="thin-section" class="level2">
-<h2 class="anchored" data-anchor-id="thin-section">Thin section</h2>
+<section id="thin-section" class="level2" data-number="20">
+<h2 data-number="20" data-anchor-id="thin-section"><span class="header-section-number">20</span> Thin section</h2>
 <p><span id="thin-section"></span></p>
 <p>The concept <code>Thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/thinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thin-section"><code>Thin section</code></a></p>
@@ -513,40 +601,40 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>thin sliver of rock cut from a sample with a diamond saw and ground optically flat, and then mounted on a glass slide and ground smooth using progressively finer abrasive grit until the sample is 30 microns thick.</p>
 </section>
-<section id="polished-thin-section" class="level2">
-<h2 class="anchored" data-anchor-id="polished-thin-section">Polished thin section</h2>
+<section id="polished-thin-section" class="level2" data-number="21">
+<h2 data-number="21" data-anchor-id="polished-thin-section"><span class="header-section-number">21</span> Polished thin section</h2>
 <p><span id="polished-thin-section"></span></p>
 <p>The concept <code>Polished thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/polishedthinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thin-section"><code>Thin section</code></a><code>-&gt;</code><a href="#polished-thin-section"><code>Polished thin section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a thin section that has its free surface polished until perfectly planar and free of pits and scratches. Used for reflected light petrography and for electron microprobe or SEM investigation.</p>
 </section>
-<section id="ultra-thin-section" class="level2">
-<h2 class="anchored" data-anchor-id="ultra-thin-section">Ultra thin section</h2>
+<section id="ultra-thin-section" class="level2" data-number="22">
+<h2 data-number="22" data-anchor-id="ultra-thin-section"><span class="header-section-number">22</span> Ultra thin section</h2>
 <p><span id="ultra-thin-section"></span></p>
 <p>The concept <code>Ultra thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/ultrathinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#ultra-thin-section"><code>Ultra thin section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>An ordinary thin section that is attached to the glass slide using a soluble cement such as Canada balsam (soluble in ethanol) to allow both sides to be worked on. The section is polished on both sides using a fine diamond paste until it has a thickness in the range of 2-12 microns. This technique has been used to study the microstructure of very fine-grained carbonate rocks, and also in the preparation of mineral and rock specimens for transmission electron microscopy.</p>
 </section>
-<section id="non-magnetic-fraction-1" class="level2">
-<h2 class="anchored" data-anchor-id="non-magnetic-fraction-1">Non-magnetic fraction</h2>
+<section id="non-magnetic-fraction-1" class="level2" data-number="23">
+<h2 data-number="23" data-anchor-id="non-magnetic-fraction-1"><span class="header-section-number">23</span> Non-magnetic fraction</h2>
 <p><span id="non-magnetic-fraction"></span></p>
 <p>The concept <code>Non-magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/nonmagneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#non-magnetic-fraction"><code>Non-magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>collection of particles from a crushed rock sample based on their lack of attraction to a magnet</p>
 </section>
-<section id="peel" class="level2">
-<h2 class="anchored" data-anchor-id="peel">Peel</h2>
+<section id="peel" class="level2" data-number="24">
+<h2 data-number="24" data-anchor-id="peel"><span class="header-section-number">24</span> Peel</h2>
 <p><span id="peel"></span></p>
 <p>The concept <code>Peel</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/peel</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#other-solid-object"><code>Other solid Object</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#peel"><code>Peel</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Acetate peels are made by polishing a planar surface on a sample, etching it with acid to give it some relief, and then chemically melting a piece of acetate onto that surface. The acetate is then pulled off for examination under a microscope. The acetate preserves a fingerprint of the internal structure of the sample surface. Used in paleontology to study complex fossils, e.g.&nbsp;bryozoan.</p>
 </section>
-<section id="prepared-powder" class="level2">
-<h2 class="anchored" data-anchor-id="prepared-powder">Prepared powder</h2>
+<section id="prepared-powder" class="level2" data-number="25">
+<h2 data-number="25" data-anchor-id="prepared-powder"><span class="header-section-number">25</span> Prepared powder</h2>
 <p><span id="prepared-powder"></span></p>
 <p>The concept <code>Prepared powder</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/preparedpowder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#prepared-powder"><code>Prepared powder</code></a></p>
@@ -557,24 +645,24 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Powder</code></p>
 </section>
-<section id="prepared-rock-powder" class="level2">
-<h2 class="anchored" data-anchor-id="prepared-rock-powder">Prepared rock powder</h2>
+<section id="prepared-rock-powder" class="level2" data-number="26">
+<h2 data-number="26" data-anchor-id="prepared-rock-powder"><span class="header-section-number">26</span> Prepared rock powder</h2>
 <p><span id="prepared-rock-powder"></span></p>
 <p>The concept <code>Prepared rock powder</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/preparedrockpowder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#prepared-powder"><code>Prepared powder</code></a><code>-&gt;</code><a href="#prepared-rock-powder"><code>Prepared rock powder</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a powder manufactured by pulverizing a rock.</p>
 </section>
-<section id="pressed-pellet" class="level2">
-<h2 class="anchored" data-anchor-id="pressed-pellet">Pressed pellet</h2>
+<section id="pressed-pellet" class="level2" data-number="27">
+<h2 data-number="27" data-anchor-id="pressed-pellet"><span class="header-section-number">27</span> Pressed pellet</h2>
 <p><span id="pressed-pellet"></span></p>
 <p>The concept <code>Pressed pellet</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/pressedpellet</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#pressed-pellet"><code>Pressed pellet</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a sample prepared by grinding a parent sample to a fine powder, mixing it with a binder, and pressing the mixture into a die at a pressure of between 15 and 35 tons to produce a solid disc for subsequent analysis, typically by X-Ray fluorescence.</p>
 </section>
-<section id="residual-material" class="level2">
-<h2 class="anchored" data-anchor-id="residual-material">Residual material</h2>
+<section id="residual-material" class="level2" data-number="28">
+<h2 data-number="28" data-anchor-id="residual-material"><span class="header-section-number">28</span> Residual material</h2>
 <p><span id="residual-material"></span></p>
 <p>The concept <code>Residual material</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/residualmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#residual-material"><code>Residual material</code></a></p>
@@ -583,32 +671,32 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Residue</code></p>
 </section>
-<section id="slab" class="level2">
-<h2 class="anchored" data-anchor-id="slab">Slab</h2>
+<section id="slab" class="level2" data-number="29">
+<h2 data-number="29" data-anchor-id="slab"><span class="header-section-number">29</span> Slab</h2>
 <p><span id="slab"></span></p>
 <p>The concept <code>Slab</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/slab</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#slab"><code>Slab</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a relatively planar rock sample,cut from a large sample to produce a tabular peice of rock with the irregular outline of the original sample on the diameter where the cut was mate.</p>
 </section>
-<section id="cell-culture-1" class="level2">
-<h2 class="anchored" data-anchor-id="cell-culture-1">Cell culture</h2>
+<section id="cell-culture-1" class="level2" data-number="30">
+<h2 data-number="30" data-anchor-id="cell-culture-1"><span class="header-section-number">30</span> Cell culture</h2>
 <p><span id="cell-culture"></span></p>
 <p>The concept <code>Cell culture</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/cellculture</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#bundle-biome-aggregation"><code>Bundle biome aggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#cell-culture"><code>Cell culture</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a collection of cells are grown under controlled conditions, generally outside of their natural environment</p>
 </section>
-<section id="direct-fluid-sample" class="level2">
-<h2 class="anchored" data-anchor-id="direct-fluid-sample">Direct fluid sample</h2>
+<section id="direct-fluid-sample" class="level2" data-number="31">
+<h2 data-number="31" data-anchor-id="direct-fluid-sample"><span class="header-section-number">31</span> Direct fluid sample</h2>
 <p><span id="direct-fluid-sample"></span></p>
 <p>The concept <code>Direct fluid sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/directfluidsample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#direct-fluid-sample"><code>Direct fluid sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a fluid collected from the sampled feature (e.g.&nbsp;water body, hydrothermal vent, atmosphere…) with no processing. (e.g.&nbsp;filtration, addition of preservatives).</p>
 </section>
-<section id="dissolved-chemical-fraction-1" class="level2">
-<h2 class="anchored" data-anchor-id="dissolved-chemical-fraction-1">Dissolved chemical fraction</h2>
+<section id="dissolved-chemical-fraction-1" class="level2" data-number="32">
+<h2 data-number="32" data-anchor-id="dissolved-chemical-fraction-1"><span class="header-section-number">32</span> Dissolved chemical fraction</h2>
 <p><span id="dissolved-chemical-fraction"></span></p>
 <p>The concept <code>Dissolved chemical fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/dissolvedchemicalfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#dissolved-chemical-fraction"><code>Dissolved chemical fraction</code></a></p>
@@ -617,16 +705,16 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>A fluid concentrating some constituent of interest from a parent sample. The dissolved constituent is actually the sample material of interest.</p>
 </section>
-<section id="eluate-1" class="level2">
-<h2 class="anchored" data-anchor-id="eluate-1">Eluate</h2>
+<section id="eluate-1" class="level2" data-number="33">
+<h2 data-number="33" data-anchor-id="eluate-1"><span class="header-section-number">33</span> Eluate</h2>
 <p><span id="eluate"></span></p>
 <p>The concept <code>Eluate</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/eluate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#dissolved-chemical-fraction"><code>Dissolved chemical fraction</code></a><code>-&gt;</code><a href="#eluate"><code>Eluate</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>The fluid product that contains the analyte of interest washed from a chromatography column</p>
 </section>
-<section id="processed-fluid-sample" class="level2">
-<h2 class="anchored" data-anchor-id="processed-fluid-sample">Processed fluid sample</h2>
+<section id="processed-fluid-sample" class="level2" data-number="34">
+<h2 data-number="34" data-anchor-id="processed-fluid-sample"><span class="header-section-number">34</span> Processed fluid sample</h2>
 <p><span id="processed-fluid-sample"></span></p>
 <p>The concept <code>Processed fluid sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/processedfluidsample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#processed-fluid-sample"><code>Processed fluid sample</code></a></p>
@@ -635,24 +723,24 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>fluid sample that has been processed in some way during or after collection, e.g.&nbsp;by filtering, addition of preservatives.</p>
 </section>
-<section id="filtrate" class="level2">
-<h2 class="anchored" data-anchor-id="filtrate">Filtrate</h2>
+<section id="filtrate" class="level2" data-number="35">
+<h2 data-number="35" data-anchor-id="filtrate"><span class="header-section-number">35</span> Filtrate</h2>
 <p><span id="filtrate"></span></p>
 <p>The concept <code>Filtrate</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/filtrate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#fluid-in-container"><code>Fluid in container</code></a><code>-&gt;</code><a href="#processed-fluid-sample"><code>Processed fluid sample</code></a><code>-&gt;</code><a href="#filtrate"><code>Filtrate</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A sample that has gone through a filtration process to separate solids from fluids (liquids or gases), using a filter medium through which only the fluid can pass. Must be associated with a filter size.</p>
 </section>
-<section id="boxed-core" class="level2">
-<h2 class="anchored" data-anchor-id="boxed-core">Boxed core</h2>
+<section id="boxed-core" class="level2" data-number="36">
+<h2 data-number="36" data-anchor-id="boxed-core"><span class="header-section-number">36</span> Boxed core</h2>
 <p><span id="boxed-core"></span></p>
 <p>The concept <code>Boxed core</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/boxedcore</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#boxed-core"><code>Boxed core</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A collection of core peices that are stored in an individual box. Typically the box will contain core peices from the same core.</p>
 </section>
-<section id="composite-sample" class="level2">
-<h2 class="anchored" data-anchor-id="composite-sample">Composite sample</h2>
+<section id="composite-sample" class="level2" data-number="37">
+<h2 data-number="37" data-anchor-id="composite-sample"><span class="header-section-number">37</span> Composite sample</h2>
 <p><span id="composite-sample"></span></p>
 <p>The concept <code>Composite sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/compositesample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#composite-sample"><code>Composite sample</code></a></p>
@@ -661,72 +749,72 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>a sample composed of multiple peices, representative of some material, or representative of some site. The peices do not all originate from the same object.</p>
 </section>
-<section id="chip-channel-sample" class="level2">
-<h2 class="anchored" data-anchor-id="chip-channel-sample">Chip Channel Sample</h2>
+<section id="chip-channel-sample" class="level2" data-number="38">
+<h2 data-number="38" data-anchor-id="chip-channel-sample"><span class="header-section-number">38</span> Chip Channel Sample</h2>
 <p><span id="chip-channel-sample"></span></p>
 <p>The concept <code>Chip Channel Sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/chipchannelsample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#composite-sample"><code>Composite sample</code></a><code>-&gt;</code><a href="#chip-channel-sample"><code>Chip Channel Sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>small chips of rock collected over a specified interval, with the objective to obtain a representative sample for that interval. Most of the time chip channel samples are collected in succession along a sample line which is laid out in advance using a tape. The freshest material possible is sampled, preferably chipping directly from bedrock. Sample intervals are set at a specified width, usually ranging from 30cm to 7m. Due to the method of sampling, chip channel samples tend to be rather large (up to 20 pounds for a five foot interval)</p>
 </section>
-<section id="high-grade-sample" class="level2">
-<h2 class="anchored" data-anchor-id="high-grade-sample">High Grade Sample</h2>
+<section id="high-grade-sample" class="level2" data-number="39">
+<h2 data-number="39" data-anchor-id="high-grade-sample"><span class="header-section-number">39</span> High Grade Sample</h2>
 <p><span id="high-grade-sample"></span></p>
 <p>The concept <code>High Grade Sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/highgradesample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#composite-sample"><code>Composite sample</code></a><code>-&gt;</code><a href="#high-grade-sample"><code>High Grade Sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>in mineral exploration, selective pieces of the most highly mineralized material from a mineralize site, intentionally excluding less mineralized material. A high grade sample might be collected to indicate what the best possible values are, or to provide material for certain types of trace element analyses.</p>
 </section>
-<section id="site-composite-sample" class="level2">
-<h2 class="anchored" data-anchor-id="site-composite-sample">Site composite sample</h2>
+<section id="site-composite-sample" class="level2" data-number="40">
+<h2 data-number="40" data-anchor-id="site-composite-sample"><span class="header-section-number">40</span> Site composite sample</h2>
 <p><span id="site-composite-sample"></span></p>
 <p>The concept <code>Site composite sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/sitecompositesample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#composite-sample"><code>Composite sample</code></a><code>-&gt;</code><a href="#site-composite-sample"><code>Site composite sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>an aggregation of peices of uniform material collected over some area (generally greater than 2.5m across). These are the ideal ‘representative’ samples used in mineral exploration. A composite sample might be collected to determine the background values of trace elements in a particular type of rock, or to determine if ore grade mineralization is present over a large area.</p>
 </section>
-<section id="core-catcher" class="level2">
-<h2 class="anchored" data-anchor-id="core-catcher">Core Catcher</h2>
+<section id="core-catcher" class="level2" data-number="41">
+<h2 data-number="41" data-anchor-id="core-catcher"><span class="header-section-number">41</span> Core Catcher</h2>
 <p><span id="core-catcher"></span></p>
 <p>The concept <code>Core Catcher</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/corecatcher</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#core-catcher"><code>Core Catcher</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>material recovered from the core catcher of a sedimentary core and which is treated as a separate section from the core. The core catcher is a device at the bottom of the core barrel that prevents the core from sliding out while the barrel is retrieved from the hole. (http://publications.iodp.org/proceedings/323/102/102_.htm)</p>
 </section>
-<section id="cuttings" class="level2">
-<h2 class="anchored" data-anchor-id="cuttings">Cuttings</h2>
+<section id="cuttings" class="level2" data-number="42">
+<h2 data-number="42" data-anchor-id="cuttings"><span class="header-section-number">42</span> Cuttings</h2>
 <p><span id="cuttings"></span></p>
 <p>The concept <code>Cuttings</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/cuttings</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#cuttings"><code>Cuttings</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>unconsolidated Earth material produced by the grinding action of a drill bit during drilling of a borehole.</p>
 </section>
-<section id="dredge" class="level2">
-<h2 class="anchored" data-anchor-id="dredge">Dredge</h2>
+<section id="dredge" class="level2" data-number="43">
+<h2 data-number="43" data-anchor-id="dredge"><span class="header-section-number">43</span> Dredge</h2>
 <p><span id="dredge"></span></p>
 <p>The concept <code>Dredge</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/dredge</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#dredge"><code>Dredge</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>an aggregation of material sampled by dragging a collection bucket (dredge) across the bottom of a water body</p>
 </section>
-<section id="material-captured-in-filter" class="level2">
-<h2 class="anchored" data-anchor-id="material-captured-in-filter">Material Captured in Filter</h2>
+<section id="material-captured-in-filter" class="level2" data-number="44">
+<h2 data-number="44" data-anchor-id="material-captured-in-filter"><span class="header-section-number">44</span> Material Captured in Filter</h2>
 <p><span id="material-captured-in-filter"></span></p>
 <p>The concept <code>Material Captured in Filter</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/materialcapturedinfilter</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#material-captured-in-filter"><code>Material Captured in Filter</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A material sample captured in filter, for example from a water sample that was filtered. Must be associated with filter size field.</p>
 </section>
-<section id="mechanical-fraction-1" class="level2">
-<h2 class="anchored" data-anchor-id="mechanical-fraction-1">Mechanical fraction</h2>
+<section id="mechanical-fraction-1" class="level2" data-number="45">
+<h2 data-number="45" data-anchor-id="mechanical-fraction-1"><span class="header-section-number">45</span> Mechanical fraction</h2>
 <p><span id="mechanical-fraction"></span></p>
 <p>The concept <code>Mechanical fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mechanicalfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mechanical-fraction"><code>Mechanical fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>defined by sample preparation involving mechanical processing, e.g.&nbsp;grain size, density, or grain shape separation.</p>
 </section>
-<section id="mineral-separate-1" class="level2">
-<h2 class="anchored" data-anchor-id="mineral-separate-1">Mineral separate</h2>
+<section id="mineral-separate-1" class="level2" data-number="46">
+<h2 data-number="46" data-anchor-id="mineral-separate-1"><span class="header-section-number">46</span> Mineral separate</h2>
 <p><span id="mineral-separate"></span></p>
 <p>The concept <code>Mineral separate</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mineralseparate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a></p>
@@ -735,24 +823,24 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>an aggregation of particles of the same mineral extracted and concentrated from a rock.</p>
 </section>
-<section id="magnetic-fraction-2" class="level2">
-<h2 class="anchored" data-anchor-id="magnetic-fraction-2">Magnetic fraction</h2>
+<section id="magnetic-fraction-2" class="level2" data-number="47">
+<h2 data-number="47" data-anchor-id="magnetic-fraction-2"><span class="header-section-number">47</span> Magnetic fraction</h2>
 <p><span id="magnetic-fraction"></span></p>
 <p>The concept <code>Magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/magneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#magnetic-fraction"><code>Magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a collection of particles separated from a crushed rock sample based on their attraction to a magnet.</p>
 </section>
-<section id="non-magnetic-fraction-2" class="level2">
-<h2 class="anchored" data-anchor-id="non-magnetic-fraction-2">Non-magnetic fraction</h2>
+<section id="non-magnetic-fraction-2" class="level2" data-number="48">
+<h2 data-number="48" data-anchor-id="non-magnetic-fraction-2"><span class="header-section-number">48</span> Non-magnetic fraction</h2>
 <p><span id="non-magnetic-fraction"></span></p>
 <p>The concept <code>Non-magnetic fraction</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/nonmagneticfraction</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#mineral-separate"><code>Mineral separate</code></a><code>-&gt;</code><a href="#non-magnetic-fraction"><code>Non-magnetic fraction</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>collection of particles from a crushed rock sample based on their lack of attraction to a magnet</p>
 </section>
-<section id="natural-aggregate-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="natural-aggregate-specimen">Natural aggregate specimen</h2>
+<section id="natural-aggregate-specimen" class="level2" data-number="49">
+<h2 data-number="49" data-anchor-id="natural-aggregate-specimen"><span class="header-section-number">49</span> Natural aggregate specimen</h2>
 <p><span id="natural-aggregate-specimen"></span></p>
 <p>The concept <code>Natural aggregate specimen</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/naturalaggregate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#natural-aggregate-specimen"><code>Natural aggregate specimen</code></a></p>
@@ -761,8 +849,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Aggregate sample</code></p>
 </section>
-<section id="prepared-powder-1" class="level2">
-<h2 class="anchored" data-anchor-id="prepared-powder-1">Prepared powder</h2>
+<section id="prepared-powder-1" class="level2" data-number="50">
+<h2 data-number="50" data-anchor-id="prepared-powder-1"><span class="header-section-number">50</span> Prepared powder</h2>
 <p><span id="prepared-powder"></span></p>
 <p>The concept <code>Prepared powder</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/preparedpowder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#prepared-powder"><code>Prepared powder</code></a></p>
@@ -773,144 +861,144 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Powder</code></p>
 </section>
-<section id="prepared-rock-powder-1" class="level2">
-<h2 class="anchored" data-anchor-id="prepared-rock-powder-1">Prepared rock powder</h2>
+<section id="prepared-rock-powder-1" class="level2" data-number="51">
+<h2 data-number="51" data-anchor-id="prepared-rock-powder-1"><span class="header-section-number">51</span> Prepared rock powder</h2>
 <p><span id="prepared-rock-powder"></span></p>
 <p>The concept <code>Prepared rock powder</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/preparedrockpowder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#prepared-powder"><code>Prepared powder</code></a><code>-&gt;</code><a href="#prepared-rock-powder"><code>Prepared rock powder</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a powder manufactured by pulverizing a rock.</p>
 </section>
-<section id="trawl" class="level2">
-<h2 class="anchored" data-anchor-id="trawl">Trawl</h2>
+<section id="trawl" class="level2" data-number="52">
+<h2 data-number="52" data-anchor-id="trawl"><span class="header-section-number">52</span> Trawl</h2>
 <p><span id="trawl"></span></p>
 <p>The concept <code>Trawl</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/trawl</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#trawl"><code>Trawl</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>an aggregation of biogenic or non-biogenic material extracted from a water body</p>
 </section>
-<section id="tem-grod" class="level2">
-<h2 class="anchored" data-anchor-id="tem-grod">TEM grod</h2>
+<section id="tem-grod" class="level2" data-number="53">
+<h2 data-number="53" data-anchor-id="tem-grod"><span class="header-section-number">53</span> TEM grod</h2>
 <p><span id="tem-grod"></span></p>
 <p>The concept <code>TEM grod</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/temgrid</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#genericaggregation"><code>genericAggregation</code></a><code>-&gt;</code><a href="#tem-grod"><code>TEM grod</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>FIB sections and microtome slices set onto a small grid for handling, transport, and analysis using a transmission electron microscope (TEM). The grid itself can be given a single sample identifier (similar to how there are multiple grains in a grain mount). The linkage from the individual samples in the grid to their parent sample(s) should be documented</p>
 </section>
-<section id="dust-wipe" class="level2">
-<h2 class="anchored" data-anchor-id="dust-wipe">Dust wipe</h2>
+<section id="dust-wipe" class="level2" data-number="54">
+<h2 data-number="54" data-anchor-id="dust-wipe"><span class="header-section-number">54</span> Dust wipe</h2>
 <p><span id="dust-wipe"></span></p>
 <p>The concept <code>Dust wipe</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/dustwipe</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#other-solid-object"><code>Other solid Object</code></a><code>-&gt;</code><a href="#dust-wipe"><code>Dust wipe</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a pre-weighed and packaged paper towel (wipe) used to wipe over a surface to collect particulates from the surface</p>
 </section>
-<section id="glass-slide-smear-1" class="level2">
-<h2 class="anchored" data-anchor-id="glass-slide-smear-1">Glass slide smear</h2>
+<section id="glass-slide-smear-1" class="level2" data-number="55">
+<h2 data-number="55" data-anchor-id="glass-slide-smear-1"><span class="header-section-number">55</span> Glass slide smear</h2>
 <p><span id="glass-slide-smear"></span></p>
 <p>The concept <code>Glass slide smear</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/glassslidesmear</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#other-solid-object"><code>Other solid Object</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#glass-slide-smear"><code>Glass slide smear</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>sample from a cell culture (or other microparticulate suspension) spread into a thin layer on a glass slide for optical investigation</p>
 </section>
-<section id="peel-1" class="level2">
-<h2 class="anchored" data-anchor-id="peel-1">Peel</h2>
+<section id="peel-1" class="level2" data-number="56">
+<h2 data-number="56" data-anchor-id="peel-1"><span class="header-section-number">56</span> Peel</h2>
 <p><span id="peel"></span></p>
 <p>The concept <code>Peel</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/peel</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#other-solid-object"><code>Other solid Object</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#peel"><code>Peel</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Acetate peels are made by polishing a planar surface on a sample, etching it with acid to give it some relief, and then chemically melting a piece of acetate onto that surface. The acetate is then pulled off for examination under a microscope. The acetate preserves a fingerprint of the internal structure of the sample surface. Used in paleontology to study complex fossils, e.g.&nbsp;bryozoan.</p>
 </section>
-<section id="core" class="level2">
-<h2 class="anchored" data-anchor-id="core">Core</h2>
+<section id="core" class="level2" data-number="57">
+<h2 data-number="57" data-anchor-id="core"><span class="header-section-number">57</span> Core</h2>
 <p><span id="core"></span></p>
 <p>The concept <code>Core</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/core</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core"><code>Core</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Cylinder of rock or sediment extracted from within the earth, and representing the entire sample extracted during a single borehole drilling event. Typically using some rotary drilling technology. In many cases the core is extracted in segments that are ‘core sections’. A core from a single borehole is rarely a continous unbroken object; commonly parts of the core will break up during drilling or extraction, leaving gaps or sections that are granular material. Cores are normally composed of consolidated (‘solid’) material, but in some cases loosely consolidated material might be recovered, and considered sediment or tephra. To be called ‘core’ the material must be sufficiently consolidated to maintain a cylindrical shape. A core hasPart (hasChild) ‘Core section’</p>
 </section>
-<section id="core-half-round" class="level2">
-<h2 class="anchored" data-anchor-id="core-half-round">Core half round</h2>
+<section id="core-half-round" class="level2" data-number="58">
+<h2 data-number="58" data-anchor-id="core-half-round"><span class="header-section-number">58</span> Core half round</h2>
 <p><span id="core-half-round"></span></p>
 <p>The concept <code>Core half round</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/corehalfround</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core-half-round"><code>Core half round</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Half-cylindrical peice of consolidated material produced by along-axis split of a core whole round along a selected diameter . Has childOf relation to core section or core, core section, or Core peice from which is was split</p>
 </section>
-<section id="core-peice" class="level2">
-<h2 class="anchored" data-anchor-id="core-peice">Core peice</h2>
+<section id="core-peice" class="level2" data-number="59">
+<h2 data-number="59" data-anchor-id="core-peice"><span class="header-section-number">59</span> Core peice</h2>
 <p><span id="core-peice"></span></p>
 <p>The concept <code>Core peice</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/corepeice</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core-peice"><code>Core peice</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A cylindrical peice of consolidated earth material extracted as a single solid object between breaks in recovery of core from a borehole. has parent core section</p>
 </section>
-<section id="core-quarter-round" class="level2">
-<h2 class="anchored" data-anchor-id="core-quarter-round">Core quarter round</h2>
+<section id="core-quarter-round" class="level2" data-number="60">
+<h2 data-number="60" data-anchor-id="core-quarter-round"><span class="header-section-number">60</span> Core quarter round</h2>
 <p><span id="core-quarter-round"></span></p>
 <p>The concept <code>Core quarter round</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/corequarterround</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core-quarter-round"><code>Core quarter round</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a partial cylindrical peice of consolidated material created by along-axis split of a core half round. Has Parent core half round</p>
 </section>
-<section id="core-section" class="level2">
-<h2 class="anchored" data-anchor-id="core-section">Core section</h2>
+<section id="core-section" class="level2" data-number="61">
+<h2 data-number="61" data-anchor-id="core-section"><span class="header-section-number">61</span> Core section</h2>
 <p><span id="core-section"></span></p>
 <p>The concept <code>Core section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/coresection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core-section"><code>Core section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Segment of a core representing some interval along the well bore. Child of Core</p>
 </section>
-<section id="core-subpeice" class="level2">
-<h2 class="anchored" data-anchor-id="core-subpeice">Core subpeice</h2>
+<section id="core-subpeice" class="level2" data-number="62">
+<h2 data-number="62" data-anchor-id="core-subpeice"><span class="header-section-number">62</span> Core subpeice</h2>
 <p><span id="core-subpeice"></span></p>
 <p>The concept <code>Core subpeice</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/coresubpeice</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#core-subpeice"><code>Core subpeice</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A peice of consolidated material broken from a core peice. has Parent core peice or core section</p>
 </section>
-<section id="fib-lamella-1" class="level2">
-<h2 class="anchored" data-anchor-id="fib-lamella-1">FIB lamella</h2>
+<section id="fib-lamella-1" class="level2" data-number="63">
+<h2 data-number="63" data-anchor-id="fib-lamella-1"><span class="header-section-number">63</span> FIB lamella</h2>
 <p><span id="fib-lamella"></span></p>
 <p>The concept <code>FIB lamella</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/fiblamella</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#fib-lamella"><code>FIB lamella</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>very thin sheet of solid material milled from a larger sample using a focused ion beam. Used for TEM analysis.</p>
 </section>
-<section id="individual-solid-cube-1" class="level2">
-<h2 class="anchored" data-anchor-id="individual-solid-cube-1">Individual solid cube</h2>
+<section id="individual-solid-cube-1" class="level2" data-number="64">
+<h2 data-number="64" data-anchor-id="individual-solid-cube-1"><span class="header-section-number">64</span> Individual solid cube</h2>
 <p><span id="individual-solid-cube"></span></p>
 <p>The concept <code>Individual solid cube</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/individualsolidcube</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#individual-solid-cube"><code>Individual solid cube</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A sample that is a prepared cube of material, intended as a sample of that material.</p>
 </section>
-<section id="individual-solid-cylinder" class="level2">
-<h2 class="anchored" data-anchor-id="individual-solid-cylinder">Individual solid cylinder</h2>
+<section id="individual-solid-cylinder" class="level2" data-number="65">
+<h2 data-number="65" data-anchor-id="individual-solid-cylinder"><span class="header-section-number">65</span> Individual solid cylinder</h2>
 <p><span id="individual-solid-cylinder"></span></p>
 <p>The concept <code>Individual solid cylinder</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/individualsolidcylinder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#individual-solid-cylinder"><code>Individual solid cylinder</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A cylindrical peice of consolidated material not obtained by subsurface drilling. Cores drilled for paleomagnetic analysis are a common example. Tree ring cores are another…</p>
 </section>
-<section id="meteorite" class="level2">
-<h2 class="anchored" data-anchor-id="meteorite">Meteorite</h2>
+<section id="meteorite" class="level2" data-number="66">
+<h2 data-number="66" data-anchor-id="meteorite"><span class="header-section-number">66</span> Meteorite</h2>
 <p><span id="meteorite"></span></p>
 <p>The concept <code>Meteorite</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/meteorite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#meteorite"><code>Meteorite</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A meteorite is a solid object that originates in interplanetary space and survives passage through an atmosphere to reach the surface of a planet or moon.</p>
 </section>
-<section id="mineral-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="mineral-specimen">Mineral specimen</h2>
+<section id="mineral-specimen" class="level2" data-number="67">
+<h2 data-number="67" data-anchor-id="mineral-specimen"><span class="header-section-number">67</span> Mineral specimen</h2>
 <p><span id="mineral-specimen"></span></p>
 <p>The concept <code>Mineral specimen</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mineralspecimen</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#mineral-specimen"><code>Mineral specimen</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a solid object consisting of one particular mineral, or several minerals intended to be representative of one or more of the mineral species.</p>
 </section>
-<section id="sectioned-specimen-1" class="level2">
-<h2 class="anchored" data-anchor-id="sectioned-specimen-1">Sectioned specimen</h2>
+<section id="sectioned-specimen-1" class="level2" data-number="68">
+<h2 data-number="68" data-anchor-id="sectioned-specimen-1"><span class="header-section-number">68</span> Sectioned specimen</h2>
 <p><span id="sectioned-specimen"></span></p>
 <p>The concept <code>Sectioned specimen</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/mountedsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a></p>
@@ -919,16 +1007,16 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>a thin slice of a solid material that has been mounted on a glass slide for study</p>
 </section>
-<section id="thick-section-1" class="level2">
-<h2 class="anchored" data-anchor-id="thick-section-1">Thick section</h2>
+<section id="thick-section-1" class="level2" data-number="69">
+<h2 data-number="69" data-anchor-id="thick-section-1"><span class="header-section-number">69</span> Thick section</h2>
 <p><span id="thick-section"></span></p>
 <p>The concept <code>Thick section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/thicksection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thick-section"><code>Thick section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Thick sections are like thin sections, but milled to a greater thickness. Typcially polished on one or both sides and used for fluid or melt inclusion studies, Raman analyses, and infrared spectroscopy analyses, and SEM or electron microprobe. The standard thickness for a fluid inclusion thick section is 50 micrometers, but thick sections can be made at any thickness. Thick sections can be attached to a glass slide, or can be prepared so that they can be removed from their mount as a stand-alone slice of rock.</p>
 </section>
-<section id="thin-section-1" class="level2">
-<h2 class="anchored" data-anchor-id="thin-section-1">Thin section</h2>
+<section id="thin-section-1" class="level2" data-number="70">
+<h2 data-number="70" data-anchor-id="thin-section-1"><span class="header-section-number">70</span> Thin section</h2>
 <p><span id="thin-section"></span></p>
 <p>The concept <code>Thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/thinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thin-section"><code>Thin section</code></a></p>
@@ -937,80 +1025,80 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Definition:</strong></p>
 <p>thin sliver of rock cut from a sample with a diamond saw and ground optically flat, and then mounted on a glass slide and ground smooth using progressively finer abrasive grit until the sample is 30 microns thick.</p>
 </section>
-<section id="polished-thin-section-1" class="level2">
-<h2 class="anchored" data-anchor-id="polished-thin-section-1">Polished thin section</h2>
+<section id="polished-thin-section-1" class="level2" data-number="71">
+<h2 data-number="71" data-anchor-id="polished-thin-section-1"><span class="header-section-number">71</span> Polished thin section</h2>
 <p><span id="polished-thin-section"></span></p>
 <p>The concept <code>Polished thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/polishedthinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#thin-section"><code>Thin section</code></a><code>-&gt;</code><a href="#polished-thin-section"><code>Polished thin section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a thin section that has its free surface polished until perfectly planar and free of pits and scratches. Used for reflected light petrography and for electron microprobe or SEM investigation.</p>
 </section>
-<section id="ultra-thin-section-1" class="level2">
-<h2 class="anchored" data-anchor-id="ultra-thin-section-1">Ultra thin section</h2>
+<section id="ultra-thin-section-1" class="level2" data-number="72">
+<h2 data-number="72" data-anchor-id="ultra-thin-section-1"><span class="header-section-number">72</span> Ultra thin section</h2>
 <p><span id="ultra-thin-section"></span></p>
 <p>The concept <code>Ultra thin section</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/ultrathinsection</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#sectioned-specimen"><code>Sectioned specimen</code></a><code>-&gt;</code><a href="#ultra-thin-section"><code>Ultra thin section</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>An ordinary thin section that is attached to the glass slide using a soluble cement such as Canada balsam (soluble in ethanol) to allow both sides to be worked on. The section is polished on both sides using a fine diamond paste until it has a thickness in the range of 2-12 microns. This technique has been used to study the microstructure of very fine-grained carbonate rocks, and also in the preparation of mineral and rock specimens for transmission electron microscopy.</p>
 </section>
-<section id="pressed-pellet-1" class="level2">
-<h2 class="anchored" data-anchor-id="pressed-pellet-1">Pressed pellet</h2>
+<section id="pressed-pellet-1" class="level2" data-number="73">
+<h2 data-number="73" data-anchor-id="pressed-pellet-1"><span class="header-section-number">73</span> Pressed pellet</h2>
 <p><span id="pressed-pellet"></span></p>
 <p>The concept <code>Pressed pellet</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/pressedpellet</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#pressed-pellet"><code>Pressed pellet</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a sample prepared by grinding a parent sample to a fine powder, mixing it with a binder, and pressing the mixture into a die at a pressure of between 15 and 35 tons to produce a solid disc for subsequent analysis, typically by X-Ray fluorescence.</p>
 </section>
-<section id="rock-hand-sample" class="level2">
-<h2 class="anchored" data-anchor-id="rock-hand-sample">Rock hand sample</h2>
+<section id="rock-hand-sample" class="level2" data-number="74">
+<h2 data-number="74" data-anchor-id="rock-hand-sample"><span class="header-section-number">74</span> Rock hand sample</h2>
 <p><span id="rock-hand-sample"></span></p>
 <p>The concept <code>Rock hand sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/rockhandsample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#rock-hand-sample"><code>Rock hand sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>individual peice of rock broken from an outcrop or larger peice of rock.</p>
 </section>
-<section id="slab-1" class="level2">
-<h2 class="anchored" data-anchor-id="slab-1">Slab</h2>
+<section id="slab-1" class="level2" data-number="75">
+<h2 data-number="75" data-anchor-id="slab-1"><span class="header-section-number">75</span> Slab</h2>
 <p><span id="slab"></span></p>
 <p>The concept <code>Slab</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/slab</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#analytical-preparation"><code>Analytical preparation</code></a><code>-&gt;</code><a href="#slab"><code>Slab</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a relatively planar rock sample,cut from a large sample to produce a tabular peice of rock with the irregular outline of the original sample on the diameter where the cut was mate.</p>
 </section>
-<section id="u-channel-sample" class="level2">
-<h2 class="anchored" data-anchor-id="u-channel-sample">U-channel sample</h2>
+<section id="u-channel-sample" class="level2" data-number="76">
+<h2 data-number="76" data-anchor-id="u-channel-sample"><span class="header-section-number">76</span> U-channel sample</h2>
 <p><span id="u-channel-sample"></span></p>
 <p>The concept <code>U-channel sample</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/uchannelsample</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#u-channel-sample"><code>U-channel sample</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>a rectangular prism of loosely consolidated sediment extracted from a core segment. has parent core piece or core segment</p>
 </section>
-<section id="atom-probe-tip" class="level2">
-<h2 class="anchored" data-anchor-id="atom-probe-tip">Atom probe tip</h2>
+<section id="atom-probe-tip" class="level2" data-number="77">
+<h2 data-number="77" data-anchor-id="atom-probe-tip"><span class="header-section-number">77</span> Atom probe tip</h2>
 <p><span id="atom-probe-tip"></span></p>
 <p>The concept <code>Atom probe tip</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/atomprobetip</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#atom-probe-tip"><code>Atom probe tip</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>needle-shaped sample milled out of a larger sample with a focused ion beam (FIB).</p>
 </section>
-<section id="chip" class="level2">
-<h2 class="anchored" data-anchor-id="chip">Chip</h2>
+<section id="chip" class="level2" data-number="78">
+<h2 data-number="78" data-anchor-id="chip"><span class="header-section-number">78</span> Chip</h2>
 <p><span id="chip"></span></p>
 <p>The concept <code>Chip</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/chip</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#chip"><code>Chip</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Individual solid object intentionally broken off a larger solid object sample. A Chip must have a documented parent sample.</p>
 </section>
-<section id="microtome-slice" class="level2">
-<h2 class="anchored" data-anchor-id="microtome-slice">Microtome slice</h2>
+<section id="microtome-slice" class="level2" data-number="79">
+<h2 data-number="79" data-anchor-id="microtome-slice"><span class="header-section-number">79</span> Microtome slice</h2>
 <p><span id="microtome-slice"></span></p>
 <p>The concept <code>Microtome slice</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/microtomeslice</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#microtome-slice"><code>Microtome slice</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>A very thin slice cut from a mounted specimen using a mocrotome or ultramicrotome.</p>
 </section>
-<section id="mounted-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="mounted-specimen">Mounted specimen</h2>
+<section id="mounted-specimen" class="level2" data-number="80">
+<h2 data-number="80" data-anchor-id="mounted-specimen"><span class="header-section-number">80</span> Mounted specimen</h2>
 <p><span id="mounted-specimen"></span></p>
 <p>The concept <code>Mounted specimen</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/mountedspecimen</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#mounted-specimen"><code>Mounted specimen</code></a></p>
@@ -1021,8 +1109,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Potted butt</code></p>
 </section>
-<section id="polished-mounted-specimen" class="level2">
-<h2 class="anchored" data-anchor-id="polished-mounted-specimen">Polished mounted specimen</h2>
+<section id="polished-mounted-specimen" class="level2" data-number="81">
+<h2 data-number="81" data-anchor-id="polished-mounted-specimen"><span class="header-section-number">81</span> Polished mounted specimen</h2>
 <p><span id="polished-mounted-specimen"></span></p>
 <p>The concept <code>Polished mounted specimen</code> <br> with URI <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/polishedmountedspecimen</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#mounted-specimen"><code>Mounted specimen</code></a><code>-&gt;</code><a href="#polished-mounted-specimen"><code>Polished mounted specimen</code></a></p>
@@ -1031,8 +1119,8 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Alternate labels:</strong></p>
 <p><code>Grain mount</code></p>
 </section>
-<section id="particle" class="level2">
-<h2 class="anchored" data-anchor-id="particle">Particle</h2>
+<section id="particle" class="level2" data-number="82">
+<h2 data-number="82" data-anchor-id="particle"><span class="header-section-number">82</span> Particle</h2>
 <p><span id="particle"></span></p>
 <p>The concept <code>Particle</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/particle</code> <br> is defined in vocabulary <code>https://w3id.org/isample/earthenv/esmaterialsample/1.0/essampletype</code></p>
 <p>Path from the top concept: <br> <a href="#solid-material-specimen"><code>Solid material specimen</code></a><code>-&gt;</code><a href="#particle"><code>Particle</code></a></p>
@@ -1063,13 +1151,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
   toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
   const isCodeAnnotation = (el) => {
     for (const clz of el.classList) {
       if (clz.startsWith('code-annotation-')) {                     
@@ -1282,7 +1363,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     <div class="nav-footer-left">© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/models/generated/extensions/earthenv_specimen_type.md" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></div>
+    </div>
     <div class="nav-footer-right">
       &nbsp;
     </div>

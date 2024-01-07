@@ -33,7 +33,6 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
@@ -64,7 +63,7 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="nav-sidebar docked fullcontent">
+<body class="nav-sidebar docked">
 
 
 <div id="quarto-search-results"></div>
@@ -175,7 +174,18 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#project-objectives" id="toc-project-objectives" class="nav-link active" data-scroll-target="#project-objectives"><span class="header-section-number">1</span> Project Objectives</a></li>
+  <li><a href="#background" id="toc-background" class="nav-link" data-scroll-target="#background"><span class="header-section-number">2</span> Background</a></li>
+  <li><a href="#technical-perspective" id="toc-technical-perspective" class="nav-link" data-scroll-target="#technical-perspective"><span class="header-section-number">3</span> Technical perspective</a></li>
+  <li><a href="#principal-investigators" id="toc-principal-investigators" class="nav-link" data-scroll-target="#principal-investigators"><span class="header-section-number">4</span> Principal Investigators</a></li>
+  </ul>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/about.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -196,8 +206,8 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<section id="project-objectives" class="level1">
-<h1>Project Objectives</h1>
+<section id="project-objectives" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Project Objectives</h1>
 <ol type="1">
 <li>Design and develop iSamples infrastructure (iSamples in a Box and iSamples Central);</li>
 <li>Build four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);</li>
@@ -210,8 +220,8 @@ ul.task-list li input[type="checkbox"] {
 </figure>
 </div>
 </section>
-<section id="background" class="level1">
-<h1>Background</h1>
+<section id="background" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Background</h1>
 <p>Research frequently uses material samples as a basic element for reference, study, and experimentation in many scientific disciplines, especially in the natural and environmental sciences, material sciences, agriculture, physical anthropology, archaeology, and biomedicine. Observations made on samples collected in the field and in the laboratory constitute a critical data resource for research that addresses grand challenges of our planet’s future sustainability, from environmental change; to food, energy, and water resources; to natural hazards and their mitigation; to public health. The large investments of public funds being made to curate huge volumes of samples acquired over decades or even centuries, and to collect and analyze new samples demand these samples to be openly accessible, easily discoverable, and documented with sufficient information to make them reusable. The current ecosystem of sample and sample data management in the U.S. and globally is highly fragmented across stakeholders, including museums, federal agencies, academic institutions, and individual researchers, with a multitude of institutional and discipline-specific catalogs, practices for sample identification, and protocols for describing samples.</p>
 <p>The iSamples project is a multi-disciplinary collaboration that will develop a national digital infrastructure that will provide services for globally unique, consistent, and convenient identification of material samples; metadata about them; and linking them to other samples, derived data, and research results published in the literature. iSamples builds on previous initiatives to achieve this by providing material samples with globally unique, persistent identifiers that reliably link to landing pages with metadata describing the sample and its provenance, and which allow unambiguously linking samples with data and publications.</p>
 <p>Leveraging significant national investments, iSamples provides the missing link among:</p>
@@ -222,8 +232,8 @@ ul.task-list li input[type="checkbox"] {
 </ol>
 <p>iSamples benefits national security and resource management by offering a means to assure sample provenance, improving scientific reproducibility and demonstrating compliance with ethical standards, national regulations, and international treaties, (e.g., automated audits of sensitive archaeological specimens, endangered species, or specimens containing controlled substances).</p>
 </section>
-<section id="technical-perspective" class="level1">
-<h1>Technical perspective</h1>
+<section id="technical-perspective" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Technical perspective</h1>
 <p>The iSamples project will:</p>
 <ul>
 <li>Create a flexible and scalable architecture to ensure broad adoption and implementation by diverse stakeholders.</li>
@@ -232,8 +242,8 @@ ul.task-list li input[type="checkbox"] {
 <li>Extend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at the System for Earth Sample Registration SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.</li>
 </ul>
 </section>
-<section id="principal-investigators" class="level1">
-<h1>Principal Investigators</h1>
+<section id="principal-investigators" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Principal Investigators</h1>
 <ul>
 <li>Kerstin Lehnert, Columbia University</li>
 <li>Ramona Walls, University of Arizona</li>
@@ -265,13 +275,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
   toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
   const isCodeAnnotation = (el) => {
     for (const clz of el.classList) {
       if (clz.startsWith('code-annotation-')) {                     
@@ -484,7 +487,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     <div class="nav-footer-left">© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/isamplesorg/isamples.github.io/edit/main/about.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/isamplesorg/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></div>
+    </div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
