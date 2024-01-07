@@ -3,17 +3,17 @@
     "listing": "/models/index.html",
     "items": [
       "/models/generated/vocabularies/sampled_feature_type.html",
-      "/models/generated/vocabularies/material_sample_type.html",
       "/models/generated/vocabularies/material_type.html",
       "/models/generated/vocabularies/readme.html",
-      "/models/generated/extensions/biology_sampledfeature_extension.html",
-      "/models/generated/extensions/earthenv_specimen_type.html",
-      "/models/generated/extensions/earthenv_material_extension_mineral_group.html",
-      "/models/generated/extensions/earthenv_material_extension_rock_sediment.html",
-      "/models/generated/extensions/earthenv_sampled_feature_role.html",
-      "/models/generated/extensions/opencontext_materialsampletype.html",
+      "/models/generated/vocabularies/material_sample_type.html",
       "/models/generated/extensions/opencontext_material_extension.html",
-      "/models/generated/extensions/readme.html"
+      "/models/generated/extensions/biology_sampledfeature_extension.html",
+      "/models/generated/extensions/opencontext_materialsampletype.html",
+      "/models/generated/extensions/earthenv_material_extension_mineral_group.html",
+      "/models/generated/extensions/earthenv_specimen_type.html",
+      "/models/generated/extensions/readme.html",
+      "/models/generated/extensions/earthenv_sampled_feature_role.html",
+      "/models/generated/extensions/earthenv_material_extension_rock_sediment.html"
     ]
   }
 ]
