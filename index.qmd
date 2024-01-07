@@ -10,5 +10,6 @@ The Internet of Samples (iSamples) is a multi-disciplinary and multi-institution
 
 * [Recording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference](https://youtu.be/eRUw5NMksFo?t=105)
 * [Zenodo Community](https://zenodo.org/communities/isamples)
+  * [presentation of iSamples metadata model](https://zenodo.org/records/7434185/files/2022-11_iSamplesMetadata.pdf?download=1)
 
 
