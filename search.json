@@ -172,7 +172,7 @@
     "href": "models/generated/vocabularies/sampled_feature_type.html",
     "title": "Sampled Feature Type vocabulary",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2021-12-10 SMR add missing skos:inScheme statements  2022-01-07 SMR change to https://w3id.org/isample/ uri base, make the ConceptScheme an ontology as well. For uploading to ESIP COR and w3id resolution redirect set up. Add some mappings to other ontologies using seeAlso, closeMatch, narrowMatch.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies. Fix typo in glacierenvrionment URI (changed the URI to glacierenvironment)  2022-09-07 SMR update some of the skos mappings to other vocabularies; remove references to other vocabularies as NamedIndividual. Remove rocksample class, it was not linked in hierarchy and inconsistent with design.  2022-09-30 add biological entity as sampled feature, per issue https://github.com/isamplesorg/metadata/issues/107. This update was lost at some point and added back in 2022-12-09.  2023-11-05 SMR update version to 1.0, prep for release  Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environemtn subclasses of Active human occupation site.\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2021-12-10 SMR add missing skos:inScheme statements  2022-01-07 SMR change to https://w3id.org/isample/ uri base, make the ConceptScheme an ontology as well. For uploading to ESIP COR and w3id resolution redirect set up. Add some mappings to other ontologies using seeAlso, closeMatch, narrowMatch.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies. Fix typo in glacierenvrionment URI (changed the URI to glacierenvironment)  2022-09-07 SMR update some of the skos mappings to other vocabularies; remove references to other vocabularies as NamedIndividual. Remove rocksample class, it was not linked in hierarchy and inconsistent with design.  2022-09-30 add biological entity as sampled feature, per issue https://github.com/isamplesorg/metadata/issues/107. This update was lost at some point and added back in 2022-12-09.  2023-11-05 SMR update version to 1.0, prep for release  Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environemtn subclasses of Active human occupation site.\nSource Repository: https://github.com/isamplesorg/vocabularies/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/vocabularies/sampled_feature_type.html#any-sampled-feature",
@@ -186,7 +186,7 @@
     "href": "models/generated/extensions/earthenv_sampled_feature_role.html",
     "title": "Earth and Environmental Science extension - Sampled feature role",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2023-11-17 SMR generate to account for sample classifications in SESAR\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2023-11-17 SMR generate to account for sample classifications in SESAR\nSource Repository: https://github.com/isamplesorg/metadata_profile_earth_science/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/earthenv_sampled_feature_role.html#sampled-feature-part",
@@ -200,7 +200,7 @@
     "href": "models/generated/extensions/earthenv_specimen_type.html",
     "title": "Earth and Environmental Science extension - Material sample type",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2023-07-07 SMR add solid material sample and broader relations from classes it subsumes.  2023-07-27 SMR modify base specimen type vocabulary, add ‘Non biologic solid object’ to replace ‘solid material sample’, change broader relations in this vocab to use that as parent class where appropriate. ‘Solid material sample’ is too closely linked to material type, created confusion. Intention is a specimen category for solid objects that are not biologic. Obviously there is some overlap with Research specimens.\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2023-07-07 SMR add solid material sample and broader relations from classes it subsumes.  2023-07-27 SMR modify base specimen type vocabulary, add ‘Non biologic solid object’ to replace ‘solid material sample’, change broader relations in this vocab to use that as parent class where appropriate. ‘Solid material sample’ is too closely linked to material type, created confusion. Intention is a specimen category for solid objects that are not biologic. Obviously there is some overlap with Research specimens.\nSource Repository: https://github.com/isamplesorg/metadata_profile_earth_science/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/earthenv_specimen_type.html#analytical-preparation",
@@ -249,7 +249,7 @@
     "href": "models/generated/extensions/opencontext_materialsampletype.html",
     "title": "Open Context vocabulary extension for material sample type",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\nSource Repository: https://github.com/isamplesorg/metadata_profile_archaeology/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/opencontext_materialsampletype.html#artifact",
@@ -270,7 +270,7 @@
     "href": "models/generated/extensions/opencontext_material_extension.html",
     "title": "OpenContext material type extension draft",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\nSource Repository: https://github.com/isamplesorg/metadata_profile_archaeology/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/opencontext_material_extension.html#anthropogenic-metal",
@@ -340,7 +340,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```ewlbcego assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```ewlbcego assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```gfczkvco assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```gfczkvco assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "about.html",
@@ -389,7 +389,7 @@
     "href": "models/generated/extensions/biology_sampledfeature_extension.html",
     "title": "Biology Extension: Basic taxon classes for biological entity",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\nBased on draft DiSSCo specimen & collection classification, table 2, https://docs.google.com/document/d/19OPyOm9VF2qfI3M6RmJPvRfo8JlZ3tt0II05aGCyBHQ/ , with added classes to attempt a logical hierarchy.\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\nBased on draft DiSSCo specimen & collection classification, table 2, https://docs.google.com/document/d/19OPyOm9VF2qfI3M6RmJPvRfo8JlZ3tt0II05aGCyBHQ/ , with added classes to attempt a logical hierarchy.\nSource Repository: https://github.com/isamplesorg/metadata_profile_biology/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/biology_sampledfeature_extension.html#biological-entity",
@@ -403,7 +403,7 @@
     "href": "models/generated/extensions/earthenv_material_extension_mineral_group.html",
     "title": "Earth and Environmental Science extension - Mineral group vocabulary",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\nSource Repository: https://github.com/isamplesorg/metadata_profile_earth_science/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/earthenv_material_extension_mineral_group.html#mineral",
@@ -424,7 +424,7 @@
     "href": "models/generated/extensions/earthenv_material_extension_rock_sediment.html",
     "title": "Earth and Environmental Science extension - Rock and sediment materials vocabulary",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2024-01-06 SMR updates to validate with SHACL rules in isamples/vocab_tools repo; extension vocabulary in skos:inScheme isamples parent voabularty; properties on inherited classes from iSample parent.\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2024-01-06 SMR updates to validate with SHACL rules in isamples/vocab_tools repo; extension vocabulary in skos:inScheme isamples parent voabularty; properties on inherited classes from iSample parent.\nSource Repository: https://github.com/isamplesorg/metadata_profile_earth_science/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/extensions/earthenv_material_extension_rock_sediment.html#rock",
@@ -445,7 +445,7 @@
     "href": "models/generated/vocabularies/material_type.html",
     "title": "iSamples Materials Vocabulary",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2022-01-05 SMR version 0.9, change base uri to https://w3id.org/isample/vocabulary/material/0.9/ for testing with ESIP COR and w3id uri resolution  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes to some definitions. Add skos matches to URIs from other vocabularies; 2023-11-05 version 1.0, in preparation for release.\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2022-01-05 SMR version 0.9, change base uri to https://w3id.org/isample/vocabulary/material/0.9/ for testing with ESIP COR and w3id uri resolution  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes to some definitions. Add skos matches to URIs from other vocabularies; 2023-11-05 version 1.0, in preparation for release.\nSource Repository: https://github.com/isamplesorg/vocabularies/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/vocabularies/material_type.html#material",
@@ -459,7 +459,7 @@
     "href": "models/generated/vocabularies/material_sample_type.html",
     "title": "iSamples Material Sample Type Vocabulary",
     "section": "",
-    "text": "Vocabularies and extensions:\nHistory:\n2022-01-07 SMR Change base URI to https://w3id.org/isample/vocabulary/, setting up resolution using w3id. Make the conceptScheme and ontology. Add Dublin core imports.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies.  2022-09-30 SMR per https://github.com/isamplesorg/metadata/issues/109, change specimen to sample in vocabulary names and labels. Add ‘Slurry biome aggregation’ and ‘Bundle biome aggregation’ (github issue 110). Rename ‘liquid or gas’ sample type to ‘fluid in container’ (github issue 108).  2023-07-27 SMR modify base specimen type vocabulary, add ‘Non biologic solid object’ change broader relations in this vocab to use that as parent class where appropriate. Intention is a specimen category for solid objects that are not biologic; this subsumes ‘Fossil’ and ‘Artifact’, but excludes living organism, their parts and products. Obviously there is some overlap with Research specimens.  2023-11-06 SMR add missing inScheme on Non-biologic solid object and solid materal specimen. Update version number in URI to 1.0\nConcept Hierarchy:"
+    "text": "Vocabularies and extensions:\nHistory:\n2022-01-07 SMR Change base URI to https://w3id.org/isample/vocabulary/, setting up resolution using w3id. Make the conceptScheme and ontology. Add Dublin core imports.  2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies.  2022-09-30 SMR per https://github.com/isamplesorg/metadata/issues/109, change specimen to sample in vocabulary names and labels. Add ‘Slurry biome aggregation’ and ‘Bundle biome aggregation’ (github issue 110). Rename ‘liquid or gas’ sample type to ‘fluid in container’ (github issue 108).  2023-07-27 SMR modify base specimen type vocabulary, add ‘Non biologic solid object’ change broader relations in this vocab to use that as parent class where appropriate. Intention is a specimen category for solid objects that are not biologic; this subsumes ‘Fossil’ and ‘Artifact’, but excludes living organism, their parts and products. Obviously there is some overlap with Research specimens.  2023-11-06 SMR add missing inScheme on Non-biologic solid object and solid materal specimen. Update version number in URI to 1.0\nSource Repository: https://github.com/isamplesorg/vocabularies/tree/main/vocabulary\nConcept Hierarchy:"
   },
   {
     "objectID": "models/generated/vocabularies/material_sample_type.html#physical-specimen",
