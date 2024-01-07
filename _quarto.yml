@@ -28,6 +28,8 @@ website:
         contents:
           - design/index.qmd
           - design/requirements.md
+          - text: Metadata Model
+            href: "https://isamplesorg.github.io/metadata/"
           - models/index.qmd
       - section: "Resources"
         contents:
