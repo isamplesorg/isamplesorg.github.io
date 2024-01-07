@@ -340,7 +340,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```qomcmako assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```qomcmako assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```abucojcb assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```abucojcb assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "about.html",
@@ -366,23 +366,9 @@
   {
     "objectID": "models/index.html",
     "href": "models/index.html",
-    "title": "iSamples Core Model",
+    "title": "1 Vocabularies",
     "section": "",
-    "text": "see description of model at https://isamplesorg.github.io/metadata/"
-  },
-  {
-    "objectID": "models/index.html#model",
-    "href": "models/index.html#model",
-    "title": "iSamples Core Model",
-    "section": "",
-    "text": "see description of model at https://isamplesorg.github.io/metadata/"
-  },
-  {
-    "objectID": "models/index.html#vocabularies",
-    "href": "models/index.html#vocabularies",
-    "title": "iSamples Core Model",
-    "section": "2 Vocabularies",
-    "text": "2 Vocabularies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:"
+    "text": "1 Vocabularies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThree taxonomies are currently defined:"
   },
   {
     "objectID": "models/generated/extensions/biology_sampledfeature_extension.html",
@@ -473,7 +459,7 @@
     "href": "index.html",
     "title": "Internet of Samples: iSamples",
     "section": "",
-    "text": "The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.\nResources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community"
+    "text": "The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.\nResources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community\n\npresentation of iSamples metadata model"
   },
   {
     "objectID": "design/actors.html",
