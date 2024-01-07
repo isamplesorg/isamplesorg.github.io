@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2024-01-07">
 
-<title>iSamples – sampled_feature_type</title>
+<title>iSamples - Sampled Feature Type vocabulary</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -74,7 +75,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Sampled Feature Type vocabulary</li></ol></nav>
       <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
       </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -179,10 +180,245 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Sampled Feature Type vocabulary</h1>
+<p class="subtitle lead"></p><p>Categories to specify the broad context that a sample is intended to represent.</p><p></p>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 7, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Vocabularies and extensions:</p>
+<ul>
+<li><code>Sampled Feature Type vocabulary</code> <a href="https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary"><code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></a></li>
+</ul>
+<p><strong>History:</strong></p>
+<p>2021-12-10 SMR add missing skos:inScheme statements <br> 2022-01-07 SMR change to https://w3id.org/isample/ uri base, make the ConceptScheme an ontology as well. For uploading to ESIP COR and w3id resolution redirect set up. Add some mappings to other ontologies using seeAlso, closeMatch, narrowMatch. <br> 2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies. Fix typo in glacierenvrionment URI (changed the URI to glacierenvironment) <br> 2022-09-07 SMR update some of the skos mappings to other vocabularies; remove references to other vocabularies as NamedIndividual. Remove rocksample class, it was not linked in hierarchy and inconsistent with design. <br> 2022-09-30 add biological entity as sampled feature, per issue https://github.com/isamplesorg/metadata/issues/107. This update was lost at some point and added back in 2022-12-09. <br> 2023-11-05 SMR update version to 1.0, prep for release <br> Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environemtn subclasses of Active human occupation site.</p>
+<p><strong>Concept Hierarchy:</strong></p>
+<ul>
+<li><a href="#any-sampled-feature">Any sampled feature</a>
+<ul>
+<li><a href="#anthropogenic-environment">Anthropogenic environment</a>
+<ul>
+<li><a href="#active-human-occupation-site">Active human occupation site</a>
+<ul>
+<li><a href="#experiment-setting">Experiment setting</a></li>
+<li><a href="#laboratory-or-curatorial-environment">Laboratory or curatorial environment</a></li>
+</ul></li>
+<li><a href="#site-of-past-human-activities">Site of past human activities</a></li>
+</ul></li>
+<li><a href="#biological-entity">Biological entity</a></li>
+<li><a href="#earth-environment">Earth environment</a>
+<ul>
+<li><a href="#atmosphere">Atmosphere</a></li>
+<li><a href="#earth-interior">Earth interior</a></li>
+<li><a href="#earth-surface">Earth surface</a>
+<ul>
+<li><a href="#lake-river-or-stream-bottom">Lake river or stream bottom</a></li>
+<li><a href="#marine-water-body-bottom">Marine water body bottom</a></li>
+<li><a href="#subaerial-surface-environment">Subaerial surface environment</a></li>
+</ul></li>
+<li><a href="#glacier-environment">Glacier environment</a></li>
+<li><a href="#subsurface-fluid-reservoir">Subsurface fluid reservoir</a></li>
+<li><a href="#water-body">Water body</a>
+<ul>
+<li><a href="#marine-environment">Marine environment</a></li>
+<li><a href="#terrestrial-water-body">Terrestrial water body</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#extraterrestrial-environment">Extraterrestrial environment</a></li>
+</ul></li>
+</ul>
+<section id="any-sampled-feature" class="level2">
+<h2 class="anchored" data-anchor-id="any-sampled-feature">Any sampled feature</h2>
+<p><span id="any-sampled-feature"></span></p>
+<p>The concept <code>Any sampled feature</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a>, <a href="#biological-entity"><code>Biological entity</code></a>, <a href="#earth-environment"><code>Earth environment</code></a>, <a href="#extraterrestrial-environment"><code>Extraterrestrial environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Any thing that can be sampled. Top concept in sampled feature type vocabulary.</p>
+</section>
+<section id="anthropogenic-environment" class="level2">
+<h2 class="anchored" data-anchor-id="anthropogenic-environment">Anthropogenic environment</h2>
+<p><span id="anthropogenic-environment"></span></p>
+<p>The concept <code>Anthropogenic environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/anthropogenicenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#active-human-occupation-site"><code>Active human occupation site</code></a>, <a href="#site-of-past-human-activities"><code>Site of past human activities</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Sampled feature is produced by or related to human activity past or present.</p>
+</section>
+<section id="active-human-occupation-site" class="level2">
+<h2 class="anchored" data-anchor-id="active-human-occupation-site">Active human occupation site</h2>
+<p><span id="active-human-occupation-site"></span></p>
+<p>The concept <code>Active human occupation site</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/activehumanoccupationsite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a><code>-&gt;</code><a href="#active-human-occupation-site"><code>Active human occupation site</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#experiment-setting"><code>Experiment setting</code></a>, <a href="#laboratory-or-curatorial-environment"><code>Laboratory or curatorial environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples materials or objects produced by current or ongoing human activity</p>
+</section>
+<section id="experiment-setting" class="level2">
+<h2 class="anchored" data-anchor-id="experiment-setting">Experiment setting</h2>
+<p><span id="experiment-setting"></span></p>
+<p>The concept <code>Experiment setting</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/experimentsetting</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a><code>-&gt;</code><a href="#active-human-occupation-site"><code>Active human occupation site</code></a><code>-&gt;</code><a href="#experiment-setting"><code>Experiment setting</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Sampled feature is the experimental set up that produced the sample.</p>
+</section>
+<section id="laboratory-or-curatorial-environment" class="level2">
+<h2 class="anchored" data-anchor-id="laboratory-or-curatorial-environment">Laboratory or curatorial environment</h2>
+<p><span id="laboratory-or-curatorial-environment"></span></p>
+<p>The concept <code>Laboratory or curatorial environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/laboratorycuratorialenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a><code>-&gt;</code><a href="#active-human-occupation-site"><code>Active human occupation site</code></a><code>-&gt;</code><a href="#laboratory-or-curatorial-environment"><code>Laboratory or curatorial environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples environment in a laboratory; e.g.&nbsp;lab blank measurements.</p>
+</section>
+<section id="site-of-past-human-activities" class="level2">
+<h2 class="anchored" data-anchor-id="site-of-past-human-activities">Site of past human activities</h2>
+<p><span id="site-of-past-human-activities"></span></p>
+<p>The concept <code>Site of past human activities</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/pasthumanoccupationsite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#anthropogenic-environment"><code>Anthropogenic environment</code></a><code>-&gt;</code><a href="#site-of-past-human-activities"><code>Site of past human activities</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>specimen samples a place where humans have been and left evidence of their activity. Includes prehistoric and paleo hominid sites</p>
+</section>
+<section id="biological-entity" class="level2">
+<h2 class="anchored" data-anchor-id="biological-entity">Biological entity</h2>
+<p><span id="biological-entity"></span></p>
+<p>The concept <code>Biological entity</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/biologicalentity</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#biological-entity"><code>Biological entity</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Sampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature for which the focus is not the environment that the organism inhabits.</p>
+</section>
+<section id="earth-environment" class="level2">
+<h2 class="anchored" data-anchor-id="earth-environment">Earth environment</h2>
+<p><span id="earth-environment"></span></p>
+<p>The concept <code>Earth environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#atmosphere"><code>Atmosphere</code></a>, <a href="#earth-interior"><code>Earth interior</code></a>, <a href="#earth-surface"><code>Earth surface</code></a>, <a href="#glacier-environment"><code>Glacier environment</code></a>, <a href="#subsurface-fluid-reservoir"><code>Subsurface fluid reservoir</code></a>, <a href="#water-body"><code>Water body</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>specimen samples the natural Earth environment</p>
+</section>
+<section id="atmosphere" class="level2">
+<h2 class="anchored" data-anchor-id="atmosphere">Atmosphere</h2>
+<p><span id="atmosphere"></span></p>
+<p>The concept <code>Atmosphere</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/atmosphere</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#atmosphere"><code>Atmosphere</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>specimen samples the Earth’s atmosphere</p>
+</section>
+<section id="earth-interior" class="level2">
+<h2 class="anchored" data-anchor-id="earth-interior">Earth interior</h2>
+<p><span id="earth-interior"></span></p>
+<p>The concept <code>Earth interior</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthinterior</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#earth-interior"><code>Earth interior</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples solid material within the earth</p>
+</section>
+<section id="earth-surface" class="level2">
+<h2 class="anchored" data-anchor-id="earth-surface">Earth surface</h2>
+<p><span id="earth-surface"></span></p>
+<p>The concept <code>Earth surface</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/earthsurface</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#earth-surface"><code>Earth surface</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#lake-river-or-stream-bottom"><code>Lake river or stream bottom</code></a>, <a href="#marine-water-body-bottom"><code>Marine water body bottom</code></a>, <a href="#subaerial-surface-environment"><code>Subaerial surface environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples the interface between solid earth and hydrosphere or atmosphere. Includes samples representing things collected on the surface, or in the uppermost part of the material below the surface. Not including recently deposited sediment that has not been modified by interaction with the surface environment.</p>
+</section>
+<section id="lake-river-or-stream-bottom" class="level2">
+<h2 class="anchored" data-anchor-id="lake-river-or-stream-bottom">Lake river or stream bottom</h2>
+<p><span id="lake-river-or-stream-bottom"></span></p>
+<p>The concept <code>Lake river or stream bottom</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/lakeriverstreambottom</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#earth-surface"><code>Earth surface</code></a><code>-&gt;</code><a href="#lake-river-or-stream-bottom"><code>Lake river or stream bottom</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples the solid Earth interface with a lake or flowing water body</p>
+</section>
+<section id="marine-water-body-bottom" class="level2">
+<h2 class="anchored" data-anchor-id="marine-water-body-bottom">Marine water body bottom</h2>
+<p><span id="marine-water-body-bottom"></span></p>
+<p>The concept <code>Marine water body bottom</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbodybottom</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#earth-surface"><code>Earth surface</code></a><code>-&gt;</code><a href="#marine-water-body-bottom"><code>Marine water body bottom</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples the solid Earth interface with marine or brackish water body. Includes&nbsp;benthic boundary layer: the bottom layer of water and the uppermost layer of sediment directly influenced by the overlying water</p>
+</section>
+<section id="subaerial-surface-environment" class="level2">
+<h2 class="anchored" data-anchor-id="subaerial-surface-environment">Subaerial surface environment</h2>
+<p><span id="subaerial-surface-environment"></span></p>
+<p>The concept <code>Subaerial surface environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/subaerialsurfaceenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#earth-surface"><code>Earth surface</code></a><code>-&gt;</code><a href="#subaerial-surface-environment"><code>Subaerial surface environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples the interface between solid Earth and atmosphere. Sample is collected on the surface, or immediately below surface (zone of bioturbation). Include soil and recently deposited subaerial sediment at the surface.</p>
+</section>
+<section id="glacier-environment" class="level2">
+<h2 class="anchored" data-anchor-id="glacier-environment">Glacier environment</h2>
+<p><span id="glacier-environment"></span></p>
+<p>The concept <code>Glacier environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/glacierenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#glacier-environment"><code>Glacier environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Sample of ice, water, or other thing from a glacier, ice sheet, ice shelf, iceberg. Does not include various environments adjacent to glacier.</p>
+</section>
+<section id="subsurface-fluid-reservoir" class="level2">
+<h2 class="anchored" data-anchor-id="subsurface-fluid-reservoir">Subsurface fluid reservoir</h2>
+<p><span id="subsurface-fluid-reservoir"></span></p>
+<p>The concept <code>Subsurface fluid reservoir</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/subsurfacefluidreservoir</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#subsurface-fluid-reservoir"><code>Subsurface fluid reservoir</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples fluid that resides in fractures or intergranular porosity in the solid earth.</p>
+</section>
+<section id="water-body" class="level2">
+<h2 class="anchored" data-anchor-id="water-body">Water body</h2>
+<p><span id="water-body"></span></p>
+<p>The concept <code>Water body</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/waterbody</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#water-body"><code>Water body</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#marine-environment"><code>Marine environment</code></a>, <a href="#terrestrial-water-body"><code>Terrestrial water body</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples the hydrosphere</p>
+</section>
+<section id="marine-environment" class="level2">
+<h2 class="anchored" data-anchor-id="marine-environment">Marine environment</h2>
+<p><span id="marine-environment"></span></p>
+<p>The concept <code>Marine environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/marinewaterbody</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#water-body"><code>Water body</code></a><code>-&gt;</code><a href="#marine-environment"><code>Marine environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>specimen samples marine hydrosphere</p>
+</section>
+<section id="terrestrial-water-body" class="level2">
+<h2 class="anchored" data-anchor-id="terrestrial-water-body">Terrestrial water body</h2>
+<p><span id="terrestrial-water-body"></span></p>
+<p>The concept <code>Terrestrial water body</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/terrestrialwaterbody</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#earth-environment"><code>Earth environment</code></a><code>-&gt;</code><a href="#water-body"><code>Water body</code></a><code>-&gt;</code><a href="#terrestrial-water-body"><code>Terrestrial water body</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen samples terrestrial hydrosphere– lake, other standing water, or a flowing water body (river, stream..) Include saline water in terrestrial evaporite environments.</p>
+</section>
+<section id="extraterrestrial-environment" class="level2">
+<h2 class="anchored" data-anchor-id="extraterrestrial-environment">Extraterrestrial environment</h2>
+<p><span id="extraterrestrial-environment"></span></p>
+<p>The concept <code>Extraterrestrial environment</code> <br> with URI <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/extraterrestrialenvironment</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></p>
+<p>Path from the top concept: <br> <a href="#any-sampled-feature"><code>Any sampled feature</code></a><code>-&gt;</code><a href="#extraterrestrial-environment"><code>Extraterrestrial environment</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>specimen samples environment outside of solid earth, hydrosphere, or atmosphere.</p>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
