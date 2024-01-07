@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2024-01-07">
 
-<title>iSamples – opencontext_material_extension</title>
+<title>iSamples - OpenContext material type extension draft</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -74,7 +75,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">OpenContext material type extension draft</li></ol></nav>
       <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
       </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -179,10 +180,614 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">OpenContext material type extension draft</h1>
+<p class="subtitle lead"></p><p>vocabulary of materials typical of archeological samples</p><p></p>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 7, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Vocabularies and extensions:</p>
+<ul>
+<li><code>OpenContext material type extension draft</code> <a href="https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab"><code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></a></li>
+</ul>
+<p><strong>History:</strong></p>
+<p><strong>Concept Hierarchy:</strong></p>
+<ul>
+<li><a href="#anthropogenic-metal">anthropogenic metal</a>
+<ul>
+<li><a href="#brass">brass</a></li>
+<li><a href="#bronze">bronze</a></li>
+<li><a href="#copper">copper</a></li>
+<li><a href="#gold">gold</a></li>
+<li><a href="#iron">iron</a></li>
+<li><a href="#lead">lead</a></li>
+<li><a href="#pewter">pewter</a></li>
+</ul></li>
+<li><a href="#biogenic-non-organic-material">biogenic non-organic material</a>
+<ul>
+<li><a href="#amber">amber</a></li>
+<li><a href="#bone">bone</a></li>
+<li><a href="#charcoal">charcoal</a></li>
+<li><a href="#coal">coal</a></li>
+<li><a href="#shell">shell</a></li>
+</ul></li>
+<li><a href="#mineral">mineral</a>
+<ul>
+<li><a href="#hematite">hematite</a></li>
+<li><a href="#kaolin">kaolin</a></li>
+<li><a href="#mica">mica</a></li>
+<li><a href="#quartz">quartz</a></li>
+</ul></li>
+<li><a href="#organic-material">organic material</a>
+<ul>
+<li><a href="#organic-animal-material">organic animal material</a>
+<ul>
+<li><a href="#hair">hair</a></li>
+<li><a href="#leather">leather</a></li>
+</ul></li>
+<li><a href="#organic-plant-material">organic plant material</a>
+<ul>
+<li><a href="#plant-fiber">plant fiber</a></li>
+<li><a href="#wood">wood</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#other-anthropogenic-material">other anthropogenic material</a>
+<ul>
+<li><a href="#anthropogenic-organic-material">anthropogenic organic material</a>
+<ul>
+<li><a href="#plastic-(material)">plastic (material)</a></li>
+</ul></li>
+<li><a href="#ceramic-clay">ceramic clay</a>
+<ul>
+<li><a href="#brick-clay">brick clay</a></li>
+<li><a href="#bucchero">bucchero</a></li>
+<li><a href="#faience">faience</a></li>
+<li><a href="#porcelain">porcelain</a></li>
+<li><a href="#terracotta">terracotta</a></li>
+<li><a href="#terra-sigilata">terra sigilata</a></li>
+</ul></li>
+<li><a href="#fiber-material">fiber material</a></li>
+<li><a href="#glass">glass</a></li>
+<li><a href="#paper">paper</a></li>
+<li><a href="#plaster-or-mortar">plaster or mortar</a></li>
+<li><a href="#rubber">rubber</a></li>
+</ul></li>
+<li><a href="#particulate-material">particulate material</a>
+<ul>
+<li><a href="#cinder">cinder</a></li>
+</ul></li>
+<li><a href="#rock">rock</a>
+<ul>
+<li><a href="#basalt">basalt</a></li>
+<li><a href="#chert">chert</a>
+<ul>
+<li><a href="#flint">flint</a></li>
+</ul></li>
+<li><a href="#cinder">cinder</a></li>
+<li><a href="#coal">coal</a></li>
+<li><a href="#dolomite">dolomite</a></li>
+<li><a href="#gabbro">gabbro</a></li>
+<li><a href="#greywacke">greywacke</a></li>
+<li><a href="#limestone">limestone</a></li>
+<li><a href="#marble">marble</a></li>
+<li><a href="#obsidian">obsidian</a></li>
+<li><a href="#pumice">pumice</a></li>
+<li><a href="#slate">slate</a></li>
+<li><a href="#travertine">travertine</a></li>
+</ul></li>
+</ul>
+<section id="anthropogenic-metal" class="level2">
+<h2 class="anchored" data-anchor-id="anthropogenic-metal">anthropogenic metal</h2>
+<p><span id="anthropogenic-metal"></span></p>
+<p>The concept <code>anthropogenic metal</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/anthropogenicmetal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#brass"><code>brass</code></a>, <a href="#bronze"><code>bronze</code></a>, <a href="#copper"><code>copper</code></a>, <a href="#gold"><code>gold</code></a>, <a href="#iron"><code>iron</code></a>, <a href="#lead"><code>lead</code></a>, <a href="#pewter"><code>pewter</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Specimen is dominantly composed of metal that has been produced or used by humans; subclass of anthropogenic material. Samples of naturally occuring metallic material (e.g.&nbsp;native copper, gold nuggets) should be considered mineral material. Metallic material is material that when polished or fractured, shows a lustrous appearance, and conducts electricity and heat relatively well. Metals are typically malleable (they can be hammered into thin sheets) or ductile (can be drawn into wires). The boundaries between metals, nonmetals, and metalloids fluctuate slightly due to a lack of universally accepted definitions of the categories involved. (https://en.wikipedia.org/wiki/Metal). c.f. http://purl.obolibrary.org/obo/ENVO_01001069</p>
+</section>
+<section id="biogenic-non-organic-material" class="level2">
+<h2 class="anchored" data-anchor-id="biogenic-non-organic-material">biogenic non-organic material</h2>
+<p><span id="biogenic-non-organic-material"></span></p>
+<p>The concept <code>biogenic non-organic material</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/biogenicnonorganicmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#amber"><code>amber</code></a>, <a href="#bone"><code>bone</code></a>, <a href="#charcoal"><code>charcoal</code></a>, <a href="#coal"><code>coal</code></a>, <a href="#shell"><code>shell</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material produced by an organism but not composed of ‘very large molecules of biological origin.’ E.g. bone, tooth, shell, coral skeleton,</p>
+</section>
+<section id="mineral" class="level2">
+<h2 class="anchored" data-anchor-id="mineral">mineral</h2>
+<p><span id="mineral"></span></p>
+<p>The concept <code>mineral</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/mineral</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#hematite"><code>hematite</code></a>, <a href="#kaolin"><code>kaolin</code></a>, <a href="#mica"><code>mica</code></a>, <a href="#quartz"><code>quartz</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material consists of a single mineral or mineraloid phase. . ‘A mineral is an element or chemical compound that is normally crystalline and that has been formed as a result of geological processes.’ (Nickel, Ernest H. (1995), The definition of a mineral, The Canadian Mineralogist. 33 (3): 689–90). Include mineraloids. … A material primarily composed of some substance that is naturally occurring, solid and stable at room temperature, representable by a chemical formula, usually abiogenic, and that has an ordered atomic structure. (http://purl.obolibrary.org/obo/ENVO_01000256). Comment: the identity of a mineral species is defined by a crystal structure and a chemical composition that might include various specific elemental substitutions in that structure. Mineraloid: A naturally occurring mineral-like substance that does not demonstrate crystallinity. Mineraloids possess chemical compositions that vary beyond the generally accepted ranges for specific minerals. Examples: obsidian, Opal. (https://en.wikipedia.org/wiki/Mineraloid)</p>
+</section>
+<section id="organic-material" class="level2">
+<h2 class="anchored" data-anchor-id="organic-material">organic material</h2>
+<p><span id="organic-material"></span></p>
+<p>The concept <code>organic material</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/organicmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#organic-animal-material"><code>organic animal material</code></a>, <a href="#organic-plant-material"><code>organic plant material</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Environmental material derived from living organisms and composed primarily of one or more very large molecules of biological origin. Examples: body (animal or plant), body part, fecal matter, seeds, wood, tissue, biological fluids, biological waste, algal material, biofilm, necromass, plankton. source: http://purl.obolibrary.org/obo/ENVO_01000155</p>
+</section>
+<section id="other-anthropogenic-material" class="level2">
+<h2 class="anchored" data-anchor-id="other-anthropogenic-material">other anthropogenic material</h2>
+<p><span id="other-anthropogenic-material"></span></p>
+<p>The concept <code>other anthropogenic material</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/otheranthropogenicmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#anthropogenic-organic-material"><code>anthropogenic organic material</code></a>, <a href="#ceramic-clay"><code>ceramic clay</code></a>, <a href="#fiber-material"><code>fiber material</code></a>, <a href="#glass"><code>glass</code></a>, <a href="#paper"><code>paper</code></a>, <a href="#plaster-or-mortar"><code>plaster or mortar</code></a>, <a href="#rubber"><code>rubber</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Non-metallic material produced by human activity. Organic products of agricultural activity are both anthropogenic and organic. Include lab preparations like XRF pellet and rock powders. Examples: ceramics, concrete, slag, (anthropogenic) glass, mine tailing, plaster, waste.</p>
+</section>
+<section id="particulate-material" class="level2">
+<h2 class="anchored" data-anchor-id="particulate-material">particulate material</h2>
+<p><span id="particulate-material"></span></p>
+<p>The concept <code>particulate material</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/particulate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#cinder"><code>cinder</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material consists of microscopic particulate material derived by precipitation, filtering, or settling from suspension in a fluid, e.g.&nbsp;filtrate from water, deposition from atmosphere, astro material particles. Might include mineral, organic, or biological material. ENVO definition (ENVO_01000060) has “composed of microscopic portions of solid or liquid material suspended in another environmental material.”, refine here to define as the solid particles, distinct from a material in which they are suspended. A material that includes solid or liquid particles suspended in another material would be a dispersed_media in this scheme, not defined in ENVO. Human manufactured particulates (e.g.&nbsp;rock powder) should be categorized as ‘anthropogenic material’ as well as ‘Particulate’</p>
+</section>
+<section id="rock" class="level2">
+<h2 class="anchored" data-anchor-id="rock">rock</h2>
+<p><span id="rock"></span></p>
+<p>The concept <code>rock</code> <br> with URI <code>https://w3id.org/isample/vocabulary/material/1.0/rock</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/material/1.0/materialsvocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#basalt"><code>basalt</code></a>, <a href="#chert"><code>chert</code></a>, <a href="#cinder"><code>cinder</code></a>, <a href="#coal"><code>coal</code></a>, <a href="#dolomite"><code>dolomite</code></a>, <a href="#gabbro"><code>gabbro</code></a>, <a href="#greywacke"><code>greywacke</code></a>, <a href="#limestone"><code>limestone</code></a>, <a href="#marble"><code>marble</code></a>, <a href="#obsidian"><code>obsidian</code></a>, <a href="#pumice"><code>pumice</code></a>, <a href="#slate"><code>slate</code></a>, <a href="#travertine"><code>travertine</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Consolidated aggregate of particles (grains) of rock, mineral (including native elements), mineraloid, or solid organic material. Includes mineral aggregates such as granite, shale, marble; natural glass such as obsidian; organic material formed by geologic processes such a coal; extraterrestrial material in meteorites; and crushed rock fragments like drill cuttings from rock. (based on http://resource.geosciml.org/classifier/cgi/lithology/rock, same as http://purl.obolibrary.org/obo/ENVO_00001995)</p>
+</section>
+<section id="brass" class="level2">
+<h2 class="anchored" data-anchor-id="brass">brass</h2>
+<p><span id="brass"></span></p>
+<p>The concept <code>brass</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/brass</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#brass"><code>brass</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>alloy of copper (Cu) and zinc (Zn)</p>
+</section>
+<section id="bronze" class="level2">
+<h2 class="anchored" data-anchor-id="bronze">bronze</h2>
+<p><span id="bronze"></span></p>
+<p>The concept <code>bronze</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bronze</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#bronze"><code>bronze</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>alloy consisting primarily of copper with subordinate tin; often includes other metals</p>
+</section>
+<section id="copper" class="level2">
+<h2 class="anchored" data-anchor-id="copper">copper</h2>
+<p><span id="copper"></span></p>
+<p>The concept <code>copper</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/copper</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#copper"><code>copper</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>copper metal, includes copper-rich alloys not identifiable as brass or bronze.</p>
+</section>
+<section id="gold" class="level2">
+<h2 class="anchored" data-anchor-id="gold">gold</h2>
+<p><span id="gold"></span></p>
+<p>The concept <code>gold</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/gold</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#gold"><code>gold</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>a chemical element with atomic number 79; a dense, soft metal that is easily malleable and ductile. It has a melting point of 1064 degrees Celsius and a boiling point of 2,807 degrees Celsius. (ChatGPT)</p>
+</section>
+<section id="iron" class="level2">
+<h2 class="anchored" data-anchor-id="iron">iron</h2>
+<p><span id="iron"></span></p>
+<p>The concept <code>iron</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/iron</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#iron"><code>iron</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Iron or iron-rich alloy <br> missing</p>
+</section>
+<section id="lead" class="level2">
+<h2 class="anchored" data-anchor-id="lead">lead</h2>
+<p><span id="lead"></span></p>
+<p>The concept <code>lead</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/lead</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#lead"><code>lead</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>lead or lead-rich alloy</p>
+</section>
+<section id="pewter" class="level2">
+<h2 class="anchored" data-anchor-id="pewter">pewter</h2>
+<p><span id="pewter"></span></p>
+<p>The concept <code>pewter</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/pewter</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#anthropogenic-metal"><code>anthropogenic metal</code></a><code>-&gt;</code><a href="#pewter"><code>pewter</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>alloy consisting of mostly tin, with antimony, minor copper or bismuth, and sometimes silver.</p>
+</section>
+<section id="amber" class="level2">
+<h2 class="anchored" data-anchor-id="amber">amber</h2>
+<p><span id="amber"></span></p>
+<p>The concept <code>amber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/amber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#amber"><code>amber</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="bone" class="level2">
+<h2 class="anchored" data-anchor-id="bone">bone</h2>
+<p><span id="bone"></span></p>
+<p>The concept <code>bone</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bone</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#bone"><code>bone</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="charcoal" class="level2">
+<h2 class="anchored" data-anchor-id="charcoal">charcoal</h2>
+<p><span id="charcoal"></span></p>
+<p>The concept <code>charcoal</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/charcoal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#charcoal"><code>charcoal</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="coal" class="level2">
+<h2 class="anchored" data-anchor-id="coal">coal</h2>
+<p><span id="coal"></span></p>
+<p>The concept <code>coal</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/coal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#coal"><code>coal</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="shell" class="level2">
+<h2 class="anchored" data-anchor-id="shell">shell</h2>
+<p><span id="shell"></span></p>
+<p>The concept <code>shell</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/shell</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#shell"><code>shell</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Hard outer covering of invertebrate creatures, composed of calcareous or chitinous material (http://vocab.getty.edu/page/aat/300011829)</p>
+</section>
+<section id="hematite" class="level2">
+<h2 class="anchored" data-anchor-id="hematite">hematite</h2>
+<p><span id="hematite"></span></p>
+<p>The concept <code>hematite</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/hematite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#mineral"><code>mineral</code></a><code>-&gt;</code><a href="#hematite"><code>hematite</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="kaolin" class="level2">
+<h2 class="anchored" data-anchor-id="kaolin">kaolin</h2>
+<p><span id="kaolin"></span></p>
+<p>The concept <code>kaolin</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/kaolin</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#mineral"><code>mineral</code></a><code>-&gt;</code><a href="#kaolin"><code>kaolin</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="mica" class="level2">
+<h2 class="anchored" data-anchor-id="mica">mica</h2>
+<p><span id="mica"></span></p>
+<p>The concept <code>mica</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/mica</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#mineral"><code>mineral</code></a><code>-&gt;</code><a href="#mica"><code>mica</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="quartz" class="level2">
+<h2 class="anchored" data-anchor-id="quartz">quartz</h2>
+<p><span id="quartz"></span></p>
+<p>The concept <code>quartz</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/quartz</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#mineral"><code>mineral</code></a><code>-&gt;</code><a href="#quartz"><code>quartz</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="organic-animal-material" class="level2">
+<h2 class="anchored" data-anchor-id="organic-animal-material">organic animal material</h2>
+<p><span id="organic-animal-material"></span></p>
+<p>The concept <code>organic animal material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/organicanimalmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-animal-material"><code>organic animal material</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#hair"><code>hair</code></a>, <a href="#leather"><code>leather</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material that is (or was) a constituent of an animal organisms, composed primarily of one or more very large molecules of biological origin.</p>
+</section>
+<section id="hair" class="level2">
+<h2 class="anchored" data-anchor-id="hair">hair</h2>
+<p><span id="hair"></span></p>
+<p>The concept <code>hair</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/hair</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-animal-material"><code>organic animal material</code></a><code>-&gt;</code><a href="#hair"><code>hair</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Material comprising the cylindrical filaments that grow from follicles embedded in the skin of mammals. Hair is a column of overlapping, fused cells that are composed of the protein keratin; hair is composed of three parts: the innermost column is the medula, the surrounding live cells (the cortex) contain pigment, and the outermost dead transparent cells are the cuticular scales. The portion of the hair outside of the skin is called the shaft. Fine, closely spaced hair that covers most of an animal’s body is called fur. Dense, soft, curled hair is called wool. Coarse, stiff hairs are called bristles, spines, or quills. Horsehair and cattle hair have been used for brushes, plaster binders, haircloth, and upholstery stuffing. Rabbit hair, often called rabbit fur, has been used to make felt hats. (http://vocab.getty.edu/page/aat/300011814)</p>
+</section>
+<section id="leather" class="level2">
+<h2 class="anchored" data-anchor-id="leather">leather</h2>
+<p><span id="leather"></span></p>
+<p>The concept <code>leather</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/leather</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-animal-material"><code>organic animal material</code></a><code>-&gt;</code><a href="#leather"><code>leather</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>The skin or hide of an animal that has been tanned to render it resistant to putrefication and relatively soft and flexible when dry. (http://vocab.getty.edu/page/aat/300011845)</p>
+</section>
+<section id="organic-plant-material" class="level2">
+<h2 class="anchored" data-anchor-id="organic-plant-material">organic plant material</h2>
+<p><span id="organic-plant-material"></span></p>
+<p>The concept <code>organic plant material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/organicplantmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-plant-material"><code>organic plant material</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#plant-fiber"><code>plant fiber</code></a>, <a href="#wood"><code>wood</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="plant-fiber" class="level2">
+<h2 class="anchored" data-anchor-id="plant-fiber">plant fiber</h2>
+<p><span id="plant-fiber"></span></p>
+<p>The concept <code>plant fiber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plantfiber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-plant-material"><code>organic plant material</code></a><code>-&gt;</code><a href="#plant-fiber"><code>plant fiber</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="wood" class="level2">
+<h2 class="anchored" data-anchor-id="wood">wood</h2>
+<p><span id="wood"></span></p>
+<p>The concept <code>wood</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/wood</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#organic-material"><code>organic material</code></a><code>-&gt;</code><a href="#organic-plant-material"><code>organic plant material</code></a><code>-&gt;</code><a href="#wood"><code>wood</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="anthropogenic-organic-material" class="level2">
+<h2 class="anchored" data-anchor-id="anthropogenic-organic-material">anthropogenic organic material</h2>
+<p><span id="anthropogenic-organic-material"></span></p>
+<p>The concept <code>anthropogenic organic material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/anthropogenicorganicmaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#anthropogenic-organic-material"><code>anthropogenic organic material</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#plastic-(material)"><code>plastic (material)</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Organic material manufactured by humans</p>
+</section>
+<section id="plastic-material" class="level2">
+<h2 class="anchored" data-anchor-id="plastic-material">plastic (material)</h2>
+<p>[]{#plastic-(material)}</p>
+<p>The concept <code>plastic (material)</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plastic</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#anthropogenic-organic-material"><code>anthropogenic organic material</code></a><code>-&gt;</code><a href="#plastic-(material)"><code>plastic (material)</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Synthetic or semi-synthetic material that uses organic polymers as a main ingredient.</p>
+</section>
+<section id="ceramic-clay" class="level2">
+<h2 class="anchored" data-anchor-id="ceramic-clay">ceramic clay</h2>
+<p><span id="ceramic-clay"></span></p>
+<p>The concept <code>ceramic clay</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/ceramicclay</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#brick-clay"><code>brick clay</code></a>, <a href="#bucchero"><code>bucchero</code></a>, <a href="#faience"><code>faience</code></a>, <a href="#porcelain"><code>porcelain</code></a>, <a href="#terracotta"><code>terracotta</code></a>, <a href="#terra-sigilata"><code>terra sigilata</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Any of the various hard, brittle, heat-resistant and corrosion-resistant materials made by shaping and then firing an inorganic, nonmetallic material, such as clay, at a high temperature. Common examples are earthenware, porcelain, and brick. (https://en.wikipedia.org/wiki/Ceramic)</p>
+</section>
+<section id="brick-clay" class="level2">
+<h2 class="anchored" data-anchor-id="brick-clay">brick clay</h2>
+<p><span id="brick-clay"></span></p>
+<p>The concept <code>brick clay</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/brickclay</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#brick-clay"><code>brick clay</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>dried or low-fired clay-rich material used to make blocks for construction</p>
+</section>
+<section id="bucchero" class="level2">
+<h2 class="anchored" data-anchor-id="bucchero">bucchero</h2>
+<p><span id="bucchero"></span></p>
+<p>The concept <code>bucchero</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/bucchero</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#bucchero"><code>bucchero</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>ceramic with black fabric and glossy, black surface achieved through reduction firing</p>
+</section>
+<section id="faience" class="level2">
+<h2 class="anchored" data-anchor-id="faience">faience</h2>
+<p><span id="faience"></span></p>
+<p>The concept <code>faience</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/faience</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#faience"><code>faience</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>fine white-glazed ceramic (tin oxide based glaze)</p>
+</section>
+<section id="porcelain" class="level2">
+<h2 class="anchored" data-anchor-id="porcelain">porcelain</h2>
+<p><span id="porcelain"></span></p>
+<p>The concept <code>porcelain</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/porcelain</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#porcelain"><code>porcelain</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Kaolin rich high-fired ceramic; In China, it includes any such ware that is highly fired enough to produce a ringing sound when struck. In Europe, it is limited to hard-fired ceramic that is translucent. (https://vocab.getty.edu/aat/scopeNote/45436)</p>
+</section>
+<section id="terracotta" class="level2">
+<h2 class="anchored" data-anchor-id="terracotta">terracotta</h2>
+<p><span id="terracotta"></span></p>
+<p>The concept <code>terracotta</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/terracotta</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#terracotta"><code>terracotta</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>clay-based unglazed or glazed, porous ceramic</p>
+</section>
+<section id="terra-sigilata" class="level2">
+<h2 class="anchored" data-anchor-id="terra-sigilata">terra sigilata</h2>
+<p><span id="terra-sigilata"></span></p>
+<p>The concept <code>terra sigilata</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/terrasigilata</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#ceramic-clay"><code>ceramic clay</code></a><code>-&gt;</code><a href="#terra-sigilata"><code>terra sigilata</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Fine red Ancient Roman pottery with glossy surface slips</p>
+</section>
+<section id="fiber-material" class="level2">
+<h2 class="anchored" data-anchor-id="fiber-material">fiber material</h2>
+<p><span id="fiber-material"></span></p>
+<p>The concept <code>fiber material</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/fibermaterial</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#fiber-material"><code>fiber material</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>material composed of fibers twisted or woved togther. Fibers might be plant material or Anthropogenic Organic material.</p>
+</section>
+<section id="glass" class="level2">
+<h2 class="anchored" data-anchor-id="glass">glass</h2>
+<p><span id="glass"></span></p>
+<p>The concept <code>glass</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/glass</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#glass"><code>glass</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A non-crystalline, often transparent amorphous solid, most often formed by rapid cooling (quenching) of the molten silca rich material. (https://en.wikipedia.org/wiki/Glass)</p>
+</section>
+<section id="paper" class="level2">
+<h2 class="anchored" data-anchor-id="paper">paper</h2>
+<p><span id="paper"></span></p>
+<p>The concept <code>paper</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/paper</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#paper"><code>paper</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>thin matted or felted sheets or webs of fiber formed and dried on a fine screen from a pulpy water suspension. The fibers may be animal, such as hair, silk or wool, or mineral, such as asbestos, or synthetic. However most paper is made from cellulosic plant fiber, such as from wood pulp, grass, cotton, linen, and straw. (http://vocab.getty.edu/page/aat/300014109)</p>
+</section>
+<section id="plaster-or-mortar" class="level2">
+<h2 class="anchored" data-anchor-id="plaster-or-mortar">plaster or mortar</h2>
+<p><span id="plaster-or-mortar"></span></p>
+<p>The concept <code>plaster or mortar</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/plasterormortar</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#plaster-or-mortar"><code>plaster or mortar</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>Plaster is a pasty material that hardens on drying and is used for coating walls, ceilings, and partitions. Mortar is a similar pasty material used for cementing bricks or block together or coating walls in building construction.</p>
+</section>
+<section id="rubber" class="level2">
+<h2 class="anchored" data-anchor-id="rubber">rubber</h2>
+<p><span id="rubber"></span></p>
+<p>The concept <code>rubber</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/rubber</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#other-anthropogenic-material"><code>other anthropogenic material</code></a><code>-&gt;</code><a href="#rubber"><code>rubber</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>An elastomer, synthesized from petroleum byproducts or from latex harvested from the rubber tree (Hevea brasiliensis).</p>
+</section>
+<section id="cinder" class="level2">
+<h2 class="anchored" data-anchor-id="cinder">cinder</h2>
+<p><span id="cinder"></span></p>
+<p>The concept <code>cinder</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/cinder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#particulate-material"><code>particulate material</code></a><code>-&gt;</code><a href="#cinder"><code>cinder</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>The incombustible residue of something burnt. (http://vocab.getty.edu/page/aat/300011788) <br> missing</p>
+</section>
+<section id="basalt" class="level2">
+<h2 class="anchored" data-anchor-id="basalt">basalt</h2>
+<p><span id="basalt"></span></p>
+<p>The concept <code>basalt</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/basalt</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#basalt"><code>basalt</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="chert" class="level2">
+<h2 class="anchored" data-anchor-id="chert">chert</h2>
+<p><span id="chert"></span></p>
+<p>The concept <code>chert</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/chert</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#chert"><code>chert</code></a></p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#flint"><code>flint</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="flint" class="level2">
+<h2 class="anchored" data-anchor-id="flint">flint</h2>
+<p><span id="flint"></span></p>
+<p>The concept <code>flint</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/flint</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#chert"><code>chert</code></a><code>-&gt;</code><a href="#flint"><code>flint</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="cinder-1" class="level2">
+<h2 class="anchored" data-anchor-id="cinder-1">cinder</h2>
+<p><span id="cinder"></span></p>
+<p>The concept <code>cinder</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/cinder</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#particulate-material"><code>particulate material</code></a><code>-&gt;</code><a href="#cinder"><code>cinder</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>The incombustible residue of something burnt. (http://vocab.getty.edu/page/aat/300011788) <br> missing</p>
+</section>
+<section id="coal-1" class="level2">
+<h2 class="anchored" data-anchor-id="coal-1">coal</h2>
+<p><span id="coal"></span></p>
+<p>The concept <code>coal</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/coal</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#biogenic-non-organic-material"><code>biogenic non-organic material</code></a><code>-&gt;</code><a href="#coal"><code>coal</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="dolomite" class="level2">
+<h2 class="anchored" data-anchor-id="dolomite">dolomite</h2>
+<p><span id="dolomite"></span></p>
+<p>The concept <code>dolomite</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/dolomite</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#dolomite"><code>dolomite</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>dolostone</code></p>
+</section>
+<section id="gabbro" class="level2">
+<h2 class="anchored" data-anchor-id="gabbro">gabbro</h2>
+<p><span id="gabbro"></span></p>
+<p>The concept <code>gabbro</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/gabbro</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#gabbro"><code>gabbro</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="greywacke" class="level2">
+<h2 class="anchored" data-anchor-id="greywacke">greywacke</h2>
+<p><span id="greywacke"></span></p>
+<p>The concept <code>greywacke</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/greywacke</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#greywacke"><code>greywacke</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+<p><strong>Alternate labels:</strong></p>
+<p><code>graywacke</code></p>
+</section>
+<section id="limestone" class="level2">
+<h2 class="anchored" data-anchor-id="limestone">limestone</h2>
+<p><span id="limestone"></span></p>
+<p>The concept <code>limestone</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/limestone</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#limestone"><code>limestone</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="marble" class="level2">
+<h2 class="anchored" data-anchor-id="marble">marble</h2>
+<p><span id="marble"></span></p>
+<p>The concept <code>marble</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/marble</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#marble"><code>marble</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="obsidian" class="level2">
+<h2 class="anchored" data-anchor-id="obsidian">obsidian</h2>
+<p><span id="obsidian"></span></p>
+<p>The concept <code>obsidian</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/obsidian</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#obsidian"><code>obsidian</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="pumice" class="level2">
+<h2 class="anchored" data-anchor-id="pumice">pumice</h2>
+<p><span id="pumice"></span></p>
+<p>The concept <code>pumice</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/pumice</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#pumice"><code>pumice</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="slate" class="level2">
+<h2 class="anchored" data-anchor-id="slate">slate</h2>
+<p><span id="slate"></span></p>
+<p>The concept <code>slate</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/slate</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#slate"><code>slate</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>missing</p>
+</section>
+<section id="travertine" class="level2">
+<h2 class="anchored" data-anchor-id="travertine">travertine</h2>
+<p><span id="travertine"></span></p>
+<p>The concept <code>travertine</code> <br> with URI <code>https://w3id.org/isample/opencontext/material/0.1/travertine</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/material/0.1/oc_materialsvocab</code></p>
+<p>Path from the top concept: <br> <a href="#rock"><code>rock</code></a><code>-&gt;</code><a href="#travertine"><code>travertine</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>A limestone consisting of a massive usually layered calcium carbonate (such as aragonite or calcite) formed by deposition from spring waters, especially from hot springs. (https://www.mindat.org/min-39057.html)</p>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
