@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2024-01-05">
+<meta name="dcterms.date" content="2024-01-07">
 
 <title>iSamples - Open Context vocabulary extension for material sample type</title>
 <style>
@@ -183,7 +183,7 @@ ul.task-list li input[type="checkbox"] {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Open Context vocabulary extension for material sample type</h1>
-<p class="subtitle lead"></p><p>None</p><p></p>
+<p class="subtitle lead"></p><p>categories for categorization of kinds of sample objects specific to archaeological studies</p><p></p>
 </div>
 
 
@@ -194,7 +194,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">January 5, 2024</p>
+      <p class="date">January 7, 2024</p>
     </div>
   </div>
   
@@ -210,28 +210,37 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <p><strong>History:</strong></p>
 <p><strong>Concept Hierarchy:</strong></p>
-<blockquote class="blockquote">
-<p><strong>Note</strong> No top level concept is available in the loaded vocabularies. Hierarchy is generated from the broadest concepts available.</p>
-</blockquote>
 <ul>
-<li><p><a href="#architectural-element">Architectural element</a></p></li>
-<li><p><a href="#clothing">Clothing</a></p></li>
-<li><p><a href="#coin">Coin</a></p></li>
-<li><p><a href="#container-object">Container object</a></p></li>
-<li><p><a href="#domestic-item">Domestic item</a></p></li>
-<li><p><a href="#ornament">Ornament</a></p></li>
-<li><p><a href="#bone-object">Bone object</a></p></li>
-<li><p><a href="#photograph">Photograph</a></p></li>
-<li><p><a href="#pot-sherd">Pot sherd</a></p></li>
-<li><p><a href="#tile">Tile</a></p></li>
-<li><p><a href="#utility-item">Utility item</a></p></li>
-<li><p><a href="#weapon">Weapon</a></p></li>
+<li><a href="#artifact">Artifact</a>
+<ul>
+<li><a href="#architectural-element">Architectural element</a></li>
+<li><a href="#clothing">Clothing</a></li>
+<li><a href="#coin">Coin</a></li>
+<li><a href="#container-object">Container object</a></li>
+<li><a href="#domestic-item">Domestic item</a></li>
+<li><a href="#ornament">Ornament</a></li>
+<li><a href="#photograph">Photograph</a></li>
+<li><a href="#pot-sherd">Pot sherd</a></li>
+<li><a href="#tile">Tile</a></li>
+<li><a href="#utility-item">Utility item</a></li>
+<li><a href="#weapon">Weapon</a></li>
+</ul></li>
 </ul>
+<section id="artifact" class="level2">
+<h2 class="anchored" data-anchor-id="artifact">Artifact</h2>
+<p><span id="artifact"></span></p>
+<p>The concept <code>Artifact</code> <br> with URI <code>https://w3id.org/isample/vocabulary/specimentype/1.0/artifact</code> <br> is defined in vocabulary <code>https://w3id.org/isample/vocabulary/specimentype/1.0/specimentypevocabulary</code></p>
+<p>This is the top concept of the vocabulary.</p>
+<p>Immediately narrower concepts:</p>
+<p><a href="#architectural-element"><code>Architectural element</code></a>, <a href="#clothing"><code>Clothing</code></a>, <a href="#coin"><code>Coin</code></a>, <a href="#container-object"><code>Container object</code></a>, <a href="#domestic-item"><code>Domestic item</code></a>, <a href="#ornament"><code>Ornament</code></a>, <a href="#photograph"><code>Photograph</code></a>, <a href="#pot-sherd"><code>Pot sherd</code></a>, <a href="#tile"><code>Tile</code></a>, <a href="#utility-item"><code>Utility item</code></a>, <a href="#weapon"><code>Weapon</code></a></p>
+<p><strong>Definition:</strong></p>
+<p>An object made (manufactured, shaped, modified) by a human being, or precursor hominid. Include a set of pieces belonging originally to a single object and treated as a single specimen.</p>
+</section>
 <section id="architectural-element" class="level2">
 <h2 class="anchored" data-anchor-id="architectural-element">Architectural element</h2>
 <p><span id="architectural-element"></span></p>
 <p>The concept <code>Architectural element</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/architecturalelement</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#architectural-element"><code>Architectural element</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Artifact that was part of a building.</p>
 </section>
@@ -239,7 +248,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="clothing">Clothing</h2>
 <p><span id="clothing"></span></p>
 <p>The concept <code>Clothing</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/clothing</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#clothing"><code>Clothing</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Item intended to be worn to cover the (human) body</p>
 </section>
@@ -247,7 +256,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="coin">Coin</h2>
 <p><span id="coin"></span></p>
 <p>The concept <code>Coin</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/coin</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#coin"><code>Coin</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>peice of metal issued by some authority and recognized as money.</p>
 </section>
@@ -255,7 +264,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="container-object">Container object</h2>
 <p><span id="container-object"></span></p>
 <p>The concept <code>Container object</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/containerobject</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#container-object"><code>Container object</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Item designed to contain some fluid, granular material, or other items for preservation, transportation or display.</p>
 </section>
@@ -263,7 +272,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="domestic-item">Domestic item</h2>
 <p><span id="domestic-item"></span></p>
 <p>The concept <code>Domestic item</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/domesticitem</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#domestic-item"><code>Domestic item</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>item intended for household use.</p>
 </section>
@@ -271,23 +280,15 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="ornament">Ornament</h2>
 <p><span id="ornament"></span></p>
 <p>The concept <code>Ornament</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/ornament</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#ornament"><code>Ornament</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>item intended for decoration.</p>
-</section>
-<section id="bone-object" class="level2">
-<h2 class="anchored" data-anchor-id="bone-object">Bone object</h2>
-<p><span id="bone-object"></span></p>
-<p>The concept <code>Bone object</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/peiceofbone</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
-<p><strong>Definition:</strong></p>
-<p>Sample is an individual bone or part of a bone from an animal.</p>
 </section>
 <section id="photograph" class="level2">
 <h2 class="anchored" data-anchor-id="photograph">Photograph</h2>
 <p><span id="photograph"></span></p>
 <p>The concept <code>Photograph</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/photograph</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#photograph"><code>Photograph</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>image produced by the action of light on a chemically sensitive surface, preserved on paper, glass or other physical substrate.</p>
 </section>
@@ -295,7 +296,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="pot-sherd">Pot sherd</h2>
 <p><span id="pot-sherd"></span></p>
 <p>The concept <code>Pot sherd</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/sherd</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#pot-sherd"><code>Pot sherd</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>fragment of pottery</p>
 </section>
@@ -303,7 +304,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="tile">Tile</h2>
 <p><span id="tile"></span></p>
 <p>The concept <code>Tile</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/tile</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#tile"><code>Tile</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>flat or curved piece of fired clay, stone, or concrete used especially for roofs, floors, or walls and often for ornamental work</p>
 </section>
@@ -311,7 +312,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="utility-item">Utility item</h2>
 <p><span id="utility-item"></span></p>
 <p>The concept <code>Utility item</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/utilityitem</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#utility-item"><code>Utility item</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Item intended for use in manufacture, construction, agriculture or other work activity.</p>
 </section>
@@ -319,7 +320,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="weapon">Weapon</h2>
 <p><span id="weapon"></span></p>
 <p>The concept <code>Weapon</code> <br> with URI <code>https://w3id.org/isample/opencontext/specimentype/0.1/weapon</code> <br> is defined in vocabulary <code>https://w3id.org/isample/opencontext/specimentype/0.1/oc_spectypevocab</code></p>
-<p>This is the top concept of the vocabulary.</p>
+<p>Path from the top concept: <br> <a href="#artifact"><code>Artifact</code></a><code>-&gt;</code><a href="#weapon"><code>Weapon</code></a></p>
 <p><strong>Definition:</strong></p>
 <p>Item for use in combat, hunting, or self defense</p>
 
