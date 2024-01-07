@@ -19,10 +19,9 @@ listing:
     fields: [title, subtitle]
     type: table
 
-
 ---
 
-# Vocabularies
+## Vocabularies
 
 One of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type.  Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader). In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
 
