@@ -3,6 +3,8 @@
 # Regenerates the vocabulary markdown files from the GH sources
 #
 #
+
+# get the core sample type vocabularies
 SCRIPT_FOLDER="$(dirname ${0})"
 #SOURCE_BASE="https://raw.githubusercontent.com/isamplesorg/metadata/develop/src/vocabularies/"
 
@@ -18,6 +20,14 @@ for src in ${SOURCES[@]}; do
     vocab markdown "${SOURCE_BASE}${src}" > "${DEST_FOLDER}${fname}"
 done
 
+#
+#**************************************************************************************************
+# add extension vocabularies here. Each extension will be in a separate github repo,
+#  and might include more than one vocabulary.  Any public repo that contains appropriatedly
+#  formatted SKOS turtle files should work. See SHACL shape files for validating iSamples SKOS
+#  at https://github.com/smrgeoinfo/vocab_tools/tree/main/vocab_tools/data
+
+# Earth Science extension
 SOURCE_BASE="https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/"
 SOURCES=("earthenv_material_extension_mineral_group.ttl" "earthenv_material_extension_rock_sediment.ttl" "earthenv_sampled_feature_role.ttl" "earthenv_specimen_type.ttl")
 DEST_FOLDER="models/generated/extensions/"
