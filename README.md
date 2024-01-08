@@ -5,7 +5,7 @@ subtitle: README for the isamples.github.io source
 
 # isamplesorg.github.io
 
-This repository provides the source for [isamplesorg.github.io](https://isamplesorg.github.io). 
+This repository provides the source for [SMR fork isamplesorg.github.io](https://smrgeoinfo.github.io/isamplesorg.github.io/). 
 
 The site uses the [Quarto](https://quarto.org/) and is built using GitHub actions.
 

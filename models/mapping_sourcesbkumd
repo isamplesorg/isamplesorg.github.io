@@ -8,7 +8,30 @@ subtitle: Mapping source sample records to the iSamples core model
 
 In general the process is :
 
-Remove plantuml diagram... [smr 2024-01-04]
+```plantuml
+---
+scale: 50%
+---
+@startuml
+skinparam monochrome true
+partition iSB {
+    :Source;
+    -> load;
+    :isb_thing
+    [postgres];
+    -> transform;
+    :isb_index
+    [solr];
+    -[dashed]-> synchronize;
+}
+partition iSC {
+    :isc_thing
+    [postgres];
+    :isc_index
+    [solr];
+}
+@enduml
+```
 
 
 ## GEOME

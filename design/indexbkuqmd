@@ -1,0 +1,55 @@
+---
+title: "Overview"
+subtitle: "iSamples use cases, requirements, architecture, and data models"
+---    
+
+Physical samples are represented by a digital record.
+
+Each digital record is addressable by at least one identifier that is unique to the record.
+
+A collection of digital records can be represented by a list of the record identifiers.
+
+A list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.
+
+Digital records may be presented in different serializations (media type).
+
+Digital records of a serialization may present different views of the same information (profile).
+
+iSamples has defined a profile applicable to all physical samples.
+
+iSamples has defined a programmatic interface
+
+
+
+```{.plantuml}
+!include https://raw.githubusercontent.com/datadavev/C4-PlantUML/master/C4_Component.puml
+
+System(isa, "iSamples", "iSamples Infrastructure")
+System_Ext(coll, "Collection", "Collection of records")
+Rel_U(isa, coll, "Synchronize records from")
+ 
+System_Ext(ont, "Ontologies", "Community maintained ontologies and vocabularies")
+Rel_L(isa, ont, "Uses")
+ 
+Person(admin, "Admin", "Administrator")
+Rel(admin, isa, "Manage systems")
+
+Person(user, "User", "Consumer\nContributor")
+Rel(user, isa, "Discover, Retrieve, Annotate, [Create, Update if authorized]")
+
+Person(curator, "Curator", "Curator")
+Rel(curator, isa, "Create, Manage, Annotate content")
+
+
+ System_Ext(pid, "Id Authority", "Identifier authorities (IGSN, ARK, DOI, ROR, ...)")
+ Rel(isa, pid, "Get allocation of identifier value range from")
+ 
+ System_Ext(identity, "Identity", "User identity service (ORCID, GitHub, ...)")
+Rel(isa, identity, "Get user metadata and authenticate using")
+ 
+System_Ext(publisher, "Publisher", "Source of identifier appareance in publications")
+Rel(isa, publisher, "Get identifier appearances from")
+
+SHOW_LEGEND()
+```
+

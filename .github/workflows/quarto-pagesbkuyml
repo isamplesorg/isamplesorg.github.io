@@ -19,40 +19,25 @@ jobs:
 
       # Install any computing dependency you may need, usually either python and Jupyter or R
       # More specific examples will be shared on quarto-dev/quarto-actions project
-      # plantUML can be used to dynamically generate UML diagrams to insert in model documentation
-      # 
-      #- name: Install plantuml deps
-      #  run: sudo apt-get install -y default-jre graphviz
 
-      #- name: Install plantuml
-      #  run: wget -O plantuml.jar "https://github.com/plantuml/plantuml/releases/download/v1.2022.4/plantuml-1.2022.4.jar" 
+      - name: Install plantuml deps
+        run: sudo apt-get install -y default-jre graphviz
 
-      # this just inserts some information in the action log
+      - name: Install plantuml
+        run: wget -O plantuml.jar "https://github.com/plantuml/plantuml/releases/download/v1.2022.4/plantuml-1.2022.4.jar" 
+
       - name: Whereami
-        run: pwd; ls -lah; java -version    # java -jar plantuml.jar -version
+        run: pwd; ls -lah; java -version; java -jar plantuml.jar -version
 
       - uses: actions/setup-python@v3
       - name: "Install Python deps"
         run: |
           pip install -r requirements.txt      
-      
-      - name: "install pipx"
-        run: pip install pipx
-
-      - name: "install vocab_tools"
-        #run: pipx install git+https://github.com/isamplesorg/vocab_tools.git@main
-        run: pipx install git+https://github.com/smrgeoinfo/vocab_tools.git@main
-          # sets up python code to convert skos to markdown; code is run
-          # in generate_vocab_docs.sh
 
       - name: Render book to all format
         # Add any command line argument needed
-        #env: 
-        #  PLANTUML_BIN: "java -jar ${{ github.workspace }}/plantuml.jar"
-        
-        # ttl to markdown python code is called from the generate_vocab_docs script
-        # Quarto render uses site configuration defined in the _quarto.yml file,
-        #  individual page content in the web site is defined by various xxx.qmd files.
+        env: 
+          PLANTUML_BIN: "java -jar ${{ github.workspace }}/plantuml.jar"
         run: |
           scripts/generate_vocab_docs.sh; quarto render
       - name: Deploy 🚀

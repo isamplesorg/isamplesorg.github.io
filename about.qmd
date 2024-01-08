@@ -37,9 +37,9 @@ The iSamples project will:
 
 # Principal Investigators
 
-* Kerstin Lehnert, Columbia University
-* Ramona Walls, University of Arizona
-* Neil Davies, The Regents of the University of California, Berkeley
-* David Vieglais, University of Kansas Biodiversity Institute
+* [Kerstin Lehnert](https://orcid.org/0000-0001-7036-1977), Columbia University
+* [Andrea Thomer](https://orcid.org/0000-0001-6238-3498), University of Arizona
+* [Neil Davies](https://orcid.org/0000-0001-8085-5014), The Regents of the University of California, Berkeley
+* [David Vieglais](https://orcid.org/0000-0002-6513-4996), University of Kansas Biodiversity Institute
 
 
