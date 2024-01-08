@@ -40,8 +40,9 @@ website:
           href: "https://github.com/isamplesorg/"
         
 
-
-  repo-url: https://github.com/isamplesorg/isamples.github.io
+# configure for correct source repository
+#  repo-url: https://github.com/isamples.org/isamples.github.io
+  repo-url: https://github.com/smrgeoinfo/isamples.github.io
   repo-actions: [edit, issue]
 
   page-footer: 
