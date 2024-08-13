@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.5.56">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>iSamples - iSamples Vocabularies</title>
+<title>iSamples Vocabularies – iSamples</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -46,7 +46,13 @@ ul.task-list li input[type="checkbox"] {
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -55,6 +61,7 @@ ul.task-list li input[type="checkbox"] {
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -118,26 +125,52 @@ ul.task-list li input[type="checkbox"] {
   })
   </script>
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-sidebar docked">
 
-
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
-      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
     </div>
@@ -146,16 +179,16 @@ ul.task-list li input[type="checkbox"] {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation docked overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
       <a href="../index.html" class="sidebar-logo-link">
       <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
-    <a href="https://hyde.cyverse.org/isamples_central/ui/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
-    <a href="https://github.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
-    <a href="https://isamples.slack.com/" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
-    <a href="https://twitter.com/isamplesorg" rel="" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+    <a href="https://hyde.cyverse.org/isamples_central/ui/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
+    <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
 </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -179,9 +212,9 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
  <span class="menu-text">Design</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
@@ -214,9 +247,9 @@ ul.task-list li input[type="checkbox"] {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
  <span class="menu-text">Resources</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
@@ -239,7 +272,7 @@ ul.task-list li input[type="checkbox"] {
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
@@ -248,12 +281,12 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#vocabularies" id="toc-vocabularies" class="nav-link active" data-scroll-target="#vocabularies"><span class="header-section-number">1</span> Vocabularies</a></li>
   </ul>
-<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/models/index.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">iSamples Vocabularies</h1>
 <p class="subtitle lead">Vocabularies for interoperable sample description</p>
@@ -269,7 +302,9 @@ ul.task-list li input[type="checkbox"] {
   </div>
   
 
+
 </header>
+
 
 <section id="vocabularies" class="level2" data-number="1">
 <h2 data-number="1" data-anchor-id="vocabularies"><span class="header-section-number">1</span> Vocabularies</h2>
@@ -281,7 +316,6 @@ ul.task-list li input[type="checkbox"] {
 </section>
 
 <div class="quarto-listing quarto-listing-container-table" id="listing-vocabulary-listing">
-
 <table class="quarto-listing-table table">
 <thead>
 <tr>
@@ -294,7 +328,7 @@ Subtitle
 </tr>
 </thead>
 <tbody class="list">
-<tr data-index="0" data-listing-date-sort="1704729294936" data-listing-file-modified-sort="1704729296282" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.md">
+<tr data-index="0" data-listing-date-sort="1723578937716" data-listing-file-modified-sort="1723578939031" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1273" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.md">
 <td>
 <a href="../models/generated/vocabularies/sampled_feature_type.html" class="title listing-title">Sampled Feature Type vocabulary</a>
 </td>
@@ -302,15 +336,15 @@ Subtitle
 <span class="listing-subtitle">Categories to specify the broad context that a sample is intended to represent. </span>
 </td>
 </tr>
-<tr data-index="1" data-listing-date-sort="1704729297804" data-listing-file-modified-sort="1704729299190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-title-sort="iSamples Material Sample Type Vocabulary" data-listing-filename-sort="material_sample_type.md">
+<tr data-index="1" data-listing-date-sort="1723578940688" data-listing-file-modified-sort="1723578942151" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1909" data-listing-title-sort="iSamples Material Sample Object Type Vocabulary" data-listing-filename-sort="material_sample_object_type.md">
 <td>
-<a href="../models/generated/vocabularies/material_sample_type.html" class="title listing-title">iSamples Material Sample Type Vocabulary</a>
+<a href="../models/generated/vocabularies/material_sample_object_type.html" class="title listing-title">iSamples Material Sample Object Type Vocabulary</a>
 </td>
 <td>
-<span class="listing-subtitle">Broad categories to specify the kind of physical thing identified as the ‘sample’. </span>
+<span class="listing-subtitle">Broad categories to specify the kind of physical object identified as the ‘sample’. </span>
 </td>
 </tr>
-<tr data-index="2" data-listing-date-sort="1704729292081" data-listing-file-modified-sort="1704729293458" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.md">
+<tr data-index="2" data-listing-date-sort="1723578934785" data-listing-file-modified-sort="1723578936175" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1807" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.md">
 <td>
 <a href="../models/generated/vocabularies/material_type.html" class="title listing-title">iSamples Materials Vocabulary</a>
 </td>
@@ -318,22 +352,20 @@ Subtitle
 <span class="listing-subtitle">High level vocabulary to specify the kind of material that constitutes a physical sample </span>
 </td>
 </tr>
-<tr data-index="3" data-listing-file-modified-sort="1704729262990" data-listing-reading-time-sort="1" data-listing-filename-sort="readme.md">
+<tr data-index="3" data-listing-file-modified-sort="1723578904606" data-listing-reading-time-sort="1" data-listing-word-count-sort="12" data-listing-filename-sort="readme.md">
 <td>
-<span class="listing-title">undefined</span>
+<a href="../models/generated/vocabularies/readme.html" class="title listing-title">&nbsp;</a>
 </td>
 <td>
-<span class="listing-subtitle">undefined</span>
+<span class="listing-subtitle">&nbsp;</span>
 </td>
 </tr>
 </tbody>
-
 </table>
 <div class="listing-no-matching d-none">
 No matching items
 </div>
 </div><div class="quarto-listing quarto-listing-container-table" id="listing-extension-listing">
-
 <table class="quarto-listing-table table">
 <thead>
 <tr>
@@ -346,23 +378,15 @@ Subtitle
 </tr>
 </thead>
 <tbody class="list">
-<tr data-index="0" data-listing-date-sort="1704729335563" data-listing-file-modified-sort="1704729338331" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="17" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
+<tr data-index="0" data-listing-date-sort="1723578969347" data-listing-file-modified-sort="1723578971975" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3649" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
 <td>
 <a href="../models/generated/extensions/biology_sampledfeature_extension.html" class="title listing-title">Biology Extension: Basic taxon classes for biological entity</a>
 </td>
 <td>
-<span class="listing-subtitle">This is a vocabulary to categorize sampled organisms (whole or part) according to taxonomic classes. Classes are based largely on taxonomy found in Wikipedia, particularly Whittaker’s five kingdom system (1969) (https://en.wikipedia.org/wiki/Kingdom_(biology), https://doi.org/10.1126%2Fscience.163.3863.150). The intended use is in iSamples cross domain categorization of material samples, recognizing that there are multiple view for taxonomy and cladistics for the tree of life. This is a high level view intended for cross domain purposes, not expert analysis. Other extension vocablaries should be used for other taxonomic schemes </span>
+<span class="listing-subtitle">This is a vocabulary to categorize sampled organisms (whole or part) according to taxonomic classes. Classes are based largely on taxonomy found in Wikipedia, particularly Whittaker’s five kingdom system (1969) (https://en.wikipedia.org/wiki/Kingdom_(biology), https://doi.org/10.1126%2Fscience.163.3863.150). The intended use is in iSamples cross domain categorization of material samples, recognizing that there are multiple view for taxonomy and cladistics for the tree of life. This is a high level view intended for cross domain purposes, not expert analysis. Other extension vocabularies should be used for other taxonomic schemes </span>
 </td>
 </tr>
-<tr data-index="1" data-listing-date-sort="1704729319262" data-listing-file-modified-sort="1704729323622" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-title-sort="Earth and Environmental Science extension -  Material sample type" data-listing-filename-sort="earthenv_specimen_type.md">
-<td>
-<a href="../models/generated/extensions/earthenv_specimen_type.html" class="title listing-title">Earth and Environmental Science extension - Material sample type</a>
-</td>
-<td>
-<span class="listing-subtitle">This concept scheme contains skos concepts for categorizing kinds of Earth Material sample types, extending the iSamples Material Sample Type vocabulary. Defintions from SESAR, ODM2, wikipedia, ESS-DIVE, and other sources; sources are cited with each term. </span>
-</td>
-</tr>
-<tr data-index="2" data-listing-date-sort="1704729300280" data-listing-file-modified-sort="1704729301090" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
+<tr data-index="1" data-listing-date-sort="1723578943295" data-listing-file-modified-sort="1723578944063" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="750" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
 <td>
 <a href="../models/generated/extensions/earthenv_material_extension_mineral_group.html" class="title listing-title">Earth and Environmental Science extension - Mineral group vocabulary</a>
 </td>
@@ -370,7 +394,7 @@ Subtitle
 <span class="listing-subtitle">Vocabulary to extend the mineral material type category with the top level mineral group categories. Uses the Nickel–Strunz mineral classes, which divide minerals into ten classes according to chemical composition and crystal structure. Nickel-Strunz group 10 is not included because that material would be mat:organiccompounds. Version 10 of the classification is modified from v 9 (Strunz and Nickel,2002) by Jim Ferraiolo and others, and now extended and maintained by mindat.org. Some scope notes from linked.data.gov.au. </span>
 </td>
 </tr>
-<tr data-index="3" data-listing-date-sort="1704729306776" data-listing-file-modified-sort="1704729313066" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
+<tr data-index="2" data-listing-date-sort="1723578949765" data-listing-file-modified-sort="1723578956155" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-word-count-sort="8356" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
 <td>
 <a href="../models/generated/extensions/earthenv_material_extension_rock_sediment.html" class="title listing-title">Earth and Environmental Science extension - Rock and sediment materials vocabulary</a>
 </td>
@@ -378,7 +402,7 @@ Subtitle
 <span class="listing-subtitle">Rock and sediment categories for iSamples materialType classification. Remove anthropogenic materials and classes for consolidated or non-consolidated material; remove leaf classes subjectively based on abundance of material type and number of subclasses. There are 83 ‘mat:rock’ subclasses; these include some classes that are non-consolidated material (e.g.&nbsp;fault gouge) but these are not sediment and adding ‘material’ classes that are independent of consolidation seems like more overhead than needed. Note that a given material is likely to fit in more that one class; for example the sediment subclasses include compositional classes (e.g.&nbsp;carbonate, clastic) as well as grain size classes (gravel-size sediment). A calcareous ooze sample would be both ‘mud-size sediment’ and ‘carbonate sediment’. Change owl:class to skos:concept, and rdfs:subClassOf to skos:broader. </span>
 </td>
 </tr>
-<tr data-index="4" data-listing-date-sort="1704729314309" data-listing-file-modified-sort="1704729315278" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
+<tr data-index="3" data-listing-date-sort="1723578957464" data-listing-file-modified-sort="1723578958455" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="673" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
 <td>
 <a href="../models/generated/extensions/earthenv_sampled_feature_role.html" class="title listing-title">Earth and Environmental Science extension - Sampled feature role</a>
 </td>
@@ -386,15 +410,7 @@ Subtitle
 <span class="listing-subtitle">Terms to categorize the relation of a sampled feature to its context. In the Earth Science realm this is typically relation of sampled feature to a containing rock body or rock body part. </span>
 </td>
 </tr>
-<tr data-index="5" data-listing-date-sort="1704729331845" data-listing-file-modified-sort="1704729332939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-title-sort="Open Context vocabulary extension for material sample type" data-listing-filename-sort="opencontext_materialsampletype.md">
-<td>
-<a href="../models/generated/extensions/opencontext_materialsampletype.html" class="title listing-title">Open Context vocabulary extension for material sample type</a>
-</td>
-<td>
-<span class="listing-subtitle">categories for categorization of kinds of sample objects specific to archaeological studies </span>
-</td>
-</tr>
-<tr data-index="6" data-listing-date-sort="1704729326757" data-listing-file-modified-sort="1704729330639" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
+<tr data-index="4" data-listing-date-sort="1723578962229" data-listing-file-modified-sort="1723578966243" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2523" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
 <td>
 <a href="../models/generated/extensions/opencontext_material_extension.html" class="title listing-title">OpenContext material type extension draft</a>
 </td>
@@ -402,16 +418,31 @@ Subtitle
 <span class="listing-subtitle">vocabulary of materials typical of archeological samples </span>
 </td>
 </tr>
-<tr data-index="7" data-listing-file-modified-sort="1704729262990" data-listing-reading-time-sort="1" data-listing-filename-sort="readme.md">
+<tr data-index="5" data-listing-file-modified-sort="1723578966291" data-listing-filename-sort="opencontext_materialsampletype.md">
 <td>
-<span class="listing-title">undefined</span>
+<a href="../models/generated/extensions/opencontext_materialsampletype.html" class="title listing-title">&nbsp;</a>
 </td>
 <td>
-<span class="listing-subtitle">undefined</span>
+<span class="listing-subtitle">&nbsp;</span>
+</td>
+</tr>
+<tr data-index="6" data-listing-file-modified-sort="1723578904606" data-listing-reading-time-sort="1" data-listing-word-count-sort="8" data-listing-filename-sort="readme.md">
+<td>
+<a href="../models/generated/extensions/readme.html" class="title listing-title">&nbsp;</a>
+</td>
+<td>
+<span class="listing-subtitle">&nbsp;</span>
+</td>
+</tr>
+<tr data-index="7" data-listing-file-modified-sort="1723578958507" data-listing-filename-sort="earthenv_specimen_type.md">
+<td>
+<a href="../models/generated/extensions/earthenv_specimen_type.html" class="title listing-title">&nbsp;</a>
+</td>
+<td>
+<span class="listing-subtitle">&nbsp;</span>
 </td>
 </tr>
 </tbody>
-
 </table>
 <div class="listing-no-matching d-none">
 No matching items
@@ -445,18 +476,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
     return false;
   }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-  });
-  clipboard.on('success', function(e) {
+  const onCopySuccess = function(e) {
     // button target
     const button = e.trigger;
     // don't keep focus
@@ -488,11 +508,50 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }, 1000);
     // clear code selection
     e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
   });
-  function tippyHover(el, contentFn) {
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -502,8 +561,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -515,7 +583,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -559,6 +750,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -584,6 +776,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -646,15 +864,18 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </div> <!-- /content -->
 <footer class="footer">
   <div class="nav-footer">
-    <div class="nav-footer-left">© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</div>   
+    <div class="nav-footer-left">
+<p>© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</p>
+</div>   
     <div class="nav-footer-center">
       &nbsp;
-    </div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
   </div>
 </footer>
+
 
 
 
