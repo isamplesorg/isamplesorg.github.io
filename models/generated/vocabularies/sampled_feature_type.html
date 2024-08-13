@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>sampled_feature_type</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="sampled_feature_type_files/libs/clipboard/clipboard.min.js"></script>
+<script src="sampled_feature_type_files/libs/quarto-html/quarto.js"></script>
+<script src="sampled_feature_type_files/libs/quarto-html/popper.min.js"></script>
+<script src="sampled_feature_type_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="sampled_feature_type_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="sampled_feature_type_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="sampled_feature_type_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="sampled_feature_type_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="sampled_feature_type_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#concept-scheme-sampled-feature-type-vocabulary" id="toc-concept-scheme-sampled-feature-type-vocabulary" class="nav-link active" data-scroll-target="#concept-scheme-sampled-feature-type-vocabulary"><span class="header-section-number">1</span> <strong>Concept scheme:</strong> Sampled Feature Type vocabulary</a>
+  <ul>
+  <li><a href="#any-sampled-feature" id="toc-any-sampled-feature" class="nav-link" data-scroll-target="#any-sampled-feature"><span class="header-section-number">1.1</span> Any sampled feature</a>
+  <ul class="collapse">
+  <li><a href="#anthropogenic-environment" id="toc-anthropogenic-environment" class="nav-link" data-scroll-target="#anthropogenic-environment"><span class="header-section-number">1.1.1</span> Anthropogenic environment</a>
+  <ul class="collapse">
+  <li><a href="#active-human-occupation-site" id="toc-active-human-occupation-site" class="nav-link" data-scroll-target="#active-human-occupation-site"><span class="header-section-number">1.1.1.1</span> Active human occupation site</a></li>
+  <li><a href="#site-of-past-human-activities" id="toc-site-of-past-human-activities" class="nav-link" data-scroll-target="#site-of-past-human-activities"><span class="header-section-number">1.1.1.2</span> Site of past human activities</a></li>
+  </ul></li>
+  <li><a href="#biological-entity" id="toc-biological-entity" class="nav-link" data-scroll-target="#biological-entity"><span class="header-section-number">1.1.2</span> Biological entity</a></li>
+  <li><a href="#earth-environment" id="toc-earth-environment" class="nav-link" data-scroll-target="#earth-environment"><span class="header-section-number">1.1.3</span> Earth environment</a>
+  <ul class="collapse">
+  <li><a href="#atmosphere" id="toc-atmosphere" class="nav-link" data-scroll-target="#atmosphere"><span class="header-section-number">1.1.3.1</span> Atmosphere</a></li>
+  <li><a href="#earth-interior" id="toc-earth-interior" class="nav-link" data-scroll-target="#earth-interior"><span class="header-section-number">1.1.3.2</span> Earth interior</a></li>
+  <li><a href="#earth-surface" id="toc-earth-surface" class="nav-link" data-scroll-target="#earth-surface"><span class="header-section-number">1.1.3.3</span> Earth surface</a></li>
+  <li><a href="#glacier-environment" id="toc-glacier-environment" class="nav-link" data-scroll-target="#glacier-environment"><span class="header-section-number">1.1.3.4</span> Glacier environment</a></li>
+  <li><a href="#subsurface-fluid-reservoir" id="toc-subsurface-fluid-reservoir" class="nav-link" data-scroll-target="#subsurface-fluid-reservoir"><span class="header-section-number">1.1.3.5</span> Subsurface fluid reservoir</a></li>
+  <li><a href="#water-body" id="toc-water-body" class="nav-link" data-scroll-target="#water-body"><span class="header-section-number">1.1.3.6</span> Water body</a></li>
+  </ul></li>
+  <li><a href="#extraterrestrial-environment" id="toc-extraterrestrial-environment" class="nav-link" data-scroll-target="#extraterrestrial-environment"><span class="header-section-number">1.1.4</span> Extraterrestrial environment</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+
+
+<p><span id="SampledFeatureTypevocabulary"></span></p>
+<section id="concept-scheme-sampled-feature-type-vocabulary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> <strong>Concept scheme:</strong> Sampled Feature Type vocabulary</h1>
+<p>Vocabulary last modified: 2022-12-09</p>
+<p>subtitle: Categories to specify the broad context that a sample is intended to represent.</p>
+<p>Namespace: <a href="https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary"><code>https://w3id.org/isample/vocabulary/sampledfeature/1.0/sampledfeaturevocabulary</code></a></p>
+<p><strong>History</strong></p>
+<ul>
+<li><p>2021-12-10 SMR add missing skos:inScheme statements</p></li>
+<li><p>2022-01-07 SMR change to https://w3id.org/isample/ uri base, make the ConceptScheme an ontology as well. For uploading to ESIP COR and w3id resolution redirect set up. Add some mappings to other ontologies using seeAlso, closeMatch, narrowMatch.</p></li>
+<li><p>2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies. Fix typo in glacierenvrionment URI (changed the URI to glacierenvironment)</p></li>
+<li><p>2022-09-07 SMR update some of the skos mappings to other vocabularies; remove references to other vocabularies as NamedIndividual. Remove rocksample class, it was not linked in hierarchy and inconsistent with design.</p></li>
+<li><p>2022-09-30 add biological entity as sampled feature, per issue https://github.com/isamplesorg/metadata/issues/107. This update was lost at some point and added back in 2022-12-09.</p></li>
+<li><p>2023-11-05 SMR update version to 1.0, prep for release</p></li>
+<li><p>Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environemtn subclasses of Active human occupation site.</p></li>
+<li><p>2024-04-19 SMR update definitions to remove use of ‘specimen’. Edit some definitions for better clarity</p></li>
+<li><p>Remove Marine biome, Subaerial terrestrial environment, Subaqueous terrestrial environment per github issue https://github.com/isamplesorg/metadata/issues/41. Make Experiment setting and Laboratory or curatorial environment subclasses of Active human occupation site.</p></li>
+<li><p><a href="#anysampledfeature">Any sampled feature</a></p>
+<ul>
+<li><a href="#anthropogenicenvironment">Anthropogenic environment</a>
+<ul>
+<li><a href="#activehumanoccupationsite">Active human occupation site</a>
+<ul>
+<li><a href="#experimentsetting">Experiment setting</a></li>
+<li><a href="#laboratorycuratorialenvironment">Laboratory or curatorial environment</a></li>
+</ul></li>
+<li><a href="#pasthumanoccupationsite">Site of past human activities</a></li>
+</ul></li>
+<li><a href="#biologicalentity">Biological entity</a></li>
+<li><a href="#earthenvironment">Earth environment</a>
+<ul>
+<li><a href="#atmosphere">Atmosphere</a></li>
+<li><a href="#earthinterior">Earth interior</a></li>
+<li><a href="#earthsurface">Earth surface</a>
+<ul>
+<li><a href="#lakeriverstreambottom">Lake river or stream bottom</a></li>
+<li><a href="#marinewaterbodybottom">Marine water body bottom</a></li>
+<li><a href="#subaerialsurfaceenvironment">Subaerial surface environment</a></li>
+</ul></li>
+<li><a href="#glacierenvironment">Glacier environment</a></li>
+<li><a href="#subsurfacefluidreservoir">Subsurface fluid reservoir</a></li>
+<li><a href="#waterbody">Water body</a>
+<ul>
+<li><a href="#marinewaterbody">Marine environment</a></li>
+<li><a href="#terrestrialwaterbody">Terrestrial water body</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#extraterrestrialenvironment">Extraterrestrial environment</a></li>
+</ul></li>
+</ul>
+<p><strong>Concepts</strong></p>
+<p><span id="anysampledfeature"></span></p>
+<section id="any-sampled-feature" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="any-sampled-feature"><span class="header-section-number">1.1</span> Any sampled feature</h2>
+<ul>
+<li>Any thing that can be sampled. Top concept in sampled feature type vocabulary.</li>
+<li>Concept URI token: anysampledfeature</li>
+</ul>
+<p><span id="anthropogenicenvironment"></span></p>
+<section id="anthropogenic-environment" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="anthropogenic-environment"><span class="header-section-number">1.1.1</span> Anthropogenic environment</h3>
+<ul>
+<li><p>Child of: <a href="#anysampledfeature"><code>anysampledfeature</code></a></p></li>
+<li><p>Sampled feature is produced by or related to human activity past or present.</p></li>
+<li><p>Concept URI token: anthropogenicenvironment</p></li>
+</ul>
+<p><span id="activehumanoccupationsite"></span></p>
+<section id="active-human-occupation-site" class="level4" data-number="1.1.1.1">
+<h4 data-number="1.1.1.1" data-anchor-id="active-human-occupation-site"><span class="header-section-number">1.1.1.1</span> Active human occupation site</h4>
+<ul>
+<li><p>Child of: <a href="#anthropogenicenvironment"><code>anthropogenicenvironment</code></a></p></li>
+<li><p>Specimen samples materials or objects produced by current or ongoing human activity</p></li>
+<li><p>sampled feature is a site at which there are ongoing human activities</p></li>
+<li><p>Concept URI token: activehumanoccupationsite</p></li>
+</ul>
+<p><span id="experimentsetting"></span></p>
+<section id="experiment-setting" class="level5" data-number="1.1.1.1.1">
+<h5 data-number="1.1.1.1.1" data-anchor-id="experiment-setting"><span class="header-section-number">1.1.1.1.1</span> Experiment setting</h5>
+<ul>
+<li><p>Child of: <a href="#activehumanoccupationsite"><code>activehumanoccupationsite</code></a></p></li>
+<li><p>Sampled feature is the experimental set up that produced the sample.</p></li>
+<li><p>Sampled feature is an experimental set up that produced the sample; the sample is the product of the experiment.</p></li>
+<li><p>Concept URI token: experimentsetting</p></li>
+</ul>
+<p><span id="laboratorycuratorialenvironment"></span></p>
+</section>
+<section id="laboratory-or-curatorial-environment" class="level5" data-number="1.1.1.1.2">
+<h5 data-number="1.1.1.1.2" data-anchor-id="laboratory-or-curatorial-environment"><span class="header-section-number">1.1.1.1.2</span> Laboratory or curatorial environment</h5>
+<ul>
+<li><p>Child of: <a href="#activehumanoccupationsite"><code>activehumanoccupationsite</code></a></p></li>
+<li><p>Specimen samples environment in a laboratory; e.g.&nbsp;lab blank measurements.</p></li>
+<li><p>Sampled feature is a laboratory or other research site, collected with intention of characterizing the environment in which data are collected or other research conducted, that might affect results or safety; e.g.&nbsp;lab blank measurements.</p></li>
+<li><p>Concept URI token: laboratorycuratorialenvironment</p></li>
+</ul>
+<p><span id="pasthumanoccupationsite"></span></p>
+</section>
+</section>
+<section id="site-of-past-human-activities" class="level4" data-number="1.1.1.2">
+<h4 data-number="1.1.1.2" data-anchor-id="site-of-past-human-activities"><span class="header-section-number">1.1.1.2</span> Site of past human activities</h4>
+<ul>
+<li><p>Child of: <a href="#anthropogenicenvironment"><code>anthropogenicenvironment</code></a></p></li>
+<li><p>specimen samples a place where humans have been and left evidence of their activity. Includes prehistoric and paleo hominid sites</p></li>
+<li><p>sampled feature is a place where humans have been and left evidence of their activity. Includes prehistoric and paleo hominid sites</p></li>
+<li><p>Concept URI token: pasthumanoccupationsite</p></li>
+</ul>
+<p><span id="biologicalentity"></span></p>
+</section>
+</section>
+<section id="biological-entity" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="biological-entity"><span class="header-section-number">1.1.2</span> Biological entity</h3>
+<ul>
+<li><p>Child of: <a href="#anysampledfeature"><code>anysampledfeature</code></a></p></li>
+<li><p>Sampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature for which the focus is not the environment that the organism inhabits.</p></li>
+<li><p>Sampled feature is an organism. Use for samples that represent some species of organism as the proximate sampled feature, not the environment that the organism inhabits.</p></li>
+<li><p>Concept URI token: biologicalentity</p></li>
+</ul>
+<p><span id="earthenvironment"></span></p>
+</section>
+<section id="earth-environment" class="level3" data-number="1.1.3">
+<h3 data-number="1.1.3" data-anchor-id="earth-environment"><span class="header-section-number">1.1.3</span> Earth environment</h3>
+<ul>
+<li><p>Child of: <a href="#anysampledfeature"><code>anysampledfeature</code></a></p></li>
+<li><p>specimen samples the natural Earth environment</p></li>
+<li><p>Sampled feature is the natural Earth environment</p></li>
+<li><p>See Also:</p></li>
+<li><p><a href="http://purl.bioontology.org/ontology/MESH/D004777">&lt;http://purl.bioontology.org/ontology/MESH/D004777&gt;</a></p></li>
+<li><p><a href="http://semanticscience.org/resource/SIO_000955">&lt;http://semanticscience.org/resource/SIO_000955&gt;</a></p></li>
+<li><p>Concept URI token: earthenvironment</p></li>
+</ul>
+<p><span id="atmosphere"></span></p>
+<section id="atmosphere" class="level4" data-number="1.1.3.1">
+<h4 data-number="1.1.3.1" data-anchor-id="atmosphere"><span class="header-section-number">1.1.3.1</span> Atmosphere</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>specimen samples the Earth’s atmosphere</p></li>
+<li><p>Sampled feature is the Earth’s atmosphere</p></li>
+<li><p>See Also:</p></li>
+<li><p><a href="http://purl.obolibrary.org/obo/ENVO_01000267">&lt;http://purl.obolibrary.org/obo/ENVO_01000267&gt;</a></p></li>
+<li><p><a href="http://purl.obolibrary.org/obo/RBO_00000018">&lt;http://purl.obolibrary.org/obo/RBO_00000018&gt;</a></p></li>
+<li><p>Concept URI token: atmosphere</p></li>
+</ul>
+<p><span id="earthinterior"></span></p>
+</section>
+<section id="earth-interior" class="level4" data-number="1.1.3.2">
+<h4 data-number="1.1.3.2" data-anchor-id="earth-interior"><span class="header-section-number">1.1.3.2</span> Earth interior</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>Specimen samples solid material within the earth</p></li>
+<li><p>Sampled feature is solid material from within the Earth</p></li>
+<li><p>Concept URI token: earthinterior</p></li>
+</ul>
+<p><span id="earthsurface"></span></p>
+</section>
+<section id="earth-surface" class="level4" data-number="1.1.3.3">
+<h4 data-number="1.1.3.3" data-anchor-id="earth-surface"><span class="header-section-number">1.1.3.3</span> Earth surface</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>Specimen samples the interface between solid earth and hydrosphere or atmosphere. Includes samples representing things collected on the surface, or in the uppermost part of the material below the surface. Not including recently deposited sediment that has not been modified by interaction with the surface environment.</p></li>
+<li><p>Sampled feature is the interface between solid earth and hydrosphere or atmosphere. Includes samples representing things collected on the surface, in the uppermost part of the material below the surface, or air or water directly at the contact with the Earth surface.</p></li>
+<li><p>Concept URI token: earthsurface</p></li>
+</ul>
+<p><span id="lakeriverstreambottom"></span></p>
+<section id="lake-river-or-stream-bottom" class="level5" data-number="1.1.3.3.1">
+<h5 data-number="1.1.3.3.1" data-anchor-id="lake-river-or-stream-bottom"><span class="header-section-number">1.1.3.3.1</span> Lake river or stream bottom</h5>
+<ul>
+<li><p>Child of: <a href="#earthsurface"><code>earthsurface</code></a></p></li>
+<li><p>Specimen samples the solid Earth interface with a lake or flowing water body</p></li>
+<li><p>Sampled feature is the interface between the solid Earth interface and a lake or flowing water body.</p></li>
+<li><p>Concept URI token: lakeriverstreambottom</p></li>
+</ul>
+<p><span id="marinewaterbodybottom"></span></p>
+</section>
+<section id="marine-water-body-bottom" class="level5" data-number="1.1.3.3.2">
+<h5 data-number="1.1.3.3.2" data-anchor-id="marine-water-body-bottom"><span class="header-section-number">1.1.3.3.2</span> Marine water body bottom</h5>
+<ul>
+<li><p>Child of: <a href="#earthsurface"><code>earthsurface</code></a></p></li>
+<li><p>Specimen samples the solid Earth interface with marine or brackish water body. Includes&nbsp;benthic boundary layer: the bottom layer of water and the uppermost layer of sediment directly influenced by the overlying water</p></li>
+<li><p>Sampled feature is the interface between the solid Earth and a marine or brackish water body. Includes&nbsp;benthic boundary layer: the bottom layer of water and the uppermost layer of sediment directly influenced by the overlying water.</p></li>
+<li><p><strong>Alternate labels:</strong> Sea floor</p></li>
+<li><p>Concept URI token: marinewaterbodybottom</p></li>
+</ul>
+<p><span id="subaerialsurfaceenvironment"></span></p>
+</section>
+<section id="subaerial-surface-environment" class="level5" data-number="1.1.3.3.3">
+<h5 data-number="1.1.3.3.3" data-anchor-id="subaerial-surface-environment"><span class="header-section-number">1.1.3.3.3</span> Subaerial surface environment</h5>
+<ul>
+<li><p>Child of: <a href="#earthsurface"><code>earthsurface</code></a></p></li>
+<li><p>Specimen samples the interface between solid Earth and atmosphere. Sample is collected on the surface, or immediately below surface (zone of bioturbation). Include soil and recently deposited subaerial sediment at the surface.</p></li>
+<li><p>sampled feature is the interface between solid Earth and atmosphere. Sample is collected on the surface, or immediately below surface (zone of bioturbation). Include soil and recently deposited subaerial sediment at the surface.</p></li>
+<li><p>Concept URI token: subaerialsurfaceenvironment</p></li>
+</ul>
+<p><span id="glacierenvironment"></span></p>
+</section>
+</section>
+<section id="glacier-environment" class="level4" data-number="1.1.3.4">
+<h4 data-number="1.1.3.4" data-anchor-id="glacier-environment"><span class="header-section-number">1.1.3.4</span> Glacier environment</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>Sample of ice, water, or other thing from a glacier, ice sheet, ice shelf, iceberg. Does not include various environments adjacent to glacier.</p></li>
+<li><p>Sampled feature is a glacier, ice sheet, ice shelf, iceberg, or rock or water directly under or on top of such ice.</p></li>
+<li><p>Concept URI token: glacierenvironment</p></li>
+</ul>
+<p><span id="subsurfacefluidreservoir"></span></p>
+</section>
+<section id="subsurface-fluid-reservoir" class="level4" data-number="1.1.3.5">
+<h4 data-number="1.1.3.5" data-anchor-id="subsurface-fluid-reservoir"><span class="header-section-number">1.1.3.5</span> Subsurface fluid reservoir</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>Specimen samples fluid that resides in fractures or intergranular porosity in the solid earth.</p></li>
+<li><p>Sampled feature is fluid that resides in fractures, intergranular porosity or other open space in the solid earth.</p></li>
+<li><p>Concept URI token: subsurfacefluidreservoir</p></li>
+</ul>
+<p><span id="waterbody"></span></p>
+</section>
+<section id="water-body" class="level4" data-number="1.1.3.6">
+<h4 data-number="1.1.3.6" data-anchor-id="water-body"><span class="header-section-number">1.1.3.6</span> Water body</h4>
+<ul>
+<li><p>Child of: <a href="#earthenvironment"><code>earthenvironment</code></a></p></li>
+<li><p>Specimen samples the hydrosphere</p></li>
+<li><p>Sampled feature is the Earth’s hydrosphere.</p></li>
+<li><p>Concept URI token: waterbody</p></li>
+</ul>
+<p><span id="marinewaterbody"></span></p>
+<section id="marine-environment" class="level5" data-number="1.1.3.6.1">
+<h5 data-number="1.1.3.6.1" data-anchor-id="marine-environment"><span class="header-section-number">1.1.3.6.1</span> Marine environment</h5>
+<ul>
+<li><p>Child of: <a href="#waterbody"><code>waterbody</code></a></p></li>
+<li><p>specimen samples marine hydrosphere</p></li>
+<li><p>Sampled feature is the marine hydrosphere.</p></li>
+<li><p>See Also:</p></li>
+<li><p><a href="http://purl.obolibrary.org/obo/ENVO_01000686">&lt;http://purl.obolibrary.org/obo/ENVO_01000686&gt;</a></p></li>
+<li><p>Concept URI token: marinewaterbody</p></li>
+</ul>
+<p><span id="terrestrialwaterbody"></span></p>
+</section>
+<section id="terrestrial-water-body" class="level5" data-number="1.1.3.6.2">
+<h5 data-number="1.1.3.6.2" data-anchor-id="terrestrial-water-body"><span class="header-section-number">1.1.3.6.2</span> Terrestrial water body</h5>
+<ul>
+<li><p>Child of: <a href="#waterbody"><code>waterbody</code></a></p></li>
+<li><p>Specimen samples terrestrial hydrosphere– lake, other standing water, or a flowing water body (river, stream..) Include saline water in terrestrial evaporite environments.</p></li>
+<li><p>Sampled feature is terrestrial hydrosphere– lake, other standing water, or a flowing water body (river, stream..). Include saline water in terrestrial evaporite environments.</p></li>
+<li><p>Concept URI token: terrestrialwaterbody</p></li>
+</ul>
+<p><span id="extraterrestrialenvironment"></span></p>
+</section>
+</section>
+</section>
+<section id="extraterrestrial-environment" class="level3" data-number="1.1.4">
+<h3 data-number="1.1.4" data-anchor-id="extraterrestrial-environment"><span class="header-section-number">1.1.4</span> Extraterrestrial environment</h3>
+<ul>
+<li><p>Child of: <a href="#anysampledfeature"><code>anysampledfeature</code></a></p></li>
+<li><p>specimen samples environment outside of solid earth, hydrosphere, or atmosphere.</p></li>
+<li><p>Sampled feature is the environment outside of solid earth, hydrosphere, or atmosphere.</p></li>
+<li><p>Concept URI token: extraterrestrialenvironment</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
