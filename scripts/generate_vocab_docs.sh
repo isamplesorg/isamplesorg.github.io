@@ -29,7 +29,7 @@ done
 
 # Earth Science extension
 SOURCE_BASE="https://raw.githubusercontent.com/isamplesorg/metadata_profile_earth_science/main/vocabulary/"
-SOURCES=("earthenv_material_extension_mineral_group.ttl" "earthenv_material_extension_rock_sediment.ttl" "earthenv_sampled_feature_role.ttl" "earthenv_specimen_type.ttl")
+SOURCES=("earthenv_material_extension_mineral_group.ttl" "earthenv_material_extension_rock_sediment.ttl" "earthenv_sampled_feature_role.ttl" "earthenv_materialsampleobject_type.ttl")
 DEST_FOLDER="models/generated/extensions/"
 mkdir -p "${DEST_FOLDER}"
 for src in ${SOURCES[@]}; do
@@ -40,7 +40,7 @@ for src in ${SOURCES[@]}; do
 done
 
 SOURCE_BASE="https://raw.githubusercontent.com/isamplesorg/metadata_profile_archaeology/main/vocabulary/"
-SOURCES=("opencontext_material_extension.ttl" "opencontext_materialsampletype.ttl")
+SOURCES=("opencontext_material_extension.ttl" "opencontext_materialsampleobjecttype.ttl")
 DEST_FOLDER="models/generated/extensions/"
 mkdir -p "${DEST_FOLDER}"
 for src in ${SOURCES[@]}; do
