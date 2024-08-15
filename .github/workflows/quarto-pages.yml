@@ -40,8 +40,9 @@ jobs:
         run: pip install pipx
 
       - name: "install vocab_tools"
-        #run: pipx install git+https://github.com/isamplesorg/vocab_tools.git@main
-        run: pipx install git+https://github.com/smrgeoinfo/vocab_tools.git@main
+        run: pipx install git+https://github.com/isamplesorg/vocab_tools.git@main
+        # 2024-08-15 smr, comment install from smrgeoinfo repo-- only difference seems to be in some comments in the code.
+        #run: pipx install git+https://github.com/smrgeoinfo/vocab_tools.git@main
           # sets up python code to convert skos to markdown; code is run
           # in generate_vocab_docs.sh
 
