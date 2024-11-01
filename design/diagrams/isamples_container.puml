@@ -1,5 +1,5 @@
 @startuml
-!include <C4/C4_Component>
+!include <C4/C4_Container>
 
 AddElementTag("v2.0", $borderColor="#250339", $fontColor="#ffffff", $bgColor="#9775AA" )
 AddRelTag("v2.0", $lineColor="#754B8E", $textColor="#754B8E")
@@ -16,7 +16,7 @@ System_Boundary(isamples, "iSamples"){
 }
 BiRel(isb, isc, "Synchronize records")
   
-System_Ext(pid, "Id Authority", "Identifier authorities (IGSN, ARK, DOI, ROR, ...", $tags="v2.0")
+System_Ext(pid, "Id Authority", "Identifier authorities (IGSN, ARK, DOI, ROR, ...)", $tags="v2.0")
 Rel(pid, isb, "Allocate range of identifier values", $tags="v2.0")
 Rel(pid, isc, "Allocate range of identifier values?", $tags="v2.0")
 
