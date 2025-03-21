@@ -40,8 +40,11 @@ website:
           href: "https://github.com/isamplesorg/"
       - section: "Tutorials"
         contents:
-          - tutorials/index.qmd
-          - tutorials/parquet.md
+          - text: "iSamples Tutorials Overview"
+            href: tutorials/index.qmd
+          - text: "iSamples Parquet Tutorial"
+            href: tutorials/parquet.qmd
+
         
 
 # configure for correct source repository

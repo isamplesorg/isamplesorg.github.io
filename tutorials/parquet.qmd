@@ -1,5 +1,5 @@
 ---
-title: "parquet"
+title: "Parquet"
 ---
 
 Let's query Eric's parquet file using duckdb+parquet
