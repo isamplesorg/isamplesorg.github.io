@@ -1,67 +1,21 @@
 name: Hello World Workflow
 
-# Enable multiple trigger types
 on:
-  # Manual trigger (keep existing functionality)
   workflow_dispatch:
-  
-  # Automatically run when changes are pushed to any branch
   push:
     branches:
-      - '**'  # Run on all branches
-    
-  # Automatically run when pull requests are created or updated
+      - '**'
   pull_request:
     types: [opened, synchronize, reopened]
-    
-  # Run on a schedule (e.g., once a day)
-  schedule:
-    - cron: '0 0 * * *'  # Runs at midnight UTC every day
 
 jobs:
   say-hello:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3  # Updated to v3
-
-    - name: Say Hello
-      run: |
-        echo "Hello, World!"
-        echo "Running on branch: ${{ github.ref_name }}"
-        echo "Triggered by: ${{ github.event_name }}"
-        echo "Repository: ${{ github.repository }}"name: Hello World Workflow
-
-# Enable multiple trigger types
-on:
-  # Manual trigger (keep existing functionality)
-  workflow_dispatch:
-  
-  # Automatically run when changes are pushed to any branch
-  push:
-    branches:
-      - '**'  # Run on all branches
-    
-  # Automatically run when pull requests are created or updated
-  pull_request:
-    types: [opened, synchronize, reopened]
-    
-  # Run on a schedule (e.g., once a day)
-  schedule:
-    - cron: '0 0 * * *'  # Runs at midnight UTC every day
-
-jobs:
-  say-hello:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3  # Updated to v3
-
-    - name: Say Hello
-      run: |
-        echo "Hello, World!"
-        echo "Running on branch: ${{ github.ref_name }}"
-        echo "Triggered by: ${{ github.event_name }}"
-        echo "Repository: ${{ github.repository }}"
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Say Hello
+        run: |
+          echo "Hello, World!"
+          echo "Running on branch: ${{ github.ref_name }}"
+          echo "Triggered by: ${{ github.event_name }}"
