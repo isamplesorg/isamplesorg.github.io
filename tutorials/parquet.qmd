@@ -1,0 +1,64 @@
+---
+title: "parquet"
+---
+
+Let's query Eric's parquet file using duckdb+parquet
+
+
+simpler query:
+
+```{ojs}
+//| echo: true
+
+// Import Observable's libraries
+import {DuckDBClient} from "@observablehq/duckdb"
+
+// Create a DuckDB instance
+db = DuckDBClient.of()
+
+// Set the Parquet file path
+parquet_path = 'https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet'
+
+// For testing, use a smaller dataset or limit rows
+// Option 1: Use LIMIT to reduce data transferred
+viewof testResults = {
+  // Show loading indicator
+  const loadingElement = html`<div>Running query...</div>`;
+  document.body.appendChild(loadingElement);
+  
+  try {
+    // Test with a small LIMIT to verify connection works
+    const data = await db.query(`
+      SELECT otype, pid
+      FROM read_parquet('${parquet_path}')
+      LIMIT 10
+    `);
+    return Inputs.table(data);
+  } finally {
+    // Remove loading indicator when done (whether success or error)
+    loadingElement.remove();
+  }
+}
+
+```
+
+now the full query
+
+
+```{ojs}
+//| echo: true
+
+
+// Query the Parquet file
+viewof results = Inputs.table(
+  await db.query(`
+    SELECT COUNT(pid) as count, otype 
+    FROM read_parquet('${parquet_path}')
+    GROUP BY otype
+    ORDER BY count DESC
+  `)
+)
+```
+
+
+
