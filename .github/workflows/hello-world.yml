@@ -1,0 +1,21 @@
+name: Hello World Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Say Hello
+        run: |
+          echo "Hello, World!"
+          echo "Running on branch: ${{ github.ref_name }}"
+          echo "Triggered by: ${{ github.event_name }}"

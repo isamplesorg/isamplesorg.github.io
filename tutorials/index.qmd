@@ -1,0 +1,67 @@
+---
+title: "Tutorials: Overview"
+---
+
+Here's where we park our various tutorials!
+
+Get the OpenAPI spec.
+
+```{ojs}
+//| echo: true
+
+// Get the OpenAPI specification and display detailed endpoint information
+viewof apiEndpointDetails = {
+  // Show loading indicator
+  const loadingElement = html`<div>Loading API endpoints...</div>`;
+  document.body.appendChild(loadingElement);
+
+  try {
+    const OPENAPI_URL = 'https://central.isample.xyz/isamples_central/openapi.json';
+
+    // Fetch the OpenAPI spec
+    const response = await fetch(OPENAPI_URL);
+    if (!response.ok) throw new Error(`Failed to fetch API spec: ${response.status}`);
+
+    const apiSpec = await response.json();
+
+    // Extract detailed information about each endpoint
+    const endpointDetails = [];
+
+    for (const [path, pathMethods] of Object.entries(apiSpec.paths)) {
+      for (const [method, details] of Object.entries(pathMethods)) {
+        endpointDetails.push({
+          endpoint: path,
+          method: method.toUpperCase(),
+          summary: details.summary || '',
+          operationId: details.operationId || '',
+          tags: (details.tags || []).join(', '),
+          parameters: (details.parameters || [])
+            .map(p => `${p.name} (${p.required ? 'required' : 'optional'})`)
+            .join(', ')
+        });
+      }
+    }
+
+    // Create a table with the detailed endpoint information
+    return Inputs.table(
+      endpointDetails,
+      {
+        label: "iSamples API Endpoints Details",
+        width: {
+          endpoint: 150,
+          method: 80,
+          summary: 200,
+          operationId: 200,
+          tags: 100,
+          parameters: 300
+        }
+      }
+    );
+  } catch (error) {
+    return html`<div style="color: red">Error fetching API endpoints: ${error.message}</div>`;
+  } finally {
+    // Remove loading indicator
+    loadingElement.remove();
+  }
+}
+```
