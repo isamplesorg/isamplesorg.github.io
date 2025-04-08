@@ -44,6 +44,8 @@ website:
             href: tutorials/index.qmd
           - text: "iSamples Parquet Tutorial"
             href: tutorials/parquet.qmd
+          - text: "Cesium View"
+            href: tutorials/parquet_cesium.qmd
 
         
 
@@ -70,7 +72,7 @@ format:
     number-sections: true
     anchor-sections: false
     number-depth: 8
-    theme: sandstone
+    theme: cosmo
     css: styles.css
 
 #filters:

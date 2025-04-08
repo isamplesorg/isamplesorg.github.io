@@ -4,14 +4,10 @@ title: "Parquet"
 
 Let's query Eric's parquet file using duckdb+parquet
 
-
-simpler query:
-
 ```{ojs}
-//| echo: true
-
-// Import Observable's libraries
-import {DuckDBClient} from "@observablehq/duckdb"
+//| code-fold: true
+//| output: false
+//
 
 // Create a DuckDB instance
 db = DuckDBClient.of()
@@ -19,46 +15,38 @@ db = DuckDBClient.of()
 // Set the Parquet file path
 parquet_path = 'https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet'
 
-// For testing, use a smaller dataset or limit rows
-// Option 1: Use LIMIT to reduce data transferred
-viewof testResults = {
-  // Show loading indicator
-  const loadingElement = html`<div>Running query...</div>`;
-  document.body.appendChild(loadingElement);
-  
-  try {
-    // Test with a small LIMIT to verify connection works
-    const data = await db.query(`
-      SELECT otype, pid
-      FROM read_parquet('${parquet_path}')
-      LIMIT 10
-    `);
-    return Inputs.table(data);
-  } finally {
-    // Remove loading indicator when done (whether success or error)
-    loadingElement.remove();
-  }
+row_count = {
+  const result = await db.queryRow(`select count(*) as n from read_parquet('${parquet_path}');`);
+  return result.n;
 }
 
+results = {
+  const data = await db.query(`SELECT COUNT(*) as count, otype FROM read_parquet('${parquet_path}') GROUP BY otype ORDER BY count DESC`);
+  document.getElementById("loading_1").hidden = true;
+  return Inputs.table(data);
+}
+
+rows1k = {
+  const data = await db.query(`SELECT row_id, pid, otype, label FROM read_parquet('${parquet_path}') limit 1000`);
+  document.getElementById("loading_2").hidden = true;
+  return Inputs.table(data);
+}
 ```
-
-now the full query
-
 
 ```{ojs}
-//| echo: true
+//| code-fold: true
 
-
-// Query the Parquet file
-viewof results = Inputs.table(
-  await db.query(`
-    SELECT COUNT(pid) as count, otype 
-    FROM read_parquet('${parquet_path}')
-    GROUP BY otype
-    ORDER BY count DESC
-  `)
-)
+md`There are ${row_count} rows in the source <code>${parquet_path}</code>.`
 ```
 
+<div>
+<div id="loading_1">Loading type counts...</div>
+${results}
+</div>
 
+The first 1000 rows:
 
+<div>
+<div id="loading_2">Loading...</div>
+${rows1k}
+</div>

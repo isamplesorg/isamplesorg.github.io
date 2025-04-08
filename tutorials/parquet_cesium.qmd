@@ -1,0 +1,231 @@
+---
+title: Using Cesium for display of remote parquet.
+categories: [parquet, spatial, recipe]
+---
+
+This page renders points from an iSamples parquet file on cesium using point primitives.
+
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
+<style>
+    div.cesium-topleft {
+        display: block;
+        position: absolute;
+        background: #00000099;
+        color: white;
+        height: auto;
+        z-index: 999;        
+    }
+    #cesiumContainer {
+        aspect-ratio: 1/1;
+    }
+</style>
+
+```{ojs}
+//| output: false
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
+
+viewof parquet_path = Inputs.text({label:"Source", value:"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet", width:"100%", submit:true});
+```
+
+```{ojs}
+//| code-fold: true
+// Import Observable's libraries
+import {DuckDBClient} from "@observablehq/duckdb"
+
+// Create a DuckDB instance
+db = DuckDBClient.of();
+
+
+async function loadData(query, params=[], waiting_id=null) {
+    // Get loading indicator
+    const waiter = document.getElementById(waiting_id);
+    if (waiter) {
+        waiter.hidden = false;
+    }
+    try {
+        // Run the (slow) query
+        const _results = await db.query(query, ...params);
+        return _results;
+    } catch (error) {
+        if (waiter) {
+            waiter.innerHtml = `<pre>${error}</pre>`;
+        }
+        return null;
+    } finally {
+        // Hide the waiter (if there is one)
+        if (waiter) {
+            waiter.hidden = true;
+        }
+    }
+}
+
+locations = {
+    // get the content form the parquet file
+    const query = `SELECT row_id, pid, latitude, longitude FROM read_parquet('${parquet_path}') WHERE otype='GeospatialCoordLocation'`;
+    const data = await loadData(query, [], "loading_1");
+
+    // create point primitives for cesium display
+    const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
+    const color = Cesium.Color.PINK;
+    const point_size = 4;
+    for (const row of data) {
+        content.points.add({
+            id: row.pid,
+            // https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees
+            position: Cesium.Cartesian3.fromDegrees(
+                row.longitude,  //longitude
+                row.latitude,   //latitude
+                0,//randomCoordinateJitter(10.0, 10.0), //elevation, m
+            ),
+            row_id: row.row_id,
+            pixelSize: point_size,
+            color: color,
+            scaleByDistance: scalar,
+        });
+    }
+    content.enableTracking();
+    return data;
+}
+
+
+function createShowPrimitive(viewer) {
+    return function(movement) {
+        // Get the point at the mouse end position
+        const selectPoint = viewer.viewer.scene.pick(movement.endPosition);        
+
+        // Clear the current selection, if there is one and it is different to the selectPoint
+        if (viewer.currentSelection !== null) {
+            //console.log(`selected.p ${viewer.currentSelection}`)
+            if (Cesium.defined(selectPoint) && selectPoint !== viewer.currentSelection) {
+                console.log(`selected.p 2 ${viewer.currentSelection}`)
+                viewer.currentSelection.primitive.pixelSize = 4;
+                viewer.currentSelection.primitive.outlineColor = Cesium.Color.TRANSPARENT;
+                viewer.currentSelection.outlineWidth = 0;
+                viewer.currentSelection = null;
+            }
+        }
+
+        // If selectPoint is valid and no currently selected point
+        if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
+            //console.log(`showPrimitiveId ${selectPoint.id}`);
+            const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)
+            viewer.pointLabel.position = selectPoint.primitive.position;
+            viewer.pointLabel.label.show = true;
+            //viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;
+            viewer.pointLabel.label.text = `${selectPoint.id}`;
+            selectPoint.primitive.pixelSize = 20;
+            selectPoint.primitive.outlineColor = Cesium.Color.YELLOW;
+            selectPoint.primitive.outlineWidth = 3;
+            viewer.currentSelection = selectPoint;
+        } else {
+            viewer.pointLabel.label.show = false;
+        }            
+    }
+}
+
+class CView {
+    constructor(target) {
+        this.viewer = new Cesium.Viewer(
+            target, {
+                timeline: false,
+                animation: false,
+                baseLayerPicker: false,
+                fullscreenElement: target,
+                terrain: Cesium.Terrain.fromWorldTerrain()
+            });
+        this.currentSelection = null;
+        this.point_size = 1;
+        this.n_points = 0;
+        // https://cesium.com/learn/cesiumjs/ref-doc/PointPrimitiveCollection.html
+        this.points = new Cesium.PointPrimitiveCollection();
+        this.viewer.scene.primitives.add(this.points);
+     
+        this.pointLabel = this.viewer.entities.add({
+            label: {
+            show: false,
+            showBackground: true,
+            font: "14px monospace",
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(15, 0),
+            // this attribute will prevent this entity clipped by the terrain
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            text:"",
+            },
+        });
+
+        this.pickHandler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
+        // Can also do this rather than wait for the points to be generated
+        //this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+        this.selectHandler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
+        this.selectHandler.setInputAction((e) => {
+            const selectPoint = this.viewer.scene.pick(e.position);
+            if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
+                mutable clickedPointId = selectPoint.id;
+            }
+        },Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    }
+
+    enableTracking() {
+        this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    }
+}
+
+content = new CView("cesiumContainer");
+
+async function getGeoRecord(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return "unset";
+    }
+    const q = `SELECT row_id, pid, otype, latitude, longitude FROM read_parquet('${parquet_path}') WHERE otype='GeospatialCoordLocation' AND pid=?`;
+    const result = await db.queryRow(q, [pid]);
+    return result;
+}
+
+mutable clickedPointId = "unset";
+selectedGeoRecord = await getGeoRecord(clickedPointId);
+
+md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
+```
+
+::: {.panel-tabset}
+
+## Map
+
+<div id="cesiumContainer"></div>
+
+## Data
+
+<div id="loading_1">Loading...</div>
+
+```{ojs}
+//| code-fold: true
+
+viewof pointdata = {
+    const data_table = Inputs.table(locations, {
+        header: {
+            row_id:"Row ID",
+            pid: "PID",
+            latitude: "Latitude",
+            longitude: "Longitude"
+        },
+    });
+    return data_table;
+}    
+```
+
+:::
+
+The click point ID is "${clickedPointId}".
+
+```{ojs}
+//| echo: false
+md`\`\`\`
+${JSON.stringify(selectedGeoRecord, null, 2)}
+\`\`\`
+`
+```
+
