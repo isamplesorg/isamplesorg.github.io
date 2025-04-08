@@ -46,6 +46,8 @@ website:
             href: tutorials/parquet.qmd
           - text: "Cesium View"
             href: tutorials/parquet_cesium.qmd
+          - text: "Cesium View split sources"
+            href: tutorials/parquet_cesium_split.qmd
 
         
 
