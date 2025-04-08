@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>iSamples Vocabularies – iSamples</title>
+<title>Parquet – iSamples</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -30,8 +64,6 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-listing/list.min.js"></script>
-<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -67,93 +99,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
 
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-vocabulary-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-vocabulary-listing'] = new List('listing-vocabulary-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-extension-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-extension-listing'] = new List('listing-extension-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
-
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -167,7 +115,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/parquet.html">iSamples Parquet Tutorial</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -239,7 +187,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../models/index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../models/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">iSamples Vocabularies</span></a>
   </div>
 </li>
@@ -286,7 +234,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet.html" class="sidebar-item-text sidebar-link">
+  <a href="../tutorials/parquet.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">iSamples Parquet Tutorial</span></a>
   </div>
 </li>
@@ -303,22 +251,15 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#taxonomies" id="toc-taxonomies" class="nav-link active" data-scroll-target="#taxonomies"><span class="header-section-number">1</span> Taxonomies</a></li>
-  </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/parquet.html">iSamples Parquet Tutorial</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">iSamples Vocabularies</h1>
-<p class="subtitle lead">Vocabularies for interoperable sample description</p>
+<h1 class="title">Parquet</h1>
 </div>
 
 
@@ -335,159 +276,112 @@ window.Quarto = {
 </header>
 
 
-<p>see <a href="https://isamplesorg.github.io/metadata/">description of model</a> at https://isamplesorg.github.io/metadata/</p>
-<section id="taxonomies" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="taxonomies"><span class="header-section-number">1</span> Taxonomies</h2>
-<p>One of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using <a href="https://www.w3.org/2009/08/skos-reference/skos.html#broader"><code>SKOS:broader</code></a>. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using <code>SKOS:broader</code> and <code>SKOS:narrower</code>.</p>
-<p>The iSamples core taxonomies are controlled vocabularies with terms related by <a href="https://www.w3.org/2009/08/skos-reference/skos.html#broader"><code>SKOS:broader</code></a> and <a href="https://www.w3.org/2009/08/skos-reference/skos.html#narrower"><code>SKOS:narrower</code></a>. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using <code>SKOS:broader</code> and <code>SKOS:narrower</code>.</p>
-<p>The iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:</p>
-<ol type="1">
-<li>The “iSamples Materials vocabulary” is a taxonomy of terms used to categorize the composition of a physical sample, that is “What material is the sample composed of?”</li>
-<li>The “Sampled Feature Type Vocabulary” is a taxonomy of terms used to indicate what the sample is representative of.</li>
-<li>The “iSamples Specimen Type Vocabulary” is a taxonomy of broad categories that classify what type of spcimen the physical sample record represents.</li>
-</ol>
-<p>Three taxonomies are currently defined :</p>
-<p><a href="https://isamplesorg.github.io/metadata/vocabularies/specimentype.html">Material Sample (specimen) Type Vocabulary</a></p>
-<p><a href="https://isamplesorg.github.io/metadata/vocabularies/materialtype.html">Materials Vocabulary</a></p>
-<p><a href="https://isamplesorg.github.io/metadata/vocabularies/sampledfeature.html">Sampled Feature (context) Type vocabulary</a></p>
+<p>Let’s query Eric’s parquet file using duckdb+parquet</p>
+<div class="cell hidden">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1" data-startfrom="13" data-source-offset="-32"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 12;"><span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> DuckDBClient<span class="op">.</span><span class="fu">of</span>()</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">// Set the Parquet file path</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>parquet_path <span class="op">=</span> <span class="st">'https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet'</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>row_count <span class="op">=</span> {</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">queryRow</span>(<span class="vs">`select count(*) as n from read_parquet('</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">');`</span>)<span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> result<span class="op">.</span><span class="at">n</span><span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(<span class="vs">`SELECT COUNT(*) as count, otype FROM read_parquet('</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">') GROUP BY otype ORDER BY count DESC`</span>)<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(<span class="st">"loading_1"</span>)<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> Inputs<span class="op">.</span><span class="fu">table</span>(data)<span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>rows1k <span class="op">=</span> {</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(<span class="vs">`SELECT row_id, pid, otype, label FROM read_parquet('</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">') limit 1000`</span>)<span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(<span class="st">"loading_2"</span>)<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> Inputs<span class="op">.</span><span class="fu">table</span>(data)<span class="op">;</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-1-1" data-nodetype="declaration">
 
-
-
-</section>
-
-<div class="quarto-listing quarto-listing-container-table" id="listing-vocabulary-listing">
-<table class="quarto-listing-table table">
-<thead>
-<tr>
-<th>
-Title
-</th>
-<th>
-Subtitle
-</th>
-</tr>
-</thead>
-<tbody class="list">
-<tr data-index="0" data-listing-date-sort="1744128577612" data-listing-file-modified-sort="1744128578878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1283" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/sampled_feature_type.html" class="title listing-title">Sampled Feature Type vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Categories to specify the broad context that a sample is intended to represent. </span>
-</td>
-</tr>
-<tr data-index="1" data-listing-date-sort="1744128580372" data-listing-file-modified-sort="1744128581665" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1917" data-listing-title-sort="iSamples Material Sample Object Type Vocabulary" data-listing-filename-sort="material_sample_object_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/material_sample_object_type.html" class="title listing-title">iSamples Material Sample Object Type Vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Broad categories to specify the kind of physical thing identified as the ‘sample’. </span>
-</td>
-</tr>
-<tr data-index="2" data-listing-date-sort="1744128574871" data-listing-file-modified-sort="1744128576150" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1870" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/material_type.html" class="title listing-title">iSamples Materials Vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">High level vocabulary to specify the kind of material that constitutes a physical sample </span>
-</td>
-</tr>
-<tr data-index="3" data-listing-file-modified-sort="1744128554413" data-listing-reading-time-sort="1" data-listing-word-count-sort="12" data-listing-filename-sort="readme.md">
-<td>
-<a href="../models/generated/vocabularies/readme.html" class="title listing-title">&nbsp;</a>
-</td>
-<td>
-<span class="listing-subtitle">&nbsp;</span>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="listing-no-matching d-none">
-No matching items
 </div>
-</div><div class="quarto-listing quarto-listing-container-table" id="listing-extension-listing">
-<table class="quarto-listing-table table">
-<thead>
-<tr>
-<th>
-Title
-</th>
-<th>
-Subtitle
-</th>
-</tr>
-</thead>
-<tbody class="list">
-<tr data-index="0" data-listing-date-sort="1744128615026" data-listing-file-modified-sort="1744128617499" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3658" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
-<td>
-<a href="../models/generated/extensions/biology_sampledfeature_extension.html" class="title listing-title">Biology Extension: Basic taxon classes for biological entity</a>
-</td>
-<td>
-<span class="listing-subtitle">This is a vocabulary to categorize sampled organisms (whole or part) according to taxonomic classes. Classes are based largely on taxonomy found in Wikipedia, particularly Whittaker’s five kingdom system (1969) (https://en.wikipedia.org/wiki/Kingdom_(biology), https://doi.org/10.1126%2Fscience.163.3863.150). The intended use is in iSamples cross domain categorization of material samples, recognizing that there are multiple view for taxonomy and cladistics for the tree of life. This is a high level view intended for cross domain purposes, not expert analysis. Other extension vocabularies should be used for other taxonomic schemes </span>
-</td>
-</tr>
-<tr data-index="1" data-listing-date-sort="1744128600060" data-listing-file-modified-sort="1744128604129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4948" data-listing-title-sort="Earth and Environmental Science extension -  Material sample type" data-listing-filename-sort="earthenv_materialsampleobject_type.md">
-<td>
-<a href="../models/generated/extensions/earthenv_materialsampleobject_type.html" class="title listing-title">Earth and Environmental Science extension - Material sample type</a>
-</td>
-<td>
-<span class="listing-subtitle">This concept scheme contains skos concepts for categorizing kinds of Earth Material sample types, extending the iSamples Material Sample Object Type vocabulary. Defintions from SESAR, ODM2, wikipedia, ESS-DIVE, and other sources; sources are cited with each term. </span>
-</td>
-</tr>
-<tr data-index="2" data-listing-date-sort="1744128582801" data-listing-file-modified-sort="1744128583514" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="756" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
-<td>
-<a href="../models/generated/extensions/earthenv_material_extension_mineral_group.html" class="title listing-title">Earth and Environmental Science extension - Mineral group vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Vocabulary to extend the mineral material type category with the top level mineral group categories. Uses the Nickel–Strunz mineral classes, which divide minerals into ten classes according to chemical composition and crystal structure. Nickel-Strunz group 10 is not included because that material would be mat:organiccompounds. Version 10 of the classification is modified from v 9 (Strunz and Nickel,2002) by Jim Ferraiolo and others, and now extended and maintained by mindat.org. Some scope notes from linked.data.gov.au. </span>
-</td>
-</tr>
-<tr data-index="3" data-listing-date-sort="1744128588617" data-listing-file-modified-sort="1744128594342" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-word-count-sort="8362" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
-<td>
-<a href="../models/generated/extensions/earthenv_material_extension_rock_sediment.html" class="title listing-title">Earth and Environmental Science extension - Rock and sediment materials vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Rock and sediment categories for iSamples materialType classification. Remove anthropogenic materials and classes for consolidated or non-consolidated material; remove leaf classes subjectively based on abundance of material type and number of subclasses. There are 83 ‘mat:rock’ subclasses; these include some classes that are non-consolidated material (e.g.&nbsp;fault gouge) but these are not sediment and adding ‘material’ classes that are independent of consolidation seems like more overhead than needed. Note that a given material is likely to fit in more that one class; for example the sediment subclasses include compositional classes (e.g.&nbsp;carbonate, clastic) as well as grain size classes (gravel-size sediment). A calcareous ooze sample would be both ‘mud-size sediment’ and ‘carbonate sediment’. Change owl:class to skos:concept, and rdfs:subClassOf to skos:broader. </span>
-</td>
-</tr>
-<tr data-index="4" data-listing-date-sort="1744128595526" data-listing-file-modified-sort="1744128596416" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="682" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
-<td>
-<a href="../models/generated/extensions/earthenv_sampled_feature_role.html" class="title listing-title">Earth and Environmental Science extension - Sampled feature role</a>
-</td>
-<td>
-<span class="listing-subtitle">Terms to categorize the relation of a sampled feature to its context. In the Earth Science realm this is typically relation of sampled feature to a containing rock body or rock body part. </span>
-</td>
-</tr>
-<tr data-index="5" data-listing-date-sort="1744128611673" data-listing-file-modified-sort="1744128612606" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="635" data-listing-title-sort="Open Context vocabulary extension for material sample object type" data-listing-filename-sort="opencontext_materialsampleobjecttype.md">
-<td>
-<a href="../models/generated/extensions/opencontext_materialsampleobjecttype.html" class="title listing-title">Open Context vocabulary extension for material sample object type</a>
-</td>
-<td>
-<span class="listing-subtitle">categories for kinds of sample objects specific to archaeological studies </span>
-</td>
-</tr>
-<tr data-index="6" data-listing-date-sort="1744128606981" data-listing-file-modified-sort="1744128610518" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2529" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
-<td>
-<a href="../models/generated/extensions/opencontext_material_extension.html" class="title listing-title">OpenContext material type extension draft</a>
-</td>
-<td>
-<span class="listing-subtitle">vocabulary of materials typical of archeological samples </span>
-</td>
-</tr>
-<tr data-index="7" data-listing-file-modified-sort="1744128554413" data-listing-reading-time-sort="1" data-listing-word-count-sort="8" data-listing-filename-sort="readme.md">
-<td>
-<a href="../models/generated/extensions/readme.html" class="title listing-title">&nbsp;</a>
-</td>
-<td>
-<span class="listing-subtitle">&nbsp;</span>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="listing-no-matching d-none">
-No matching items
 </div>
-</div></main> <!-- /main -->
+</div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-1-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-1-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-1-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-1-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2" data-startfrom="37" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 36;"><span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`There are </span><span class="sc">${</span>row_count<span class="sc">}</span><span class="vs"> rows in the source &lt;code&gt;</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">&lt;/code&gt;.`</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div>
+<div id="loading_1">
+Loading type counts…
+</div>
+<p><span><span id="ojs-element-id-1"></span></span></p>
+</div>
+<p>The first 1000 rows:</p>
+<div>
+<div id="loading_2">
+Loading…
+</div>
+<p><span><span id="ojs-element-id-2"></span></span></p>
+</div>
+
+
+<div class="ojs-auto-generated hidden">
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cmVzdWx0c308L3NwYW4+YCIsICJjZWxsTmFtZSI6Im9qcy1lbGVtZW50LWlkLTEifSwgIHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImlubGluZSI6InRydWUiLCJzb3VyY2UiOiJodGwuaHRtbGA8c3Bhbj4ke3Jvd3Mxa308L3NwYW4+YCIsICJjZWxsTmFtZSI6Im9qcy1lbGVtZW50LWlkLTIifV19
+</script>
+</div>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6Ii8vXG5cbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSBEdWNrREJDbGllbnQub2YoKVxuXG4vLyBTZXQgdGhlIFBhcnF1ZXQgZmlsZSBwYXRoXG5wYXJxdWV0X3BhdGggPSAnaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL29wZW5jb250ZXh0LXBhcnF1ZXQvb2NfaXNhbXBsZXNfcHFnLnBhcnF1ZXQnXG5cbnJvd19jb3VudCA9IHtcbiAgY29uc3QgcmVzdWx0ID0gYXdhaXQgZGIucXVlcnlSb3coYHNlbGVjdCBjb3VudCgqKSBhcyBuIGZyb20gcmVhZF9wYXJxdWV0KCcke3BhcnF1ZXRfcGF0aH0nKTtgKTtcbiAgcmV0dXJuIHJlc3VsdC5uO1xufVxuXG5yZXN1bHRzID0ge1xuICBjb25zdCBkYXRhID0gYXdhaXQgZGIucXVlcnkoYFNFTEVDVCBDT1VOVCgqKSBhcyBjb3VudCwgb3R5cGUgRlJPTSByZWFkX3BhcnF1ZXQoJyR7cGFycXVldF9wYXRofScpIEdST1VQIEJZIG90eXBlIE9SREVSIEJZIGNvdW50IERFU0NgKTtcbiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJsb2FkaW5nXzFcIikuaGlkZGVuID0gdHJ1ZTtcbiAgcmV0dXJuIElucHV0cy50YWJsZShkYXRhKTtcbn1cblxucm93czFrID0ge1xuICBjb25zdCBkYXRhID0gYXdhaXQgZGIucXVlcnkoYFNFTEVDVCByb3dfaWQsIHBpZCwgb3R5cGUsIGxhYmVsIEZST00gcmVhZF9wYXJxdWV0KCcke3BhcnF1ZXRfcGF0aH0nKSBsaW1pdCAxMDAwYCk7XG4gIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKFwibG9hZGluZ18yXCIpLmhpZGRlbiA9IHRydWU7XG4gIHJldHVybiBJbnB1dHMudGFibGUoZGF0YSk7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbm1kYFRoZXJlIGFyZSAke3Jvd19jb3VudH0gcm93cyBpbiB0aGUgc291cmNlIDxjb2RlPiR7cGFycXVldF9wYXRofTwvY29kZT4uYFxuIn1dfQ==
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../tutorials";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
@@ -906,7 +800,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
