@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.43">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Using Cesium for display of remote parquet. – iSamples</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-d4d76bf8491c20bad77d141916dc28e1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-4f8f6427cacb2b88427f3b7f9d55ea5e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar docked">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/parquet_cesium_split.html">Cesium View split sources</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      </a>
+      <div class="sidebar-tools-main tools-wide">
+    <a href="https://hyde.cyverse.org/isamples_central/ui/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
+    <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+</div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">About</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Design</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://isamplesorg.github.io/metadata/" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Metadata Model</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Vocabularies</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Resources</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pubs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Publications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text">Github</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Tutorials Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/parquet.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Parquet Tutorial</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/parquet_cesium.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cesium View</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/parquet_cesium_split.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Cesium View split sources</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/parquet_cesium_split.html">Cesium View split sources</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Using Cesium for display of remote parquet.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">parquet</div>
+    <div class="quarto-category">spatial</div>
+    <div class="quarto-category">recipe</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page renders points from an iSamples parquet file on cesium using point primitives.</p>
+<p>In this case, the Open Context source has been split into separate nodes and edges parquet files, with the edges table containing only s, p, and un-nested o for <code>_edge_</code> rows, and the same content removed from the nodes table.</p>
+<p>The resulting files sizes are smaller at about 58 and 236 mb for edges and nodes respectively.</p>
+<p>This page loads the entire edges file, but keeps the nodes resource remote only. The initial query when clicking on a point is a bit slow, but performance should improve significantly for subsequent interactions.</p>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+    div.cesium-topleft {
+        display: block;
+        position: absolute;
+        background: #00000099;
+        color: white;
+        height: auto;
+        z-index: 999;        
+    }
+    #cesiumContainer {
+        aspect-ratio: 1/1;
+    }
+</style>
+<div class="cell hidden">
+<div class="sourceCode cell-code" id="cb1" data-startfrom="31" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 30;"><span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>Cesium<span class="op">.</span><span class="at">Ion</span><span class="op">.</span><span class="at">defaultAccessToken</span> <span class="op">=</span> <span class="st">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4'</span><span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display hidden">
+<div id="ojs-cell-1" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb2" data-startfrom="37" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 36;"><span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>viewof nodes_path <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">text</span>({</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="dt">label</span><span class="op">:</span><span class="st">"Source"</span><span class="op">,</span> </span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="dt">value</span><span class="op">:</span><span class="st">"https://s3.beehivebeach.com/isamples-data/oc_nodes.parquet"</span><span class="op">,</span> </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span><span class="st">"100%"</span><span class="op">,</span> </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    <span class="dt">submit</span><span class="op">:</span><span class="kw">true</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>viewof edges_path <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">text</span>({</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    <span class="dt">label</span><span class="op">:</span><span class="st">"Source"</span><span class="op">,</span> </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="dt">value</span><span class="op">:</span><span class="st">"https://s3.beehivebeach.com/isamples-data/oc_edge.parquet"</span><span class="op">,</span> </span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span><span class="st">"100%"</span><span class="op">,</span> </span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="dt">submit</span><span class="op">:</span><span class="kw">true</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3" data-startfrom="55" data-source-offset="-29"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 54;"><span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> {</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> instance <span class="op">=</span> <span class="cf">await</span> DuckDBClient<span class="op">.</span><span class="fu">of</span>()<span class="op">;</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> instance<span class="op">.</span><span class="fu">query</span>(<span class="vs">`create view nodes as select * from read_parquet('</span><span class="sc">${</span>nodes_path<span class="sc">}</span><span class="vs">')`</span>)<span class="op">;</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>  instance<span class="op">.</span><span class="fu">query</span>(<span class="vs">`create table edges as select s,p,o from read_parquet('</span><span class="sc">${</span>edges_path<span class="sc">}</span><span class="vs">')`</span>)<span class="op">;</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> instance<span class="op">;</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">loadData</span>(query<span class="op">,</span> params<span class="op">=</span>[]<span class="op">,</span> waiting_id<span class="op">=</span><span class="kw">null</span>) {</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Get loading indicator</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> waiter <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(waiting_id)<span class="op">;</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (waiter) {</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>        waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Run the (slow) query</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _results <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(query<span class="op">,</span> <span class="op">...</span>params)<span class="op">;</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> _results<span class="op">;</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">catch</span> (error) {</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter) {</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">innerHtml</span> <span class="op">=</span> <span class="vs">`&lt;pre&gt;</span><span class="sc">${</span>error<span class="sc">}</span><span class="vs">&lt;/pre&gt;`</span><span class="op">;</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Hide the waiter (if there is one)</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter) {</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>locations <span class="op">=</span> {</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    <span class="co">// get the content form the parquet file</span></span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation'`</span><span class="op">;</span></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_1"</span>)<span class="op">;</span></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clear the existing PointPrimitiveCollection</span></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">removeAll</span>()<span class="op">;</span></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>    <span class="co">//content.points = new Cesium.PointPrimitiveCollection();</span></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>    <span class="co">// create point primitives for cesium display</span></span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> scalar <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">NearFarScalar</span>(<span class="fl">1.5e2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">8.0e6</span><span class="op">,</span> <span class="fl">0.2</span>)<span class="op">;</span></span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> color <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">PINK</span><span class="op">;</span></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> point_size <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> row <span class="kw">of</span> data) {</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>        content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>            <span class="dt">id</span><span class="op">:</span> row<span class="op">.</span><span class="at">pid</span><span class="op">,</span></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>            <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees</span></span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>            <span class="dt">position</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Cartesian3</span><span class="op">.</span><span class="fu">fromDegrees</span>(</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">longitude</span><span class="op">,</span>  <span class="co">//longitude</span></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">latitude</span><span class="op">,</span>   <span class="co">//latitude</span></span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>                <span class="dv">0</span><span class="op">,</span><span class="co">//randomCoordinateJitter(10.0, 10.0), //elevation, m</span></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>            )<span class="op">,</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelSize</span><span class="op">:</span> point_size<span class="op">,</span></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>            <span class="dt">color</span><span class="op">:</span> color<span class="op">,</span></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>            <span class="dt">scaleByDistance</span><span class="op">:</span> scalar<span class="op">,</span></span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="fu">enableTracking</span>()<span class="op">;</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createShowPrimitive</span>(viewer) {</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">function</span>(movement) {</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Get the point at the mouse end position</span></span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> selectPoint <span class="op">=</span> viewer<span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(movement<span class="op">.</span><span class="at">endPosition</span>)<span class="op">;</span>        </span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Clear the current selection, if there is one and it is different to the selectPoint</span></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">!==</span> <span class="kw">null</span>) {</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`selected.p ${viewer.currentSelection}`)</span></span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint <span class="op">!==</span> viewer<span class="op">.</span><span class="at">currentSelection</span>) {</span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>                <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`selected.p 2 </span><span class="sc">${</span>viewer<span class="op">.</span><span class="at">currentSelection</span><span class="sc">}</span><span class="vs">`</span>)</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">TRANSPARENT</span><span class="op">;</span></span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>        <span class="co">// If selectPoint is valid and no currently selected point</span></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`showPrimitiveId ${selectPoint.id}`);</span></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>            <span class="co">//const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)</span></span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">position</span> <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">position</span><span class="op">;</span></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>            <span class="co">//viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;</span></span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">text</span> <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>selectPoint<span class="op">.</span><span class="at">id</span><span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">20</span><span class="op">;</span></span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">YELLOW</span><span class="op">;</span></span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> selectPoint<span class="op">;</span></span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>        }            </span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CView {</span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>    <span class="fu">constructor</span>(target) {</span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Viewer</span>(</span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>            target<span class="op">,</span> {</span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>                <span class="dt">timeline</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a>                <span class="dt">animation</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a>                <span class="dt">baseLayerPicker</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>                <span class="dt">fullscreenElement</span><span class="op">:</span> target<span class="op">,</span></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>                <span class="dt">terrain</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Terrain</span><span class="op">.</span><span class="fu">fromWorldTerrain</span>()</span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>            })<span class="op">;</span></span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">point_size</span> <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">n_points</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>        <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/PointPrimitiveCollection.html</span></span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">points</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">PointPrimitiveCollection</span>()<span class="op">;</span></span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">primitives</span><span class="op">.</span><span class="fu">add</span>(<span class="kw">this</span><span class="op">.</span><span class="at">points</span>)<span class="op">;</span></span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pointLabel</span> <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">entities</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>            <span class="dt">label</span><span class="op">:</span> {</span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>            <span class="dt">show</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>            <span class="dt">showBackground</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>            <span class="dt">font</span><span class="op">:</span> <span class="st">"14px monospace"</span><span class="op">,</span></span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>            <span class="dt">horizontalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">HorizontalOrigin</span><span class="op">.</span><span class="at">LEFT</span><span class="op">,</span></span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>            <span class="dt">verticalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">VerticalOrigin</span><span class="op">.</span><span class="at">BOTTOM</span><span class="op">,</span></span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelOffset</span><span class="op">:</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Cartesian2</span>(<span class="dv">15</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span></span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>            <span class="co">// this attribute will prevent this entity clipped by the terrain</span></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>            <span class="dt">disableDepthTestDistance</span><span class="op">:</span> <span class="bu">Number</span><span class="op">.</span><span class="cn">POSITIVE_INFINITY</span><span class="op">,</span></span>
+<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>            <span class="dt">text</span><span class="op">:</span><span class="st">""</span><span class="op">,</span></span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>            }<span class="op">,</span></span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Can also do this rather than wait for the points to be generated</span></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>        <span class="co">//this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);</span></span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span><span class="op">.</span><span class="fu">setInputAction</span>((e) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> selectPoint <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(e<span class="op">.</span><span class="at">position</span>)<span class="op">;</span></span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>                mutable clickedPointId <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">id</span><span class="op">;</span></span>
+<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span>Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">LEFT_CLICK</span>)<span class="op">;</span></span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enableTracking</span>() {</span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span><span class="op">.</span><span class="fu">setInputAction</span>(<span class="fu">createShowPrimitive</span>(<span class="kw">this</span>)<span class="op">,</span> Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">MOUSE_MOVE</span>)<span class="op">;</span></span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>content <span class="op">=</span> <span class="kw">new</span> <span class="fu">CView</span>(<span class="st">"cesiumContainer"</span>)<span class="op">;</span></span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">getGeoRecord</span>(pid) {</span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) {</span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">"unset"</span><span class="op">;</span></span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`</span><span class="op">;</span></span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">queryRow</span>(q<span class="op">,</span> [pid])<span class="op">;</span></span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">locationUsedBy</span>(rowid){</span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (rowid <span class="op">===</span> <span class="kw">undefined</span> <span class="op">||</span> rowid <span class="op">===</span> <span class="kw">null</span>) {</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`select pid, otype from nodes where row_id in (select edges.s from edges where edges.o=?);`</span><span class="op">;</span></span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> db<span class="op">.</span><span class="fu">query</span>(q<span class="op">,</span> [rowid])<span class="op">;</span></span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">samplesAtLocation</span>(rowid) {</span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (rowid <span class="op">===</span> <span class="kw">undefined</span> <span class="op">||</span> rowid <span class="op">===</span> <span class="kw">null</span>) {</span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`select pid, label, description from nodes where row_id in (</span></span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a><span class="vs">    with recursive efor(s,p,o) as (</span></span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a><span class="vs">        select s,p,o from edges where o=? </span></span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a><span class="vs">        union all</span></span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a><span class="vs">        select e.s, e.p, e.o from edges as e, efor as ef where ef.s = e.o</span></span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a><span class="vs">    ) select s from efor where p='produced_by');`</span><span class="op">;</span></span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> db<span class="op">.</span><span class="fu">query</span>(q<span class="op">,</span> [rowid])<span class="op">;</span></span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>mutable clickedPointId <span class="op">=</span> <span class="st">"unset"</span><span class="op">;</span></span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>selectedGeoRecord <span class="op">=</span> <span class="cf">await</span> <span class="fu">getGeoRecord</span>(clickedPointId)<span class="op">;</span></span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`Retrieved </span><span class="sc">${</span>pointdata<span class="op">.</span><span class="at">length</span><span class="sc">}</span><span class="vs"> locations from </span><span class="sc">${</span>nodes_path<span class="sc">}</span><span class="vs">.`</span><span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-7" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-8" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-9" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-10" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-11" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-12" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" aria-current="page">Map</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Data</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div id="cesiumContainer">
+
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div id="loading_1">
+Loading…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4" data-startfrom="252" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 251;"><span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a>viewof pointdata <span class="op">=</span> {</span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(locations<span class="op">,</span> {</span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a>            <span class="dt">row_id</span><span class="op">:</span><span class="st">"Row ID"</span><span class="op">,</span></span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pid</span><span class="op">:</span> <span class="st">"PID"</span><span class="op">,</span></span>
+<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a>            <span class="dt">latitude</span><span class="op">:</span> <span class="st">"Latitude"</span><span class="op">,</span></span>
+<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a>            <span class="dt">longitude</span><span class="op">:</span> <span class="st">"Longitude"</span></span>
+<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb4-262"><a href="#cb4-262" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>The click point ID is “<span><span id="ojs-element-id-1"></span></span>”.</p>
+<div class="cell">
+<div class="sourceCode cell-code hidden" id="cb5" data-startfrom="272" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 271;"><span id="cb5-272"><a href="#cb5-272" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb5-273"><a href="#cb5-273" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(selectedGeoRecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-5" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6" data-startfrom="279" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 278;"><span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a>Inputs<span class="op">.</span><span class="fu">table</span>(<span class="fu">locationUsedBy</span>(selectedGeoRecord<span class="op">.</span><span class="at">row_id</span>))<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-6" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7" data-startfrom="283" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 282;"><span id="cb7-283"><a href="#cb7-283" aria-hidden="true" tabindex="-1"></a>viewof usedby <span class="op">=</span> {</span>
+<span id="cb7-284"><a href="#cb7-284" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(<span class="fu">samplesAtLocation</span>(selectedGeoRecord<span class="op">.</span><span class="at">row_id</span>))<span class="op">;</span></span>
+<span id="cb7-285"><a href="#cb7-285" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> table<span class="op">;</span></span>
+<span id="cb7-286"><a href="#cb7-286" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-7" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+
+
+<div class="ojs-auto-generated hidden">
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7Y2xpY2tlZFBvaW50SWR9PC9zcGFuPmAiLCAiY2VsbE5hbWUiOiJvanMtZWxlbWVudC1pZC0xIn1dfQ==
+</script>
+</div>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IkNlc2l1bS5Jb24uZGVmYXVsdEFjY2Vzc1Rva2VuID0gJ2V5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpxZEdraU9pSXdOemszTmpreU15MWlOR0kxTFRSa04yVXRPRFJpTXkwNE9UWXdZV0UwTjJNM1pUa2lMQ0pwWkNJNk5qazFNVGNzSW1saGRDSTZNVFl6TXpVME1UUTNOMzAuZTcwZHBOek9DRFJMREd4Umd1UUNDLXRSekd6QS0yM1hnbm81bE5nQ2VCNCc7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2Ygbm9kZXNfcGF0aCA9IElucHV0cy50ZXh0KHtcbiAgICBsYWJlbDpcIlNvdXJjZVwiLCBcbiAgICB2YWx1ZTpcImh0dHBzOi8vczMuYmVlaGl2ZWJlYWNoLmNvbS9pc2FtcGxlcy1kYXRhL29jX25vZGVzLnBhcnF1ZXRcIiwgXG4gICAgd2lkdGg6XCIxMDAlXCIsIFxuICAgIHN1Ym1pdDp0cnVlXG59KTtcbnZpZXdvZiBlZGdlc19wYXRoID0gSW5wdXRzLnRleHQoe1xuICAgIGxhYmVsOlwiU291cmNlXCIsIFxuICAgIHZhbHVlOlwiaHR0cHM6Ly9zMy5iZWVoaXZlYmVhY2guY29tL2lzYW1wbGVzLWRhdGEvb2NfZWRnZS5wYXJxdWV0XCIsIFxuICAgIHdpZHRoOlwiMTAwJVwiLCBcbiAgICBzdWJtaXQ6dHJ1ZVxufSk7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSB7XG4gIGNvbnN0IGluc3RhbmNlID0gYXdhaXQgRHVja0RCQ2xpZW50Lm9mKCk7XG4gIGF3YWl0IGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdmlldyBub2RlcyBhcyBzZWxlY3QgKiBmcm9tIHJlYWRfcGFycXVldCgnJHtub2Rlc19wYXRofScpYCk7XG4gIGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdGFibGUgZWRnZXMgYXMgc2VsZWN0IHMscCxvIGZyb20gcmVhZF9wYXJxdWV0KCcke2VkZ2VzX3BhdGh9JylgKTtcbiAgcmV0dXJuIGluc3RhbmNlO1xufVxuXG5cbmFzeW5jIGZ1bmN0aW9uIGxvYWREYXRhKHF1ZXJ5LCBwYXJhbXM9W10sIHdhaXRpbmdfaWQ9bnVsbCkge1xuICAgIC8vIEdldCBsb2FkaW5nIGluZGljYXRvclxuICAgIGNvbnN0IHdhaXRlciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKHdhaXRpbmdfaWQpO1xuICAgIGlmICh3YWl0ZXIpIHtcbiAgICAgICAgd2FpdGVyLmhpZGRlbiA9IGZhbHNlO1xuICAgIH1cbiAgICB0cnkge1xuICAgICAgICAvLyBSdW4gdGhlIChzbG93KSBxdWVyeVxuICAgICAgICBjb25zdCBfcmVzdWx0cyA9IGF3YWl0IGRiLnF1ZXJ5KHF1ZXJ5LCAuLi5wYXJhbXMpO1xuICAgICAgICByZXR1cm4gX3Jlc3VsdHM7XG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcbiAgICAgICAgaWYgKHdhaXRlcikge1xuICAgICAgICAgICAgd2FpdGVyLmlubmVySHRtbCA9IGA8cHJlPiR7ZXJyb3J9PC9wcmU+YDtcbiAgICAgICAgfVxuICAgICAgICByZXR1cm4gbnVsbDtcbiAgICB9IGZpbmFsbHkge1xuICAgICAgICAvLyBIaWRlIHRoZSB3YWl0ZXIgKGlmIHRoZXJlIGlzIG9uZSlcbiAgICAgICAgaWYgKHdhaXRlcikge1xuICAgICAgICAgICAgd2FpdGVyLmhpZGRlbiA9IHRydWU7XG4gICAgICAgIH1cbiAgICB9XG59XG5cbmxvY2F0aW9ucyA9IHtcbiAgICAvLyBnZXQgdGhlIGNvbnRlbnQgZm9ybSB0aGUgcGFycXVldCBmaWxlXG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUIHBpZCwgbGF0aXR1ZGUsIGxvbmdpdHVkZSBGUk9NIG5vZGVzIFdIRVJFIG90eXBlPSdHZW9zcGF0aWFsQ29vcmRMb2NhdGlvbidgO1xuICAgIGNvbnN0IGRhdGEgPSBhd2FpdCBsb2FkRGF0YShxdWVyeSwgW10sIFwibG9hZGluZ18xXCIpO1xuXG4gICAgLy8gQ2xlYXIgdGhlIGV4aXN0aW5nIFBvaW50UHJpbWl0aXZlQ29sbGVjdGlvblxuICAgIGNvbnRlbnQucG9pbnRzLnJlbW92ZUFsbCgpO1xuICAgIC8vY29udGVudC5wb2ludHMgPSBuZXcgQ2VzaXVtLlBvaW50UHJpbWl0aXZlQ29sbGVjdGlvbigpO1xuXG4gICAgLy8gY3JlYXRlIHBvaW50IHByaW1pdGl2ZXMgZm9yIGNlc2l1bSBkaXNwbGF5XG4gICAgY29uc3Qgc2NhbGFyID0gbmV3IENlc2l1bS5OZWFyRmFyU2NhbGFyKDEuNWUyLCAyLCA4LjBlNiwgMC4yKTtcbiAgICBjb25zdCBjb2xvciA9IENlc2l1bS5Db2xvci5QSU5LO1xuICAgIGNvbnN0IHBvaW50X3NpemUgPSA0O1xuICAgIGZvciAoY29uc3Qgcm93IG9mIGRhdGEpIHtcbiAgICAgICAgY29udGVudC5wb2ludHMuYWRkKHtcbiAgICAgICAgICAgIGlkOiByb3cucGlkLFxuICAgICAgICAgICAgLy8gaHR0cHM6Ly9jZXNpdW0uY29tL2xlYXJuL2Nlc2l1bWpzL3JlZi1kb2MvQ2FydGVzaWFuMy5odG1sIy5mcm9tRGVncmVlc1xuICAgICAgICAgICAgcG9zaXRpb246IENlc2l1bS5DYXJ0ZXNpYW4zLmZyb21EZWdyZWVzKFxuICAgICAgICAgICAgICAgIHJvdy5sb25naXR1ZGUsICAvL2xvbmdpdHVkZVxuICAgICAgICAgICAgICAgIHJvdy5sYXRpdHVkZSwgICAvL2xhdGl0dWRlXG4gICAgICAgICAgICAgICAgMCwvL3JhbmRvbUNvb3JkaW5hdGVKaXR0ZXIoMTAuMCwgMTAuMCksIC8vZWxldmF0aW9uLCBtXG4gICAgICAgICAgICApLFxuICAgICAgICAgICAgcGl4ZWxTaXplOiBwb2ludF9zaXplLFxuICAgICAgICAgICAgY29sb3I6IGNvbG9yLFxuICAgICAgICAgICAgc2NhbGVCeURpc3RhbmNlOiBzY2FsYXIsXG4gICAgICAgIH0pO1xuICAgIH1cbiAgICBjb250ZW50LmVuYWJsZVRyYWNraW5nKCk7XG4gICAgcmV0dXJuIGRhdGE7XG59XG5cblxuZnVuY3Rpb24gY3JlYXRlU2hvd1ByaW1pdGl2ZSh2aWV3ZXIpIHtcbiAgICByZXR1cm4gZnVuY3Rpb24obW92ZW1lbnQpIHtcbiAgICAgICAgLy8gR2V0IHRoZSBwb2ludCBhdCB0aGUgbW91c2UgZW5kIHBvc2l0aW9uXG4gICAgICAgIGNvbnN0IHNlbGVjdFBvaW50ID0gdmlld2VyLnZpZXdlci5zY2VuZS5waWNrKG1vdmVtZW50LmVuZFBvc2l0aW9uKTsgICAgICAgIFxuXG4gICAgICAgIC8vIENsZWFyIHRoZSBjdXJyZW50IHNlbGVjdGlvbiwgaWYgdGhlcmUgaXMgb25lIGFuZCBpdCBpcyBkaWZmZXJlbnQgdG8gdGhlIHNlbGVjdFBvaW50XG4gICAgICAgIGlmICh2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiAhPT0gbnVsbCkge1xuICAgICAgICAgICAgLy9jb25zb2xlLmxvZyhgc2VsZWN0ZWQucCAke3ZpZXdlci5jdXJyZW50U2VsZWN0aW9ufWApXG4gICAgICAgICAgICBpZiAoQ2VzaXVtLmRlZmluZWQoc2VsZWN0UG9pbnQpICYmIHNlbGVjdFBvaW50ICE9PSB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbikge1xuICAgICAgICAgICAgICAgIGNvbnNvbGUubG9nKGBzZWxlY3RlZC5wIDIgJHt2aWV3ZXIuY3VycmVudFNlbGVjdGlvbn1gKVxuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uLnByaW1pdGl2ZS5waXhlbFNpemUgPSA0O1xuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uLnByaW1pdGl2ZS5vdXRsaW5lQ29sb3IgPSBDZXNpdW0uQ29sb3IuVFJBTlNQQVJFTlQ7XG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ub3V0bGluZVdpZHRoID0gMDtcbiAgICAgICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiA9IG51bGw7XG4gICAgICAgICAgICB9XG4gICAgICAgIH1cblxuICAgICAgICAvLyBJZiBzZWxlY3RQb2ludCBpcyB2YWxpZCBhbmQgbm8gY3VycmVudGx5IHNlbGVjdGVkIHBvaW50XG4gICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQuaGFzT3duUHJvcGVydHkoXCJwcmltaXRpdmVcIikpIHtcbiAgICAgICAgICAgIC8vY29uc29sZS5sb2coYHNob3dQcmltaXRpdmVJZCAke3NlbGVjdFBvaW50LmlkfWApO1xuICAgICAgICAgICAgLy9jb25zdCBjYXJ0byA9IENlc2l1bS5DYXJ0b2dyYXBoaWMuZnJvbUNhcnRlc2lhbihzZWxlY3RQb2ludC5wcmltaXRpdmUucG9zaXRpb24pXG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5wb3NpdGlvbiA9IHNlbGVjdFBvaW50LnByaW1pdGl2ZS5wb3NpdGlvbjtcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLmxhYmVsLnNob3cgPSB0cnVlO1xuICAgICAgICAgICAgLy92aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC50ZXh0ID0gYGlkOiR7c2VsZWN0UG9pbnQuaWR9LCAke2NhcnRvfWA7XG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC50ZXh0ID0gYCR7c2VsZWN0UG9pbnQuaWR9YDtcbiAgICAgICAgICAgIHNlbGVjdFBvaW50LnByaW1pdGl2ZS5waXhlbFNpemUgPSAyMDtcbiAgICAgICAgICAgIHNlbGVjdFBvaW50LnByaW1pdGl2ZS5vdXRsaW5lQ29sb3IgPSBDZXNpdW0uQ29sb3IuWUVMTE9XO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLm91dGxpbmVXaWR0aCA9IDM7XG4gICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiA9IHNlbGVjdFBvaW50O1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgdmlld2VyLnBvaW50TGFiZWwubGFiZWwuc2hvdyA9IGZhbHNlO1xuICAgICAgICB9ICAgICAgICAgICAgXG4gICAgfVxufVxuXG5jbGFzcyBDVmlldyB7XG4gICAgY29uc3RydWN0b3IodGFyZ2V0KSB7XG4gICAgICAgIHRoaXMudmlld2VyID0gbmV3IENlc2l1bS5WaWV3ZXIoXG4gICAgICAgICAgICB0YXJnZXQsIHtcbiAgICAgICAgICAgICAgICB0aW1lbGluZTogZmFsc2UsXG4gICAgICAgICAgICAgICAgYW5pbWF0aW9uOiBmYWxzZSxcbiAgICAgICAgICAgICAgICBiYXNlTGF5ZXJQaWNrZXI6IGZhbHNlLFxuICAgICAgICAgICAgICAgIGZ1bGxzY3JlZW5FbGVtZW50OiB0YXJnZXQsXG4gICAgICAgICAgICAgICAgdGVycmFpbjogQ2VzaXVtLlRlcnJhaW4uZnJvbVdvcmxkVGVycmFpbigpXG4gICAgICAgICAgICB9KTtcbiAgICAgICAgdGhpcy5jdXJyZW50U2VsZWN0aW9uID0gbnVsbDtcbiAgICAgICAgdGhpcy5wb2ludF9zaXplID0gMTtcbiAgICAgICAgdGhpcy5uX3BvaW50cyA9IDA7XG4gICAgICAgIC8vIGh0dHBzOi8vY2VzaXVtLmNvbS9sZWFybi9jZXNpdW1qcy9yZWYtZG9jL1BvaW50UHJpbWl0aXZlQ29sbGVjdGlvbi5odG1sXG4gICAgICAgIHRoaXMucG9pbnRzID0gbmV3IENlc2l1bS5Qb2ludFByaW1pdGl2ZUNvbGxlY3Rpb24oKTtcbiAgICAgICAgdGhpcy52aWV3ZXIuc2NlbmUucHJpbWl0aXZlcy5hZGQodGhpcy5wb2ludHMpO1xuICAgICBcbiAgICAgICAgdGhpcy5wb2ludExhYmVsID0gdGhpcy52aWV3ZXIuZW50aXRpZXMuYWRkKHtcbiAgICAgICAgICAgIGxhYmVsOiB7XG4gICAgICAgICAgICBzaG93OiBmYWxzZSxcbiAgICAgICAgICAgIHNob3dCYWNrZ3JvdW5kOiB0cnVlLFxuICAgICAgICAgICAgZm9udDogXCIxNHB4IG1vbm9zcGFjZVwiLFxuICAgICAgICAgICAgaG9yaXpvbnRhbE9yaWdpbjogQ2VzaXVtLkhvcml6b250YWxPcmlnaW4uTEVGVCxcbiAgICAgICAgICAgIHZlcnRpY2FsT3JpZ2luOiBDZXNpdW0uVmVydGljYWxPcmlnaW4uQk9UVE9NLFxuICAgICAgICAgICAgcGl4ZWxPZmZzZXQ6IG5ldyBDZXNpdW0uQ2FydGVzaWFuMigxNSwgMCksXG4gICAgICAgICAgICAvLyB0aGlzIGF0dHJpYnV0ZSB3aWxsIHByZXZlbnQgdGhpcyBlbnRpdHkgY2xpcHBlZCBieSB0aGUgdGVycmFpblxuICAgICAgICAgICAgZGlzYWJsZURlcHRoVGVzdERpc3RhbmNlOiBOdW1iZXIuUE9TSVRJVkVfSU5GSU5JVFksXG4gICAgICAgICAgICB0ZXh0OlwiXCIsXG4gICAgICAgICAgICB9LFxuICAgICAgICB9KTtcblxuICAgICAgICB0aGlzLnBpY2tIYW5kbGVyID0gbmV3IENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50SGFuZGxlcih0aGlzLnZpZXdlci5zY2VuZS5jYW52YXMpO1xuICAgICAgICAvLyBDYW4gYWxzbyBkbyB0aGlzIHJhdGhlciB0aGFuIHdhaXQgZm9yIHRoZSBwb2ludHMgdG8gYmUgZ2VuZXJhdGVkXG4gICAgICAgIC8vdGhpcy5waWNrSGFuZGxlci5zZXRJbnB1dEFjdGlvbihjcmVhdGVTaG93UHJpbWl0aXZlKHRoaXMpLCBDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTU9VU0VfTU9WRSk7XG5cbiAgICAgICAgdGhpcy5zZWxlY3RIYW5kbGVyID0gbmV3IENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50SGFuZGxlcih0aGlzLnZpZXdlci5zY2VuZS5jYW52YXMpO1xuICAgICAgICB0aGlzLnNlbGVjdEhhbmRsZXIuc2V0SW5wdXRBY3Rpb24oKGUpID0+IHtcbiAgICAgICAgICAgIGNvbnN0IHNlbGVjdFBvaW50ID0gdGhpcy52aWV3ZXIuc2NlbmUucGljayhlLnBvc2l0aW9uKTtcbiAgICAgICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQuaGFzT3duUHJvcGVydHkoXCJwcmltaXRpdmVcIikpIHtcbiAgICAgICAgICAgICAgICBtdXRhYmxlIGNsaWNrZWRQb2ludElkID0gc2VsZWN0UG9pbnQuaWQ7XG4gICAgICAgICAgICB9XG4gICAgICAgIH0sQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRUeXBlLkxFRlRfQ0xJQ0spO1xuXG4gICAgfVxuXG4gICAgZW5hYmxlVHJhY2tpbmcoKSB7XG4gICAgICAgIHRoaXMucGlja0hhbmRsZXIuc2V0SW5wdXRBY3Rpb24oY3JlYXRlU2hvd1ByaW1pdGl2ZSh0aGlzKSwgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRUeXBlLk1PVVNFX01PVkUpO1xuICAgIH1cbn1cblxuY29udGVudCA9IG5ldyBDVmlldyhcImNlc2l1bUNvbnRhaW5lclwiKTtcblxuYXN5bmMgZnVuY3Rpb24gZ2V0R2VvUmVjb3JkKHBpZCkge1xuICAgIGlmIChwaWQgPT09IG51bGwgfHwgcGlkID09PVwiXCIgfHwgcGlkID09IFwidW5zZXRcIikge1xuICAgICAgICByZXR1cm4gXCJ1bnNldFwiO1xuICAgIH1cbiAgICBjb25zdCBxID0gYFNFTEVDVCByb3dfaWQsIHBpZCwgb3R5cGUsIGxhdGl0dWRlLCBsb25naXR1ZGUgRlJPTSBub2RlcyBXSEVSRSBvdHlwZT0nR2Vvc3BhdGlhbENvb3JkTG9jYXRpb24nIEFORCBwaWQ9P2A7XG4gICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgZGIucXVlcnlSb3cocSwgW3BpZF0pO1xuICAgIHJldHVybiByZXN1bHQ7XG59XG5cbmFzeW5jIGZ1bmN0aW9uIGxvY2F0aW9uVXNlZEJ5KHJvd2lkKXtcbiAgICBpZiAocm93aWQgPT09IHVuZGVmaW5lZCB8fCByb3dpZCA9PT0gbnVsbCkge1xuICAgICAgICByZXR1cm4gW107XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgc2VsZWN0IHBpZCwgb3R5cGUgZnJvbSBub2RlcyB3aGVyZSByb3dfaWQgaW4gKHNlbGVjdCBlZGdlcy5zIGZyb20gZWRnZXMgd2hlcmUgZWRnZXMubz0/KTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxuYXN5bmMgZnVuY3Rpb24gc2FtcGxlc0F0TG9jYXRpb24ocm93aWQpIHtcbiAgICBpZiAocm93aWQgPT09IHVuZGVmaW5lZCB8fCByb3dpZCA9PT0gbnVsbCkge1xuICAgICAgICByZXR1cm4gW107XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgc2VsZWN0IHBpZCwgbGFiZWwsIGRlc2NyaXB0aW9uIGZyb20gbm9kZXMgd2hlcmUgcm93X2lkIGluIChcbiAgICB3aXRoIHJlY3Vyc2l2ZSBlZm9yKHMscCxvKSBhcyAoXG4gICAgICAgIHNlbGVjdCBzLHAsbyBmcm9tIGVkZ2VzIHdoZXJlIG89PyBcbiAgICAgICAgdW5pb24gYWxsXG4gICAgICAgIHNlbGVjdCBlLnMsIGUucCwgZS5vIGZyb20gZWRnZXMgYXMgZSwgZWZvciBhcyBlZiB3aGVyZSBlZi5zID0gZS5vXG4gICAgKSBzZWxlY3QgcyBmcm9tIGVmb3Igd2hlcmUgcD0ncHJvZHVjZWRfYnknKTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxubXV0YWJsZSBjbGlja2VkUG9pbnRJZCA9IFwidW5zZXRcIjtcbnNlbGVjdGVkR2VvUmVjb3JkID0gYXdhaXQgZ2V0R2VvUmVjb3JkKGNsaWNrZWRQb2ludElkKTtcblxubWRgUmV0cmlldmVkICR7cG9pbnRkYXRhLmxlbmd0aH0gbG9jYXRpb25zIGZyb20gJHtub2Rlc19wYXRofS5gO1xuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC00IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiXG52aWV3b2YgcG9pbnRkYXRhID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUobG9jYXRpb25zLCB7XG4gICAgICAgIGhlYWRlcjoge1xuICAgICAgICAgICAgcm93X2lkOlwiUm93IElEXCIsXG4gICAgICAgICAgICBwaWQ6IFwiUElEXCIsXG4gICAgICAgICAgICBsYXRpdHVkZTogXCJMYXRpdHVkZVwiLFxuICAgICAgICAgICAgbG9uZ2l0dWRlOiBcIkxvbmdpdHVkZVwiXG4gICAgICAgIH0sXG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59ICAgIFxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC01IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoibWRgXFxgXFxgXFxgXG4ke0pTT04uc3RyaW5naWZ5KHNlbGVjdGVkR2VvUmVjb3JkLCBudWxsLCAyKX1cblxcYFxcYFxcYFxuYFxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC02IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiSW5wdXRzLnRhYmxlKGxvY2F0aW9uVXNlZEJ5KHNlbGVjdGVkR2VvUmVjb3JkLnJvd19pZCkpO1xuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC03IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoidmlld29mIHVzZWRieSA9IHtcbiAgICBjb25zdCB0YWJsZSA9IElucHV0cy50YWJsZShzYW1wbGVzQXRMb2NhdGlvbihzZWxlY3RlZEdlb1JlY29yZC5yb3dfaWQpKTtcbiAgICByZXR1cm4gdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ25vZGVzX3BhdGgnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnZWRnZXNfcGF0aCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdwb2ludGRhdGEnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgndXNlZGJ5JykifV19
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../tutorials";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet_cesium_split.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
