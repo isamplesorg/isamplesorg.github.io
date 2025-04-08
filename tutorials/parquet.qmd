@@ -6,7 +6,6 @@ Let's query Eric's parquet file using duckdb+parquet
 
 ```{ojs}
 //| code-fold: true
-//| output: false
 //
 
 parquet_path = 'https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet';
@@ -34,13 +33,10 @@ rows1k = {
   document.getElementById("loading_2").hidden = true;
   return Inputs.table(data);
 }
-```
-
-```{ojs}
-//| code-fold: true
 
 md`There are ${row_count} rows in the source <code>${parquet_path}</code>.`
 ```
+
 
 <div>
 <div id="loading_1">Loading type counts...</div>
