@@ -1,0 +1,51 @@
+---
+title: "Parquet"
+---
+
+Let's query Eric's parquet file using duckdb+parquet
+
+```{ojs}
+//| code-fold: true
+//
+
+parquet_path = 'https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet';
+
+// Create a DuckDB instance
+db = {
+  const instance = await DuckDBClient.of();
+  await instance.query(`create view nodes as select * from read_parquet('${parquet_path}')`)
+  return instance;
+}
+
+row_count = {
+  const result = await db.queryRow(`select count(*) as n from nodes;`);
+  return result.n;
+}
+
+results = {
+  const data = await db.query(`SELECT COUNT(*) as count, otype FROM nodes GROUP BY otype ORDER BY count DESC`);
+  document.getElementById("loading_1").hidden = true;
+  return Inputs.table(data);
+}
+
+rows1k = {
+  const data = await db.query(`SELECT row_id, pid, otype, label FROM nodes limit 1000`);
+  document.getElementById("loading_2").hidden = true;
+  return Inputs.table(data);
+}
+
+md`There are ${row_count} rows in the source <code>${parquet_path}</code>.`
+```
+
+
+<div>
+<div id="loading_1">Loading type counts...</div>
+${results}
+</div>
+
+The first 1000 rows:
+
+<div>
+<div id="loading_2">Loading...</div>
+${rows1k}
+</div>
