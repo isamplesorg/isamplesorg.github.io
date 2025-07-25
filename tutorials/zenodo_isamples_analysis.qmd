@@ -11,6 +11,22 @@ format:
     theme: cosmo
 ---
 
+## Learning OJS
+
+```{ojs}
+
+// Simple test to debug Observable reactivity
+viewof int_input = Inputs.range([1, 100], {
+  label: "Int Input:",
+  step: 1,
+  value: 42
+})
+
+doubly = 2*int_input
+doubly
+```
+
+
 ## Introduction
 
 This tutorial demonstrates how to efficiently analyze large geospatial datasets directly in your browser without downloading entire files. We'll use DuckDB-WASM and Observable JS to perform fast, memory-efficient analysis and create interactive visualizations.
@@ -37,6 +53,33 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 - **Purpose**: Demonstrates all analytical techniques with faster loading
 
 ## Setup and Database Connection
+
+```{ojs}
+//| label: test-reactivity
+
+// Simple test to debug Observable reactivity
+viewof test_input = Inputs.range([1, 100], {
+  label: "Test Input:",
+  step: 1,
+  value: 42
+})
+
+// In Observable, the input itself IS the value when referenced reactively
+test_value = test_input
+
+test_output = test_value * 2
+
+md`
+### 🧪 Reactivity Test
+
+**Raw input object**: ${typeof test_input} (Constructor: ${test_input?.constructor?.name})  
+**Extracted value**: ${test_value}  
+**Output (2x input)**: ${test_output}  
+**Value type**: ${typeof test_value}
+
+This should update in real-time as you move the slider.
+`
+```
 
 ```{ojs}
 //| label: setup
@@ -257,15 +300,18 @@ source_data = {
     ORDER BY sample_count DESC
   `);
   // Convert BigInt values to Numbers
-  return result.toArray().map(row => ({
+  const processedData = result.toArray().map(row => ({
     ...row,
     sample_count: Number(row.sample_count),
     geo_count: Number(row.geo_count)
   }));
+  
+  console.log('Source data processed:', processedData);
+  return processedData;
 }
 
 // Create interactive table showing source distribution
-source_table = Inputs.table(source_data, {
+viewof source_table = Inputs.table(source_data, {
   columns: [
     "source_collection",
     "sample_count", 
@@ -287,35 +333,47 @@ source_table = Inputs.table(source_data, {
 //| label: source-chart
 
 // Create bar chart of source collections
-source_chart = Plot.plot({
-  title: "Sample Distribution by Source Collection",
-  x: {
-    label: "Number of samples",
-    tickFormat: "~s"
-  },
-  y: {
-    label: "Source Collection",
-    domain: source_data.map(d => d.source_collection)
-  },
-  marks: [
-    Plot.barX(source_data, {
-      x: "sample_count",
-      y: "source_collection",
-      fill: "steelblue",
-      sort: {y: "x", reverse: true}
-    }),
-    Plot.text(source_data, {
-      x: "sample_count",
-      y: "source_collection",
-      text: d => d3.format("~s")(d.sample_count),
-      dx: 10,
-      textAnchor: "start"
-    })
-  ],
-  marginLeft: 120,
-  height: 250,
-  width: 600
-})
+source_chart = {
+  console.log('Source chart - source_data type:', typeof source_data);
+  console.log('Source chart - source_data:', source_data);
+  console.log('Source chart - is array:', Array.isArray(source_data));
+  
+  // Validate that source_data is an array
+  if (!Array.isArray(source_data)) {
+    console.error('source_data is not an array:', source_data);
+    return html`<div>Error: Source data is not available</div>`;
+  }
+  
+  return Plot.plot({
+    title: "Sample Distribution by Source Collection",
+    x: {
+      label: "Number of samples",
+      tickFormat: "~s"
+    },
+    y: {
+      label: "Source Collection",
+      domain: source_data.map(d => d.source_collection)
+    },
+    marks: [
+      Plot.barX(source_data, {
+        x: "sample_count",
+        y: "source_collection",
+        fill: "steelblue",
+        sort: {y: "x", reverse: true}
+      }),
+      Plot.text(source_data, {
+        x: "sample_count",
+        y: "source_collection",
+        text: d => d3.format("~s")(d.sample_count),
+        dx: 10,
+        textAnchor: "start"
+      })
+    ],
+    marginLeft: 120,
+    height: 250,
+    width: 600
+  });
+}
 ```
 
 ## Geographic Distribution Analysis
@@ -391,6 +449,12 @@ md`
 - **Latitude range**: ${geo_stats.min_lat.toFixed(3)}° to ${geo_stats.max_lat.toFixed(3)}°
 - **Longitude range**: ${geo_stats.min_lon.toFixed(3)}° to ${geo_stats.max_lon.toFixed(3)}°
 - **Average location**: ${geo_stats.avg_lat.toFixed(3)}°, ${geo_stats.avg_lon.toFixed(3)}°
+
+### Regional Data Debug Info
+
+- **Total regional records**: ${regional_data.length}
+- **Regions found**: ${[...new Set(regional_data.map(d => d.region))].join(', ')}
+- **Sample regional record**: ${JSON.stringify(regional_data[0] || 'No data', null, 2)}
 `
 ```
 
@@ -402,57 +466,87 @@ Create an interactive visualization to explore samples by region and source.
 //| label: regional-controls
 
 // Interactive region selector
-selected_region = Inputs.select(
+viewof selected_region = Inputs.select(
   ["All", ...new Set(regional_data.map(d => d.region))],
   {
     label: "Select Region:",
     value: "All"
   }
 )
-
-// Filter data based on selection
-filtered_regional_data = selected_region === "All" 
-  ? regional_data 
-  : regional_data.filter(d => d.region === selected_region)
 ```
 
 ```{ojs}
 //| label: regional-chart
 
-// Regional distribution chart
-regional_chart = Plot.plot({
-  title: `Sample Distribution ${selected_region === "All" ? "by Region" : `in ${selected_region}`}`,
-  x: {
-    label: "Number of samples",
-    tickFormat: "~s"
-  },
-  y: {
-    label: selected_region === "All" ? "Region" : "Source Collection"
-  },
-  color: {
-    legend: selected_region === "All" ? false : true,
-    domain: ["SESAR", "OPENCONTEXT", "GEOME", "SMITHSONIAN"],
-    range: ["#3366cc", "#dc3912", "#109618", "#ff9900"]
-  },
+// Simple test chart to verify Plot.js is working
+test_chart = Plot.plot({
   marks: [
-    Plot.barX(filtered_regional_data, {
-      x: "sample_count",
-      y: selected_region === "All" ? "region" : "source_collection",
-      fill: selected_region === "All" ? "steelblue" : "source_collection",
-      sort: {y: "x", reverse: true}
-    }),
-    Plot.text(filtered_regional_data, {
-      x: "sample_count",
-      y: selected_region === "All" ? "region" : "source_collection", 
-      text: d => d3.format("~s")(d.sample_count),
-      dx: 10,
-      textAnchor: "start"
-    })
+    Plot.barX([
+      {name: "A", value: 100},
+      {name: "B", value: 200},
+      {name: "C", value: 150}
+    ], {x: "value", y: "name", fill: "red"})
   ],
-  marginLeft: 120,
-  height: Math.max(200, filtered_regional_data.length * 25),
-  width: 700
+  width: 400,
+  height: 150
 })
+
+// Regional distribution chart  
+regional_chart = {
+  console.log('Regional chart - regional_data type:', typeof regional_data);
+  console.log('Regional chart - regional_data:', regional_data);
+  console.log('Regional chart - is array:', Array.isArray(regional_data));
+  
+  // Validate that regional_data is an array
+  if (!Array.isArray(regional_data)) {
+    console.error('regional_data is not an array:', regional_data);
+    return html`<div>Error: Regional data is not available</div>`;
+  }
+  
+  // Aggregate the regional data by region like we do for source data
+  const regionTotals = d3.rollup(
+    regional_data, 
+    v => d3.sum(v, d => d.sample_count), 
+    d => d.region
+  );
+  
+  const aggregatedData = Array.from(regionTotals, ([region, total]) => ({
+    region: region,
+    sample_count: total
+  })).sort((a, b) => b.sample_count - a.sample_count);
+  
+  console.log('Regional chart - aggregated data:', aggregatedData);
+  
+  return Plot.plot({
+    title: `Sample Distribution by Region (${aggregatedData.length} regions)`,
+    width: 700,
+    height: 300,
+    marginLeft: 120,
+    x: {
+      label: "Number of samples",
+      tickFormat: "~s"
+    },
+    y: {
+      label: "Region",
+      domain: aggregatedData.map(d => d.region)
+    },
+    marks: [
+      Plot.barX(aggregatedData, {
+        x: "sample_count",
+        y: "region",
+        fill: "steelblue",
+        sort: {y: "x", reverse: true}
+      }),
+      Plot.text(aggregatedData, {
+        x: "sample_count",
+        y: "region", 
+        text: d => d3.format("~s")(d.sample_count),
+        dx: 10,
+        textAnchor: "start"
+      })
+    ]
+  });
+}
 ```
 
 ## Efficient Sampling for Visualization
@@ -463,14 +557,14 @@ Create a representative sample of the data for detailed visualization while mini
 //| label: sampling-controls
 
 // Sample size control
-sample_size = Inputs.range([1000, 50000], {
+viewof sample_size = Inputs.range([1000, 50000], {
   label: "Sample Size:",
   step: 1000,
   value: 10000
 })
 
 // Sample per collection limit
-max_per_collection = Inputs.range([500, 5000], {
+viewof max_per_collection = Inputs.range([500, 5000], {
   label: "Max per Collection:",
   step: 250,
   value: 2500
@@ -482,12 +576,18 @@ max_per_collection = Inputs.range([500, 5000], {
 
 // Create stratified sample - simplified for DuckDB-WASM compatibility
 sample_data = {
-  // Convert to numbers explicitly
-  const maxPerCollection = Number(max_per_collection);
-  const sampleSizeValue = Number(sample_size);
+  // In Observable, inputs are automatically reactive values
+  const maxPerCollection = max_per_collection;
+  const sampleSizeValue = sample_size;
   
-  // Calculate sampling probability - use a simpler approach
-  const samplingRate = 0.1; // Sample 10% of data as fallback
+  // Use a fixed sampling rate to avoid NaN issues
+  const samplingRate = 0.1; // Sample 10% of data
+  
+  // Validate that all values are proper numbers
+  if (isNaN(maxPerCollection) || isNaN(sampleSizeValue) || isNaN(samplingRate)) {
+    console.error('Invalid numeric values detected', {maxPerCollection, sampleSizeValue, samplingRate});
+    throw new Error('Invalid sampling parameters');
+  }
   
   const result = await db.query(`
     WITH sampled_data AS (
@@ -533,6 +633,14 @@ md`
 
 **Distribution by source**:
 ${sample_stats.by_source.map(d => `- ${d.source}: ${d.count.toLocaleString()}`).join('\n')}
+
+### Sample Data Debug Info
+
+- **Raw sample data length**: ${sample_data.length}
+- **Sample record example**: ${JSON.stringify(sample_data[0] || 'No data', null, 2)}
+- **Geo count**: ${geo_count.toLocaleString()}
+- **Sample size input**: ${sample_size}
+- **Max per collection input**: ${max_per_collection}
 `
 ```
 
@@ -544,7 +652,7 @@ Create an interactive scatter plot map showing the geographic distribution of sa
 //| label: map-controls
 
 // Map projection selector
-projection = Inputs.select([
+viewof projection = Inputs.select([
   "equirectangular",
   "natural-earth",
   "orthographic",
@@ -555,7 +663,7 @@ projection = Inputs.select([
 })
 
 // Point size control
-point_size = Inputs.range([0.5, 5], {
+viewof point_size = Inputs.range([0.5, 5], {
   label: "Point Size:",
   step: 0.1,
   value: 1.5
@@ -575,12 +683,19 @@ world_map = {
   const worldData = await world;
   const countries = topojson.feature(worldData, worldData.objects.countries);
   
-  // Convert point size to number
-  const pointRadius = Number(point_size);
+  // In Observable, inputs are automatically reactive values
+  const pointRadius = point_size;
+  const mapProjection = projection;
+  
+  // Validate that pointRadius is a proper number
+  if (isNaN(pointRadius) || pointRadius <= 0) {
+    console.error('Invalid point size detected:', point_size, 'using fallback:', 1.5);
+    pointRadius = 1.5;
+  }
   
   return Plot.plot({
     title: `Geographic Distribution of ${sample_stats.total.toLocaleString()} Sample Points`,
-    projection: projection,
+    projection: mapProjection,
     marks: [
       // World map outline
       Plot.geo(countries, {
@@ -663,7 +778,7 @@ top_categories = {
 //| label: material-controls
 
 // Category selector for detailed view
-selected_category = Inputs.select(
+viewof selected_category = Inputs.select(
   ["All", ...top_categories.map(d => d.has_material_category)],
   {
     label: "Focus on Category:",
@@ -712,39 +827,73 @@ categories_chart = Plot.plot({
 })
 
 // Material by source chart
-material_by_source_chart = Plot.plot({
-  title: selected_category === "All" 
-    ? "Material Categories by Source Collection" 
-    : `${selected_category} by Source Collection`,
-  x: {
-    label: "Number of samples",
-    tickFormat: "~s"
-  },
-  y: {
-    label: selected_category === "All" ? "Material Category" : "Source Collection"
-  },
-  color: {
-    legend: true,
-    domain: ["SESAR", "OPENCONTEXT", "GEOME", "SMITHSONIAN"],
-    range: ["#3366cc", "#dc3912", "#109618", "#ff9900"]
-  },
-  marks: [
-    Plot.barX(
-      selected_category === "All" 
-        ? material_data.filter(d => top_categories.map(c => c.has_material_category).includes(d.has_material_category))
-        : filtered_material_data,
-      {
+material_by_source_chart = {
+  console.log('Material chart - selected_category type:', typeof selected_category);
+  console.log('Material chart - selected_category:', selected_category);
+  console.log('Material chart - material_data type:', typeof material_data);
+  console.log('Material chart - material_data is array:', Array.isArray(material_data));
+  console.log('Material chart - top_categories is array:', Array.isArray(top_categories));
+  
+  // Validate that data is available
+  if (!Array.isArray(material_data) || !Array.isArray(top_categories)) {
+    console.error('Material data or top_categories is not an array');
+    return html`<div>Error: Material data is not available</div>`;
+  }
+  
+  // In Observable, inputs are automatically reactive values
+  const currentCategory = selected_category;
+  
+  // Filter the data based on selection
+  let chartData;
+  if (currentCategory === "All") {
+    // For "All", show top 10 categories across all sources
+    chartData = material_data.filter(d => 
+      top_categories.map(c => c.has_material_category).includes(d.has_material_category)
+    );
+  } else {
+    // For specific category, show by source collection
+    chartData = material_data.filter(d => d.has_material_category === currentCategory);
+  }
+  
+  console.log('Material chart - current category:', currentCategory);
+  console.log('Material chart - filtered data length:', chartData.length);
+  console.log('Material chart - sample filtered data:', chartData.slice(0, 5));
+  console.log('Material chart - top categories list:', top_categories.map(c => c.has_material_category));
+  
+  // If no data, return early with a message
+  if (chartData.length === 0) {
+    return html`<div>No data available for selected category: ${currentCategory}</div>`;
+  }
+  
+  return Plot.plot({
+    title: currentCategory === "All" 
+      ? "Material Categories by Source Collection" 
+      : `${currentCategory} by Source Collection`,
+    x: {
+      label: "Number of samples",
+      tickFormat: "~s"
+    },
+    y: {
+      label: currentCategory === "All" ? "Material Category" : "Source Collection"
+    },
+    color: {
+      legend: true,
+      domain: ["SESAR", "OPENCONTEXT", "GEOME", "SMITHSONIAN"],
+      range: ["#3366cc", "#dc3912", "#109618", "#ff9900"]
+    },
+    marks: [
+      Plot.barX(chartData, {
         x: "category_count",
-        y: selected_category === "All" ? "has_material_category" : "source_collection",
+        y: currentCategory === "All" ? "has_material_category" : "source_collection",
         fill: "source_collection",
         sort: {y: "x", reverse: true}
-      }
-    )
-  ],
-  marginLeft: 150,
-  height: Math.max(250, filtered_material_data.length * 20),
-  width: 700
-})
+      })
+    ],
+    marginLeft: 150,
+    height: Math.max(250, chartData.length * 20),
+    width: 700
+  });
+}
 ```
 
 ## Performance Summary
