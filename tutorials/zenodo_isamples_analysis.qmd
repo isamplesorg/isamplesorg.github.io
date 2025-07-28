@@ -654,12 +654,11 @@ Create an interactive scatter plot map showing the geographic distribution of sa
 // Map projection selector
 viewof projection = Inputs.select([
   "equirectangular",
-  "natural-earth",
   "orthographic",
   "mercator"
 ], {
   label: "Map Projection:",
-  value: "natural-earth"
+  value: "equirectangular"
 })
 
 // Point size control
