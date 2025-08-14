@@ -44,6 +44,8 @@ website:
             href: tutorials/index.qmd
           - text: "iSamples Parquet Tutorial"
             href: tutorials/parquet.qmd
+          - text: "Zenodo iSamples OpenContext Tutorial"
+            href: tutorials/zenodo_isamples_analysis.qmd
           - text: "Cesium View"
             href: tutorials/parquet_cesium.qmd
           - text: "Cesium View split sources"
