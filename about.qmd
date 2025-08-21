@@ -4,9 +4,17 @@ title: "About iSamples"
 
 # Project Objectives
 
-1. Design and develop iSamples infrastructure (iSamples in a Box and iSamples Central);
+1. Design and develop iSamples infrastructure (iSamples in a Box and distributed data systems);
 2. Build four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);
 3. Conduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.
+
+## Current Data Access
+
+**Note**: iSamples Central is currently unavailable. The project has transitioned to a **geoparquet-based approach** for data access and analysis:
+
+- **Primary Data Source**: Comprehensive geoparquet files containing millions of sample records
+- **Analysis Platform**: Browser-based tools using DuckDB-WASM and Observable
+- **Coverage**: Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian collections
 
 ![iSamples diagram](assets/iSamplesArchitecture.png)
 

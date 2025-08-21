@@ -2,66 +2,39 @@
 title: "Tutorials: Overview"
 ---
 
-Here's where we park our various tutorials!
+Welcome to the iSamples tutorials! These tutorials demonstrate how to work with sample data using modern browser-based tools and geoparquet files.
 
-Get the OpenAPI spec.
+## Available Data Sources
 
-```{ojs}
-//| echo: true
+With iSamples Central currently unavailable, all tutorials now use **geoparquet files** as the primary data source:
 
-// Get the OpenAPI specification and display detailed endpoint information
-viewof apiEndpointDetails = {
-  // Show loading indicator
-  const loadingElement = html`<div>Loading API endpoints...</div>`;
-  document.body.appendChild(loadingElement);
+### Primary Data Sources
+- **Zenodo Complete Dataset**: ~300MB, 6+ million records from all iSamples sources
+- **OpenContext Parquet**: Curated archaeological sample data
+- **Domain-specific Collections**: Specialized datasets for focused analysis
 
-  try {
-    const OPENAPI_URL = 'https://central.isample.xyz/isamples_central/openapi.json';
+### Tutorial Categories
 
-    // Fetch the OpenAPI spec
-    const response = await fetch(OPENAPI_URL);
-    if (!response.ok) throw new Error(`Failed to fetch API spec: ${response.status}`);
+**🗺️ Geographic Analysis**
+- Interactive mapping and spatial exploration
+- Regional distribution analysis
+- Cesium-based 3D visualizations
 
-    const apiSpec = await response.json();
+**📊 Data Analysis**
+- Statistical analysis with DuckDB-WASM
+- Material category distributions
+- Cross-collection comparisons
 
-    // Extract detailed information about each endpoint
-    const endpointDetails = [];
+**🚀 Performance Demonstrations**
+- Browser-based big data analysis
+- Efficient sampling and visualization techniques
+- HTTP range request optimization
 
-    for (const [path, pathMethods] of Object.entries(apiSpec.paths)) {
-      for (const [method, details] of Object.entries(pathMethods)) {
-        endpointDetails.push({
-          endpoint: path,
-          method: method.toUpperCase(),
-          summary: details.summary || '',
-          operationId: details.operationId || '',
-          tags: (details.tags || []).join(', '),
-          parameters: (details.parameters || [])
-            .map(p => `${p.name} (${p.required ? 'required' : 'optional'})`)
-            .join(', ')
-        });
-      }
-    }
+## Why Geoparquet?
 
-    // Create a table with the detailed endpoint information
-    return Inputs.table(
-      endpointDetails,
-      {
-        label: "iSamples API Endpoints Details",
-        width: {
-          endpoint: 150,
-          method: 80,
-          summary: 200,
-          operationId: 200,
-          tags: 100,
-          parameters: 300
-        }
-      }
-    );
-  } catch (error) {
-    return html`<div style="color: red">Error fetching API endpoints: ${error.message}</div>`;
-  } finally {
-    // Remove loading indicator
-    loadingElement.remove();
-  }
-}
-```
+Our tutorials showcase how **geoparquet + DuckDB-WASM** enables:
+- ✅ **Universal access**: No software installation required
+- ✅ **Fast analysis**: 5-10x faster than traditional approaches  
+- ✅ **Memory efficient**: Analyze 300MB datasets using <100MB browser memory
+- ✅ **Minimal data transfer**: Only download what you need
+- ✅ **Interactive exploration**: Real-time parameter adjustment
