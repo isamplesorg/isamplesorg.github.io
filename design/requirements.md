@@ -337,7 +337,7 @@ Components
 ## 15 All content sources should be assumed to be dynamic and attached components should facilitate efficient synchronization of subscribed content.
   
 
-iSamples central will need to continually update the catalog and promote dissemination of the content to subscribers (e.g. iSB instances).
+With the transition to geoparquet-based data access, content synchronization now occurs through periodic updates of parquet files rather than real-time API synchronization. This approach provides better performance and reliability for analytical workloads.
 
 Derived from:
 

@@ -9,8 +9,6 @@ website:
     search: true
     logo: assets/isampleslogopetal.png
     tools:
-      - icon: table
-        href: https://hyde.cyverse.org/isamples_central/ui/
       - icon: github
         href: https://github.com/isamplesorg
       - icon: slack
