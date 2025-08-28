@@ -38,7 +38,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-9e53c2ed7bc9fb8419eeca6e6a9e5da6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-97733a8ea5fc01a894890b48a54654e5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -98,7 +98,6 @@ ul.task-list li input[type="checkbox"] {
       <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
-    <a href="https://hyde.cyverse.org/isamples_central/ui/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
     <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
     <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
     <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
@@ -233,7 +232,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#project-objectives" id="toc-project-objectives" class="nav-link active" data-scroll-target="#project-objectives"><span class="header-section-number">1</span> Project Objectives</a></li>
+  <li><a href="#project-objectives" id="toc-project-objectives" class="nav-link active" data-scroll-target="#project-objectives"><span class="header-section-number">1</span> Project Objectives</a>
+  <ul>
+  <li><a href="#current-data-access" id="toc-current-data-access" class="nav-link" data-scroll-target="#current-data-access"><span class="header-section-number">1.1</span> Current Data Access</a></li>
+  </ul></li>
   <li><a href="#background" id="toc-background" class="nav-link" data-scroll-target="#background"><span class="header-section-number">2</span> Background</a></li>
   <li><a href="#technical-perspective" id="toc-technical-perspective" class="nav-link" data-scroll-target="#technical-perspective"><span class="header-section-number">3</span> Technical perspective</a></li>
   <li><a href="#principal-investigators" id="toc-principal-investigators" class="nav-link" data-scroll-target="#principal-investigators"><span class="header-section-number">4</span> Principal Investigators</a></li>
@@ -265,16 +267,25 @@ ul.task-list li input[type="checkbox"] {
 <section id="project-objectives" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Project Objectives</h1>
 <ol type="1">
-<li>Design and develop iSamples infrastructure (iSamples in a Box and iSamples Central);</li>
+<li>Design and develop iSamples infrastructure (iSamples in a Box and distributed data systems);</li>
 <li>Build four initial implementations of iSamples for adoption and use case testing (Open Context, GEOME, SESAR, and Smithsonian Institution);</li>
 <li>Conduct outreach and community engagement to developers, individual researchers, and international organizations concerned with material samples.</li>
 </ol>
+<section id="current-data-access" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="current-data-access"><span class="header-section-number">1.1</span> Current Data Access</h2>
+<p><strong>Note</strong>: iSamples Central is currently unavailable. The project has transitioned to a <strong>geoparquet-based approach</strong> for data access and analysis:</p>
+<ul>
+<li><strong>Primary Data Source</strong>: Comprehensive geoparquet files containing millions of sample records</li>
+<li><strong>Analysis Platform</strong>: Browser-based tools using DuckDB-WASM and Observable</li>
+<li><strong>Coverage</strong>: Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian collections</li>
+</ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="assets/iSamplesArchitecture.png" class="img-fluid figure-img"></p>
 <figcaption>iSamples diagram</figcaption>
 </figure>
 </div>
+</section>
 </section>
 <section id="background" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Background</h1>

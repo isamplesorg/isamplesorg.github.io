@@ -20,41 +20,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -73,7 +38,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-9e53c2ed7bc9fb8419eeca6e6a9e5da6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-97733a8ea5fc01a894890b48a54654e5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -101,8 +66,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
-<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
 
 
 <link rel="stylesheet" href="../styles.css">
@@ -135,7 +98,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
-    <a href="https://hyde.cyverse.org/isamples_central/ui/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-table"></i></a>
     <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
     <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
     <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
@@ -265,8 +227,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#available-data-sources" id="toc-available-data-sources" class="nav-link active" data-scroll-target="#available-data-sources"><span class="header-section-number">1</span> Available Data Sources</a>
+  <ul>
+  <li><a href="#primary-data-sources" id="toc-primary-data-sources" class="nav-link" data-scroll-target="#primary-data-sources"><span class="header-section-number">1.1</span> Primary Data Sources</a></li>
+  <li><a href="#tutorial-categories" id="toc-tutorial-categories" class="nav-link" data-scroll-target="#tutorial-categories"><span class="header-section-number">1.2</span> Tutorial Categories</a></li>
+  </ul></li>
+  <li><a href="#why-geoparquet" id="toc-why-geoparquet" class="nav-link" data-scroll-target="#why-geoparquet"><span class="header-section-number">2</span> Why Geoparquet?</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -290,85 +263,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Here’s where we park our various tutorials!</p>
-<p>Get the OpenAPI spec.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1" data-startfrom="10" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 9;"><span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Get the OpenAPI specification and display detailed endpoint information</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>viewof apiEndpointDetails <span class="op">=</span> {</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Show loading indicator</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> loadingElement <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;Loading API endpoints...&lt;/div&gt;`</span><span class="op">;</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(loadingElement)<span class="op">;</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">try</span> {</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> OPENAPI_URL <span class="op">=</span> <span class="st">'https://central.isample.xyz/isamples_central/openapi.json'</span><span class="op">;</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Fetch the OpenAPI spec</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> response <span class="op">=</span> <span class="cf">await</span> <span class="fu">fetch</span>(OPENAPI_URL)<span class="op">;</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>response<span class="op">.</span><span class="at">ok</span>) <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">Error</span>(<span class="vs">`Failed to fetch API spec: </span><span class="sc">${</span>response<span class="op">.</span><span class="at">status</span><span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> apiSpec <span class="op">=</span> <span class="cf">await</span> response<span class="op">.</span><span class="fu">json</span>()<span class="op">;</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Extract detailed information about each endpoint</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> endpointDetails <span class="op">=</span> []<span class="op">;</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> [path<span class="op">,</span> pathMethods] <span class="kw">of</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">entries</span>(apiSpec<span class="op">.</span><span class="at">paths</span>)) {</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>      <span class="cf">for</span> (<span class="kw">const</span> [method<span class="op">,</span> details] <span class="kw">of</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">entries</span>(pathMethods)) {</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        endpointDetails<span class="op">.</span><span class="fu">push</span>({</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>          <span class="dt">endpoint</span><span class="op">:</span> path<span class="op">,</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>          <span class="dt">method</span><span class="op">:</span> method<span class="op">.</span><span class="fu">toUpperCase</span>()<span class="op">,</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>          <span class="dt">summary</span><span class="op">:</span> details<span class="op">.</span><span class="at">summary</span> <span class="op">||</span> <span class="st">''</span><span class="op">,</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>          <span class="dt">operationId</span><span class="op">:</span> details<span class="op">.</span><span class="at">operationId</span> <span class="op">||</span> <span class="st">''</span><span class="op">,</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>          <span class="dt">tags</span><span class="op">:</span> (details<span class="op">.</span><span class="at">tags</span> <span class="op">||</span> [])<span class="op">.</span><span class="fu">join</span>(<span class="st">', '</span>)<span class="op">,</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>          <span class="dt">parameters</span><span class="op">:</span> (details<span class="op">.</span><span class="at">parameters</span> <span class="op">||</span> [])</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">map</span>(p <span class="kw">=&gt;</span> <span class="vs">`</span><span class="sc">${</span>p<span class="op">.</span><span class="at">name</span><span class="sc">}</span><span class="vs"> (</span><span class="sc">${</span>p<span class="op">.</span><span class="at">required</span> <span class="op">?</span> <span class="st">'required'</span> <span class="op">:</span> <span class="st">'optional'</span><span class="sc">}</span><span class="vs">)`</span>)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">join</span>(<span class="st">', '</span>)</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Create a table with the detailed endpoint information</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Inputs<span class="op">.</span><span class="fu">table</span>(</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>      endpointDetails<span class="op">,</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>      {</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>        <span class="dt">label</span><span class="op">:</span> <span class="st">"iSamples API Endpoints Details"</span><span class="op">,</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>        <span class="dt">width</span><span class="op">:</span> {</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>          <span class="dt">endpoint</span><span class="op">:</span> <span class="dv">150</span><span class="op">,</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>          <span class="dt">method</span><span class="op">:</span> <span class="dv">80</span><span class="op">,</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>          <span class="dt">summary</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>          <span class="dt">operationId</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>          <span class="dt">tags</span><span class="op">:</span> <span class="dv">100</span><span class="op">,</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>          <span class="dt">parameters</span><span class="op">:</span> <span class="dv">300</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">catch</span> (error) {</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="color: red"&gt;Error fetching API endpoints: </span><span class="sc">${</span>error<span class="op">.</span><span class="at">message</span><span class="sc">}</span><span class="vs">&lt;/div&gt;`</span><span class="op">;</span></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">finally</span> {</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Remove loading indicator</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>    loadingElement<span class="op">.</span><span class="fu">remove</span>()<span class="op">;</span></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-1" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
+<p>Welcome to the iSamples tutorials! These tutorials demonstrate how to work with sample data using modern browser-based tools and geoparquet files.</p>
+<section id="available-data-sources" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="available-data-sources"><span class="header-section-number">1</span> Available Data Sources</h2>
+<p>With iSamples Central currently unavailable, all tutorials now use <strong>geoparquet files</strong> as the primary data source:</p>
+<section id="primary-data-sources" class="level3" data-number="1.1">
+<h3 data-number="1.1" data-anchor-id="primary-data-sources"><span class="header-section-number">1.1</span> Primary Data Sources</h3>
+<ul>
+<li><strong>Zenodo Complete Dataset</strong>: ~300MB, 6+ million records from all iSamples sources</li>
+<li><strong>OpenContext Parquet</strong>: Curated archaeological sample data</li>
+<li><strong>Domain-specific Collections</strong>: Specialized datasets for focused analysis</li>
+</ul>
+</section>
+<section id="tutorial-categories" class="level3" data-number="1.2">
+<h3 data-number="1.2" data-anchor-id="tutorial-categories"><span class="header-section-number">1.2</span> Tutorial Categories</h3>
+<p><strong>🗺️ Geographic Analysis</strong> - Interactive mapping and spatial exploration - Regional distribution analysis - Cesium-based 3D visualizations</p>
+<p><strong>📊 Data Analysis</strong> - Statistical analysis with DuckDB-WASM - Material category distributions - Cross-collection comparisons</p>
+<p><strong>🚀 Performance Demonstrations</strong> - Browser-based big data analysis - Efficient sampling and visualization techniques - HTTP range request optimization</p>
+</section>
+</section>
+<section id="why-geoparquet" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="why-geoparquet"><span class="header-section-number">2</span> Why Geoparquet?</h2>
+<p>Our tutorials showcase how <strong>geoparquet + DuckDB-WASM</strong> enables: - ✅ <strong>Universal access</strong>: No software installation required - ✅ <strong>Fast analysis</strong>: 5-10x faster than traditional approaches (e.g., downloading full CSV datasets and analyzing them locally). <a href="https://duckdb.org/2023/05/10/duckdb-wasm.html">See benchmark</a> - ✅ <strong>Memory efficient</strong>: Analyze 300MB datasets using &lt;100MB browser memory - ✅ <strong>Minimal data transfer</strong>: Only download what you need - ✅ <strong>Interactive exploration</strong>: Real-time parameter adjustment</p>
 
 
+</section>
 
 </main> <!-- /main -->
-<script type="ojs-module-contents">
-eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IlxuLy8gR2V0IHRoZSBPcGVuQVBJIHNwZWNpZmljYXRpb24gYW5kIGRpc3BsYXkgZGV0YWlsZWQgZW5kcG9pbnQgaW5mb3JtYXRpb25cbnZpZXdvZiBhcGlFbmRwb2ludERldGFpbHMgPSB7XG4gIC8vIFNob3cgbG9hZGluZyBpbmRpY2F0b3JcbiAgY29uc3QgbG9hZGluZ0VsZW1lbnQgPSBodG1sYDxkaXY+TG9hZGluZyBBUEkgZW5kcG9pbnRzLi4uPC9kaXY+YDtcbiAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChsb2FkaW5nRWxlbWVudCk7XG5cbiAgdHJ5IHtcbiAgICBjb25zdCBPUEVOQVBJX1VSTCA9ICdodHRwczovL2NlbnRyYWwuaXNhbXBsZS54eXovaXNhbXBsZXNfY2VudHJhbC9vcGVuYXBpLmpzb24nO1xuXG4gICAgLy8gRmV0Y2ggdGhlIE9wZW5BUEkgc3BlY1xuICAgIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgZmV0Y2goT1BFTkFQSV9VUkwpO1xuICAgIGlmICghcmVzcG9uc2Uub2spIHRocm93IG5ldyBFcnJvcihgRmFpbGVkIHRvIGZldGNoIEFQSSBzcGVjOiAke3Jlc3BvbnNlLnN0YXR1c31gKTtcblxuICAgIGNvbnN0IGFwaVNwZWMgPSBhd2FpdCByZXNwb25zZS5qc29uKCk7XG5cbiAgICAvLyBFeHRyYWN0IGRldGFpbGVkIGluZm9ybWF0aW9uIGFib3V0IGVhY2ggZW5kcG9pbnRcbiAgICBjb25zdCBlbmRwb2ludERldGFpbHMgPSBbXTtcblxuICAgIGZvciAoY29uc3QgW3BhdGgsIHBhdGhNZXRob2RzXSBvZiBPYmplY3QuZW50cmllcyhhcGlTcGVjLnBhdGhzKSkge1xuICAgICAgZm9yIChjb25zdCBbbWV0aG9kLCBkZXRhaWxzXSBvZiBPYmplY3QuZW50cmllcyhwYXRoTWV0aG9kcykpIHtcbiAgICAgICAgZW5kcG9pbnREZXRhaWxzLnB1c2goe1xuICAgICAgICAgIGVuZHBvaW50OiBwYXRoLFxuICAgICAgICAgIG1ldGhvZDogbWV0aG9kLnRvVXBwZXJDYXNlKCksXG4gICAgICAgICAgc3VtbWFyeTogZGV0YWlscy5zdW1tYXJ5IHx8ICcnLFxuICAgICAgICAgIG9wZXJhdGlvbklkOiBkZXRhaWxzLm9wZXJhdGlvbklkIHx8ICcnLFxuICAgICAgICAgIHRhZ3M6IChkZXRhaWxzLnRhZ3MgfHwgW10pLmpvaW4oJywgJyksXG4gICAgICAgICAgcGFyYW1ldGVyczogKGRldGFpbHMucGFyYW1ldGVycyB8fCBbXSlcbiAgICAgICAgICAgIC5tYXAocCA9PiBgJHtwLm5hbWV9ICgke3AucmVxdWlyZWQgPyAncmVxdWlyZWQnIDogJ29wdGlvbmFsJ30pYClcbiAgICAgICAgICAgIC5qb2luKCcsICcpXG4gICAgICAgIH0pO1xuICAgICAgfVxuICAgIH1cblxuICAgIC8vIENyZWF0ZSBhIHRhYmxlIHdpdGggdGhlIGRldGFpbGVkIGVuZHBvaW50IGluZm9ybWF0aW9uXG4gICAgcmV0dXJuIElucHV0cy50YWJsZShcbiAgICAgIGVuZHBvaW50RGV0YWlscyxcbiAgICAgIHtcbiAgICAgICAgbGFiZWw6IFwiaVNhbXBsZXMgQVBJIEVuZHBvaW50cyBEZXRhaWxzXCIsXG4gICAgICAgIHdpZHRoOiB7XG4gICAgICAgICAgZW5kcG9pbnQ6IDE1MCxcbiAgICAgICAgICBtZXRob2Q6IDgwLFxuICAgICAgICAgIHN1bW1hcnk6IDIwMCxcbiAgICAgICAgICBvcGVyYXRpb25JZDogMjAwLFxuICAgICAgICAgIHRhZ3M6IDEwMCxcbiAgICAgICAgICBwYXJhbWV0ZXJzOiAzMDBcbiAgICAgICAgfVxuICAgICAgfVxuICAgICk7XG4gIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgcmV0dXJuIGh0bWxgPGRpdiBzdHlsZT1cImNvbG9yOiByZWRcIj5FcnJvciBmZXRjaGluZyBBUEkgZW5kcG9pbnRzOiAke2Vycm9yLm1lc3NhZ2V9PC9kaXY+YDtcbiAgfSBmaW5hbGx5IHtcbiAgICAvLyBSZW1vdmUgbG9hZGluZyBpbmRpY2F0b3JcbiAgICBsb2FkaW5nRWxlbWVudC5yZW1vdmUoKTtcbiAgfVxufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdhcGlFbmRwb2ludERldGFpbHMnKSJ9XX0=
-</script>
-<script type="module">
-if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
-window._ojs.paths.runtimeToDoc = "../../tutorials";
-window._ojs.paths.runtimeToRoot = "../..";
-window._ojs.paths.docToRoot = "..";
-window._ojs.selfContained = false;
-window._ojs.runtime.interpretFromScriptTags();
-</script>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const isCodeAnnotation = (el) => {
@@ -769,7 +690,7 @@ window._ojs.runtime.interpretFromScriptTags();
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
