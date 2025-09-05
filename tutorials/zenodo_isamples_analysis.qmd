@@ -5,7 +5,8 @@ author: "iSamples Team"
 date: "2025-09-05"
 format:
   html:
-    code-fold: false
+    code-fold: true
+    code-summary: "Show code"
     toc: true
     toc-depth: 3
     theme: cosmo
