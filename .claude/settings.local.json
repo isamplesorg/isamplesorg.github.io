@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(git add:*)",
+      "Read(//Users/raymondyee/dev-journal/daily/**)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
