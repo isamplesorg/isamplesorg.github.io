@@ -961,7 +961,7 @@ MAPCFG = ({
   basemap: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
   pointColor: [20,110,180,200],
   pointRadiusPx: 2,
-  maxPerTileHard: 20000,
+  maxPerTileHard: sample_limit_value, // Dynamic sample limit from controls
   modulusByZoom(z){
     if (z >= 13) return 1;
     if (z >= 11) return 2;
@@ -978,6 +978,25 @@ MAPCFG = ({
     return 1.0;
   }
 })
+```
+
+```{ojs}
+//| label: viewport-sampling-controls
+
+// Text input for viewport sample limit
+viewof sample_limit = Inputs.text({
+  label: "Viewport Sample Limit:",
+  value: "20000",
+  placeholder: "Enter number (works reliably up to ~1M)"
+})
+
+// Convert to number with validation
+sample_limit_value = Math.max(1, parseInt(sample_limit) || 20000)
+
+// Display current sample limit
+md`**Current viewport sample limit**: ${sample_limit_value.toLocaleString()} samples per viewport
+
+*Note: Performance tested up to ~1M samples. For larger datasets, need more scalable approach (e.g., lonboard/deck.gl optimization)*`
 ```
 
 ```{ojs}
