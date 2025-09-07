@@ -20,23 +20,26 @@ website:
         text: Home
         aria-label: "iSamples home"
       - href: about.qmd
-        text: About
+        text: Goals
         aria-label: "About the iSamples project"
-      - section: "Design"
+      - href: people.qmd
+        text: People
+        aria-label: "People of the iSamples project"
+      - section: "Information Architecture"
         contents:
           - design/index.qmd
           - design/requirements.md
           - text: Metadata Model
             href: "https://isamplesorg.github.io/metadata/"
           - models/index.qmd
-      - section: "Resources"
+      - section: "Outputs"
         contents:
         - text: Publications
           href: pubs.qmd
         - icon: github
           text: Github
           href: "https://github.com/isamplesorg/"
-      - section: "Tutorials"
+      - section: "Getting Started"
         contents:
           - text: "iSamples Tutorials Overview"
             href: tutorials/index.qmd
