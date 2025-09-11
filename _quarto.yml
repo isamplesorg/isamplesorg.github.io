@@ -4,6 +4,7 @@ project:
 
 website:
   title: "iSamples"  
+  favicon: assets/isamplesfavicon.ico
   sidebar:
     style: "docked"
     search: true
