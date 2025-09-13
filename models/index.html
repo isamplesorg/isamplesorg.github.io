@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.33">
+<meta name="generator" content="quarto-1.8.24">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -30,17 +30,19 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../assets/isamplesfavicon.ico" rel="icon">
 <script src="../site_libs/quarto-listing/list.min.js"></script>
 <script src="../site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ea385d0e468b0dd5ea5bf0780b1290d9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-97733a8ea5fc01a894890b48a54654e5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-00217dde8ce72fc90f13fd9dbcd9a85e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -140,7 +142,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -168,7 +170,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Information Architecture</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -183,7 +185,8 @@ window.Quarto = {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
       <a href="../index.html" class="sidebar-logo-link">
-      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo py-0 d-lg-inline d-none">
+      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
     <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
@@ -207,13 +210,19 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../about.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">About</span></a>
+ <span class="menu-text">Goals</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../people.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">People</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
- <span class="menu-text">Design</span></a>
+ <span class="menu-text">Information Architecture</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -248,7 +257,7 @@ window.Quarto = {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Resources</span></a>
+ <span class="menu-text">Outputs</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -272,7 +281,7 @@ window.Quarto = {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
- <span class="menu-text">Tutorials</span></a>
+ <span class="menu-text">Getting Started</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -327,7 +336,7 @@ window.Quarto = {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Design</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Information Architecture</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">iSamples Vocabularies</h1>
 <p class="subtitle lead">Vocabularies for interoperable sample description</p>
@@ -384,7 +393,7 @@ Subtitle
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1756396551583" data-listing-file-modified-sort="1756396552770" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1283" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.qmd">
+<tr data-index="0" data-listing-date-sort="1757764837007" data-listing-file-modified-sort="1757764838162" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1283" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.qmd">
 <td>
 <a href="../models/generated/vocabularies/sampled_feature_type.html" class="title listing-title">Sampled Feature Type vocabulary</a>
 </td>
@@ -394,7 +403,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1756396554138" data-listing-file-modified-sort="1756396555362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1917" data-listing-title-sort="iSamples Material Sample Object Type Vocabulary" data-listing-filename-sort="material_sample_object_type.qmd">
+<tr data-index="1" data-listing-date-sort="1757764839520" data-listing-file-modified-sort="1757764840726" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1917" data-listing-title-sort="iSamples Material Sample Object Type Vocabulary" data-listing-filename-sort="material_sample_object_type.qmd">
 <td>
 <a href="../models/generated/vocabularies/material_sample_object_type.html" class="title listing-title">iSamples Material Sample Object Type Vocabulary</a>
 </td>
@@ -404,7 +413,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1756396549027" data-listing-file-modified-sort="1756396550234" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1870" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.qmd">
+<tr data-index="2" data-listing-date-sort="1757764834480" data-listing-file-modified-sort="1757764835666" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1870" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.qmd">
 <td>
 <a href="../models/generated/vocabularies/material_type.html" class="title listing-title">iSamples Materials Vocabulary</a>
 </td>
@@ -414,7 +423,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="3" data-listing-file-modified-sort="1756396521429" data-listing-reading-time-sort="1" data-listing-word-count-sort="12" data-listing-filename-sort="readme.md">
+<tr data-index="3" data-listing-file-modified-sort="1757764792578" data-listing-reading-time-sort="1" data-listing-word-count-sort="12" data-listing-filename-sort="readme.md">
 <td>
 <a href="../models/generated/vocabularies/readme.html" class="title listing-title">&nbsp;</a>
 </td>
@@ -444,7 +453,7 @@ Subtitle
 </thead>
 <tbody class="list">
 
-<tr data-index="0" data-listing-date-sort="1756396586656" data-listing-file-modified-sort="1756396589055" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3658" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
+<tr data-index="0" data-listing-date-sort="1757764871968" data-listing-file-modified-sort="1757764874291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3658" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
 <td>
 <a href="../models/generated/extensions/biology_sampledfeature_extension.html" class="title listing-title">Biology Extension: Basic taxon classes for biological entity</a>
 </td>
@@ -454,7 +463,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="1" data-listing-date-sort="1756396572382" data-listing-file-modified-sort="1756396576334" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4948" data-listing-title-sort="Earth and Environmental Science extension -  Material sample type" data-listing-filename-sort="earthenv_materialsampleobject_type.md">
+<tr data-index="1" data-listing-date-sort="1757764857883" data-listing-file-modified-sort="1757764861679" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4948" data-listing-title-sort="Earth and Environmental Science extension -  Material sample type" data-listing-filename-sort="earthenv_materialsampleobject_type.md">
 <td>
 <a href="../models/generated/extensions/earthenv_materialsampleobject_type.html" class="title listing-title">Earth and Environmental Science extension - Material sample type</a>
 </td>
@@ -464,7 +473,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="2" data-listing-date-sort="1756396556275" data-listing-file-modified-sort="1756396556943" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="756" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
+<tr data-index="2" data-listing-date-sort="1757764841676" data-listing-file-modified-sort="1757764842338" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="756" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
 <td>
 <a href="../models/generated/extensions/earthenv_material_extension_mineral_group.html" class="title listing-title">Earth and Environmental Science extension - Mineral group vocabulary</a>
 </td>
@@ -474,7 +483,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="3" data-listing-date-sort="1756396561658" data-listing-file-modified-sort="1756396567108" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-word-count-sort="8362" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
+<tr data-index="3" data-listing-date-sort="1757764847116" data-listing-file-modified-sort="1757764852561" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-word-count-sort="8362" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
 <td>
 <a href="../models/generated/extensions/earthenv_material_extension_rock_sediment.html" class="title listing-title">Earth and Environmental Science extension - Rock and sediment materials vocabulary</a>
 </td>
@@ -484,7 +493,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="4" data-listing-date-sort="1756396568131" data-listing-file-modified-sort="1756396568965" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="682" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
+<tr data-index="4" data-listing-date-sort="1757764853637" data-listing-file-modified-sort="1757764854484" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="682" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
 <td>
 <a href="../models/generated/extensions/earthenv_sampled_feature_role.html" class="title listing-title">Earth and Environmental Science extension - Sampled feature role</a>
 </td>
@@ -494,7 +503,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="5" data-listing-date-sort="1756396583522" data-listing-file-modified-sort="1756396584421" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="635" data-listing-title-sort="Open Context vocabulary extension for material sample object type" data-listing-filename-sort="opencontext_materialsampleobjecttype.md">
+<tr data-index="5" data-listing-date-sort="1757764868877" data-listing-file-modified-sort="1757764869749" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="635" data-listing-title-sort="Open Context vocabulary extension for material sample object type" data-listing-filename-sort="opencontext_materialsampleobjecttype.md">
 <td>
 <a href="../models/generated/extensions/opencontext_materialsampleobjecttype.html" class="title listing-title">Open Context vocabulary extension for material sample object type</a>
 </td>
@@ -504,7 +513,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="6" data-listing-date-sort="1756396579019" data-listing-file-modified-sort="1756396582459" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2529" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
+<tr data-index="6" data-listing-date-sort="1757764864374" data-listing-file-modified-sort="1757764867722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2529" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
 <td>
 <a href="../models/generated/extensions/opencontext_material_extension.html" class="title listing-title">OpenContext material type extension draft</a>
 </td>
@@ -514,7 +523,7 @@ Subtitle
 
 </tr>
 
-<tr data-index="7" data-listing-file-modified-sort="1756396521429" data-listing-reading-time-sort="1" data-listing-word-count-sort="8" data-listing-filename-sort="readme.md">
+<tr data-index="7" data-listing-file-modified-sort="1757764792577" data-listing-reading-time-sort="1" data-listing-word-count-sort="8" data-listing-filename-sort="readme.md">
 <td>
 <a href="../models/generated/extensions/readme.html" class="title listing-title">&nbsp;</a>
 </td>
@@ -572,13 +581,14 @@ Subtitle
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
