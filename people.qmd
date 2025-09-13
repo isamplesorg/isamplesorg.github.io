@@ -1,0 +1,27 @@
+---
+title: "People who contributed to iSamples"
+---
+
+* Cao, Sean
+* Choe, Saebyl
+* Cui, Hong
+* Davies, Neil
+* Deck, John
+* Kansa, Eric C
+* Kansa, Sarah Whitcher
+* Kunze, John
+* Lehnert, Kerstin
+* Mandel, Danny
+* Meyer, Christopher
+* Ramdeen, Sarah
+* Raia, Natalie
+* Richard, Steve
+* Robinson, Erin
+* Snyder, Rebecca
+* Song, Lu-lin
+* Thomer, Andrea
+* Vieglais, Dave
+* Walls, Ramona L
+* Yee, Raymond
+
+xxx! [do we hve a group photo or two? ] (assets/iSamplesArchitecture.png)
