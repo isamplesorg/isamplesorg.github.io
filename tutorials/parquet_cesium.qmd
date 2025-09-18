@@ -406,4 +406,40 @@ viewof otypeTable = {
 
 Total records by object type: ${otypeCounts.reduce((sum, row) => sum + row.count, 0).toLocaleString()}
 
+## Property Distribution Analysis
+
+Understanding the range of properties (predicates) in this graph database structure:
+
+```{ojs}
+//| code-fold: true
+propertyDistribution = {
+    const query = `SELECT p as property, COUNT(*) as count FROM nodes WHERE p IS NOT NULL GROUP BY p ORDER BY count DESC`;
+    const data = await loadData(query, [], "loading_properties");
+    return data;
+}
+```
+
+<div id="loading_properties">Loading property distribution...</div>
+
+```{ojs}
+//| code-fold: true
+viewof propertyTable = {
+    const data_table = Inputs.table(propertyDistribution, {
+        header: {
+            property: "Property (Predicate)",
+            count: "Count"
+        },
+        format: {
+            count: d => d.toLocaleString()
+        },
+        layout: "auto"
+    });
+    return data_table;
+}
+```
+
+Total records with properties: ${propertyDistribution.reduce((sum, row) => sum + row.count, 0).toLocaleString()}
+
+Unique properties in the dataset: ${propertyDistribution.length.toLocaleString()}
+
 
