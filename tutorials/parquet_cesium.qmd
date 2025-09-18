@@ -265,7 +265,7 @@ async function samplesAtLocation(rowid) {
             FROM nodes
             WHERE row_id IN (SELECT o1 FROM concept_edges)
         ), keyword_text AS (
-            SELECT ce.s, string_agg(DISTINCT cl.label, ', ') AS keywords
+            SELECT ce.s, LIST(DISTINCT cl.label) AS keywords
             FROM concept_edges ce
             JOIN concept_labels cl ON ce.o1 = cl.row_id
             WHERE ce.p = 'keywords'
@@ -300,12 +300,18 @@ async function samplesAtLocation(rowid) {
         LEFT JOIN sampling_sites ss ON sl.event_row_id = ss.event_row_id
         LEFT JOIN site_nodes snl ON ss.site_row_id = snl.row_id
         GROUP BY sn.pid, sn.label, sn.description, sn.thumbnail_url, kt.keywords, en.project, en.label, snl.label
-        ORDER BY sn.label
+        ORDER BY coalesce(sn.label, sn.pid)
         LIMIT 6;
     `;
-    const result = await db.query(query, [rowid]);
-    const rows = result?.toArray ? result.toArray() : result;
-    return Array.isArray(rows) ? rows : [];
+    try {
+        const result = await db.query(query, [rowid]);
+        const rows = result?.toArray ? result.toArray() : result;
+        console.log(`Samples retrieved for location ${rowid}:`, rows);
+        return Array.isArray(rows) ? rows : [];
+    } catch (error) {
+        console.error('Failed to load sample data for location', rowid, error);
+        return [];
+    }
 }
 
 // Use a viewof pattern to create a reactive clickedPointId
@@ -395,10 +401,11 @@ html`<section id="sampleDetails">
                 const typeParts = [sample.sample_object_type, sample.material_category].filter(Boolean);
                 const collectionParts = [sample.project, sample.site_label, sample.event_label].filter(Boolean);
                 const context = sample.context_category;
-                const keywords = typeof sample.keywords === 'string'
-                  ? sample.keywords.split(', ').filter(Boolean)
-                  : Array.isArray(sample.keywords)
-                    ? sample.keywords.filter(Boolean)
+                const keywordData = sample.keywords;
+                const keywords = Array.isArray(keywordData)
+                  ? keywordData.filter(Boolean)
+                  : typeof keywordData === 'string'
+                    ? keywordData.split(',').map(d => d.trim()).filter(Boolean)
                     : [];
                 return html`<article class="sample-card">
                   <h3><a href="${sampleLink}" target="_blank" rel="noopener">${displayLabel}</a></h3>
