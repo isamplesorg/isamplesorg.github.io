@@ -227,6 +227,7 @@ async function getGeoRecord(pid) {
     }
     const q = `SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
     const result = await db.queryRow(q, [pid]);
+    console.log('Loaded geo record for PID', pid, result);
     return result;
 }
 
@@ -234,6 +235,7 @@ async function samplesAtLocation(rowid) {
     if (rowid === undefined || rowid === null) {
         return [];
     }
+    console.log('samplesAtLocation invoked with row_id', rowid);
     const query = `
         WITH edges AS (
             SELECT s, p, unnest(o) AS o1
