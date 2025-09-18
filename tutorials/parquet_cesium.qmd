@@ -250,7 +250,128 @@ ${JSON.stringify(selectedGeoRecord, null, 2)}
 `
 ```
 
+## Table Structure Analysis
 
+Understanding the structure and schema of the parquet file:
+
+### Column Schema
+
+```{ojs}
+//| code-fold: true
+tableSchema = {
+    const query = `DESCRIBE nodes`;
+    const data = await loadData(query, [], "loading_schema");
+    return data;
+}
+```
+
+<div id="loading_schema">Loading table schema...</div>
+
+```{ojs}
+//| code-fold: true
+viewof schemaTable = {
+    const data_table = Inputs.table(tableSchema, {
+        header: {
+            column_name: "Column Name",
+            column_type: "Data Type",
+            null: "Nullable",
+            key: "Key",
+            default: "Default",
+            extra: "Extra"
+        }
+    });
+    return data_table;
+}
+```
+
+### Sample Data
+
+First 10 rows of the dataset to understand the data structure:
+
+```{ojs}
+//| code-fold: true
+sampleData = {
+    const query = `SELECT * FROM nodes LIMIT 10`;
+    const data = await loadData(query, [], "loading_sample");
+    return data;
+}
+```
+
+<div id="loading_sample">Loading sample data...</div>
+
+```{ojs}
+//| code-fold: true
+viewof sampleTable = {
+    const data_table = Inputs.table(sampleData, {
+        layout: "auto",
+        width: {
+            pid: 200,
+            otype: 150
+        }
+    });
+    return data_table;
+}
+```
+
+### Sample Data by Object Type
+
+Examples of records for each object type to understand the data semantics:
+
+```{ojs}
+//| code-fold: true
+sampleDataByOtype = {
+    // First get the list of unique object types
+    const otypeQuery = `SELECT DISTINCT otype FROM nodes ORDER BY otype`;
+    const otypes = await loadData(otypeQuery, [], "loading_otype_samples");
+    
+    const results = [];
+    for (const otypeRow of otypes) {
+        const otype = otypeRow.otype;
+        // Get 3 sample records for each otype
+        const sampleQuery = `SELECT * FROM nodes WHERE otype = ? LIMIT 3`;
+        const samples = await db.query(sampleQuery, [otype]);
+        
+        results.push({
+            otype: otype,
+            count: samples.length,
+            samples: samples
+        });
+    }
+    return results;
+}
+```
+
+<div id="loading_otype_samples">Loading sample data by object type...</div>
+
+```{ojs}
+//| code-fold: true
+viewof otypeSamplesDisplay = {
+    const container = html`<div></div>`;
+    
+    for (const otypeData of sampleDataByOtype) {
+        const section = html`<div style="margin-bottom: 2rem;">
+            <h4 style="color: #2563eb; margin-bottom: 0.5rem;">Object Type: ${otypeData.otype}</h4>
+            <p style="margin: 0.5rem 0; font-style: italic;">Sample records (showing up to 3):</p>
+        </div>`;
+        
+        // Create a table for this otype's samples
+        const table = Inputs.table(otypeData.samples, {
+            layout: "auto",
+            width: {
+                pid: 150,
+                otype: 120,
+                latitude: 100,
+                longitude: 100
+            }
+        });
+        
+        section.appendChild(table);
+        container.appendChild(section);
+    }
+    
+    return container;
+}
+```
 
 ## Object Type Counts
 
