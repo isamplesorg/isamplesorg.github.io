@@ -3,9 +3,9 @@ title: Using Cesium for geospatial visualization of remote parquet data
 categories: [parquet, spatial, recipe]
 ---
 
-<p>One key development of the iSamples project centers on the demonstration of low-cost, simplified, and more sustainable approaches to access, analyze and visualize scientific data. Rather than relying upon elaborate and costly server-side infrastructure, iSamples demonstrates how open source technologies like parquet and DuckDB-WASM can streamline cheaper and faster approaches to interacting with geospatial data.</p>
+One key development of the iSamples project centers on the demonstration of low-cost, simplified, and more sustainable approaches to access, analyze and visualize scientific data. Rather than relying upon elaborate and costly server-side infrastructure, iSamples demonstrates how open source technologies like parquet and DuckDB-WASM can streamline cheaper and faster approaches to interacting with geospatial data.
 
-<p>This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from <a href="https://opencontext.org/" target="_blank">Open Context's</a> export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.</p>
+This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from [Open Context's](https://opencontext.org/) export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.
 
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
