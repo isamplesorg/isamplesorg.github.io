@@ -22,34 +22,6 @@ This page demonstrates how geospatial data can be dynamically accessed from a re
     #cesiumContainer {
         aspect-ratio: 1/1;
     }
-    #sampleDetails {
-        margin-top: 1.5rem;
-    }
-    #sampleDetails .sample-grid {
-        display: grid;
-        gap: 1rem;
-    }
-    @media (min-width: 768px) {
-        #sampleDetails .sample-grid {
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        }
-    }
-    #sampleDetails .sample-card {
-        border: 1px solid #d9d9d9;
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        background: #fafafa;
-    }
-    #sampleDetails .sample-card h3 {
-        margin-top: 0;
-        font-size: 1.05rem;
-    }
-    #sampleDetails .sample-card img {
-        max-width: 140px;
-        border-radius: 0.25rem;
-        display: block;
-        margin-top: 0.5rem;
-    }
 </style>
 
 ```{ojs}
@@ -202,13 +174,7 @@ class CView {
         this.selectHandler.setInputAction((e) => {
             const selectPoint = this.viewer.scene.pick(e.position);
             if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
-                console.log("Clicked point ID:", selectPoint.id);
-                // Store the clicked ID in the viewer instance for now
-                this.clickedId = selectPoint.id;
-                // Dispatch a custom event that can be picked up by Observable
-                document.dispatchEvent(new CustomEvent('pointSelected', {
-                    detail: { pointId: selectPoint.id }
-                }));
+                mutable clickedPointId = selectPoint.id;
             }
         },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -227,125 +193,19 @@ async function getGeoRecord(pid) {
     }
     const q = `SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
     const result = await db.queryRow(q, [pid]);
-    console.log('Loaded geo record for PID', pid, result);
     return result;
 }
 
-async function samplesAtLocation(rowid) {
+async function locationUsedBy(rowid){
     if (rowid === undefined || rowid === null) {
         return [];
     }
-    console.log('samplesAtLocation invoked with row_id', rowid);
-    const query = `
-        WITH edges AS (
-            SELECT s, p, unnest(o) AS o1
-            FROM nodes
-            WHERE otype = '_edge_'
-        ), events AS (
-            SELECT s AS event_row_id
-            FROM edges
-            WHERE p = 'sample_location' AND o1 = ?
-        ), sample_links AS (
-            SELECT s AS sample_row_id, o1 AS event_row_id
-            FROM edges
-            WHERE p = 'produced_by' AND o1 IN (SELECT event_row_id FROM events)
-        ), sample_nodes AS (
-            SELECT row_id, pid, label, description, thumbnail_url, alternate_identifiers
-            FROM nodes
-            WHERE row_id IN (SELECT sample_row_id FROM sample_links)
-        ), event_nodes AS (
-            SELECT row_id, label, project
-            FROM nodes
-            WHERE row_id IN (SELECT event_row_id FROM events)
-        ), concept_edges AS (
-            SELECT s, p, o1
-            FROM edges
-            WHERE s IN (SELECT row_id FROM sample_nodes)
-              AND p IN ('has_sample_object_type','has_material_category','has_context_category','keywords')
-        ), concept_labels AS (
-            SELECT row_id, label
-            FROM nodes
-            WHERE row_id IN (SELECT o1 FROM concept_edges)
-        ), keyword_text AS (
-            SELECT ce.s, LIST(DISTINCT cl.label) AS keywords
-            FROM concept_edges ce
-            JOIN concept_labels cl ON ce.o1 = cl.row_id
-            WHERE ce.p = 'keywords'
-            GROUP BY ce.s
-        ), sampling_sites AS (
-            SELECT s AS event_row_id, o1 AS site_row_id
-            FROM edges
-            WHERE p = 'sampling_site' AND s IN (SELECT event_row_id FROM events)
-        ), site_nodes AS (
-            SELECT row_id, label
-            FROM nodes
-            WHERE row_id IN (SELECT site_row_id FROM sampling_sites)
-        )
-        SELECT
-            sn.pid,
-            sn.label,
-            sn.description,
-            sn.thumbnail_url,
-            MAX(CASE WHEN ce.p = 'has_sample_object_type' THEN cl.label END) AS sample_object_type,
-            MAX(CASE WHEN ce.p = 'has_material_category' THEN cl.label END) AS material_category,
-            MAX(CASE WHEN ce.p = 'has_context_category' THEN cl.label END) AS context_category,
-            kt.keywords,
-            en.project,
-            en.label AS event_label,
-            snl.label AS site_label
-        FROM sample_nodes sn
-        LEFT JOIN sample_links sl ON sn.row_id = sl.sample_row_id
-        LEFT JOIN event_nodes en ON sl.event_row_id = en.row_id
-        LEFT JOIN concept_edges ce ON sn.row_id = ce.s
-        LEFT JOIN concept_labels cl ON ce.o1 = cl.row_id
-        LEFT JOIN keyword_text kt ON sn.row_id = kt.s
-        LEFT JOIN sampling_sites ss ON sl.event_row_id = ss.event_row_id
-        LEFT JOIN site_nodes snl ON ss.site_row_id = snl.row_id
-        GROUP BY sn.pid, sn.label, sn.description, sn.thumbnail_url, kt.keywords, en.project, en.label, snl.label
-        ORDER BY coalesce(sn.label, sn.pid)
-        LIMIT 6;
-    `;
-    try {
-        const result = await db.query(query, [rowid]);
-        const rows = result?.toArray ? result.toArray() : result;
-        console.log(`Samples retrieved for location ${rowid}:`, rows);
-        return Array.isArray(rows) ? rows : [];
-    } catch (error) {
-        console.error('Failed to load sample data for location', rowid, error);
-        return [];
-    }
+    const q = `select pid, otype from nodes where row_id in (select nodes.s from nodes where list_contains(nodes.o, ?));`;
+    return db.query(q, [rowid]);
 }
 
-// Use a viewof pattern to create a reactive clickedPointId
-viewof clickedPointId = {
-  const input = html`<input type="hidden" value="unset">`;
-
-  // Listen for point selection events and update the input value
-  document.addEventListener('pointSelected', (event) => {
-    input.value = event.detail.pointId;
-    input.dispatchEvent(new Event('input'));
-  });
-
-  return input;
-}
-
-// Access the current value
-clickedPointId;
-
-selectedGeoRecord = {
-  // This will re-execute whenever clickedPointId changes
-  const result = await getGeoRecord(clickedPointId);
-  return result;
-}
-
-selectedSamples = {
-  // This will re-execute whenever selectedGeoRecord changes
-  if (selectedGeoRecord?.row_id) {
-    const samples = await samplesAtLocation(selectedGeoRecord.row_id);
-    return samples;
-  }
-  return [];
-}
+mutable clickedPointId = "unset";
+selectedGeoRecord = await getGeoRecord(clickedPointId);
 
 md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 ```
@@ -378,51 +238,14 @@ viewof pointdata = {
 
 :::
 
+The click point ID is "${clickedPointId}".
+
 ```{ojs}
 //| echo: false
-// Enhanced UI with sample information
-html`<section id="sampleDetails">
-  <h2>Selected Location</h2>
-  ${clickedPointId === "unset" ?
-    html`<p>Click a point on the map to view nearby sample records.</p>` :
-    html`${(() => {
-      const locationPid = selectedGeoRecord?.pid || clickedPointId;
-      const resolver = locationPid?.startsWith('http') ? locationPid : `https://n2t.net/${encodeURIComponent(locationPid)}`;
-      const lat = selectedGeoRecord?.latitude != null ? selectedGeoRecord.latitude.toFixed(4) : 'N/A';
-      const lon = selectedGeoRecord?.longitude != null ? selectedGeoRecord.longitude.toFixed(4) : 'N/A';
-      const samples = Array.isArray(selectedSamples) ? selectedSamples : [];
-      return html`<div>
-        <p><strong>Point PID:</strong> <a href="${resolver}" target="_blank" rel="noopener">${locationPid}</a></p>
-        <p><strong>Coordinates:</strong> ${lat}, ${lon}</p>
-        <p><strong>Sample records found:</strong> ${samples.length}</p>
-        ${samples.length
-          ? html`<div class="sample-grid">
-              ${samples.map(sample => {
-                const displayLabel = sample.label || sample.pid;
-                const sampleLink = sample.pid?.startsWith('http') ? sample.pid : `https://n2t.net/${encodeURIComponent(sample.pid)}`;
-                const typeParts = [sample.sample_object_type, sample.material_category].filter(Boolean);
-                const collectionParts = [sample.project, sample.site_label, sample.event_label].filter(Boolean);
-                const context = sample.context_category;
-                const keywordData = sample.keywords;
-                const keywords = Array.isArray(keywordData)
-                  ? keywordData.filter(Boolean)
-                  : typeof keywordData === 'string'
-                    ? keywordData.split(',').map(d => d.trim()).filter(Boolean)
-                    : [];
-                return html`<article class="sample-card">
-                  <h3><a href="${sampleLink}" target="_blank" rel="noopener">${displayLabel}</a></h3>
-                  ${sample.description ? html`<p>${sample.description}</p>` : null}
-                  ${typeParts.length ? html`<p><strong>Type</strong>: ${typeParts.join(' · ')}</p>` : null}
-                  ${context ? html`<p><strong>Context</strong>: ${context}</p>` : null}
-                  ${collectionParts.length ? html`<p><strong>Collection</strong>: ${collectionParts.join(' · ')}</p>` : null}
-                  ${keywords.length ? html`<p><strong>Keywords</strong>: ${keywords.join(', ')}</p>` : null}
-                  ${sample.thumbnail_url ? html`<img src="${sample.thumbnail_url}" alt="Thumbnail for ${displayLabel}" loading="lazy">` : null}
-                </article>`;
-              })}
-            </div>`
-          : html`<p><em>No sample records were linked to this location.</em></p>`}
-      </div>`;
-    })()}`
-  }
-</section>`
+md`\`\`\`
+${JSON.stringify(selectedGeoRecord, null, 2)}
+\`\`\`
+`
 ```
+
+
