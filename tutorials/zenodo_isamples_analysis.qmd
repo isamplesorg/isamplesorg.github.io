@@ -2,30 +2,15 @@
 title: "Efficient Analysis of Large iSamples Dataset from Zenodo"
 subtitle: "Using DuckDB-WASM and Observable JS for Browser-Based Data Analysis"
 author: "iSamples Team"
-date: "2025-07-14"
+date: "2025-09-05"
 format:
   html:
-    code-fold: false
+    code-fold: true
+    code-summary: "Show code"
     toc: true
     toc-depth: 3
     theme: cosmo
 ---
-
-## Learning OJS
-
-```{ojs}
-
-// Simple test to debug Observable reactivity
-viewof int_input = Inputs.range([1, 100], {
-  label: "Int Input:",
-  step: 1,
-  value: 42
-})
-
-doubly = 2*int_input
-doubly
-```
-
 
 ## Introduction
 
@@ -42,12 +27,15 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 
 ### Dataset Information
 
-**Primary dataset** (if accessible):
-- **URL**: `https://z.rslv.xyz/10.5281/zenodo.15278210/isamples_export_2025_04_21_16_23_46_geo.parquet`
+**Primary dataset**:
+- **URL**: `https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet` *(temporary for testing)*
+- **Original**: `https://zenodo.org/api/records/15278211/files/...` *(currently rate limited)*
 - **Size**: ~300 MB, 6+ million records
 - **Sources**: SESAR, OpenContext, GEOME, Smithsonian
 
-**Fallback dataset** (if CORS blocked):
+**Note**: *Currently using DataUnbound Labs hosting temporarily to avoid Zenodo rate limiting during development. This will be switched back to Zenodo once the notebook is stable.*
+
+**Fallback dataset** (if remote data fails):
 - **Type**: Generated demo data with realistic structure
 - **Size**: 10K records with same schema and representative geographic distribution
 - **Purpose**: Demonstrates all analytical techniques with faster loading
@@ -93,14 +81,26 @@ d3 = require("d3@7")
 topojson = require("topojson-client@3")
 
 // Dataset URLs - try multiple options for CORS compatibility
+// TEMPORARY: Using DataUnbound Labs hosting for testing to avoid Zenodo rate limiting
 parquet_urls = [
+  'https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet',
+  
+  // Original Zenodo URLs (currently rate limited)
   'https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content',
-  'https://cors-anywhere.herokuapp.com/https://z.rslv.xyz/10.5281/zenodo.15278210/isamples_export_2025_04_21_16_23_46_geo.parquet',
-  'https://z.rslv.xyz/10.5281/zenodo.15278210/isamples_export_2025_04_21_16_23_46_geo.parquet'
+  'https://cors-anywhere.herokuapp.com/https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content',
+  'https://z.rslv.xyz/10.5281/zenodo.15278211/isamples_export_2025_04_21_16_23_46_geo.parquet'
 ]
 
-// Test CORS and find working URL
+// Test CORS and find working URL - with rate limiting protection
 working_parquet_url = {
+  // Check if we've recently failed (to avoid repeated rate limiting)
+  const lastFailTime = localStorage.getItem('zenodo_last_fail');
+  const now = Date.now();
+  if (lastFailTime && (now - parseInt(lastFailTime)) < 300000) { // 5 minutes
+    console.log('⏳ Recently hit rate limit, using demo data');
+    return null;
+  }
+  
   for (const url of parquet_urls) {
     try {
       console.log(`Testing URL: ${url}`);
@@ -111,10 +111,20 @@ working_parquet_url = {
       });
       if (response.ok) {
         console.log(`✅ Working URL found: ${url}`);
+        // Clear any previous failure time
+        localStorage.removeItem('zenodo_last_fail');
         return url;
+      } else if (response.status === 429) {
+        console.log(`⚠️ Rate limited: ${url}`);
+        localStorage.setItem('zenodo_last_fail', now.toString());
+        return null;
       }
     } catch (error) {
       console.log(`❌ Failed URL: ${url}, Error: ${error.message}`);
+      if (error.message.includes('429') || error.message.includes('TOO MANY REQUESTS')) {
+        localStorage.setItem('zenodo_last_fail', now.toString());
+        return null;
+      }
       continue;
     }
   }
@@ -151,9 +161,18 @@ db = {
     try {
       // Try to create view of the remote parquet file
       await conn.query(`CREATE VIEW isamples_data AS SELECT * FROM read_parquet('${working_parquet_url}')`);
+      
+      // Test the connection with a simple query to catch rate limiting
+      await conn.query(`SELECT count(*) FROM isamples_data LIMIT 1`);
       console.log("✅ Successfully connected to remote Parquet file");
+      
     } catch (error) {
       console.log("❌ Failed to read remote Parquet:", error.message);
+      // Check if it's a rate limiting error
+      if (error.message.includes('429') || error.message.includes('TOO MANY REQUESTS')) {
+        console.log("⏳ Rate limited - storing failure time");
+        localStorage.setItem('zenodo_last_fail', Date.now().toString());
+      }
       // Create demo data as fallback
       await createDemoData(conn);
     }
@@ -274,7 +293,7 @@ md`
 
 - **Total records**: ${total_count.toLocaleString()}
 - **Records with coordinates**: ${geo_count.toLocaleString()} (${geo_percentage}%)
-- **Data source**: Remote Parquet file (${Math.round(300)} MB)
+- **Data source**: ${working_parquet_url ? 'Remote Parquet file (~300 MB)' : 'Demo dataset (synthetic)'}
 - **Data transferred for these stats**: < 1 KB (metadata only!)
 `
 ```
@@ -306,7 +325,6 @@ source_data = {
     geo_count: Number(row.geo_count)
   }));
   
-  console.log('Source data processed:', processedData);
   return processedData;
 }
 
@@ -334,13 +352,8 @@ viewof source_table = Inputs.table(source_data, {
 
 // Create bar chart of source collections
 source_chart = {
-  console.log('Source chart - source_data type:', typeof source_data);
-  console.log('Source chart - source_data:', source_data);
-  console.log('Source chart - is array:', Array.isArray(source_data));
-  
   // Validate that source_data is an array
   if (!Array.isArray(source_data)) {
-    console.error('source_data is not an array:', source_data);
     return html`<div>Error: Source data is not available</div>`;
   }
   
@@ -449,12 +462,8 @@ md`
 - **Latitude range**: ${geo_stats.min_lat.toFixed(3)}° to ${geo_stats.max_lat.toFixed(3)}°
 - **Longitude range**: ${geo_stats.min_lon.toFixed(3)}° to ${geo_stats.max_lon.toFixed(3)}°
 - **Average location**: ${geo_stats.avg_lat.toFixed(3)}°, ${geo_stats.avg_lon.toFixed(3)}°
-
-### Regional Data Debug Info
-
 - **Total regional records**: ${regional_data.length}
 - **Regions found**: ${[...new Set(regional_data.map(d => d.region))].join(', ')}
-- **Sample regional record**: ${JSON.stringify(regional_data[0] || 'No data', null, 2)}
 `
 ```
 
@@ -467,7 +476,7 @@ Create an interactive visualization to explore samples by region and source.
 
 // Interactive region selector
 viewof selected_region = Inputs.select(
-  ["All", ...new Set(regional_data.map(d => d.region))],
+  ["All", ...new Set(regional_data?.map?.(d => d.region) || [])],
   {
     label: "Select Region:",
     value: "All"
@@ -478,28 +487,10 @@ viewof selected_region = Inputs.select(
 ```{ojs}
 //| label: regional-chart
 
-// Simple test chart to verify Plot.js is working
-test_chart = Plot.plot({
-  marks: [
-    Plot.barX([
-      {name: "A", value: 100},
-      {name: "B", value: 200},
-      {name: "C", value: 150}
-    ], {x: "value", y: "name", fill: "red"})
-  ],
-  width: 400,
-  height: 150
-})
-
 // Regional distribution chart  
 regional_chart = {
-  console.log('Regional chart - regional_data type:', typeof regional_data);
-  console.log('Regional chart - regional_data:', regional_data);
-  console.log('Regional chart - is array:', Array.isArray(regional_data));
-  
   // Validate that regional_data is an array
   if (!Array.isArray(regional_data)) {
-    console.error('regional_data is not an array:', regional_data);
     return html`<div>Error: Regional data is not available</div>`;
   }
   
@@ -514,8 +505,6 @@ regional_chart = {
     region: region,
     sample_count: total
   })).sort((a, b) => b.sample_count - a.sample_count);
-  
-  console.log('Regional chart - aggregated data:', aggregatedData);
   
   return Plot.plot({
     title: `Sample Distribution by Region (${aggregatedData.length} regions)`,
@@ -633,14 +622,6 @@ md`
 
 **Distribution by source**:
 ${sample_stats.by_source.map(d => `- ${d.source}: ${d.count.toLocaleString()}`).join('\n')}
-
-### Sample Data Debug Info
-
-- **Raw sample data length**: ${sample_data.length}
-- **Sample record example**: ${JSON.stringify(sample_data[0] || 'No data', null, 2)}
-- **Geo count**: ${geo_count.toLocaleString()}
-- **Sample size input**: ${sample_size}
-- **Max per collection input**: ${max_per_collection}
 `
 ```
 
@@ -683,7 +664,7 @@ world_map = {
   const countries = topojson.feature(worldData, worldData.objects.countries);
   
   // In Observable, inputs are automatically reactive values
-  const pointRadius = point_size;
+  let pointRadius = point_size;
   const mapProjection = projection;
   
   // Validate that pointRadius is a proper number
@@ -827,15 +808,8 @@ categories_chart = Plot.plot({
 
 // Material by source chart
 material_by_source_chart = {
-  console.log('Material chart - selected_category type:', typeof selected_category);
-  console.log('Material chart - selected_category:', selected_category);
-  console.log('Material chart - material_data type:', typeof material_data);
-  console.log('Material chart - material_data is array:', Array.isArray(material_data));
-  console.log('Material chart - top_categories is array:', Array.isArray(top_categories));
-  
   // Validate that data is available
   if (!Array.isArray(material_data) || !Array.isArray(top_categories)) {
-    console.error('Material data or top_categories is not an array');
     return html`<div>Error: Material data is not available</div>`;
   }
   
@@ -853,11 +827,6 @@ material_by_source_chart = {
     // For specific category, show by source collection
     chartData = material_data.filter(d => d.has_material_category === currentCategory);
   }
-  
-  console.log('Material chart - current category:', currentCategory);
-  console.log('Material chart - filtered data length:', chartData.length);
-  console.log('Material chart - sample filtered data:', chartData.slice(0, 5));
-  console.log('Material chart - top categories list:', top_categories.map(c => c.has_material_category));
   
   // If no data, return early with a message
   if (chartData.length === 0) {
@@ -959,5 +928,471 @@ This notebook demonstrates how to:
 5. Achieve high performance with minimal data transfer
 
 The complete workflow enables sophisticated data analysis directly in the browser without any local software installation or large file downloads.
+`
+```
+
+# 🔍 Viewport Map with Graceful Degradation (deck.gl ↔ DuckDB-WASM)
+
+```{ojs}
+//| label: map-libs
+// Import CSS first
+{
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css";
+  document.head.appendChild(link);
+}
+
+// Map libs only - skip deck.gl for now due to dependency issues
+maplibregl = await import("https://cdn.skypack.dev/maplibre-gl@3?min")
+
+// For now, we'll skip deck.gl due to luma.gl dependency issues
+// and just show the map without WebGL overlays
+decklib = null
+```
+
+```{ojs}
+//| label: map-config
+MAPCFG = ({
+  center: [20.0, 45.0], // Centered to include Italy and Israel
+  zoom: 3, // Zoomed out one level
+  minZoom: 1,
+  maxZoom: 17,
+  basemap: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  pointColor: [20,110,180,200],
+  pointRadiusPx: 2,
+  maxPerTileHard: sample_limit_value, // Dynamic sample limit from controls
+  modulusByZoom(z){
+    if (z >= 13) return 1;
+    if (z >= 11) return 2;
+    if (z >= 9 ) return 8;
+    if (z >= 7 ) return 32;
+    if (z >= 5 ) return 128;
+    return 512;
+  },
+  aggDegByZoom(z){
+    if (z >= 11) return 0.05;
+    if (z >= 9 ) return 0.1;
+    if (z >= 7 ) return 0.25;
+    if (z >= 5 ) return 0.5;
+    return 1.0;
+  }
+})
+```
+
+```{ojs}
+//| label: viewport-sampling-controls
+
+// Text input for viewport sample limit
+viewof sample_limit = Inputs.text({
+  label: "Viewport Sample Limit:",
+  value: "20000",
+  placeholder: "Enter number (works reliably up to ~1M)"
+})
+
+// Convert to number with validation
+sample_limit_value = Math.max(1, parseInt(sample_limit) || 20000)
+
+// Display current sample limit
+md`**Current viewport sample limit**: ${sample_limit_value.toLocaleString()} samples per viewport
+
+*Note: Performance tested up to ~1M samples. For larger datasets, need more scalable approach (e.g., lonboard/deck.gl optimization)*`
+```
+
+```{ojs}
+//| label: map-capability
+pickMode = () => {
+  const c = document.createElement("canvas");
+  const gl2 = c.getContext("webgl2", {antialias:false});
+  if (gl2) return "full";
+  const gl = c.getContext("webgl", {antialias:false});
+  if (!gl) return "raster";
+  const ext = gl.getExtension("WEBGL_debug_renderer_info");
+  const r = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "";
+  const low = /swiftshader|llvmpipe|software/i.test(r) || gl.getParameter(gl.MAX_TEXTURE_SIZE) < 4096;
+  return low ? "raster" : "lite";
+}
+MODE = pickMode()
+```
+
+```{ojs}
+//| label: map-container
+html`
+<div style="position:relative;">
+  <div id="map" style="height: 70vh; width: 100%;"></div>
+  <div id="mode-badge" style="position:absolute;top:8px;left:8px;background:#fff;border-radius:6px;padding:4px 8px;font:12px system-ui;">
+    Mode: <b>${MODE}</b> ${working_parquet_url ? "" : "(demo data)"}
+  </div>
+</div>`
+```
+
+```{ojs}
+//| label: map-init
+viewport = {
+  const Map = maplibregl.default?.Map || maplibregl.Map;
+  const NavigationControl = maplibregl.default?.NavigationControl || maplibregl.NavigationControl;
+  if (!Map) {
+    console.error("MapLibre GL not loaded properly:", maplibregl);
+    console.error("Available keys:", Object.keys(maplibregl));
+    throw new Error("MapLibre GL Map class failed to load");
+  }
+  
+  // Wait for DOM container to be available
+  return new Promise((resolve) => {
+    function waitForContainer() {
+      const container = document.getElementById("map");
+      if (container) {
+        const map = new Map({
+          container: "map",
+          style: MAPCFG.basemap,
+          center: MAPCFG.center,
+          zoom: MAPCFG.zoom,
+          minZoom: MAPCFG.minZoom,
+          maxZoom: MAPCFG.maxZoom,
+          attributionControl: true
+        });
+        map.addControl(new NavigationControl({visualizePitch:true}));
+        
+        // Store map instance globally for deck.gl access
+        window._observableMap = map;
+        
+        const observable = Generators.observe((notify) => {
+          function emit() {
+            const c = map.getCenter();
+            const z = map.getZoom();
+            const b = map.getBounds();
+            notify({
+              center: [c.lng, c.lat],
+              zoom: z,
+              bounds: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()],
+              map: map // Include map reference
+            });
+          }
+          const onMove = () => {
+            if (emit._t) return;
+            emit._t = setTimeout(() => { emit(); emit._t = null; }, 120);
+          };
+          map.on("load", emit);
+          map.on("move", onMove);
+          map.on("zoom", onMove);
+          if (map.loaded()) emit();
+          return () => {
+            window._observableMap = null;
+            map.remove();
+          };
+        });
+        
+        resolve(observable);
+      } else {
+        // Try again in a few milliseconds
+        setTimeout(waitForContainer, 50);
+      }
+    }
+    waitForContainer();
+  });
+}
+```
+
+```{ojs}
+//| label: viewport-sample
+async function queryViewportSamples(db, vp, mode) {
+  const [xmin, ymin, xmax, ymax] = vp.bounds;
+  const z = vp.zoom;
+  const baseMod = MAPCFG.modulusByZoom(z);
+  const MODULUS = mode === "lite" ? Math.max(1, baseMod * 2) : baseMod;
+  const LIMIT = mode === "lite" ? Math.floor(MAPCFG.maxPerTileHard/2) : MAPCFG.maxPerTileHard;
+  const sql = `
+    SELECT 
+      sample_identifier,
+      sample_location_longitude AS lon,
+      sample_location_latitude  AS lat,
+      source_collection
+    FROM isamples_data
+    WHERE sample_location_longitude BETWEEN ${xmin} AND ${xmax}
+      AND sample_location_latitude  BETWEEN ${ymin} AND ${ymax}
+      AND ABS(hash(sample_identifier)) % ${MODULUS} = 0
+    LIMIT ${LIMIT}
+  `;
+  const res = await db.query(sql);
+  return res.toArray();
+}
+```
+
+```{ojs}
+//| label: data-viewport
+viewport_data = {
+  // Always load data (not just for non-raster mode since we need it for fallback plot)
+  if (!viewport?.bounds || !db) {
+    console.log('No viewport bounds or db available');
+    return null;
+  }
+  
+  try {
+    const data = await queryViewportSamples(db, viewport, MODE);
+    console.log(`Loaded ${data?.length || 0} viewport samples for bounds:`, viewport.bounds);
+    console.log('Sample data:', data?.slice(0, 3)); // Show first 3 records
+    return data;
+  } catch (error) {
+    console.error('Error querying viewport samples:', error);
+    return null;
+  }
+}
+```
+
+```{ojs}
+//| label: maplibre-layer-update
+map_layer_update = {
+  // Update MapLibre map layers with viewport data
+  if (!viewport?.map || !viewport_data || !Array.isArray(viewport_data)) {
+    console.log('No map or data available for layer update');
+    return null;
+  }
+  
+  const map = viewport.map;
+  
+  // Convert viewport data to GeoJSON format for MapLibre
+  const geojson = {
+    type: "FeatureCollection",
+    features: viewport_data.map(d => ({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [d.lon, d.lat]
+      },
+      properties: {
+        sample_identifier: d.sample_identifier,
+        source_collection: d.source_collection
+      }
+    }))
+  };
+  
+  // Remove existing source/layer if they exist
+  if (map.getSource('viewport-points')) {
+    map.removeLayer('viewport-points');
+    map.removeSource('viewport-points');
+  }
+  
+  // Add new source and layer
+  map.addSource('viewport-points', {
+    type: 'geojson',
+    data: geojson
+  });
+  
+  map.addLayer({
+    id: 'viewport-points',
+    type: 'circle',
+    source: 'viewport-points',
+    paint: {
+      'circle-radius': 4,
+      'circle-color': [
+        'match',
+        ['get', 'source_collection'],
+        'SESAR', '#3366cc',
+        'OPENCONTEXT', '#dc3912', 
+        'GEOME', '#109618',
+        'SMITHSONIAN', '#ff9900',
+        '#666666' // fallback color
+      ],
+      'circle-opacity': 0.8,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#ffffff'
+    }
+  });
+  
+  console.log(`Updated MapLibre map with ${viewport_data.length} points`);
+  return `Updated with ${viewport_data.length} points`;
+}
+```
+
+```{ojs}
+//| label: deckgl-layer
+function scatterLayer(data) {
+  const ScatterplotLayer = decklib.default?.ScatterplotLayer || decklib.ScatterplotLayer;
+  return new ScatterplotLayer({
+    id: "vp-points",
+    data,
+    getPosition: d => [d.lon, d.lat],
+    getFillColor: MAPCFG.pointColor,
+    getRadius: MAPCFG.pointRadiusPx,
+    radiusUnits: "pixels",
+    radiusMinPixels: MAPCFG.pointRadiusPx,
+    radiusMaxPixels: MAPCFG.pointRadiusPx * 2,
+    pickable: false,
+    parameters: {depthTest: false}
+  });
+}
+```
+
+```{ojs}
+//| label: deckgl-overlay
+deck_overlay = {
+  if (!decklib) {
+    return html`<div>Deck.gl temporarily disabled due to dependency issues. Map shows without WebGL overlay.</div>`;
+  }
+  
+  if (MODE === "raster") return html`<div>Raster mode active</div>`;
+  
+  try {
+    // Get map from viewport or global reference
+    const map = viewport?.map || window._observableMap;
+    if (!map) {
+      return html`<div>Waiting for map initialization...</div>`;
+    }
+    
+    // Use MapboxOverlay from deck.gl library
+    const MapboxOverlay = decklib.default?.MapboxOverlay || decklib.MapboxOverlay;
+    if (!MapboxOverlay) {
+      console.error("Available decklib properties:", Object.keys(decklib || {}));
+      console.error("Available decklib.default properties:", Object.keys(decklib.default || {}));
+      throw new Error("MapboxOverlay not found in deck.gl library");
+    }
+    
+    const overlay = new MapboxOverlay({interleaved: true, layers: []});
+    
+    // Add overlay to map
+    map.addControl(overlay);
+    
+    // Store overlay reference for other cells
+    window._deckOverlay = overlay;
+    
+    function render() {
+      if (MODE !== "raster" && Array.isArray(viewport_data) && viewport_data.length > 0) {
+        overlay.setProps({layers: [scatterLayer(viewport_data)]});
+      } else {
+        overlay.setProps({layers: []});
+      }
+    }
+    render();
+    
+    return html`<div>Deck.gl overlay initialized (${viewport_data?.length || 0} points)</div>`;
+  } catch (error) {
+    console.error('Deck overlay error:', error);
+    return html`<div>Error initializing deck.gl: ${error.message}</div>`;
+  }
+}
+```
+
+```{ojs}
+//| label: fps-autodowngrade
+{
+  if (MODE === "raster") return;
+  
+  const overlay = window._deckOverlay;
+  const badge = document.getElementById("mode-badge");
+  
+  if (!overlay || !badge) return;
+  
+  let samples = 0, total = 0, degraded = false;
+  
+  function tick(t) {
+    if (degraded || !overlay) return;
+    
+    try {
+      const stats = overlay._deck?.stats;
+      const ft = stats && stats.get && stats.get("Frame Time")?.lastTiming;
+      if (ft && ft > 0) { 
+        total += ft; 
+        samples++; 
+      }
+      
+      if (samples < 120) {
+        requestAnimationFrame(tick);
+      } else if (samples > 0) {
+        const avg = total / samples;
+        if (avg > 50) {
+          degraded = true;
+          overlay.setProps({layers: []});
+          badge.innerHTML = 'Mode: <b>raster (auto)</b>';
+          mutable autodowngraded = true;
+        }
+      }
+    } catch (error) {
+      console.warn('FPS monitoring error:', error);
+    }
+  }
+  
+  // Wait a bit for deck to initialize
+  setTimeout(() => requestAnimationFrame(tick), 1000);
+}
+```
+
+```{ojs}
+//| label: plot-fallback
+mutable autodowngraded = false
+
+// Since deck.gl is disabled, always show a Plot fallback for viewport data  
+plot_fallback = {
+  console.log('Plot fallback - decklib:', decklib);
+  console.log('Plot fallback - MODE:', MODE);
+  console.log('Plot fallback - viewport_data type:', typeof viewport_data);
+  console.log('Plot fallback - viewport_data length:', viewport_data?.length);
+  
+  if (!decklib || MODE === "raster" || autodowngraded) {
+    if (!viewport_data || !Array.isArray(viewport_data) || viewport_data.length === 0) {
+      return html`<div style="padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
+        <strong>Viewport Data Status:</strong><br>
+        • deck.gl: ${decklib ? 'enabled' : 'disabled'}<br>
+        • Mode: ${MODE}<br>
+        • Data: ${viewport_data ? `${viewport_data.length} samples` : 'null/undefined'}<br>
+        • Waiting for viewport data to load...
+      </div>`;
+    }
+    
+    // Use the Plot that's already imported at the top of the notebook
+    // Need to get the world data for the map background
+    const worldData = await world;
+    const countries = topojson.feature(worldData, worldData.objects.countries);
+    
+    return Plot.plot({
+      title: `Viewport Samples (${viewport_data.length.toLocaleString()} points)`,
+      width: 900,
+      height: 480,
+      projection: "mercator",
+      inset: 6,
+      marks: [
+        // World map outline
+        Plot.geo(countries, {
+          fill: "#f0f0f0",
+          stroke: "#ccc",
+          strokeWidth: 0.5
+        }),
+        // Add a big red dot on London for testing
+        Plot.dot([{lon: 0.1278, lat: 51.5074}], {
+          x: "lon", 
+          y: "lat", 
+          r: 20,
+          fill: "red",
+          stroke: "darkred",
+          strokeWidth: 3
+        }),
+        // Add the actual data points
+        Plot.dot(viewport_data, {
+          x: "lon", 
+          y: "lat", 
+          fill: "source_collection",
+          r: 3,
+          fillOpacity: 0.7,
+          stroke: "white",
+          strokeWidth: 0.2
+        })
+      ],
+      color: {
+        legend: true,
+        domain: ["SESAR", "OPENCONTEXT", "GEOME", "SMITHSONIAN"],
+        range: ["#3366cc", "#dc3912", "#109618", "#ff9900"]
+      }
+    });
+  }
+  
+  return html`<div>Deck.gl enabled - no fallback needed</div>`;
+}
+```
+
+```{ojs}
+//| label: map-legend
+md`
+**Rendering mode**: \`${MODE}\`  
+- **full / lite** → deck.gl Scatterplot sampled from DuckDB-WASM by current viewport  
+- **raster** (or auto) → aggregated canvas dots (size ≈ count per grid cell)
 `
 ```

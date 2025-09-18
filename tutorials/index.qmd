@@ -33,6 +33,7 @@ With iSamples Central currently unavailable, all tutorials now use **geoparquet 
 ## Why Geoparquet?
 
 Our tutorials showcase how **geoparquet + DuckDB-WASM** enables:
+
 - ✅ **Universal access**: No software installation required
 - ✅ **Fast analysis**: 5-10x faster than traditional approaches (e.g., downloading full CSV datasets and analyzing them locally). [See benchmark](https://duckdb.org/2023/05/10/duckdb-wasm.html)
 - ✅ **Memory efficient**: Analyze 300MB datasets using <100MB browser memory
