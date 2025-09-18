@@ -273,8 +273,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#table-structure-analysis" id="toc-table-structure-analysis" class="nav-link active" data-scroll-target="#table-structure-analysis"><span class="header-section-number">1</span> Table Structure Analysis</a>
+  <ul>
+  <li><a href="#column-schema" id="toc-column-schema" class="nav-link" data-scroll-target="#column-schema"><span class="header-section-number">1.1</span> Column Schema</a></li>
+  <li><a href="#sample-data" id="toc-sample-data" class="nav-link" data-scroll-target="#sample-data"><span class="header-section-number">1.2</span> Sample Data</a></li>
+  <li><a href="#sample-data-by-object-type" id="toc-sample-data-by-object-type" class="nav-link" data-scroll-target="#sample-data-by-object-type"><span class="header-section-number">1.3</span> Sample Data by Object Type</a></li>
+  </ul></li>
+  <li><a href="#object-type-counts" id="toc-object-type-counts" class="nav-link" data-scroll-target="#object-type-counts"><span class="header-section-number">2</span> Object Type Counts</a></li>
+  <li><a href="#property-distribution-analysis" id="toc-property-distribution-analysis" class="nav-link" data-scroll-target="#property-distribution-analysis"><span class="header-section-number">3</span> Property Distribution Analysis</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet_cesium.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -305,8 +318,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <p>One key development of the iSamples project centers on the demonstration of low-cost, simplified, and more sustainable approaches to access, analyze and visualize scientific data. Rather than relying upon elaborate and costly server-side infrastructure, iSamples demonstrates how open source technologies like parquet and DuckDB-WASM can streamline cheaper and faster approaches to interacting with geospatial data.</p>
 <p>This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from <a href="https://opencontext.org/">Open Context’s</a> export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.</p>
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 <style>
     div.cesium-topleft {
         display: block;
@@ -624,29 +637,285 @@ Loading…
 </div>
 </div>
 </div>
-<p>The click point ID is “<span><span id="ojs-element-id-1"></span></span>”.</p>
+<p>The number of locations in the file is: <span><span id="ojs-element-id-1"></span>.</span></p>
+<p>The click point ID is “<span><span id="ojs-element-id-2"></span></span>”.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb5" data-startfrom="244" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 243;"><span id="cb5-244"><a href="#cb5-244" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
-<span id="cb5-245"><a href="#cb5-245" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(selectedGeoRecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
-<span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
-<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb5" data-startfrom="246" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 245;"><span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(selectedGeoRecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-5" data-nodetype="expression">
 
 </div>
 </div>
 </div>
+<section id="table-structure-analysis" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="table-structure-analysis"><span class="header-section-number">1</span> Table Structure Analysis</h2>
+<p>Understanding the structure and schema of the parquet file:</p>
+<section id="column-schema" class="level3" data-number="1.1">
+<h3 data-number="1.1" data-anchor-id="column-schema"><span class="header-section-number">1.1</span> Column Schema</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6" data-startfrom="260" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 259;"><span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>tableSchema <span class="op">=</span> {</span>
+<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`DESCRIBE nodes`</span><span class="op">;</span></span>
+<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_schema"</span>)<span class="op">;</span></span>
+<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div id="loading_schema">
+Loading table schema…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7" data-startfrom="271" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 270;"><span id="cb7-271"><a href="#cb7-271" aria-hidden="true" tabindex="-1"></a>viewof schemaTable <span class="op">=</span> {</span>
+<span id="cb7-272"><a href="#cb7-272" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(tableSchema<span class="op">,</span> {</span>
+<span id="cb7-273"><a href="#cb7-273" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
+<span id="cb7-274"><a href="#cb7-274" aria-hidden="true" tabindex="-1"></a>            <span class="dt">column_name</span><span class="op">:</span> <span class="st">"Column Name"</span><span class="op">,</span></span>
+<span id="cb7-275"><a href="#cb7-275" aria-hidden="true" tabindex="-1"></a>            <span class="dt">column_type</span><span class="op">:</span> <span class="st">"Data Type"</span><span class="op">,</span></span>
+<span id="cb7-276"><a href="#cb7-276" aria-hidden="true" tabindex="-1"></a>            <span class="dt">null</span><span class="op">:</span> <span class="st">"Nullable"</span><span class="op">,</span></span>
+<span id="cb7-277"><a href="#cb7-277" aria-hidden="true" tabindex="-1"></a>            <span class="dt">key</span><span class="op">:</span> <span class="st">"Key"</span><span class="op">,</span></span>
+<span id="cb7-278"><a href="#cb7-278" aria-hidden="true" tabindex="-1"></a>            <span class="cf">default</span><span class="op">:</span> <span class="st">"Default"</span><span class="op">,</span></span>
+<span id="cb7-279"><a href="#cb7-279" aria-hidden="true" tabindex="-1"></a>            <span class="dt">extra</span><span class="op">:</span> <span class="st">"Extra"</span></span>
+<span id="cb7-280"><a href="#cb7-280" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb7-281"><a href="#cb7-281" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb7-282"><a href="#cb7-282" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb7-283"><a href="#cb7-283" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-7" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</section>
+<section id="sample-data" class="level3" data-number="1.2">
+<h3 data-number="1.2" data-anchor-id="sample-data"><span class="header-section-number">1.2</span> Sample Data</h3>
+<p>First 10 rows of the dataset to understand the data structure:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8" data-startfrom="292" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 291;"><span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a>sampleData <span class="op">=</span> {</span>
+<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT * FROM nodes LIMIT 10`</span><span class="op">;</span></span>
+<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_sample"</span>)<span class="op">;</span></span>
+<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-8" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div id="loading_sample">
+Loading sample data…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9" data-startfrom="303" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 302;"><span id="cb9-303"><a href="#cb9-303" aria-hidden="true" tabindex="-1"></a>viewof sampleTable <span class="op">=</span> {</span>
+<span id="cb9-304"><a href="#cb9-304" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(sampleData<span class="op">,</span> {</span>
+<span id="cb9-305"><a href="#cb9-305" aria-hidden="true" tabindex="-1"></a>        <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span><span class="op">,</span></span>
+<span id="cb9-306"><a href="#cb9-306" aria-hidden="true" tabindex="-1"></a>        <span class="dt">width</span><span class="op">:</span> {</span>
+<span id="cb9-307"><a href="#cb9-307" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pid</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span></span>
+<span id="cb9-308"><a href="#cb9-308" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> <span class="dv">150</span></span>
+<span id="cb9-309"><a href="#cb9-309" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb9-310"><a href="#cb9-310" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb9-311"><a href="#cb9-311" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb9-312"><a href="#cb9-312" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-9" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</section>
+<section id="sample-data-by-object-type" class="level3" data-number="1.3">
+<h3 data-number="1.3" data-anchor-id="sample-data-by-object-type"><span class="header-section-number">1.3</span> Sample Data by Object Type</h3>
+<p>Examples of records for each object type to understand the data semantics:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10" data-startfrom="321" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 320;"><span id="cb10-321"><a href="#cb10-321" aria-hidden="true" tabindex="-1"></a>sampleDataByOtype <span class="op">=</span> {</span>
+<span id="cb10-322"><a href="#cb10-322" aria-hidden="true" tabindex="-1"></a>    <span class="co">// First get the list of unique object types</span></span>
+<span id="cb10-323"><a href="#cb10-323" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> otypeQuery <span class="op">=</span> <span class="vs">`SELECT DISTINCT otype FROM nodes ORDER BY otype`</span><span class="op">;</span></span>
+<span id="cb10-324"><a href="#cb10-324" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> otypes <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(otypeQuery<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_otype_samples"</span>)<span class="op">;</span></span>
+<span id="cb10-325"><a href="#cb10-325" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-326"><a href="#cb10-326" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> results <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb10-327"><a href="#cb10-327" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> otypeRow <span class="kw">of</span> otypes) {</span>
+<span id="cb10-328"><a href="#cb10-328" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> otype <span class="op">=</span> otypeRow<span class="op">.</span><span class="at">otype</span><span class="op">;</span></span>
+<span id="cb10-329"><a href="#cb10-329" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Get 3 sample records for each otype</span></span>
+<span id="cb10-330"><a href="#cb10-330" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> sampleQuery <span class="op">=</span> <span class="vs">`SELECT * FROM nodes WHERE otype = ? LIMIT 3`</span><span class="op">;</span></span>
+<span id="cb10-331"><a href="#cb10-331" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> samples <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(sampleQuery<span class="op">,</span> [otype])<span class="op">;</span></span>
+<span id="cb10-332"><a href="#cb10-332" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb10-333"><a href="#cb10-333" aria-hidden="true" tabindex="-1"></a>        results<span class="op">.</span><span class="fu">push</span>({</span>
+<span id="cb10-334"><a href="#cb10-334" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> otype<span class="op">,</span></span>
+<span id="cb10-335"><a href="#cb10-335" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> samples<span class="op">.</span><span class="at">length</span><span class="op">,</span></span>
+<span id="cb10-336"><a href="#cb10-336" aria-hidden="true" tabindex="-1"></a>            <span class="dt">samples</span><span class="op">:</span> samples</span>
+<span id="cb10-337"><a href="#cb10-337" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb10-338"><a href="#cb10-338" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-339"><a href="#cb10-339" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> results<span class="op">;</span></span>
+<span id="cb10-340"><a href="#cb10-340" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-10" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div id="loading_otype_samples">
+Loading sample data by object type…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11" data-startfrom="347" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 346;"><span id="cb11-347"><a href="#cb11-347" aria-hidden="true" tabindex="-1"></a>viewof otypeSamplesDisplay <span class="op">=</span> {</span>
+<span id="cb11-348"><a href="#cb11-348" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> container <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb11-349"><a href="#cb11-349" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-350"><a href="#cb11-350" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> otypeData <span class="kw">of</span> sampleDataByOtype) {</span>
+<span id="cb11-351"><a href="#cb11-351" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> section <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div style="margin-bottom: 2rem;"&gt;</span></span>
+<span id="cb11-352"><a href="#cb11-352" aria-hidden="true" tabindex="-1"></a><span class="vs">            &lt;h4 style="color: #2563eb; margin-bottom: 0.5rem;"&gt;Object Type: </span><span class="sc">${</span>otypeData<span class="op">.</span><span class="at">otype</span><span class="sc">}</span><span class="vs">&lt;/h4&gt;</span></span>
+<span id="cb11-353"><a href="#cb11-353" aria-hidden="true" tabindex="-1"></a><span class="vs">            &lt;p style="margin: 0.5rem 0; font-style: italic;"&gt;Sample records (showing up to 3):&lt;/p&gt;</span></span>
+<span id="cb11-354"><a href="#cb11-354" aria-hidden="true" tabindex="-1"></a><span class="vs">        &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb11-355"><a href="#cb11-355" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-356"><a href="#cb11-356" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create a table for this otype's samples</span></span>
+<span id="cb11-357"><a href="#cb11-357" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(otypeData<span class="op">.</span><span class="at">samples</span><span class="op">,</span> {</span>
+<span id="cb11-358"><a href="#cb11-358" aria-hidden="true" tabindex="-1"></a>            <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span><span class="op">,</span></span>
+<span id="cb11-359"><a href="#cb11-359" aria-hidden="true" tabindex="-1"></a>            <span class="dt">width</span><span class="op">:</span> {</span>
+<span id="cb11-360"><a href="#cb11-360" aria-hidden="true" tabindex="-1"></a>                <span class="dt">pid</span><span class="op">:</span> <span class="dv">150</span><span class="op">,</span></span>
+<span id="cb11-361"><a href="#cb11-361" aria-hidden="true" tabindex="-1"></a>                <span class="dt">otype</span><span class="op">:</span> <span class="dv">120</span><span class="op">,</span></span>
+<span id="cb11-362"><a href="#cb11-362" aria-hidden="true" tabindex="-1"></a>                <span class="dt">latitude</span><span class="op">:</span> <span class="dv">100</span><span class="op">,</span></span>
+<span id="cb11-363"><a href="#cb11-363" aria-hidden="true" tabindex="-1"></a>                <span class="dt">longitude</span><span class="op">:</span> <span class="dv">100</span></span>
+<span id="cb11-364"><a href="#cb11-364" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb11-365"><a href="#cb11-365" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb11-366"><a href="#cb11-366" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-367"><a href="#cb11-367" aria-hidden="true" tabindex="-1"></a>        section<span class="op">.</span><span class="fu">appendChild</span>(table)<span class="op">;</span></span>
+<span id="cb11-368"><a href="#cb11-368" aria-hidden="true" tabindex="-1"></a>        container<span class="op">.</span><span class="fu">appendChild</span>(section)<span class="op">;</span></span>
+<span id="cb11-369"><a href="#cb11-369" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb11-370"><a href="#cb11-370" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-371"><a href="#cb11-371" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> container<span class="op">;</span></span>
+<span id="cb11-372"><a href="#cb11-372" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-11" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="object-type-counts" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="object-type-counts"><span class="header-section-number">2</span> Object Type Counts</h2>
+<p>The distribution of object types (<code>otype</code>) in the dataset:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12" data-startfrom="381" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 380;"><span id="cb12-381"><a href="#cb12-381" aria-hidden="true" tabindex="-1"></a>otypeCounts <span class="op">=</span> {</span>
+<span id="cb12-382"><a href="#cb12-382" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT otype, COUNT(*) as count FROM nodes GROUP BY otype ORDER BY count DESC`</span><span class="op">;</span></span>
+<span id="cb12-383"><a href="#cb12-383" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_otype"</span>)<span class="op">;</span></span>
+<span id="cb12-384"><a href="#cb12-384" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb12-385"><a href="#cb12-385" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-12" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div id="loading_otype">
+Loading object type counts…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13" data-startfrom="392" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 391;"><span id="cb13-392"><a href="#cb13-392" aria-hidden="true" tabindex="-1"></a>viewof otypeTable <span class="op">=</span> {</span>
+<span id="cb13-393"><a href="#cb13-393" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(otypeCounts<span class="op">,</span> {</span>
+<span id="cb13-394"><a href="#cb13-394" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
+<span id="cb13-395"><a href="#cb13-395" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> <span class="st">"Object Type"</span><span class="op">,</span></span>
+<span id="cb13-396"><a href="#cb13-396" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> <span class="st">"Count"</span></span>
+<span id="cb13-397"><a href="#cb13-397" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb13-398"><a href="#cb13-398" aria-hidden="true" tabindex="-1"></a>        <span class="dt">format</span><span class="op">:</span> {</span>
+<span id="cb13-399"><a href="#cb13-399" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="fu">toLocaleString</span>()</span>
+<span id="cb13-400"><a href="#cb13-400" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb13-401"><a href="#cb13-401" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb13-402"><a href="#cb13-402" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb13-403"><a href="#cb13-403" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-13" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<p>Total records by object type: <span><span id="ojs-element-id-3"></span></span></p>
+</section>
+<section id="property-distribution-analysis" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="property-distribution-analysis"><span class="header-section-number">3</span> Property Distribution Analysis</h2>
+<p>Understanding the range of properties (predicates) in this graph database structure:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14" data-startfrom="414" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 413;"><span id="cb14-414"><a href="#cb14-414" aria-hidden="true" tabindex="-1"></a>propertyDistribution <span class="op">=</span> {</span>
+<span id="cb14-415"><a href="#cb14-415" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT p as property, COUNT(*) as count FROM nodes WHERE p IS NOT NULL GROUP BY p ORDER BY count DESC`</span><span class="op">;</span></span>
+<span id="cb14-416"><a href="#cb14-416" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_properties"</span>)<span class="op">;</span></span>
+<span id="cb14-417"><a href="#cb14-417" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb14-418"><a href="#cb14-418" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-14" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div id="loading_properties">
+Loading property distribution…
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15" data-startfrom="425" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 424;"><span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>viewof propertyTable <span class="op">=</span> {</span>
+<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(propertyDistribution<span class="op">,</span> {</span>
+<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
+<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>            <span class="dt">property</span><span class="op">:</span> <span class="st">"Property (Predicate)"</span><span class="op">,</span></span>
+<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> <span class="st">"Count"</span></span>
+<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a>        <span class="dt">format</span><span class="op">:</span> {</span>
+<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="fu">toLocaleString</span>()</span>
+<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>        <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span></span>
+<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-15" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<p>Total records with properties: <span><span id="ojs-element-id-4"></span></span></p>
+<p>Unique properties in the dataset: <span><span id="ojs-element-id-5"></span></span></p>
 
 
 <div class="ojs-auto-generated hidden">
 <script type="ojs-module-contents">
-eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7Y2xpY2tlZFBvaW50SWR9PC9zcGFuPmAiLCAiY2VsbE5hbWUiOiJvanMtZWxlbWVudC1pZC0xIn1dfQ==
+eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cG9pbnRkYXRhLmxlbmd0aH08L3NwYW4+YCIsICJjZWxsTmFtZSI6Im9qcy1lbGVtZW50LWlkLTEifSwgIHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImlubGluZSI6InRydWUiLCJzb3VyY2UiOiJodGwuaHRtbGA8c3Bhbj4ke2NsaWNrZWRQb2ludElkfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtMiJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7b3R5cGVDb3VudHMucmVkdWNlKChzdW0sIHJvdykgPT4gc3VtICsgcm93LmNvdW50LCAwKS50b0xvY2FsZVN0cmluZygpfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtMyJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cHJvcGVydHlEaXN0cmlidXRpb24ucmVkdWNlKChzdW0sIHJvdykgPT4gc3VtICsgcm93LmNvdW50LCAwKS50b0xvY2FsZVN0cmluZygpfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtNCJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cHJvcGVydHlEaXN0cmlidXRpb24ubGVuZ3RoLnRvTG9jYWxlU3RyaW5nKCl9PC9zcGFuPmAiLCAiY2VsbE5hbWUiOiJvanMtZWxlbWVudC1pZC01In1dfQ==
 </script>
 </div>
+</section>
 
 </main> <!-- /main -->
 <script type="ojs-module-contents">
-eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IkNlc2l1bS5Jb24uZGVmYXVsdEFjY2Vzc1Rva2VuID0gJ2V5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpxZEdraU9pSXdOemszTmpreU15MWlOR0kxTFRSa04yVXRPRFJpTXkwNE9UWXdZV0UwTjJNM1pUa2lMQ0pwWkNJNk5qazFNVGNzSW1saGRDSTZNVFl6TXpVME1UUTNOMzAuZTcwZHBOek9DRFJMREd4Umd1UUNDLXRSekd6QS0yM1hnbm81bE5nQ2VCNCc7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2YgcGFycXVldF9wYXRoID0gSW5wdXRzLnRleHQoe2xhYmVsOlwiU291cmNlXCIsIHZhbHVlOlwiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL29wZW5jb250ZXh0LXBhcnF1ZXQvb2NfaXNhbXBsZXNfcHFnLnBhcnF1ZXRcIiwgd2lkdGg6XCIxMDAlXCIsIHN1Ym1pdDp0cnVlfSk7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSB7XG4gIGNvbnN0IGluc3RhbmNlID0gYXdhaXQgRHVja0RCQ2xpZW50Lm9mKCk7XG4gIGF3YWl0IGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdmlldyBub2RlcyBhcyBzZWxlY3QgKiBmcm9tIHJlYWRfcGFycXVldCgnJHtwYXJxdWV0X3BhdGh9JylgKVxuICByZXR1cm4gaW5zdGFuY2U7XG59XG5cblxuYXN5bmMgZnVuY3Rpb24gbG9hZERhdGEocXVlcnksIHBhcmFtcz1bXSwgd2FpdGluZ19pZD1udWxsKSB7XG4gICAgLy8gR2V0IGxvYWRpbmcgaW5kaWNhdG9yXG4gICAgY29uc3Qgd2FpdGVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQod2FpdGluZ19pZCk7XG4gICAgaWYgKHdhaXRlcikge1xuICAgICAgICB3YWl0ZXIuaGlkZGVuID0gZmFsc2U7XG4gICAgfVxuICAgIHRyeSB7XG4gICAgICAgIC8vIFJ1biB0aGUgKHNsb3cpIHF1ZXJ5XG4gICAgICAgIGNvbnN0IF9yZXN1bHRzID0gYXdhaXQgZGIucXVlcnkocXVlcnksIC4uLnBhcmFtcyk7XG4gICAgICAgIHJldHVybiBfcmVzdWx0cztcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaW5uZXJIdG1sID0gYDxwcmU+JHtlcnJvcn08L3ByZT5gO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBudWxsO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIC8vIEhpZGUgdGhlIHdhaXRlciAoaWYgdGhlcmUgaXMgb25lKVxuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaGlkZGVuID0gdHJ1ZTtcbiAgICAgICAgfVxuICAgIH1cbn1cblxubG9jYXRpb25zID0ge1xuICAgIC8vIGdldCB0aGUgY29udGVudCBmb3JtIHRoZSBwYXJxdWV0IGZpbGVcbiAgICBjb25zdCBxdWVyeSA9IGBTRUxFQ1QgcGlkLCBsYXRpdHVkZSwgbG9uZ2l0dWRlIEZST00gbm9kZXMgV0hFUkUgb3R5cGU9J0dlb3NwYXRpYWxDb29yZExvY2F0aW9uJ2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nXzFcIik7XG5cbiAgICAvLyBDbGVhciB0aGUgZXhpc3RpbmcgUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uXG4gICAgY29udGVudC5wb2ludHMucmVtb3ZlQWxsKCk7XG4gICAgLy9jb250ZW50LnBvaW50cyA9IG5ldyBDZXNpdW0uUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uKCk7XG5cbiAgICAvLyBjcmVhdGUgcG9pbnQgcHJpbWl0aXZlcyBmb3IgY2VzaXVtIGRpc3BsYXlcbiAgICBjb25zdCBzY2FsYXIgPSBuZXcgQ2VzaXVtLk5lYXJGYXJTY2FsYXIoMS41ZTIsIDIsIDguMGU2LCAwLjIpO1xuICAgIGNvbnN0IGNvbG9yID0gQ2VzaXVtLkNvbG9yLlBJTks7XG4gICAgY29uc3QgcG9pbnRfc2l6ZSA9IDQ7XG4gICAgZm9yIChjb25zdCByb3cgb2YgZGF0YSkge1xuICAgICAgICBjb250ZW50LnBvaW50cy5hZGQoe1xuICAgICAgICAgICAgaWQ6IHJvdy5waWQsXG4gICAgICAgICAgICAvLyBodHRwczovL2Nlc2l1bS5jb20vbGVhcm4vY2VzaXVtanMvcmVmLWRvYy9DYXJ0ZXNpYW4zLmh0bWwjLmZyb21EZWdyZWVzXG4gICAgICAgICAgICBwb3NpdGlvbjogQ2VzaXVtLkNhcnRlc2lhbjMuZnJvbURlZ3JlZXMoXG4gICAgICAgICAgICAgICAgcm93LmxvbmdpdHVkZSwgIC8vbG9uZ2l0dWRlXG4gICAgICAgICAgICAgICAgcm93LmxhdGl0dWRlLCAgIC8vbGF0aXR1ZGVcbiAgICAgICAgICAgICAgICAwLC8vcmFuZG9tQ29vcmRpbmF0ZUppdHRlcigxMC4wLCAxMC4wKSwgLy9lbGV2YXRpb24sIG1cbiAgICAgICAgICAgICksXG4gICAgICAgICAgICBwaXhlbFNpemU6IHBvaW50X3NpemUsXG4gICAgICAgICAgICBjb2xvcjogY29sb3IsXG4gICAgICAgICAgICBzY2FsZUJ5RGlzdGFuY2U6IHNjYWxhcixcbiAgICAgICAgfSk7XG4gICAgfVxuICAgIGNvbnRlbnQuZW5hYmxlVHJhY2tpbmcoKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cblxuXG5mdW5jdGlvbiBjcmVhdGVTaG93UHJpbWl0aXZlKHZpZXdlcikge1xuICAgIHJldHVybiBmdW5jdGlvbihtb3ZlbWVudCkge1xuICAgICAgICAvLyBHZXQgdGhlIHBvaW50IGF0IHRoZSBtb3VzZSBlbmQgcG9zaXRpb25cbiAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB2aWV3ZXIudmlld2VyLnNjZW5lLnBpY2sobW92ZW1lbnQuZW5kUG9zaXRpb24pOyAgICAgICAgXG5cbiAgICAgICAgLy8gQ2xlYXIgdGhlIGN1cnJlbnQgc2VsZWN0aW9uLCBpZiB0aGVyZSBpcyBvbmUgYW5kIGl0IGlzIGRpZmZlcmVudCB0byB0aGUgc2VsZWN0UG9pbnRcbiAgICAgICAgaWYgKHZpZXdlci5jdXJyZW50U2VsZWN0aW9uICE9PSBudWxsKSB7XG4gICAgICAgICAgICAvL2NvbnNvbGUubG9nKGBzZWxlY3RlZC5wICR7dmlld2VyLmN1cnJlbnRTZWxlY3Rpb259YClcbiAgICAgICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQgIT09IHZpZXdlci5jdXJyZW50U2VsZWN0aW9uKSB7XG4gICAgICAgICAgICAgICAgY29uc29sZS5sb2coYHNlbGVjdGVkLnAgMiAke3ZpZXdlci5jdXJyZW50U2VsZWN0aW9ufWApXG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDQ7XG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5UUkFOU1BBUkVOVDtcbiAgICAgICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbi5vdXRsaW5lV2lkdGggPSAwO1xuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gbnVsbDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuXG4gICAgICAgIC8vIElmIHNlbGVjdFBvaW50IGlzIHZhbGlkIGFuZCBubyBjdXJyZW50bHkgc2VsZWN0ZWQgcG9pbnRcbiAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgLy9jb25zb2xlLmxvZyhgc2hvd1ByaW1pdGl2ZUlkICR7c2VsZWN0UG9pbnQuaWR9YCk7XG4gICAgICAgICAgICAvL2NvbnN0IGNhcnRvID0gQ2VzaXVtLkNhcnRvZ3JhcGhpYy5mcm9tQ2FydGVzaWFuKHNlbGVjdFBvaW50LnByaW1pdGl2ZS5wb3NpdGlvbilcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLnBvc2l0aW9uID0gc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBvc2l0aW9uO1xuICAgICAgICAgICAgdmlld2VyLnBvaW50TGFiZWwubGFiZWwuc2hvdyA9IHRydWU7XG4gICAgICAgICAgICAvL3ZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgaWQ6JHtzZWxlY3RQb2ludC5pZH0sICR7Y2FydG99YDtcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgJHtzZWxlY3RQb2ludC5pZH1gO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDIwO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5ZRUxMT1c7XG4gICAgICAgICAgICBzZWxlY3RQb2ludC5wcmltaXRpdmUub3V0bGluZVdpZHRoID0gMztcbiAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gc2VsZWN0UG9pbnQ7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC5zaG93ID0gZmFsc2U7XG4gICAgICAgIH0gICAgICAgICAgICBcbiAgICB9XG59XG5cbmNsYXNzIENWaWV3IHtcbiAgICBjb25zdHJ1Y3Rvcih0YXJnZXQpIHtcbiAgICAgICAgdGhpcy52aWV3ZXIgPSBuZXcgQ2VzaXVtLlZpZXdlcihcbiAgICAgICAgICAgIHRhcmdldCwge1xuICAgICAgICAgICAgICAgIHRpbWVsaW5lOiBmYWxzZSxcbiAgICAgICAgICAgICAgICBhbmltYXRpb246IGZhbHNlLFxuICAgICAgICAgICAgICAgIGJhc2VMYXllclBpY2tlcjogZmFsc2UsXG4gICAgICAgICAgICAgICAgZnVsbHNjcmVlbkVsZW1lbnQ6IHRhcmdldCxcbiAgICAgICAgICAgICAgICB0ZXJyYWluOiBDZXNpdW0uVGVycmFpbi5mcm9tV29ybGRUZXJyYWluKClcbiAgICAgICAgICAgIH0pO1xuICAgICAgICB0aGlzLmN1cnJlbnRTZWxlY3Rpb24gPSBudWxsO1xuICAgICAgICB0aGlzLnBvaW50X3NpemUgPSAxO1xuICAgICAgICB0aGlzLm5fcG9pbnRzID0gMDtcbiAgICAgICAgLy8gaHR0cHM6Ly9jZXNpdW0uY29tL2xlYXJuL2Nlc2l1bWpzL3JlZi1kb2MvUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uLmh0bWxcbiAgICAgICAgdGhpcy5wb2ludHMgPSBuZXcgQ2VzaXVtLlBvaW50UHJpbWl0aXZlQ29sbGVjdGlvbigpO1xuICAgICAgICB0aGlzLnZpZXdlci5zY2VuZS5wcmltaXRpdmVzLmFkZCh0aGlzLnBvaW50cyk7XG4gICAgIFxuICAgICAgICB0aGlzLnBvaW50TGFiZWwgPSB0aGlzLnZpZXdlci5lbnRpdGllcy5hZGQoe1xuICAgICAgICAgICAgbGFiZWw6IHtcbiAgICAgICAgICAgIHNob3c6IGZhbHNlLFxuICAgICAgICAgICAgc2hvd0JhY2tncm91bmQ6IHRydWUsXG4gICAgICAgICAgICBmb250OiBcIjE0cHggbW9ub3NwYWNlXCIsXG4gICAgICAgICAgICBob3Jpem9udGFsT3JpZ2luOiBDZXNpdW0uSG9yaXpvbnRhbE9yaWdpbi5MRUZULFxuICAgICAgICAgICAgdmVydGljYWxPcmlnaW46IENlc2l1bS5WZXJ0aWNhbE9yaWdpbi5CT1RUT00sXG4gICAgICAgICAgICBwaXhlbE9mZnNldDogbmV3IENlc2l1bS5DYXJ0ZXNpYW4yKDE1LCAwKSxcbiAgICAgICAgICAgIC8vIHRoaXMgYXR0cmlidXRlIHdpbGwgcHJldmVudCB0aGlzIGVudGl0eSBjbGlwcGVkIGJ5IHRoZSB0ZXJyYWluXG4gICAgICAgICAgICBkaXNhYmxlRGVwdGhUZXN0RGlzdGFuY2U6IE51bWJlci5QT1NJVElWRV9JTkZJTklUWSxcbiAgICAgICAgICAgIHRleHQ6XCJcIixcbiAgICAgICAgICAgIH0sXG4gICAgICAgIH0pO1xuXG4gICAgICAgIHRoaXMucGlja0hhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIC8vIENhbiBhbHNvIGRvIHRoaXMgcmF0aGVyIHRoYW4gd2FpdCBmb3IgdGhlIHBvaW50cyB0byBiZSBnZW5lcmF0ZWRcbiAgICAgICAgLy90aGlzLnBpY2tIYW5kbGVyLnNldElucHV0QWN0aW9uKGNyZWF0ZVNob3dQcmltaXRpdmUodGhpcyksIENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50VHlwZS5NT1VTRV9NT1ZFKTtcblxuICAgICAgICB0aGlzLnNlbGVjdEhhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIHRoaXMuc2VsZWN0SGFuZGxlci5zZXRJbnB1dEFjdGlvbigoZSkgPT4ge1xuICAgICAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB0aGlzLnZpZXdlci5zY2VuZS5waWNrKGUucG9zaXRpb24pO1xuICAgICAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgICAgIG11dGFibGUgY2xpY2tlZFBvaW50SWQgPSBzZWxlY3RQb2ludC5pZDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSxDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTEVGVF9DTElDSyk7XG5cbiAgICB9XG5cbiAgICBlbmFibGVUcmFja2luZygpIHtcbiAgICAgICAgdGhpcy5waWNrSGFuZGxlci5zZXRJbnB1dEFjdGlvbihjcmVhdGVTaG93UHJpbWl0aXZlKHRoaXMpLCBDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTU9VU0VfTU9WRSk7XG4gICAgfVxufVxuXG5jb250ZW50ID0gbmV3IENWaWV3KFwiY2VzaXVtQ29udGFpbmVyXCIpO1xuXG5hc3luYyBmdW5jdGlvbiBnZXRHZW9SZWNvcmQocGlkKSB7XG4gICAgaWYgKHBpZCA9PT0gbnVsbCB8fCBwaWQgPT09XCJcIiB8fCBwaWQgPT0gXCJ1bnNldFwiKSB7XG4gICAgICAgIHJldHVybiBcInVuc2V0XCI7XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgU0VMRUNUIHJvd19pZCwgcGlkLCBvdHlwZSwgbGF0aXR1ZGUsIGxvbmdpdHVkZSBGUk9NIG5vZGVzIFdIRVJFIG90eXBlPSdHZW9zcGF0aWFsQ29vcmRMb2NhdGlvbicgQU5EIHBpZD0/YDtcbiAgICBjb25zdCByZXN1bHQgPSBhd2FpdCBkYi5xdWVyeVJvdyhxLCBbcGlkXSk7XG4gICAgcmV0dXJuIHJlc3VsdDtcbn1cblxuYXN5bmMgZnVuY3Rpb24gbG9jYXRpb25Vc2VkQnkocm93aWQpe1xuICAgIGlmIChyb3dpZCA9PT0gdW5kZWZpbmVkIHx8IHJvd2lkID09PSBudWxsKSB7XG4gICAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgY29uc3QgcSA9IGBzZWxlY3QgcGlkLCBvdHlwZSBmcm9tIG5vZGVzIHdoZXJlIHJvd19pZCBpbiAoc2VsZWN0IG5vZGVzLnMgZnJvbSBub2RlcyB3aGVyZSBsaXN0X2NvbnRhaW5zKG5vZGVzLm8sID8pKTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxubXV0YWJsZSBjbGlja2VkUG9pbnRJZCA9IFwidW5zZXRcIjtcbnNlbGVjdGVkR2VvUmVjb3JkID0gYXdhaXQgZ2V0R2VvUmVjb3JkKGNsaWNrZWRQb2ludElkKTtcblxubWRgUmV0cmlldmVkICR7cG9pbnRkYXRhLmxlbmd0aH0gbG9jYXRpb25zIGZyb20gJHtwYXJxdWV0X3BhdGh9LmA7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTQiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbnZpZXdvZiBwb2ludGRhdGEgPSB7XG4gICAgY29uc3QgZGF0YV90YWJsZSA9IElucHV0cy50YWJsZShsb2NhdGlvbnMsIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICByb3dfaWQ6XCJSb3cgSURcIixcbiAgICAgICAgICAgIHBpZDogXCJQSURcIixcbiAgICAgICAgICAgIGxhdGl0dWRlOiBcIkxhdGl0dWRlXCIsXG4gICAgICAgICAgICBsb25naXR1ZGU6IFwiTG9uZ2l0dWRlXCJcbiAgICAgICAgfSxcbiAgICB9KTtcbiAgICByZXR1cm4gZGF0YV90YWJsZTtcbn0gICAgXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTUiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJtZGBcXGBcXGBcXGBcbiR7SlNPTi5zdHJpbmdpZnkoc2VsZWN0ZWRHZW9SZWNvcmQsIG51bGwsIDIpfVxuXFxgXFxgXFxgXG5gXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3BhcnF1ZXRfcGF0aCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdwb2ludGRhdGEnKSJ9XX0=
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IkNlc2l1bS5Jb24uZGVmYXVsdEFjY2Vzc1Rva2VuID0gJ2V5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpxZEdraU9pSXdOemszTmpreU15MWlOR0kxTFRSa04yVXRPRFJpTXkwNE9UWXdZV0UwTjJNM1pUa2lMQ0pwWkNJNk5qazFNVGNzSW1saGRDSTZNVFl6TXpVME1UUTNOMzAuZTcwZHBOek9DRFJMREd4Umd1UUNDLXRSekd6QS0yM1hnbm81bE5nQ2VCNCc7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2YgcGFycXVldF9wYXRoID0gSW5wdXRzLnRleHQoe2xhYmVsOlwiU291cmNlXCIsIHZhbHVlOlwiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL29wZW5jb250ZXh0LXBhcnF1ZXQvb2NfaXNhbXBsZXNfcHFnLnBhcnF1ZXRcIiwgd2lkdGg6XCIxMDAlXCIsIHN1Ym1pdDp0cnVlfSk7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSB7XG4gIGNvbnN0IGluc3RhbmNlID0gYXdhaXQgRHVja0RCQ2xpZW50Lm9mKCk7XG4gIGF3YWl0IGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdmlldyBub2RlcyBhcyBzZWxlY3QgKiBmcm9tIHJlYWRfcGFycXVldCgnJHtwYXJxdWV0X3BhdGh9JylgKVxuICByZXR1cm4gaW5zdGFuY2U7XG59XG5cblxuYXN5bmMgZnVuY3Rpb24gbG9hZERhdGEocXVlcnksIHBhcmFtcz1bXSwgd2FpdGluZ19pZD1udWxsKSB7XG4gICAgLy8gR2V0IGxvYWRpbmcgaW5kaWNhdG9yXG4gICAgY29uc3Qgd2FpdGVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQod2FpdGluZ19pZCk7XG4gICAgaWYgKHdhaXRlcikge1xuICAgICAgICB3YWl0ZXIuaGlkZGVuID0gZmFsc2U7XG4gICAgfVxuICAgIHRyeSB7XG4gICAgICAgIC8vIFJ1biB0aGUgKHNsb3cpIHF1ZXJ5XG4gICAgICAgIGNvbnN0IF9yZXN1bHRzID0gYXdhaXQgZGIucXVlcnkocXVlcnksIC4uLnBhcmFtcyk7XG4gICAgICAgIHJldHVybiBfcmVzdWx0cztcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaW5uZXJIdG1sID0gYDxwcmU+JHtlcnJvcn08L3ByZT5gO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBudWxsO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIC8vIEhpZGUgdGhlIHdhaXRlciAoaWYgdGhlcmUgaXMgb25lKVxuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaGlkZGVuID0gdHJ1ZTtcbiAgICAgICAgfVxuICAgIH1cbn1cblxubG9jYXRpb25zID0ge1xuICAgIC8vIGdldCB0aGUgY29udGVudCBmb3JtIHRoZSBwYXJxdWV0IGZpbGVcbiAgICBjb25zdCBxdWVyeSA9IGBTRUxFQ1QgcGlkLCBsYXRpdHVkZSwgbG9uZ2l0dWRlIEZST00gbm9kZXMgV0hFUkUgb3R5cGU9J0dlb3NwYXRpYWxDb29yZExvY2F0aW9uJ2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nXzFcIik7XG5cbiAgICAvLyBDbGVhciB0aGUgZXhpc3RpbmcgUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uXG4gICAgY29udGVudC5wb2ludHMucmVtb3ZlQWxsKCk7XG4gICAgLy9jb250ZW50LnBvaW50cyA9IG5ldyBDZXNpdW0uUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uKCk7XG5cbiAgICAvLyBjcmVhdGUgcG9pbnQgcHJpbWl0aXZlcyBmb3IgY2VzaXVtIGRpc3BsYXlcbiAgICBjb25zdCBzY2FsYXIgPSBuZXcgQ2VzaXVtLk5lYXJGYXJTY2FsYXIoMS41ZTIsIDIsIDguMGU2LCAwLjIpO1xuICAgIGNvbnN0IGNvbG9yID0gQ2VzaXVtLkNvbG9yLlBJTks7XG4gICAgY29uc3QgcG9pbnRfc2l6ZSA9IDQ7XG4gICAgZm9yIChjb25zdCByb3cgb2YgZGF0YSkge1xuICAgICAgICBjb250ZW50LnBvaW50cy5hZGQoe1xuICAgICAgICAgICAgaWQ6IHJvdy5waWQsXG4gICAgICAgICAgICAvLyBodHRwczovL2Nlc2l1bS5jb20vbGVhcm4vY2VzaXVtanMvcmVmLWRvYy9DYXJ0ZXNpYW4zLmh0bWwjLmZyb21EZWdyZWVzXG4gICAgICAgICAgICBwb3NpdGlvbjogQ2VzaXVtLkNhcnRlc2lhbjMuZnJvbURlZ3JlZXMoXG4gICAgICAgICAgICAgICAgcm93LmxvbmdpdHVkZSwgIC8vbG9uZ2l0dWRlXG4gICAgICAgICAgICAgICAgcm93LmxhdGl0dWRlLCAgIC8vbGF0aXR1ZGVcbiAgICAgICAgICAgICAgICAwLC8vcmFuZG9tQ29vcmRpbmF0ZUppdHRlcigxMC4wLCAxMC4wKSwgLy9lbGV2YXRpb24sIG1cbiAgICAgICAgICAgICksXG4gICAgICAgICAgICBwaXhlbFNpemU6IHBvaW50X3NpemUsXG4gICAgICAgICAgICBjb2xvcjogY29sb3IsXG4gICAgICAgICAgICBzY2FsZUJ5RGlzdGFuY2U6IHNjYWxhcixcbiAgICAgICAgfSk7XG4gICAgfVxuICAgIGNvbnRlbnQuZW5hYmxlVHJhY2tpbmcoKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cblxuXG5mdW5jdGlvbiBjcmVhdGVTaG93UHJpbWl0aXZlKHZpZXdlcikge1xuICAgIHJldHVybiBmdW5jdGlvbihtb3ZlbWVudCkge1xuICAgICAgICAvLyBHZXQgdGhlIHBvaW50IGF0IHRoZSBtb3VzZSBlbmQgcG9zaXRpb25cbiAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB2aWV3ZXIudmlld2VyLnNjZW5lLnBpY2sobW92ZW1lbnQuZW5kUG9zaXRpb24pOyAgICAgICAgXG5cbiAgICAgICAgLy8gQ2xlYXIgdGhlIGN1cnJlbnQgc2VsZWN0aW9uLCBpZiB0aGVyZSBpcyBvbmUgYW5kIGl0IGlzIGRpZmZlcmVudCB0byB0aGUgc2VsZWN0UG9pbnRcbiAgICAgICAgaWYgKHZpZXdlci5jdXJyZW50U2VsZWN0aW9uICE9PSBudWxsKSB7XG4gICAgICAgICAgICAvL2NvbnNvbGUubG9nKGBzZWxlY3RlZC5wICR7dmlld2VyLmN1cnJlbnRTZWxlY3Rpb259YClcbiAgICAgICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQgIT09IHZpZXdlci5jdXJyZW50U2VsZWN0aW9uKSB7XG4gICAgICAgICAgICAgICAgY29uc29sZS5sb2coYHNlbGVjdGVkLnAgMiAke3ZpZXdlci5jdXJyZW50U2VsZWN0aW9ufWApXG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDQ7XG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5UUkFOU1BBUkVOVDtcbiAgICAgICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbi5vdXRsaW5lV2lkdGggPSAwO1xuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gbnVsbDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuXG4gICAgICAgIC8vIElmIHNlbGVjdFBvaW50IGlzIHZhbGlkIGFuZCBubyBjdXJyZW50bHkgc2VsZWN0ZWQgcG9pbnRcbiAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgLy9jb25zb2xlLmxvZyhgc2hvd1ByaW1pdGl2ZUlkICR7c2VsZWN0UG9pbnQuaWR9YCk7XG4gICAgICAgICAgICAvL2NvbnN0IGNhcnRvID0gQ2VzaXVtLkNhcnRvZ3JhcGhpYy5mcm9tQ2FydGVzaWFuKHNlbGVjdFBvaW50LnByaW1pdGl2ZS5wb3NpdGlvbilcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLnBvc2l0aW9uID0gc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBvc2l0aW9uO1xuICAgICAgICAgICAgdmlld2VyLnBvaW50TGFiZWwubGFiZWwuc2hvdyA9IHRydWU7XG4gICAgICAgICAgICAvL3ZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgaWQ6JHtzZWxlY3RQb2ludC5pZH0sICR7Y2FydG99YDtcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgJHtzZWxlY3RQb2ludC5pZH1gO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDIwO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5ZRUxMT1c7XG4gICAgICAgICAgICBzZWxlY3RQb2ludC5wcmltaXRpdmUub3V0bGluZVdpZHRoID0gMztcbiAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gc2VsZWN0UG9pbnQ7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC5zaG93ID0gZmFsc2U7XG4gICAgICAgIH0gICAgICAgICAgICBcbiAgICB9XG59XG5cbmNsYXNzIENWaWV3IHtcbiAgICBjb25zdHJ1Y3Rvcih0YXJnZXQpIHtcbiAgICAgICAgdGhpcy52aWV3ZXIgPSBuZXcgQ2VzaXVtLlZpZXdlcihcbiAgICAgICAgICAgIHRhcmdldCwge1xuICAgICAgICAgICAgICAgIHRpbWVsaW5lOiBmYWxzZSxcbiAgICAgICAgICAgICAgICBhbmltYXRpb246IGZhbHNlLFxuICAgICAgICAgICAgICAgIGJhc2VMYXllclBpY2tlcjogZmFsc2UsXG4gICAgICAgICAgICAgICAgZnVsbHNjcmVlbkVsZW1lbnQ6IHRhcmdldCxcbiAgICAgICAgICAgICAgICB0ZXJyYWluOiBDZXNpdW0uVGVycmFpbi5mcm9tV29ybGRUZXJyYWluKClcbiAgICAgICAgICAgIH0pO1xuICAgICAgICB0aGlzLmN1cnJlbnRTZWxlY3Rpb24gPSBudWxsO1xuICAgICAgICB0aGlzLnBvaW50X3NpemUgPSAxO1xuICAgICAgICB0aGlzLm5fcG9pbnRzID0gMDtcbiAgICAgICAgLy8gaHR0cHM6Ly9jZXNpdW0uY29tL2xlYXJuL2Nlc2l1bWpzL3JlZi1kb2MvUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uLmh0bWxcbiAgICAgICAgdGhpcy5wb2ludHMgPSBuZXcgQ2VzaXVtLlBvaW50UHJpbWl0aXZlQ29sbGVjdGlvbigpO1xuICAgICAgICB0aGlzLnZpZXdlci5zY2VuZS5wcmltaXRpdmVzLmFkZCh0aGlzLnBvaW50cyk7XG4gICAgIFxuICAgICAgICB0aGlzLnBvaW50TGFiZWwgPSB0aGlzLnZpZXdlci5lbnRpdGllcy5hZGQoe1xuICAgICAgICAgICAgbGFiZWw6IHtcbiAgICAgICAgICAgIHNob3c6IGZhbHNlLFxuICAgICAgICAgICAgc2hvd0JhY2tncm91bmQ6IHRydWUsXG4gICAgICAgICAgICBmb250OiBcIjE0cHggbW9ub3NwYWNlXCIsXG4gICAgICAgICAgICBob3Jpem9udGFsT3JpZ2luOiBDZXNpdW0uSG9yaXpvbnRhbE9yaWdpbi5MRUZULFxuICAgICAgICAgICAgdmVydGljYWxPcmlnaW46IENlc2l1bS5WZXJ0aWNhbE9yaWdpbi5CT1RUT00sXG4gICAgICAgICAgICBwaXhlbE9mZnNldDogbmV3IENlc2l1bS5DYXJ0ZXNpYW4yKDE1LCAwKSxcbiAgICAgICAgICAgIC8vIHRoaXMgYXR0cmlidXRlIHdpbGwgcHJldmVudCB0aGlzIGVudGl0eSBjbGlwcGVkIGJ5IHRoZSB0ZXJyYWluXG4gICAgICAgICAgICBkaXNhYmxlRGVwdGhUZXN0RGlzdGFuY2U6IE51bWJlci5QT1NJVElWRV9JTkZJTklUWSxcbiAgICAgICAgICAgIHRleHQ6XCJcIixcbiAgICAgICAgICAgIH0sXG4gICAgICAgIH0pO1xuXG4gICAgICAgIHRoaXMucGlja0hhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIC8vIENhbiBhbHNvIGRvIHRoaXMgcmF0aGVyIHRoYW4gd2FpdCBmb3IgdGhlIHBvaW50cyB0byBiZSBnZW5lcmF0ZWRcbiAgICAgICAgLy90aGlzLnBpY2tIYW5kbGVyLnNldElucHV0QWN0aW9uKGNyZWF0ZVNob3dQcmltaXRpdmUodGhpcyksIENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50VHlwZS5NT1VTRV9NT1ZFKTtcblxuICAgICAgICB0aGlzLnNlbGVjdEhhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIHRoaXMuc2VsZWN0SGFuZGxlci5zZXRJbnB1dEFjdGlvbigoZSkgPT4ge1xuICAgICAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB0aGlzLnZpZXdlci5zY2VuZS5waWNrKGUucG9zaXRpb24pO1xuICAgICAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgICAgIG11dGFibGUgY2xpY2tlZFBvaW50SWQgPSBzZWxlY3RQb2ludC5pZDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSxDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTEVGVF9DTElDSyk7XG5cbiAgICB9XG5cbiAgICBlbmFibGVUcmFja2luZygpIHtcbiAgICAgICAgdGhpcy5waWNrSGFuZGxlci5zZXRJbnB1dEFjdGlvbihjcmVhdGVTaG93UHJpbWl0aXZlKHRoaXMpLCBDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTU9VU0VfTU9WRSk7XG4gICAgfVxufVxuXG5jb250ZW50ID0gbmV3IENWaWV3KFwiY2VzaXVtQ29udGFpbmVyXCIpO1xuXG5hc3luYyBmdW5jdGlvbiBnZXRHZW9SZWNvcmQocGlkKSB7XG4gICAgaWYgKHBpZCA9PT0gbnVsbCB8fCBwaWQgPT09XCJcIiB8fCBwaWQgPT0gXCJ1bnNldFwiKSB7XG4gICAgICAgIHJldHVybiBcInVuc2V0XCI7XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgU0VMRUNUIHJvd19pZCwgcGlkLCBvdHlwZSwgbGF0aXR1ZGUsIGxvbmdpdHVkZSBGUk9NIG5vZGVzIFdIRVJFIG90eXBlPSdHZW9zcGF0aWFsQ29vcmRMb2NhdGlvbicgQU5EIHBpZD0/YDtcbiAgICBjb25zdCByZXN1bHQgPSBhd2FpdCBkYi5xdWVyeVJvdyhxLCBbcGlkXSk7XG4gICAgcmV0dXJuIHJlc3VsdDtcbn1cblxuYXN5bmMgZnVuY3Rpb24gbG9jYXRpb25Vc2VkQnkocm93aWQpe1xuICAgIGlmIChyb3dpZCA9PT0gdW5kZWZpbmVkIHx8IHJvd2lkID09PSBudWxsKSB7XG4gICAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgY29uc3QgcSA9IGBzZWxlY3QgcGlkLCBvdHlwZSBmcm9tIG5vZGVzIHdoZXJlIHJvd19pZCBpbiAoc2VsZWN0IG5vZGVzLnMgZnJvbSBub2RlcyB3aGVyZSBsaXN0X2NvbnRhaW5zKG5vZGVzLm8sID8pKTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxubXV0YWJsZSBjbGlja2VkUG9pbnRJZCA9IFwidW5zZXRcIjtcbnNlbGVjdGVkR2VvUmVjb3JkID0gYXdhaXQgZ2V0R2VvUmVjb3JkKGNsaWNrZWRQb2ludElkKTtcblxubWRgUmV0cmlldmVkICR7cG9pbnRkYXRhLmxlbmd0aH0gbG9jYXRpb25zIGZyb20gJHtwYXJxdWV0X3BhdGh9LmA7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTQiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbnZpZXdvZiBwb2ludGRhdGEgPSB7XG4gICAgY29uc3QgZGF0YV90YWJsZSA9IElucHV0cy50YWJsZShsb2NhdGlvbnMsIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICByb3dfaWQ6XCJSb3cgSURcIixcbiAgICAgICAgICAgIHBpZDogXCJQSURcIixcbiAgICAgICAgICAgIGxhdGl0dWRlOiBcIkxhdGl0dWRlXCIsXG4gICAgICAgICAgICBsb25naXR1ZGU6IFwiTG9uZ2l0dWRlXCJcbiAgICAgICAgfSxcbiAgICB9KTtcbiAgICByZXR1cm4gZGF0YV90YWJsZTtcbn0gICAgXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTUiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJtZGBcXGBcXGBcXGBcbiR7SlNPTi5zdHJpbmdpZnkoc2VsZWN0ZWRHZW9SZWNvcmQsIG51bGwsIDIpfVxuXFxgXFxgXFxgXG5gXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTYiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ0YWJsZVNjaGVtYSA9IHtcbiAgICBjb25zdCBxdWVyeSA9IGBERVNDUklCRSBub2Rlc2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX3NjaGVtYVwiKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtNyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBzY2hlbWFUYWJsZSA9IHtcbiAgICBjb25zdCBkYXRhX3RhYmxlID0gSW5wdXRzLnRhYmxlKHRhYmxlU2NoZW1hLCB7XG4gICAgICAgIGhlYWRlcjoge1xuICAgICAgICAgICAgY29sdW1uX25hbWU6IFwiQ29sdW1uIE5hbWVcIixcbiAgICAgICAgICAgIGNvbHVtbl90eXBlOiBcIkRhdGEgVHlwZVwiLFxuICAgICAgICAgICAgbnVsbDogXCJOdWxsYWJsZVwiLFxuICAgICAgICAgICAga2V5OiBcIktleVwiLFxuICAgICAgICAgICAgZGVmYXVsdDogXCJEZWZhdWx0XCIsXG4gICAgICAgICAgICBleHRyYTogXCJFeHRyYVwiXG4gICAgICAgIH1cbiAgICB9KTtcbiAgICByZXR1cm4gZGF0YV90YWJsZTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtOCIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InNhbXBsZURhdGEgPSB7XG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUICogRlJPTSBub2RlcyBMSU1JVCAxMGA7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX3NhbXBsZVwiKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtOSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBzYW1wbGVUYWJsZSA9IHtcbiAgICBjb25zdCBkYXRhX3RhYmxlID0gSW5wdXRzLnRhYmxlKHNhbXBsZURhdGEsIHtcbiAgICAgICAgbGF5b3V0OiBcImF1dG9cIixcbiAgICAgICAgd2lkdGg6IHtcbiAgICAgICAgICAgIHBpZDogMjAwLFxuICAgICAgICAgICAgb3R5cGU6IDE1MFxuICAgICAgICB9XG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTEwIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoic2FtcGxlRGF0YUJ5T3R5cGUgPSB7XG4gICAgLy8gRmlyc3QgZ2V0IHRoZSBsaXN0IG9mIHVuaXF1ZSBvYmplY3QgdHlwZXNcbiAgICBjb25zdCBvdHlwZVF1ZXJ5ID0gYFNFTEVDVCBESVNUSU5DVCBvdHlwZSBGUk9NIG5vZGVzIE9SREVSIEJZIG90eXBlYDtcbiAgICBjb25zdCBvdHlwZXMgPSBhd2FpdCBsb2FkRGF0YShvdHlwZVF1ZXJ5LCBbXSwgXCJsb2FkaW5nX290eXBlX3NhbXBsZXNcIik7XG4gICAgXG4gICAgY29uc3QgcmVzdWx0cyA9IFtdO1xuICAgIGZvciAoY29uc3Qgb3R5cGVSb3cgb2Ygb3R5cGVzKSB7XG4gICAgICAgIGNvbnN0IG90eXBlID0gb3R5cGVSb3cub3R5cGU7XG4gICAgICAgIC8vIEdldCAzIHNhbXBsZSByZWNvcmRzIGZvciBlYWNoIG90eXBlXG4gICAgICAgIGNvbnN0IHNhbXBsZVF1ZXJ5ID0gYFNFTEVDVCAqIEZST00gbm9kZXMgV0hFUkUgb3R5cGUgPSA/IExJTUlUIDNgO1xuICAgICAgICBjb25zdCBzYW1wbGVzID0gYXdhaXQgZGIucXVlcnkoc2FtcGxlUXVlcnksIFtvdHlwZV0pO1xuICAgICAgICBcbiAgICAgICAgcmVzdWx0cy5wdXNoKHtcbiAgICAgICAgICAgIG90eXBlOiBvdHlwZSxcbiAgICAgICAgICAgIGNvdW50OiBzYW1wbGVzLmxlbmd0aCxcbiAgICAgICAgICAgIHNhbXBsZXM6IHNhbXBsZXNcbiAgICAgICAgfSk7XG4gICAgfVxuICAgIHJldHVybiByZXN1bHRzO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBvdHlwZVNhbXBsZXNEaXNwbGF5ID0ge1xuICAgIGNvbnN0IGNvbnRhaW5lciA9IGh0bWxgPGRpdj48L2Rpdj5gO1xuICAgIFxuICAgIGZvciAoY29uc3Qgb3R5cGVEYXRhIG9mIHNhbXBsZURhdGFCeU90eXBlKSB7XG4gICAgICAgIGNvbnN0IHNlY3Rpb24gPSBodG1sYDxkaXYgc3R5bGU9XCJtYXJnaW4tYm90dG9tOiAycmVtO1wiPlxuICAgICAgICAgICAgPGg0IHN0eWxlPVwiY29sb3I6ICMyNTYzZWI7IG1hcmdpbi1ib3R0b206IDAuNXJlbTtcIj5PYmplY3QgVHlwZTogJHtvdHlwZURhdGEub3R5cGV9PC9oND5cbiAgICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiAwLjVyZW0gMDsgZm9udC1zdHlsZTogaXRhbGljO1wiPlNhbXBsZSByZWNvcmRzIChzaG93aW5nIHVwIHRvIDMpOjwvcD5cbiAgICAgICAgPC9kaXY+YDtcbiAgICAgICAgXG4gICAgICAgIC8vIENyZWF0ZSBhIHRhYmxlIGZvciB0aGlzIG90eXBlJ3Mgc2FtcGxlc1xuICAgICAgICBjb25zdCB0YWJsZSA9IElucHV0cy50YWJsZShvdHlwZURhdGEuc2FtcGxlcywge1xuICAgICAgICAgICAgbGF5b3V0OiBcImF1dG9cIixcbiAgICAgICAgICAgIHdpZHRoOiB7XG4gICAgICAgICAgICAgICAgcGlkOiAxNTAsXG4gICAgICAgICAgICAgICAgb3R5cGU6IDEyMCxcbiAgICAgICAgICAgICAgICBsYXRpdHVkZTogMTAwLFxuICAgICAgICAgICAgICAgIGxvbmdpdHVkZTogMTAwXG4gICAgICAgICAgICB9XG4gICAgICAgIH0pO1xuICAgICAgICBcbiAgICAgICAgc2VjdGlvbi5hcHBlbmRDaGlsZCh0YWJsZSk7XG4gICAgICAgIGNvbnRhaW5lci5hcHBlbmRDaGlsZChzZWN0aW9uKTtcbiAgICB9XG4gICAgXG4gICAgcmV0dXJuIGNvbnRhaW5lcjtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJvdHlwZUNvdW50cyA9IHtcbiAgICBjb25zdCBxdWVyeSA9IGBTRUxFQ1Qgb3R5cGUsIENPVU5UKCopIGFzIGNvdW50IEZST00gbm9kZXMgR1JPVVAgQlkgb3R5cGUgT1JERVIgQlkgY291bnQgREVTQ2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX290eXBlXCIpO1xuICAgIHJldHVybiBkYXRhO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xMyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBvdHlwZVRhYmxlID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUob3R5cGVDb3VudHMsIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICBvdHlwZTogXCJPYmplY3QgVHlwZVwiLFxuICAgICAgICAgICAgY291bnQ6IFwiQ291bnRcIlxuICAgICAgICB9LFxuICAgICAgICBmb3JtYXQ6IHtcbiAgICAgICAgICAgIGNvdW50OiBkID0+IGQudG9Mb2NhbGVTdHJpbmcoKVxuICAgICAgICB9XG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTE0IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoicHJvcGVydHlEaXN0cmlidXRpb24gPSB7XG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUIHAgYXMgcHJvcGVydHksIENPVU5UKCopIGFzIGNvdW50IEZST00gbm9kZXMgV0hFUkUgcCBJUyBOT1QgTlVMTCBHUk9VUCBCWSBwIE9SREVSIEJZIGNvdW50IERFU0NgO1xuICAgIGNvbnN0IGRhdGEgPSBhd2FpdCBsb2FkRGF0YShxdWVyeSwgW10sIFwibG9hZGluZ19wcm9wZXJ0aWVzXCIpO1xuICAgIHJldHVybiBkYXRhO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xNSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBwcm9wZXJ0eVRhYmxlID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUocHJvcGVydHlEaXN0cmlidXRpb24sIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICBwcm9wZXJ0eTogXCJQcm9wZXJ0eSAoUHJlZGljYXRlKVwiLFxuICAgICAgICAgICAgY291bnQ6IFwiQ291bnRcIlxuICAgICAgICB9LFxuICAgICAgICBmb3JtYXQ6IHtcbiAgICAgICAgICAgIGNvdW50OiBkID0+IGQudG9Mb2NhbGVTdHJpbmcoKVxuICAgICAgICB9LFxuICAgICAgICBsYXlvdXQ6IFwiYXV0b1wiXG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3BhcnF1ZXRfcGF0aCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdwb2ludGRhdGEnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnc2NoZW1hVGFibGUnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnc2FtcGxlVGFibGUnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnb3R5cGVTYW1wbGVzRGlzcGxheScpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdvdHlwZVRhYmxlJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3Byb3BlcnR5VGFibGUnKSJ9XX0=
 </script>
 <script type="module">
 if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
@@ -1057,7 +1326,7 @@ window._ojs.runtime.interpretFromScriptTags();
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet_cesium.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet_cesium.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
