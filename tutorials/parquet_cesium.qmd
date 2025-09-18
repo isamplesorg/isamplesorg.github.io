@@ -8,8 +8,8 @@ One key development of the iSamples project centers on the demonstration of low-
 This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from [Open Context's](https://opencontext.org/) export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.
 
 
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
     div.cesium-topleft {
         display: block;
@@ -238,6 +238,8 @@ viewof pointdata = {
 
 :::
 
+The number of locations in the file is: ${pointdata.length}.
+
 The click point ID is "${clickedPointId}".
 
 ```{ojs}
@@ -247,5 +249,40 @@ ${JSON.stringify(selectedGeoRecord, null, 2)}
 \`\`\`
 `
 ```
+
+
+
+## Object Type Counts
+
+The distribution of object types (`otype`) in the dataset:
+
+```{ojs}
+//| code-fold: true
+otypeCounts = {
+    const query = `SELECT otype, COUNT(*) as count FROM nodes GROUP BY otype ORDER BY count DESC`;
+    const data = await loadData(query, [], "loading_otype");
+    return data;
+}
+```
+
+<div id="loading_otype">Loading object type counts...</div>
+
+```{ojs}
+//| code-fold: true
+viewof otypeTable = {
+    const data_table = Inputs.table(otypeCounts, {
+        header: {
+            otype: "Object Type",
+            count: "Count"
+        },
+        format: {
+            count: d => d.toLocaleString()
+        }
+    });
+    return data_table;
+}
+```
+
+Total records by object type: ${otypeCounts.reduce((sum, row) => sum + row.count, 0).toLocaleString()}
 
 
