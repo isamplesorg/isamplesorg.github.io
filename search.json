@@ -207,7 +207,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```oscxuqdc assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```oscxuqdc assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```qubqxyrz assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```qubqxyrz assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "design/index.html",
@@ -225,17 +225,7 @@
     "href": "index.html",
     "title": "Internet of Samples: iSamples",
     "section": "",
-    "text": "The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.",
-    "crumbs": [
-      "Home"
-    ]
-  },
-  {
-    "objectID": "index.html#current-data-access-geoparquet-based-approach",
-    "href": "index.html#current-data-access-geoparquet-based-approach",
-    "title": "Internet of Samples: iSamples",
-    "section": "1 Current Data Access: Geoparquet-Based Approach",
-    "text": "1 Current Data Access: Geoparquet-Based Approach\nNote: iSamples Central is currently unavailable. The project now uses geoparquet files for efficient, browser-based data access and analysis:\n\n📊 Interactive Tutorials - Modern browser-based analysis with DuckDB-WASM\n🗺️ Comprehensive Coverage - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian\n🚀 High Performance - Fast, efficient data access with minimal memory usage\n🌐 Universal Access - Works in any modern browser without software installation\n\nResources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community\n\npresentation of iSamples metadata model",
+    "text": "The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.\n\nCurrent Data Access: Geoparquet-Based Approach\nNote: iSamples Central is currently unavailable. The project now uses geoparquet files for efficient, browser-based data access and analysis:\n\n📊 Interactive Tutorials - Modern browser-based analysis with DuckDB-WASM\n🗺️ Comprehensive Coverage - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian\n🚀 High Performance - Fast, efficient data access with minimal memory usage\n🌐 Universal Access - Works in any modern browser without software installation\n\nResources\n\nRecording of project presentation at the 2020 SPNHC & ICOM NATHIST Conference\nZenodo Community\n\npresentation of iSamples metadata model",
     "crumbs": [
       "Home"
     ]
