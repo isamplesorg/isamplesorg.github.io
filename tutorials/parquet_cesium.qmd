@@ -195,7 +195,7 @@ async function getGeoRecord(pid) {
 
 async function get_samples_1(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
-        return "unset";
+        return [];
     }
     const q = `
         SELECT DISTINCT
@@ -215,13 +215,13 @@ async function get_samples_1(pid) {
           AND g.otype = 'GeospatialCoordLocation'
           AND g.pid = ?
     `;
-    const result = await db.queryRow(q, [pid]);
+    const result = await db.query(q, [pid]);
     return result;
 }
 
 async function get_samples_2(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
-        return "unset";
+        return [];
     }
     const q = `
         SELECT DISTINCT
@@ -245,7 +245,7 @@ async function get_samples_2(pid) {
           AND g.otype = 'GeospatialCoordLocation'
           AND g.pid = ?
     `;
-    const result = await db.queryRow(q, [pid]);
+    const result = await db.query(q, [pid]);
     return result; 
 }
 
@@ -330,11 +330,11 @@ viewof sampleTable = {
 }
 ```
 
-## getGeoRecord (harcoded)
+## getGeoRecord (selected)
 
 ```{ojs}
 //| code-fold: true
-pid = "geoloc_7ea562cce4c70e4b37f7915e8384880c86607729";
+pid = clickedPointId
 testrecord = await getGeoRecord(pid);
 ```
 
@@ -346,11 +346,11 @@ ${JSON.stringify(testrecord, null, 2)}
 `
 ```
 
-## Related Sample Path 1 (harcoded)
+## Related Sample Path 1 (selected)
 
 ```{ojs}
 //| echo: false
-samples_1 = await get_samples_1(pid)
+samples_1 = await get_samples_1(clickedPointId)
 md`\`\`\`
 ${JSON.stringify(samples_1, null, 2)}
 \`\`\`
@@ -358,11 +358,11 @@ ${JSON.stringify(samples_1, null, 2)}
 ```
 
 
-## Related Sample Path 2 (harcoded)
+## Related Sample Path 2 (selected)
 
 ```{ojs}
 //| echo: false
-samples_2 = await get_samples_2(pid)
+samples_2 = await get_samples_2(clickedPointId)
 md`\`\`\`
 ${JSON.stringify(samples_2, null, 2)}
 \`\`\`
