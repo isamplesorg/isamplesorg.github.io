@@ -1,15 +1,12 @@
 ---
-title: Using Cesium for geospatial visualization of remote parquet data
+title: Using Cesium for display of remote parquet.
 categories: [parquet, spatial, recipe]
 ---
 
-One key development of the iSamples project centers on the demonstration of low-cost, simplified, and more sustainable approaches to access, analyze and visualize scientific data. Rather than relying upon elaborate and costly server-side infrastructure, iSamples demonstrates how open source technologies like parquet and DuckDB-WASM can streamline cheaper and faster approaches to interacting with geospatial data.
+This page renders points from an iSamples parquet file on cesium using point primitives.
 
-This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from [Open Context's](https://opencontext.org/) export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.
-
-
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
     div.cesium-topleft {
         display: block;
@@ -34,6 +31,11 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 viewof parquet_path = Inputs.text({label:"Source", value:"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet", width:"100%", submit:true});
 ```
 
+::: callout-warning
+#### Heads up: first interaction may be slow
+The first click or query can take a few seconds while the in‑browser database engine initializes and the remote Parquet file is fetched and indexed. Subsequent interactions are much faster because both the browser and DuckDB cache metadata and column chunks, so later queries reuse what was already loaded.
+:::
+
 ```{ojs}
 //| code-fold: true
 
@@ -45,24 +47,30 @@ db = {
 }
 
 
-async function loadData(query, params=[], waiting_id=null) {
+async function loadData(query, params = [], waiting_id = null, key = "default") {
+    // latest-only guard per key
+    loadData._latest = loadData._latest || new Map();
+    const requestToken = Symbol();
+    loadData._latest.set(key, requestToken);
+
     // Get loading indicator
-    const waiter = document.getElementById(waiting_id);
-    if (waiter) {
-        waiter.hidden = false;
-    }
+    const waiter = waiting_id ? document.getElementById(waiting_id) : null;
+    if (waiter) waiter.hidden = false;
+
     try {
         // Run the (slow) query
-        const _results = await db.query(query, ...params);
+        const _results = await db.query(query, params);
+        // Ignore stale responses
+        if (loadData._latest.get(key) !== requestToken) return null;
         return _results;
     } catch (error) {
-        if (waiter) {
-            waiter.innerHtml = `<pre>${error}</pre>`;
+        if (waiter && loadData._latest.get(key) === requestToken) {
+            waiter.innerHTML = `<pre>${error}</pre>`;
         }
         return null;
     } finally {
-        // Hide the waiter (if there is one)
-        if (waiter) {
+        // Hide the waiter (if there is one) only if latest
+        if (waiter && loadData._latest.get(key) === requestToken) {
             waiter.hidden = true;
         }
     }
@@ -71,7 +79,7 @@ async function loadData(query, params=[], waiting_id=null) {
 locations = {
     // get the content form the parquet file
     const query = `SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation'`;
-    const data = await loadData(query, [], "loading_1");
+    const data = await loadData(query, [], "loading_1", "locations");
 
     // Clear the existing PointPrimitiveCollection
     content.points.removeAll();
@@ -192,8 +200,64 @@ async function getGeoRecord(pid) {
         return "unset";
     }
     const q = `SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
-    const result = await db.queryRow(q, [pid]);
-    return result;
+    const rows = await loadData(q, [pid], "loading_geo", "geo");
+    return rows && rows.length ? rows[0] : null;
+}
+
+async function get_samples_1(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    const q = `
+        SELECT DISTINCT
+            s.pid as sample_id,
+            s.label as sample_label,
+            s.name as sample_name,
+            event.pid as event_id,
+            event.label as event_label,
+            'direct_event_location' as location_path
+        FROM nodes s
+        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
+        JOIN nodes event ON e1.o[1] = event.row_id
+        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'
+        JOIN nodes g ON e2.o[1] = g.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+          AND event.otype = 'SamplingEvent'
+          AND g.otype = 'GeospatialCoordLocation'
+          AND g.pid = ?
+    `;
+    const result = await loadData(q, [pid], "loading_s1", "samples_1");
+    return result ?? [];
+}
+
+async function get_samples_2(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    const q = `
+        SELECT DISTINCT
+            s.pid as sample_id,
+            s.label as sample_label,
+            s.name as sample_name,
+            event.pid as event_id,
+            event.label as event_label,
+            site.label as site_name,
+            'via_site_location' as location_path
+        FROM nodes s
+        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
+        JOIN nodes event ON e1.o[1] = event.row_id
+        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'
+        JOIN nodes site ON e2.o[1] = site.row_id
+        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'
+        JOIN nodes g ON e3.o[1] = g.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+          AND event.otype = 'SamplingEvent'
+          AND site.otype = 'SamplingSite'
+          AND g.otype = 'GeospatialCoordLocation'
+          AND g.pid = ?
+    `;
+    const result = await loadData(q, [pid], "loading_s2", "samples_2");
+    return result ?? []; 
 }
 
 async function locationUsedBy(rowid){
@@ -205,7 +269,38 @@ async function locationUsedBy(rowid){
 }
 
 mutable clickedPointId = "unset";
-selectedGeoRecord = await getGeoRecord(clickedPointId);
+// Loading flags to control UI clearing while fetching
+mutable geoLoading = false;
+mutable s1Loading = false;
+mutable s2Loading = false;
+
+// Precompute selection-driven data with loading flags
+selectedGeoRecord = {
+    mutable geoLoading = true;
+    try {
+        return await getGeoRecord(clickedPointId);
+    } finally {
+        mutable geoLoading = false;
+    }
+}
+
+selectedSamples1 = {
+    mutable s1Loading = true;
+    try {
+        return await get_samples_1(clickedPointId);
+    } finally {
+        mutable s1Loading = false;
+    }
+}
+
+selectedSamples2 = {
+    mutable s2Loading = true;
+    try {
+        return await get_samples_2(clickedPointId);
+    } finally {
+        mutable s2Loading = false;
+    }
+}
 
 md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 ```
@@ -238,208 +333,67 @@ viewof pointdata = {
 
 :::
 
-The number of locations in the file is: ${pointdata.length}.
-
 The click point ID is "${clickedPointId}".
+
+<div id="loading_geo" hidden>Loading selected location…</div>
 
 ```{ojs}
 //| echo: false
-md`\`\`\`
+geoLoading ? md`(loading…)` : md`\`\`\`
 ${JSON.stringify(selectedGeoRecord, null, 2)}
 \`\`\`
 `
 ```
 
-## Table Structure Analysis
-
-Understanding the structure and schema of the parquet file:
-
-### Column Schema
+## getGeoRecord (selected)
 
 ```{ojs}
 //| code-fold: true
-tableSchema = {
-    const query = `DESCRIBE nodes`;
-    const data = await loadData(query, [], "loading_schema");
-    return data;
-}
+pid = clickedPointId
+testrecord = selectedGeoRecord;
 ```
-
-<div id="loading_schema">Loading table schema...</div>
 
 ```{ojs}
-//| code-fold: true
-viewof schemaTable = {
-    const data_table = Inputs.table(tableSchema, {
-        header: {
-            column_name: "Column Name",
-            column_type: "Data Type",
-            null: "Nullable",
-            key: "Key",
-            default: "Default",
-            extra: "Extra"
-        }
-    });
-    return data_table;
-}
+//| echo: false
+md`\`\`\`
+${JSON.stringify(testrecord, null, 2)}
+\`\`\`
+`
 ```
 
-### Sample Data
+## Related Sample Path 1 (selected)
 
-First 10 rows of the dataset to understand the data structure:
+<div id="loading_s1" hidden>Loading related samples (path 1)…</div>
+
+Path 1 (direct_event_location): find MaterialSampleRecord items whose producing SamplingEvent has a direct sample_location pointing to the clicked GeospatialCoordLocation (pid).
+
+- Chain: MaterialSampleRecord → produced_by → SamplingEvent → sample_location → GeospatialCoordLocation (clicked pid)
+- This matches the "direct_samples" concept in the Python notebook and is labeled as `location_path = 'direct_event_location'` in the query.
 
 ```{ojs}
-//| code-fold: true
-sampleData = {
-    const query = `SELECT * FROM nodes LIMIT 10`;
-    const data = await loadData(query, [], "loading_sample");
-    return data;
-}
+//| echo: false
+samples_1 = selectedSamples1
+s1Loading ? md`(loading…)` : md`\`\`\`
+${JSON.stringify(samples_1, null, 2)}
+\`\`\`
+`
 ```
 
-<div id="loading_sample">Loading sample data...</div>
+
+## Related Sample Path 2 (selected)
+
+<div id="loading_s2" hidden>Loading related samples (path 2)…</div>
+
+Path 2 (via_site_location): find MaterialSampleRecord items whose producing SamplingEvent references a SamplingSite, and that site’s site_location points to the clicked GeospatialCoordLocation (pid).
+
+- Chain: MaterialSampleRecord → produced_by → SamplingEvent → sampling_site → SamplingSite → site_location → GeospatialCoordLocation (clicked pid)
+- This matches the "samples_via_sites" concept in the Python notebook and is labeled as `location_path = 'via_site_location'` in the query.
 
 ```{ojs}
-//| code-fold: true
-viewof sampleTable = {
-    const data_table = Inputs.table(sampleData, {
-        layout: "auto",
-        width: {
-            pid: 200,
-            otype: 150
-        }
-    });
-    return data_table;
-}
+//| echo: false
+samples_2 = selectedSamples2
+s2Loading ? md`(loading…)` : md`\`\`\`
+${JSON.stringify(samples_2, null, 2)}
+\`\`\`
+`
 ```
-
-### Sample Data by Object Type
-
-Examples of records for each object type to understand the data semantics:
-
-```{ojs}
-//| code-fold: true
-sampleDataByOtype = {
-    // First get the list of unique object types
-    const otypeQuery = `SELECT DISTINCT otype FROM nodes ORDER BY otype`;
-    const otypes = await loadData(otypeQuery, [], "loading_otype_samples");
-    
-    const results = [];
-    for (const otypeRow of otypes) {
-        const otype = otypeRow.otype;
-        // Get 3 sample records for each otype
-        const sampleQuery = `SELECT * FROM nodes WHERE otype = ? LIMIT 3`;
-        const samples = await db.query(sampleQuery, [otype]);
-        
-        results.push({
-            otype: otype,
-            count: samples.length,
-            samples: samples
-        });
-    }
-    return results;
-}
-```
-
-<div id="loading_otype_samples">Loading sample data by object type...</div>
-
-```{ojs}
-//| code-fold: true
-viewof otypeSamplesDisplay = {
-    const container = html`<div></div>`;
-    
-    for (const otypeData of sampleDataByOtype) {
-        const section = html`<div style="margin-bottom: 2rem;">
-            <h4 style="color: #2563eb; margin-bottom: 0.5rem;">Object Type: ${otypeData.otype}</h4>
-            <p style="margin: 0.5rem 0; font-style: italic;">Sample records (showing up to 3):</p>
-        </div>`;
-        
-        // Create a table for this otype's samples
-        const table = Inputs.table(otypeData.samples, {
-            layout: "auto",
-            width: {
-                pid: 150,
-                otype: 120,
-                latitude: 100,
-                longitude: 100
-            }
-        });
-        
-        section.appendChild(table);
-        container.appendChild(section);
-    }
-    
-    return container;
-}
-```
-
-## Object Type Counts
-
-The distribution of object types (`otype`) in the dataset:
-
-```{ojs}
-//| code-fold: true
-otypeCounts = {
-    const query = `SELECT otype, COUNT(*) as count FROM nodes GROUP BY otype ORDER BY count DESC`;
-    const data = await loadData(query, [], "loading_otype");
-    return data;
-}
-```
-
-<div id="loading_otype">Loading object type counts...</div>
-
-```{ojs}
-//| code-fold: true
-viewof otypeTable = {
-    const data_table = Inputs.table(otypeCounts, {
-        header: {
-            otype: "Object Type",
-            count: "Count"
-        },
-        format: {
-            count: d => d.toLocaleString()
-        }
-    });
-    return data_table;
-}
-```
-
-Total records by object type: ${otypeCounts.reduce((sum, row) => sum + row.count, 0).toLocaleString()}
-
-## Property Distribution Analysis
-
-Understanding the range of properties (predicates) in this graph database structure:
-
-```{ojs}
-//| code-fold: true
-propertyDistribution = {
-    const query = `SELECT p as property, COUNT(*) as count FROM nodes WHERE p IS NOT NULL GROUP BY p ORDER BY count DESC`;
-    const data = await loadData(query, [], "loading_properties");
-    return data;
-}
-```
-
-<div id="loading_properties">Loading property distribution...</div>
-
-```{ojs}
-//| code-fold: true
-viewof propertyTable = {
-    const data_table = Inputs.table(propertyDistribution, {
-        header: {
-            property: "Property (Predicate)",
-            count: "Count"
-        },
-        format: {
-            count: d => d.toLocaleString()
-        },
-        layout: "auto"
-    });
-    return data_table;
-}
-```
-
-Total records with properties: ${propertyDistribution.reduce((sum, row) => sum + row.count, 0).toLocaleString()}
-
-Unique properties in the dataset: ${propertyDistribution.length.toLocaleString()}
-
-

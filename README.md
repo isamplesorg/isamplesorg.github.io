@@ -13,6 +13,16 @@ Sources are in markdown or "quarto markdown" (`.qmd` files), and may include con
 
 Visit the [Quarto site](https://quarto.org/docs/guide/) for documentation on using the Quarto environment and features.
 
+## Tutorials
+
+The `tutorials/` directory contains interactive data analysis tutorials:
+
+- **`parquet_cesium.qmd`** - Cesium-based 3D visualization of parquet data
+- **`oc_parquet_enhanced.qmd`** - **NEW**: Enhanced OpenContext property graph analysis with DuckDB-WASM
+- **`zenodo_isamples_analysis.qmd`** - Analysis of Zenodo archived iSamples data
+
+The enhanced OpenContext tutorial demonstrates browser-based analysis of 11M+ row archaeological datasets using property graph traversal patterns.
+
 ## Development
 
 For simple editing tasks, the sources may be edited directly on GitHub. A local setup will be beneficial for larger or more complex changes.
