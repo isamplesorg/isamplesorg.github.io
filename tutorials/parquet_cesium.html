@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Using Cesium for geospatial visualization of remote parquet data – iSamples</title>
+<title>Using Cesium for display of remote parquet. – iSamples</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -75,7 +75,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-00217dde8ce72fc90f13fd9dbcd9a85e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-5dcfcf7f8d229c93d75c4165c3ff646b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -278,14 +278,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#table-structure-analysis" id="toc-table-structure-analysis" class="nav-link active" data-scroll-target="#table-structure-analysis"><span class="header-section-number">1</span> Table Structure Analysis</a>
-  <ul>
-  <li><a href="#column-schema" id="toc-column-schema" class="nav-link" data-scroll-target="#column-schema"><span class="header-section-number">1.1</span> Column Schema</a></li>
-  <li><a href="#sample-data" id="toc-sample-data" class="nav-link" data-scroll-target="#sample-data"><span class="header-section-number">1.2</span> Sample Data</a></li>
-  <li><a href="#sample-data-by-object-type" id="toc-sample-data-by-object-type" class="nav-link" data-scroll-target="#sample-data-by-object-type"><span class="header-section-number">1.3</span> Sample Data by Object Type</a></li>
-  </ul></li>
-  <li><a href="#object-type-counts" id="toc-object-type-counts" class="nav-link" data-scroll-target="#object-type-counts"><span class="header-section-number">2</span> Object Type Counts</a></li>
-  <li><a href="#property-distribution-analysis" id="toc-property-distribution-analysis" class="nav-link" data-scroll-target="#property-distribution-analysis"><span class="header-section-number">3</span> Property Distribution Analysis</a></li>
+  <li><a href="#getgeorecord-selected" id="toc-getgeorecord-selected" class="nav-link active" data-scroll-target="#getgeorecord-selected"><span class="header-section-number">1</span> getGeoRecord (selected)</a></li>
+  <li><a href="#related-sample-path-1-selected" id="toc-related-sample-path-1-selected" class="nav-link" data-scroll-target="#related-sample-path-1-selected"><span class="header-section-number">2</span> Related Sample Path 1 (selected)</a></li>
+  <li><a href="#related-sample-path-2-selected" id="toc-related-sample-path-2-selected" class="nav-link" data-scroll-target="#related-sample-path-2-selected"><span class="header-section-number">3</span> Related Sample Path 2 (selected)</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/smrgeoinfo/isamples.github.io/edit/main/tutorials/parquet_cesium.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/smrgeoinfo/isamples.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -294,7 +289,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../tutorials/parquet_cesium.html">Cesium View</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Using Cesium for geospatial visualization of remote parquet data</h1>
+<h1 class="title">Using Cesium for display of remote parquet.</h1>
   <div class="quarto-categories">
     <div class="quarto-category">parquet</div>
     <div class="quarto-category">spatial</div>
@@ -316,10 +311,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>One key development of the iSamples project centers on the demonstration of low-cost, simplified, and more sustainable approaches to access, analyze and visualize scientific data. Rather than relying upon elaborate and costly server-side infrastructure, iSamples demonstrates how open source technologies like parquet and DuckDB-WASM can streamline cheaper and faster approaches to interacting with geospatial data.</p>
-<p>This page demonstrates how geospatial data can be dynamically accessed from a remote parquet file in cloud storage. The page uses Cesium for browser visualization of these spatial data on a 3D global map. The data in this demonstration comes from <a href="https://opencontext.org/">Open Context’s</a> export of specimen (archaeological artifact and ecofact) records for iSamples. However, this demonstration can also work with any other iSamples compliant parquet data source made publicly accessible on the Web.</p>
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<p>This page renders points from an iSamples parquet file on cesium using point primitives.</p>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 <style>
     div.cesium-topleft {
         display: block;
@@ -334,7 +328,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
 </style>
 <div class="cell hidden">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" data-startfrom="28" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 27;"><span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>Cesium<span class="op">.</span><span class="at">Ion</span><span class="op">.</span><span class="at">defaultAccessToken</span> <span class="op">=</span> <span class="st">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" data-startfrom="25" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 24;"><span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>Cesium<span class="op">.</span><span class="at">Ion</span><span class="op">.</span><span class="at">defaultAccessToken</span> <span class="op">=</span> <span class="st">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display hidden">
 <div id="ojs-cell-1" data-nodetype="expression">
 
@@ -342,186 +336,292 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="33" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 32;"><span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>viewof parquet_path <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">text</span>({<span class="dt">label</span><span class="op">:</span><span class="st">"Source"</span><span class="op">,</span> <span class="dt">value</span><span class="op">:</span><span class="st">"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet"</span><span class="op">,</span> <span class="dt">width</span><span class="op">:</span><span class="st">"100%"</span><span class="op">,</span> <span class="dt">submit</span><span class="op">:</span><span class="kw">true</span>})<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="30" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 29;"><span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>viewof parquet_path <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">text</span>({<span class="dt">label</span><span class="op">:</span><span class="st">"Source"</span><span class="op">,</span> <span class="dt">value</span><span class="op">:</span><span class="st">"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet"</span><span class="op">,</span> <span class="dt">width</span><span class="op">:</span><span class="st">"100%"</span><span class="op">,</span> <span class="dt">submit</span><span class="op">:</span><span class="kw">true</span>})<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-2" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Heads up: first interaction may be slow
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The first click or query can take a few seconds while the in‑browser database engine initializes and the remote Parquet file is fetched and indexed. Subsequent interactions are much faster because both the browser and DuckDB cache metadata and column chunks, so later queries reuse what was already loaded.</p>
+</div>
+</div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3" data-startfrom="41" data-source-offset="-29"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 40;"><span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> {</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> instance <span class="op">=</span> <span class="cf">await</span> DuckDBClient<span class="op">.</span><span class="fu">of</span>()<span class="op">;</span></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> instance<span class="op">.</span><span class="fu">query</span>(<span class="vs">`create view nodes as select * from read_parquet('</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">')`</span>)</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> instance<span class="op">;</span></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">loadData</span>(query<span class="op">,</span> params<span class="op">=</span>[]<span class="op">,</span> waiting_id<span class="op">=</span><span class="kw">null</span>) {</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Get loading indicator</span></span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> waiter <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(waiting_id)<span class="op">;</span></span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (waiter) {</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>        waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Run the (slow) query</span></span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _results <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(query<span class="op">,</span> <span class="op">...</span>params)<span class="op">;</span></span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> _results<span class="op">;</span></span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">catch</span> (error) {</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter) {</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">innerHtml</span> <span class="op">=</span> <span class="vs">`&lt;pre&gt;</span><span class="sc">${</span>error<span class="sc">}</span><span class="vs">&lt;/pre&gt;`</span><span class="op">;</span></span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">null</span><span class="op">;</span></span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Hide the waiter (if there is one)</span></span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter) {</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>locations <span class="op">=</span> {</span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    <span class="co">// get the content form the parquet file</span></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation'`</span><span class="op">;</span></span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_1"</span>)<span class="op">;</span></span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clear the existing PointPrimitiveCollection</span></span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">removeAll</span>()<span class="op">;</span></span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>    <span class="co">//content.points = new Cesium.PointPrimitiveCollection();</span></span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>    <span class="co">// create point primitives for cesium display</span></span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> scalar <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">NearFarScalar</span>(<span class="fl">1.5e2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">8.0e6</span><span class="op">,</span> <span class="fl">0.2</span>)<span class="op">;</span></span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> color <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">PINK</span><span class="op">;</span></span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> point_size <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> row <span class="kw">of</span> data) {</span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>        content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">add</span>({</span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>            <span class="dt">id</span><span class="op">:</span> row<span class="op">.</span><span class="at">pid</span><span class="op">,</span></span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>            <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees</span></span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>            <span class="dt">position</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Cartesian3</span><span class="op">.</span><span class="fu">fromDegrees</span>(</span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">longitude</span><span class="op">,</span>  <span class="co">//longitude</span></span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">latitude</span><span class="op">,</span>   <span class="co">//latitude</span></span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>                <span class="dv">0</span><span class="op">,</span><span class="co">//randomCoordinateJitter(10.0, 10.0), //elevation, m</span></span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>            )<span class="op">,</span></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelSize</span><span class="op">:</span> point_size<span class="op">,</span></span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>            <span class="dt">color</span><span class="op">:</span> color<span class="op">,</span></span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>            <span class="dt">scaleByDistance</span><span class="op">:</span> scalar<span class="op">,</span></span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="fu">enableTracking</span>()<span class="op">;</span></span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createShowPrimitive</span>(viewer) {</span>
-<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">function</span>(movement) {</span>
-<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Get the point at the mouse end position</span></span>
-<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> selectPoint <span class="op">=</span> viewer<span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(movement<span class="op">.</span><span class="at">endPosition</span>)<span class="op">;</span>        </span>
-<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Clear the current selection, if there is one and it is different to the selectPoint</span></span>
-<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">!==</span> <span class="kw">null</span>) {</span>
-<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`selected.p ${viewer.currentSelection}`)</span></span>
-<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint <span class="op">!==</span> viewer<span class="op">.</span><span class="at">currentSelection</span>) {</span>
-<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>                <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`selected.p 2 </span><span class="sc">${</span>viewer<span class="op">.</span><span class="at">currentSelection</span><span class="sc">}</span><span class="vs">`</span>)</span>
-<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">TRANSPARENT</span><span class="op">;</span></span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
-<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>            }</span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>        <span class="co">// If selectPoint is valid and no currently selected point</span></span>
-<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
-<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`showPrimitiveId ${selectPoint.id}`);</span></span>
-<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>            <span class="co">//const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)</span></span>
-<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">position</span> <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">position</span><span class="op">;</span></span>
-<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>            <span class="co">//viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;</span></span>
-<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">text</span> <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>selectPoint<span class="op">.</span><span class="at">id</span><span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
-<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">20</span><span class="op">;</span></span>
-<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">YELLOW</span><span class="op">;</span></span>
-<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
-<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> selectPoint<span class="op">;</span></span>
-<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
-<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>        }            </span>
-<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CView {</span>
-<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>    <span class="fu">constructor</span>(target) {</span>
-<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Viewer</span>(</span>
-<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>            target<span class="op">,</span> {</span>
-<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>                <span class="dt">timeline</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>                <span class="dt">animation</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>                <span class="dt">baseLayerPicker</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a>                <span class="dt">fullscreenElement</span><span class="op">:</span> target<span class="op">,</span></span>
-<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a>                <span class="dt">terrain</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Terrain</span><span class="op">.</span><span class="fu">fromWorldTerrain</span>()</span>
-<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>            })<span class="op">;</span></span>
-<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
-<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">point_size</span> <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
-<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">n_points</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>        <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/PointPrimitiveCollection.html</span></span>
-<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">points</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">PointPrimitiveCollection</span>()<span class="op">;</span></span>
-<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">primitives</span><span class="op">.</span><span class="fu">add</span>(<span class="kw">this</span><span class="op">.</span><span class="at">points</span>)<span class="op">;</span></span>
-<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>     </span>
-<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pointLabel</span> <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">entities</span><span class="op">.</span><span class="fu">add</span>({</span>
-<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>            <span class="dt">label</span><span class="op">:</span> {</span>
-<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>            <span class="dt">show</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a>            <span class="dt">showBackground</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
-<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a>            <span class="dt">font</span><span class="op">:</span> <span class="st">"14px monospace"</span><span class="op">,</span></span>
-<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>            <span class="dt">horizontalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">HorizontalOrigin</span><span class="op">.</span><span class="at">LEFT</span><span class="op">,</span></span>
-<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>            <span class="dt">verticalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">VerticalOrigin</span><span class="op">.</span><span class="at">BOTTOM</span><span class="op">,</span></span>
-<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelOffset</span><span class="op">:</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Cartesian2</span>(<span class="dv">15</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span></span>
-<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>            <span class="co">// this attribute will prevent this entity clipped by the terrain</span></span>
-<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>            <span class="dt">disableDepthTestDistance</span><span class="op">:</span> <span class="bu">Number</span><span class="op">.</span><span class="cn">POSITIVE_INFINITY</span><span class="op">,</span></span>
-<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>            <span class="dt">text</span><span class="op">:</span><span class="st">""</span><span class="op">,</span></span>
-<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>            }<span class="op">,</span></span>
-<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
-<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
-<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Can also do this rather than wait for the points to be generated</span></span>
-<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>        <span class="co">//this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);</span></span>
-<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
-<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span><span class="op">.</span><span class="fu">setInputAction</span>((e) <span class="kw">=&gt;</span> {</span>
-<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> selectPoint <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(e<span class="op">.</span><span class="at">position</span>)<span class="op">;</span></span>
-<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
-<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>                mutable clickedPointId <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">id</span><span class="op">;</span></span>
-<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>            }</span>
-<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span>Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">LEFT_CLICK</span>)<span class="op">;</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3" data-startfrom="43" data-source-offset="-29"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 42;"><span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> {</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> instance <span class="op">=</span> <span class="cf">await</span> DuckDBClient<span class="op">.</span><span class="fu">of</span>()<span class="op">;</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> instance<span class="op">.</span><span class="fu">query</span>(<span class="vs">`create view nodes as select * from read_parquet('</span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">')`</span>)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> instance<span class="op">;</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">loadData</span>(query<span class="op">,</span> params <span class="op">=</span> []<span class="op">,</span> waiting_id <span class="op">=</span> <span class="kw">null</span><span class="op">,</span> key <span class="op">=</span> <span class="st">"default"</span>) {</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="co">// latest-only guard per key</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    loadData<span class="op">.</span><span class="at">_latest</span> <span class="op">=</span> loadData<span class="op">.</span><span class="at">_latest</span> <span class="op">||</span> <span class="kw">new</span> <span class="bu">Map</span>()<span class="op">;</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> requestToken <span class="op">=</span> <span class="bu">Symbol</span>()<span class="op">;</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    loadData<span class="op">.</span><span class="at">_latest</span><span class="op">.</span><span class="fu">set</span>(key<span class="op">,</span> requestToken)<span class="op">;</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Get loading indicator</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> waiter <span class="op">=</span> waiting_id <span class="op">?</span> <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(waiting_id) <span class="op">:</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (waiter) waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Run the (slow) query</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _results <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(query<span class="op">,</span> params)<span class="op">;</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Ignore stale responses</span></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (loadData<span class="op">.</span><span class="at">_latest</span><span class="op">.</span><span class="fu">get</span>(key) <span class="op">!==</span> requestToken) <span class="cf">return</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> _results<span class="op">;</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">catch</span> (error) {</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter <span class="op">&amp;&amp;</span> loadData<span class="op">.</span><span class="at">_latest</span><span class="op">.</span><span class="fu">get</span>(key) <span class="op">===</span> requestToken) {</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">innerHTML</span> <span class="op">=</span> <span class="vs">`&lt;pre&gt;</span><span class="sc">${</span>error<span class="sc">}</span><span class="vs">&lt;/pre&gt;`</span><span class="op">;</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Hide the waiter (if there is one) only if latest</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (waiter <span class="op">&amp;&amp;</span> loadData<span class="op">.</span><span class="at">_latest</span><span class="op">.</span><span class="fu">get</span>(key) <span class="op">===</span> requestToken) {</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>            waiter<span class="op">.</span><span class="at">hidden</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>locations <span class="op">=</span> {</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>    <span class="co">// get the content form the parquet file</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation'`</span><span class="op">;</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_1"</span><span class="op">,</span> <span class="st">"locations"</span>)<span class="op">;</span></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clear the existing PointPrimitiveCollection</span></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">removeAll</span>()<span class="op">;</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    <span class="co">//content.points = new Cesium.PointPrimitiveCollection();</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    <span class="co">// create point primitives for cesium display</span></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> scalar <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">NearFarScalar</span>(<span class="fl">1.5e2</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">8.0e6</span><span class="op">,</span> <span class="fl">0.2</span>)<span class="op">;</span></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> color <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">PINK</span><span class="op">;</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> point_size <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> row <span class="kw">of</span> data) {</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>        content<span class="op">.</span><span class="at">points</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>            <span class="dt">id</span><span class="op">:</span> row<span class="op">.</span><span class="at">pid</span><span class="op">,</span></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>            <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees</span></span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>            <span class="dt">position</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Cartesian3</span><span class="op">.</span><span class="fu">fromDegrees</span>(</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">longitude</span><span class="op">,</span>  <span class="co">//longitude</span></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>                row<span class="op">.</span><span class="at">latitude</span><span class="op">,</span>   <span class="co">//latitude</span></span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>                <span class="dv">0</span><span class="op">,</span><span class="co">//randomCoordinateJitter(10.0, 10.0), //elevation, m</span></span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>            )<span class="op">,</span></span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelSize</span><span class="op">:</span> point_size<span class="op">,</span></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>            <span class="dt">color</span><span class="op">:</span> color<span class="op">,</span></span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>            <span class="dt">scaleByDistance</span><span class="op">:</span> scalar<span class="op">,</span></span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>    content<span class="op">.</span><span class="fu">enableTracking</span>()<span class="op">;</span></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createShowPrimitive</span>(viewer) {</span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">function</span>(movement) {</span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Get the point at the mouse end position</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> selectPoint <span class="op">=</span> viewer<span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(movement<span class="op">.</span><span class="at">endPosition</span>)<span class="op">;</span>        </span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Clear the current selection, if there is one and it is different to the selectPoint</span></span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">!==</span> <span class="kw">null</span>) {</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`selected.p ${viewer.currentSelection}`)</span></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint <span class="op">!==</span> viewer<span class="op">.</span><span class="at">currentSelection</span>) {</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>                <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`selected.p 2 </span><span class="sc">${</span>viewer<span class="op">.</span><span class="at">currentSelection</span><span class="sc">}</span><span class="vs">`</span>)</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">TRANSPARENT</span><span class="op">;</span></span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>                viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>        <span class="co">// If selectPoint is valid and no currently selected point</span></span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>            <span class="co">//console.log(`showPrimitiveId ${selectPoint.id}`);</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>            <span class="co">//const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)</span></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">position</span> <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">position</span><span class="op">;</span></span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>            <span class="co">//viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;</span></span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">text</span> <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>selectPoint<span class="op">.</span><span class="at">id</span><span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">pixelSize</span> <span class="op">=</span> <span class="dv">20</span><span class="op">;</span></span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineColor</span> <span class="op">=</span> Cesium<span class="op">.</span><span class="at">Color</span><span class="op">.</span><span class="at">YELLOW</span><span class="op">;</span></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>            selectPoint<span class="op">.</span><span class="at">primitive</span><span class="op">.</span><span class="at">outlineWidth</span> <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> selectPoint<span class="op">;</span></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>            viewer<span class="op">.</span><span class="at">pointLabel</span><span class="op">.</span><span class="at">label</span><span class="op">.</span><span class="at">show</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>        }            </span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CView {</span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>    <span class="fu">constructor</span>(target) {</span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Viewer</span>(</span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>            target<span class="op">,</span> {</span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>                <span class="dt">timeline</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>                <span class="dt">animation</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>                <span class="dt">baseLayerPicker</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>                <span class="dt">fullscreenElement</span><span class="op">:</span> target<span class="op">,</span></span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>                <span class="dt">terrain</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">Terrain</span><span class="op">.</span><span class="fu">fromWorldTerrain</span>()</span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>            })<span class="op">;</span></span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">currentSelection</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">point_size</span> <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">n_points</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a>        <span class="co">// https://cesium.com/learn/cesiumjs/ref-doc/PointPrimitiveCollection.html</span></span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">points</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">PointPrimitiveCollection</span>()<span class="op">;</span></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">primitives</span><span class="op">.</span><span class="fu">add</span>(<span class="kw">this</span><span class="op">.</span><span class="at">points</span>)<span class="op">;</span></span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pointLabel</span> <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">entities</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>            <span class="dt">label</span><span class="op">:</span> {</span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>            <span class="dt">show</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>            <span class="dt">showBackground</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>            <span class="dt">font</span><span class="op">:</span> <span class="st">"14px monospace"</span><span class="op">,</span></span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>            <span class="dt">horizontalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">HorizontalOrigin</span><span class="op">.</span><span class="at">LEFT</span><span class="op">,</span></span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>            <span class="dt">verticalOrigin</span><span class="op">:</span> Cesium<span class="op">.</span><span class="at">VerticalOrigin</span><span class="op">.</span><span class="at">BOTTOM</span><span class="op">,</span></span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pixelOffset</span><span class="op">:</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">Cartesian2</span>(<span class="dv">15</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">,</span></span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>            <span class="co">// this attribute will prevent this entity clipped by the terrain</span></span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>            <span class="dt">disableDepthTestDistance</span><span class="op">:</span> <span class="bu">Number</span><span class="op">.</span><span class="cn">POSITIVE_INFINITY</span><span class="op">,</span></span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>            <span class="dt">text</span><span class="op">:</span><span class="st">""</span><span class="op">,</span></span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>            }<span class="op">,</span></span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Can also do this rather than wait for the points to be generated</span></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>        <span class="co">//this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);</span></span>
 <span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enableTracking</span>() {</span>
-<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span><span class="op">.</span><span class="fu">setInputAction</span>(<span class="fu">createShowPrimitive</span>(<span class="kw">this</span>)<span class="op">,</span> Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">MOUSE_MOVE</span>)<span class="op">;</span></span>
-<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>content <span class="op">=</span> <span class="kw">new</span> <span class="fu">CView</span>(<span class="st">"cesiumContainer"</span>)<span class="op">;</span></span>
-<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">getGeoRecord</span>(pid) {</span>
-<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) {</span>
-<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">"unset"</span><span class="op">;</span></span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span> <span class="op">=</span> <span class="kw">new</span> Cesium<span class="op">.</span><span class="fu">ScreenSpaceEventHandler</span>(<span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="at">canvas</span>)<span class="op">;</span></span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">selectHandler</span><span class="op">.</span><span class="fu">setInputAction</span>((e) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> selectPoint <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">viewer</span><span class="op">.</span><span class="at">scene</span><span class="op">.</span><span class="fu">pick</span>(e<span class="op">.</span><span class="at">position</span>)<span class="op">;</span></span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (Cesium<span class="op">.</span><span class="fu">defined</span>(selectPoint) <span class="op">&amp;&amp;</span> selectPoint<span class="op">.</span><span class="fu">hasOwnProperty</span>(<span class="st">"primitive"</span>)) {</span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>                mutable clickedPointId <span class="op">=</span> selectPoint<span class="op">.</span><span class="at">id</span><span class="op">;</span></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span>Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">LEFT_CLICK</span>)<span class="op">;</span></span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enableTracking</span>() {</span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="at">pickHandler</span><span class="op">.</span><span class="fu">setInputAction</span>(<span class="fu">createShowPrimitive</span>(<span class="kw">this</span>)<span class="op">,</span> Cesium<span class="op">.</span><span class="at">ScreenSpaceEventType</span><span class="op">.</span><span class="at">MOUSE_MOVE</span>)<span class="op">;</span></span>
 <span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`</span><span class="op">;</span></span>
-<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">queryRow</span>(q<span class="op">,</span> [pid])<span class="op">;</span></span>
-<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
-<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">locationUsedBy</span>(rowid){</span>
-<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (rowid <span class="op">===</span> <span class="kw">undefined</span> <span class="op">||</span> rowid <span class="op">===</span> <span class="kw">null</span>) {</span>
-<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
-<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`select pid, otype from nodes where row_id in (select nodes.s from nodes where list_contains(nodes.o, ?));`</span><span class="op">;</span></span>
-<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> db<span class="op">.</span><span class="fu">query</span>(q<span class="op">,</span> [rowid])<span class="op">;</span></span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>content <span class="op">=</span> <span class="kw">new</span> <span class="fu">CView</span>(<span class="st">"cesiumContainer"</span>)<span class="op">;</span></span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">getGeoRecord</span>(pid) {</span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) {</span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">"unset"</span><span class="op">;</span></span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`SELECT row_id, pid, otype, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`</span><span class="op">;</span></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> rows <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(q<span class="op">,</span> [pid]<span class="op">,</span> <span class="st">"loading_geo"</span><span class="op">,</span> <span class="st">"geo"</span>)<span class="op">;</span></span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rows <span class="op">&amp;&amp;</span> rows<span class="op">.</span><span class="at">length</span> <span class="op">?</span> rows[<span class="dv">0</span>] <span class="op">:</span> <span class="kw">null</span><span class="op">;</span></span>
 <span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>mutable clickedPointId <span class="op">=</span> <span class="st">"unset"</span><span class="op">;</span></span>
-<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>selectedGeoRecord <span class="op">=</span> <span class="cf">await</span> <span class="fu">getGeoRecord</span>(clickedPointId)<span class="op">;</span></span>
-<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`Retrieved </span><span class="sc">${</span>pointdata<span class="op">.</span><span class="at">length</span><span class="sc">}</span><span class="vs"> locations from </span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">.`</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">get_samples_1</span>(pid) {</span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) {</span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a><span class="vs">        SELECT DISTINCT</span></span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.pid as sample_id,</span></span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.label as sample_label,</span></span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.name as sample_name,</span></span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a><span class="vs">            event.pid as event_id,</span></span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a><span class="vs">            event.label as event_label,</span></span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a><span class="vs">            'direct_event_location' as location_path</span></span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a><span class="vs">        FROM nodes s</span></span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'</span></span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes event ON e1.o[1] = event.row_id</span></span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'</span></span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes g ON e2.o[1] = g.row_id</span></span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="vs">        WHERE s.otype = 'MaterialSampleRecord'</span></span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND event.otype = 'SamplingEvent'</span></span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND g.otype = 'GeospatialCoordLocation'</span></span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND g.pid = ?</span></span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a><span class="vs">    `</span><span class="op">;</span></span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(q<span class="op">,</span> [pid]<span class="op">,</span> <span class="st">"loading_s1"</span><span class="op">,</span> <span class="st">"samples_1"</span>)<span class="op">;</span></span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result <span class="op">??</span> []<span class="op">;</span></span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">get_samples_2</span>(pid) {</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) {</span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`</span></span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a><span class="vs">        SELECT DISTINCT</span></span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.pid as sample_id,</span></span>
+<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.label as sample_label,</span></span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a><span class="vs">            s.name as sample_name,</span></span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a><span class="vs">            event.pid as event_id,</span></span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a><span class="vs">            event.label as event_label,</span></span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a><span class="vs">            site.label as site_name,</span></span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a><span class="vs">            'via_site_location' as location_path</span></span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a><span class="vs">        FROM nodes s</span></span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'</span></span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes event ON e1.o[1] = event.row_id</span></span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'</span></span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes site ON e2.o[1] = site.row_id</span></span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'</span></span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a><span class="vs">        JOIN nodes g ON e3.o[1] = g.row_id</span></span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a><span class="vs">        WHERE s.otype = 'MaterialSampleRecord'</span></span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND event.otype = 'SamplingEvent'</span></span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND site.otype = 'SamplingSite'</span></span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND g.otype = 'GeospatialCoordLocation'</span></span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a><span class="vs">          AND g.pid = ?</span></span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a><span class="vs">    `</span><span class="op">;</span></span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(q<span class="op">,</span> [pid]<span class="op">,</span> <span class="st">"loading_s2"</span><span class="op">,</span> <span class="st">"samples_2"</span>)<span class="op">;</span></span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result <span class="op">??</span> []<span class="op">;</span> </span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">locationUsedBy</span>(rowid){</span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (rowid <span class="op">===</span> <span class="kw">undefined</span> <span class="op">||</span> rowid <span class="op">===</span> <span class="kw">null</span>) {</span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`select pid, otype from nodes where row_id in (select nodes.s from nodes where list_contains(nodes.o, ?));`</span><span class="op">;</span></span>
+<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> db<span class="op">.</span><span class="fu">query</span>(q<span class="op">,</span> [rowid])<span class="op">;</span></span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>mutable clickedPointId <span class="op">=</span> <span class="st">"unset"</span><span class="op">;</span></span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a><span class="co">// Loading flags to control UI clearing while fetching</span></span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>mutable geoLoading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>mutable s1Loading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>mutable s2Loading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a><span class="co">// Precompute selection-driven data with loading flags</span></span>
+<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>selectedGeoRecord <span class="op">=</span> {</span>
+<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>    mutable geoLoading <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> <span class="fu">getGeoRecord</span>(clickedPointId)<span class="op">;</span></span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>        mutable geoLoading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a>selectedSamples1 <span class="op">=</span> {</span>
+<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a>    mutable s1Loading <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> <span class="fu">get_samples_1</span>(clickedPointId)<span class="op">;</span></span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a>        mutable s1Loading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a>selectedSamples2 <span class="op">=</span> {</span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a>    mutable s2Loading <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> <span class="fu">get_samples_2</span>(clickedPointId)<span class="op">;</span></span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>        mutable s2Loading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`Retrieved </span><span class="sc">${</span>pointdata<span class="op">.</span><span class="at">length</span><span class="sc">}</span><span class="vs"> locations from </span><span class="sc">${</span>parquet_path<span class="sc">}</span><span class="vs">.`</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -595,7 +695,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell-output cell-output-display">
 <div>
-<div id="ojs-cell-3-11" data-nodetype="expression">
+<div id="ojs-cell-3-11" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-12" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-13" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-14" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-15" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-16" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-17" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-3-18" data-nodetype="expression">
 
 </div>
 </div>
@@ -616,17 +765,17 @@ Loading…
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4" data-startfrom="224" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 223;"><span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a>viewof pointdata <span class="op">=</span> {</span>
-<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(locations<span class="op">,</span> {</span>
-<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
-<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>            <span class="dt">row_id</span><span class="op">:</span><span class="st">"Row ID"</span><span class="op">,</span></span>
-<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pid</span><span class="op">:</span> <span class="st">"PID"</span><span class="op">,</span></span>
-<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>            <span class="dt">latitude</span><span class="op">:</span> <span class="st">"Latitude"</span><span class="op">,</span></span>
-<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>            <span class="dt">longitude</span><span class="op">:</span> <span class="st">"Longitude"</span></span>
-<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
-<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
-<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4" data-startfrom="319" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 318;"><span id="cb4-319"><a href="#cb4-319" aria-hidden="true" tabindex="-1"></a>viewof pointdata <span class="op">=</span> {</span>
+<span id="cb4-320"><a href="#cb4-320" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(locations<span class="op">,</span> {</span>
+<span id="cb4-321"><a href="#cb4-321" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
+<span id="cb4-322"><a href="#cb4-322" aria-hidden="true" tabindex="-1"></a>            <span class="dt">row_id</span><span class="op">:</span><span class="st">"Row ID"</span><span class="op">,</span></span>
+<span id="cb4-323"><a href="#cb4-323" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pid</span><span class="op">:</span> <span class="st">"PID"</span><span class="op">,</span></span>
+<span id="cb4-324"><a href="#cb4-324" aria-hidden="true" tabindex="-1"></a>            <span class="dt">latitude</span><span class="op">:</span> <span class="st">"Latitude"</span><span class="op">,</span></span>
+<span id="cb4-325"><a href="#cb4-325" aria-hidden="true" tabindex="-1"></a>            <span class="dt">longitude</span><span class="op">:</span> <span class="st">"Longitude"</span></span>
+<span id="cb4-326"><a href="#cb4-326" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb4-327"><a href="#cb4-327" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb4-328"><a href="#cb4-328" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
+<span id="cb4-329"><a href="#cb4-329" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-4" data-nodetype="declaration">
@@ -637,285 +786,131 @@ Loading…
 </div>
 </div>
 </div>
-<p>The number of locations in the file is: <span><span id="ojs-element-id-1"></span>.</span></p>
-<p>The click point ID is “<span><span id="ojs-element-id-2"></span></span>”.</p>
+<p>The click point ID is “<span><span id="ojs-element-id-1"></span></span>”.</p>
+<div id="loading_geo" hidden="">
+Loading selected location…
+</div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb5" data-startfrom="246" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 245;"><span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
-<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(selectedGeoRecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
-<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
-<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb5" data-startfrom="341" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 340;"><span id="cb5-341"><a href="#cb5-341" aria-hidden="true" tabindex="-1"></a>geoLoading <span class="op">?</span> <span class="fu">md</span><span class="vs">`(loading…)`</span> <span class="op">:</span> <span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb5-342"><a href="#cb5-342" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(selectedGeoRecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb5-343"><a href="#cb5-343" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb5-344"><a href="#cb5-344" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-5" data-nodetype="expression">
 
 </div>
 </div>
 </div>
-<section id="table-structure-analysis" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="table-structure-analysis"><span class="header-section-number">1</span> Table Structure Analysis</h2>
-<p>Understanding the structure and schema of the parquet file:</p>
-<section id="column-schema" class="level3" data-number="1.1">
-<h3 data-number="1.1" data-anchor-id="column-schema"><span class="header-section-number">1.1</span> Column Schema</h3>
+<section id="getgeorecord-selected" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="getgeorecord-selected"><span class="header-section-number">1</span> getGeoRecord (selected)</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6" data-startfrom="260" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 259;"><span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>tableSchema <span class="op">=</span> {</span>
-<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`DESCRIBE nodes`</span><span class="op">;</span></span>
-<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_schema"</span>)<span class="op">;</span></span>
-<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
-<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6" data-startfrom="352" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 351;"><span id="cb6-352"><a href="#cb6-352" aria-hidden="true" tabindex="-1"></a>pid <span class="op">=</span> clickedPointId</span>
+<span id="cb6-353"><a href="#cb6-353" aria-hidden="true" tabindex="-1"></a>testrecord <span class="op">=</span> selectedGeoRecord<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-6" data-nodetype="declaration">
+<div>
+<div id="ojs-cell-6-1" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
-<div id="loading_schema">
-Loading table schema…
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-6-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7" data-startfrom="271" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 270;"><span id="cb7-271"><a href="#cb7-271" aria-hidden="true" tabindex="-1"></a>viewof schemaTable <span class="op">=</span> {</span>
-<span id="cb7-272"><a href="#cb7-272" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(tableSchema<span class="op">,</span> {</span>
-<span id="cb7-273"><a href="#cb7-273" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
-<span id="cb7-274"><a href="#cb7-274" aria-hidden="true" tabindex="-1"></a>            <span class="dt">column_name</span><span class="op">:</span> <span class="st">"Column Name"</span><span class="op">,</span></span>
-<span id="cb7-275"><a href="#cb7-275" aria-hidden="true" tabindex="-1"></a>            <span class="dt">column_type</span><span class="op">:</span> <span class="st">"Data Type"</span><span class="op">,</span></span>
-<span id="cb7-276"><a href="#cb7-276" aria-hidden="true" tabindex="-1"></a>            <span class="dt">null</span><span class="op">:</span> <span class="st">"Nullable"</span><span class="op">,</span></span>
-<span id="cb7-277"><a href="#cb7-277" aria-hidden="true" tabindex="-1"></a>            <span class="dt">key</span><span class="op">:</span> <span class="st">"Key"</span><span class="op">,</span></span>
-<span id="cb7-278"><a href="#cb7-278" aria-hidden="true" tabindex="-1"></a>            <span class="cf">default</span><span class="op">:</span> <span class="st">"Default"</span><span class="op">,</span></span>
-<span id="cb7-279"><a href="#cb7-279" aria-hidden="true" tabindex="-1"></a>            <span class="dt">extra</span><span class="op">:</span> <span class="st">"Extra"</span></span>
-<span id="cb7-280"><a href="#cb7-280" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb7-281"><a href="#cb7-281" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb7-282"><a href="#cb7-282" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
-<span id="cb7-283"><a href="#cb7-283" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb7" data-startfrom="357" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 356;"><span id="cb7-357"><a href="#cb7-357" aria-hidden="true" tabindex="-1"></a><span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb7-358"><a href="#cb7-358" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(testrecord<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb7-359"><a href="#cb7-359" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb7-360"><a href="#cb7-360" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-7" data-nodetype="declaration">
+<div id="ojs-cell-7" data-nodetype="expression">
 
 </div>
 </div>
 </div>
 </section>
-<section id="sample-data" class="level3" data-number="1.2">
-<h3 data-number="1.2" data-anchor-id="sample-data"><span class="header-section-number">1.2</span> Sample Data</h3>
-<p>First 10 rows of the dataset to understand the data structure:</p>
+<section id="related-sample-path-1-selected" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="related-sample-path-1-selected"><span class="header-section-number">2</span> Related Sample Path 1 (selected)</h2>
+<div id="loading_s1" hidden="">
+Loading related samples (path 1)…
+</div>
+<p>Path 1 (direct_event_location): find MaterialSampleRecord items whose producing SamplingEvent has a direct sample_location pointing to the clicked GeospatialCoordLocation (pid).</p>
+<ul>
+<li>Chain: MaterialSampleRecord → produced_by → SamplingEvent → sample_location → GeospatialCoordLocation (clicked pid)</li>
+<li>This matches the “direct_samples” concept in the Python notebook and is labeled as <code>location_path = 'direct_event_location'</code> in the query.</li>
+</ul>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8" data-startfrom="292" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 291;"><span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a>sampleData <span class="op">=</span> {</span>
-<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT * FROM nodes LIMIT 10`</span><span class="op">;</span></span>
-<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_sample"</span>)<span class="op">;</span></span>
-<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
-<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb8" data-startfrom="375" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 374;"><span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a>samples_1 <span class="op">=</span> selectedSamples1</span>
+<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a>s1Loading <span class="op">?</span> <span class="fu">md</span><span class="vs">`(loading…)`</span> <span class="op">:</span> <span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(samples_1<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb8-378"><a href="#cb8-378" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb8-379"><a href="#cb8-379" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-8" data-nodetype="declaration">
+<div>
+<div id="ojs-cell-8-1" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
-<div id="loading_sample">
-Loading sample data…
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9" data-startfrom="303" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 302;"><span id="cb9-303"><a href="#cb9-303" aria-hidden="true" tabindex="-1"></a>viewof sampleTable <span class="op">=</span> {</span>
-<span id="cb9-304"><a href="#cb9-304" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(sampleData<span class="op">,</span> {</span>
-<span id="cb9-305"><a href="#cb9-305" aria-hidden="true" tabindex="-1"></a>        <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span><span class="op">,</span></span>
-<span id="cb9-306"><a href="#cb9-306" aria-hidden="true" tabindex="-1"></a>        <span class="dt">width</span><span class="op">:</span> {</span>
-<span id="cb9-307"><a href="#cb9-307" aria-hidden="true" tabindex="-1"></a>            <span class="dt">pid</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span></span>
-<span id="cb9-308"><a href="#cb9-308" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> <span class="dv">150</span></span>
-<span id="cb9-309"><a href="#cb9-309" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb9-310"><a href="#cb9-310" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb9-311"><a href="#cb9-311" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
-<span id="cb9-312"><a href="#cb9-312" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-9" data-nodetype="declaration">
+<div>
+<div id="ojs-cell-8-2" data-nodetype="expression">
 
+</div>
 </div>
 </div>
 </div>
 </section>
-<section id="sample-data-by-object-type" class="level3" data-number="1.3">
-<h3 data-number="1.3" data-anchor-id="sample-data-by-object-type"><span class="header-section-number">1.3</span> Sample Data by Object Type</h3>
-<p>Examples of records for each object type to understand the data semantics:</p>
+<section id="related-sample-path-2-selected" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="related-sample-path-2-selected"><span class="header-section-number">3</span> Related Sample Path 2 (selected)</h2>
+<div id="loading_s2" hidden="">
+Loading related samples (path 2)…
+</div>
+<p>Path 2 (via_site_location): find MaterialSampleRecord items whose producing SamplingEvent references a SamplingSite, and that site’s site_location points to the clicked GeospatialCoordLocation (pid).</p>
+<ul>
+<li>Chain: MaterialSampleRecord → produced_by → SamplingEvent → sampling_site → SamplingSite → site_location → GeospatialCoordLocation (clicked pid)</li>
+<li>This matches the “samples_via_sites” concept in the Python notebook and is labeled as <code>location_path = 'via_site_location'</code> in the query.</li>
+</ul>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10" data-startfrom="321" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 320;"><span id="cb10-321"><a href="#cb10-321" aria-hidden="true" tabindex="-1"></a>sampleDataByOtype <span class="op">=</span> {</span>
-<span id="cb10-322"><a href="#cb10-322" aria-hidden="true" tabindex="-1"></a>    <span class="co">// First get the list of unique object types</span></span>
-<span id="cb10-323"><a href="#cb10-323" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> otypeQuery <span class="op">=</span> <span class="vs">`SELECT DISTINCT otype FROM nodes ORDER BY otype`</span><span class="op">;</span></span>
-<span id="cb10-324"><a href="#cb10-324" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> otypes <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(otypeQuery<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_otype_samples"</span>)<span class="op">;</span></span>
-<span id="cb10-325"><a href="#cb10-325" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb10-326"><a href="#cb10-326" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> results <span class="op">=</span> []<span class="op">;</span></span>
-<span id="cb10-327"><a href="#cb10-327" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> otypeRow <span class="kw">of</span> otypes) {</span>
-<span id="cb10-328"><a href="#cb10-328" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> otype <span class="op">=</span> otypeRow<span class="op">.</span><span class="at">otype</span><span class="op">;</span></span>
-<span id="cb10-329"><a href="#cb10-329" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Get 3 sample records for each otype</span></span>
-<span id="cb10-330"><a href="#cb10-330" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> sampleQuery <span class="op">=</span> <span class="vs">`SELECT * FROM nodes WHERE otype = ? LIMIT 3`</span><span class="op">;</span></span>
-<span id="cb10-331"><a href="#cb10-331" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> samples <span class="op">=</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(sampleQuery<span class="op">,</span> [otype])<span class="op">;</span></span>
-<span id="cb10-332"><a href="#cb10-332" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb10-333"><a href="#cb10-333" aria-hidden="true" tabindex="-1"></a>        results<span class="op">.</span><span class="fu">push</span>({</span>
-<span id="cb10-334"><a href="#cb10-334" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> otype<span class="op">,</span></span>
-<span id="cb10-335"><a href="#cb10-335" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> samples<span class="op">.</span><span class="at">length</span><span class="op">,</span></span>
-<span id="cb10-336"><a href="#cb10-336" aria-hidden="true" tabindex="-1"></a>            <span class="dt">samples</span><span class="op">:</span> samples</span>
-<span id="cb10-337"><a href="#cb10-337" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
-<span id="cb10-338"><a href="#cb10-338" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb10-339"><a href="#cb10-339" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> results<span class="op">;</span></span>
-<span id="cb10-340"><a href="#cb10-340" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb9" data-startfrom="394" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 393;"><span id="cb9-394"><a href="#cb9-394" aria-hidden="true" tabindex="-1"></a>samples_2 <span class="op">=</span> selectedSamples2</span>
+<span id="cb9-395"><a href="#cb9-395" aria-hidden="true" tabindex="-1"></a>s2Loading <span class="op">?</span> <span class="fu">md</span><span class="vs">`(loading…)`</span> <span class="op">:</span> <span class="fu">md</span><span class="vs">`</span><span class="sc">\`\`\`</span></span>
+<span id="cb9-396"><a href="#cb9-396" aria-hidden="true" tabindex="-1"></a><span class="sc">${</span><span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(samples_2<span class="op">,</span> <span class="kw">null</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span></span>
+<span id="cb9-397"><a href="#cb9-397" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb9-398"><a href="#cb9-398" aria-hidden="true" tabindex="-1"></a><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-10" data-nodetype="declaration">
+<div>
+<div id="ojs-cell-9-1" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
-<div id="loading_otype_samples">
-Loading sample data by object type…
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11" data-startfrom="347" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 346;"><span id="cb11-347"><a href="#cb11-347" aria-hidden="true" tabindex="-1"></a>viewof otypeSamplesDisplay <span class="op">=</span> {</span>
-<span id="cb11-348"><a href="#cb11-348" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> container <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
-<span id="cb11-349"><a href="#cb11-349" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb11-350"><a href="#cb11-350" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> otypeData <span class="kw">of</span> sampleDataByOtype) {</span>
-<span id="cb11-351"><a href="#cb11-351" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> section <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div style="margin-bottom: 2rem;"&gt;</span></span>
-<span id="cb11-352"><a href="#cb11-352" aria-hidden="true" tabindex="-1"></a><span class="vs">            &lt;h4 style="color: #2563eb; margin-bottom: 0.5rem;"&gt;Object Type: </span><span class="sc">${</span>otypeData<span class="op">.</span><span class="at">otype</span><span class="sc">}</span><span class="vs">&lt;/h4&gt;</span></span>
-<span id="cb11-353"><a href="#cb11-353" aria-hidden="true" tabindex="-1"></a><span class="vs">            &lt;p style="margin: 0.5rem 0; font-style: italic;"&gt;Sample records (showing up to 3):&lt;/p&gt;</span></span>
-<span id="cb11-354"><a href="#cb11-354" aria-hidden="true" tabindex="-1"></a><span class="vs">        &lt;/div&gt;`</span><span class="op">;</span></span>
-<span id="cb11-355"><a href="#cb11-355" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb11-356"><a href="#cb11-356" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create a table for this otype's samples</span></span>
-<span id="cb11-357"><a href="#cb11-357" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(otypeData<span class="op">.</span><span class="at">samples</span><span class="op">,</span> {</span>
-<span id="cb11-358"><a href="#cb11-358" aria-hidden="true" tabindex="-1"></a>            <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span><span class="op">,</span></span>
-<span id="cb11-359"><a href="#cb11-359" aria-hidden="true" tabindex="-1"></a>            <span class="dt">width</span><span class="op">:</span> {</span>
-<span id="cb11-360"><a href="#cb11-360" aria-hidden="true" tabindex="-1"></a>                <span class="dt">pid</span><span class="op">:</span> <span class="dv">150</span><span class="op">,</span></span>
-<span id="cb11-361"><a href="#cb11-361" aria-hidden="true" tabindex="-1"></a>                <span class="dt">otype</span><span class="op">:</span> <span class="dv">120</span><span class="op">,</span></span>
-<span id="cb11-362"><a href="#cb11-362" aria-hidden="true" tabindex="-1"></a>                <span class="dt">latitude</span><span class="op">:</span> <span class="dv">100</span><span class="op">,</span></span>
-<span id="cb11-363"><a href="#cb11-363" aria-hidden="true" tabindex="-1"></a>                <span class="dt">longitude</span><span class="op">:</span> <span class="dv">100</span></span>
-<span id="cb11-364"><a href="#cb11-364" aria-hidden="true" tabindex="-1"></a>            }</span>
-<span id="cb11-365"><a href="#cb11-365" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
-<span id="cb11-366"><a href="#cb11-366" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb11-367"><a href="#cb11-367" aria-hidden="true" tabindex="-1"></a>        section<span class="op">.</span><span class="fu">appendChild</span>(table)<span class="op">;</span></span>
-<span id="cb11-368"><a href="#cb11-368" aria-hidden="true" tabindex="-1"></a>        container<span class="op">.</span><span class="fu">appendChild</span>(section)<span class="op">;</span></span>
-<span id="cb11-369"><a href="#cb11-369" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb11-370"><a href="#cb11-370" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb11-371"><a href="#cb11-371" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> container<span class="op">;</span></span>
-<span id="cb11-372"><a href="#cb11-372" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
 <div class="cell-output cell-output-display">
-<div id="ojs-cell-11" data-nodetype="declaration">
+<div>
+<div id="ojs-cell-9-2" data-nodetype="expression">
 
 </div>
 </div>
 </div>
-</section>
-</section>
-<section id="object-type-counts" class="level2" data-number="2">
-<h2 data-number="2" data-anchor-id="object-type-counts"><span class="header-section-number">2</span> Object Type Counts</h2>
-<p>The distribution of object types (<code>otype</code>) in the dataset:</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12" data-startfrom="381" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 380;"><span id="cb12-381"><a href="#cb12-381" aria-hidden="true" tabindex="-1"></a>otypeCounts <span class="op">=</span> {</span>
-<span id="cb12-382"><a href="#cb12-382" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT otype, COUNT(*) as count FROM nodes GROUP BY otype ORDER BY count DESC`</span><span class="op">;</span></span>
-<span id="cb12-383"><a href="#cb12-383" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_otype"</span>)<span class="op">;</span></span>
-<span id="cb12-384"><a href="#cb12-384" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
-<span id="cb12-385"><a href="#cb12-385" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-12" data-nodetype="declaration">
-
 </div>
-</div>
-</div>
-<div id="loading_otype">
-Loading object type counts…
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13" data-startfrom="392" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 391;"><span id="cb13-392"><a href="#cb13-392" aria-hidden="true" tabindex="-1"></a>viewof otypeTable <span class="op">=</span> {</span>
-<span id="cb13-393"><a href="#cb13-393" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(otypeCounts<span class="op">,</span> {</span>
-<span id="cb13-394"><a href="#cb13-394" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
-<span id="cb13-395"><a href="#cb13-395" aria-hidden="true" tabindex="-1"></a>            <span class="dt">otype</span><span class="op">:</span> <span class="st">"Object Type"</span><span class="op">,</span></span>
-<span id="cb13-396"><a href="#cb13-396" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> <span class="st">"Count"</span></span>
-<span id="cb13-397"><a href="#cb13-397" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
-<span id="cb13-398"><a href="#cb13-398" aria-hidden="true" tabindex="-1"></a>        <span class="dt">format</span><span class="op">:</span> {</span>
-<span id="cb13-399"><a href="#cb13-399" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="fu">toLocaleString</span>()</span>
-<span id="cb13-400"><a href="#cb13-400" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb13-401"><a href="#cb13-401" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb13-402"><a href="#cb13-402" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
-<span id="cb13-403"><a href="#cb13-403" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-13" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<p>Total records by object type: <span><span id="ojs-element-id-3"></span></span></p>
-</section>
-<section id="property-distribution-analysis" class="level2" data-number="3">
-<h2 data-number="3" data-anchor-id="property-distribution-analysis"><span class="header-section-number">3</span> Property Distribution Analysis</h2>
-<p>Understanding the range of properties (predicates) in this graph database structure:</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14" data-startfrom="414" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 413;"><span id="cb14-414"><a href="#cb14-414" aria-hidden="true" tabindex="-1"></a>propertyDistribution <span class="op">=</span> {</span>
-<span id="cb14-415"><a href="#cb14-415" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> query <span class="op">=</span> <span class="vs">`SELECT p as property, COUNT(*) as count FROM nodes WHERE p IS NOT NULL GROUP BY p ORDER BY count DESC`</span><span class="op">;</span></span>
-<span id="cb14-416"><a href="#cb14-416" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(query<span class="op">,</span> []<span class="op">,</span> <span class="st">"loading_properties"</span>)<span class="op">;</span></span>
-<span id="cb14-417"><a href="#cb14-417" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data<span class="op">;</span></span>
-<span id="cb14-418"><a href="#cb14-418" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-14" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<div id="loading_properties">
-Loading property distribution…
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15" data-startfrom="425" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 424;"><span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>viewof propertyTable <span class="op">=</span> {</span>
-<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> data_table <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">table</span>(propertyDistribution<span class="op">,</span> {</span>
-<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>        <span class="dt">header</span><span class="op">:</span> {</span>
-<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>            <span class="dt">property</span><span class="op">:</span> <span class="st">"Property (Predicate)"</span><span class="op">,</span></span>
-<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> <span class="st">"Count"</span></span>
-<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
-<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a>        <span class="dt">format</span><span class="op">:</span> {</span>
-<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a>            <span class="dt">count</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">.</span><span class="fu">toLocaleString</span>()</span>
-<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
-<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>        <span class="dt">layout</span><span class="op">:</span> <span class="st">"auto"</span></span>
-<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_table<span class="op">;</span></span>
-<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-15" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<p>Total records with properties: <span><span id="ojs-element-id-4"></span></span></p>
-<p>Unique properties in the dataset: <span><span id="ojs-element-id-5"></span></span></p>
 
 
 <div class="ojs-auto-generated hidden">
 <script type="ojs-module-contents">
-eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cG9pbnRkYXRhLmxlbmd0aH08L3NwYW4+YCIsICJjZWxsTmFtZSI6Im9qcy1lbGVtZW50LWlkLTEifSwgIHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImlubGluZSI6InRydWUiLCJzb3VyY2UiOiJodGwuaHRtbGA8c3Bhbj4ke2NsaWNrZWRQb2ludElkfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtMiJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7b3R5cGVDb3VudHMucmVkdWNlKChzdW0sIHJvdykgPT4gc3VtICsgcm93LmNvdW50LCAwKS50b0xvY2FsZVN0cmluZygpfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtMyJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cHJvcGVydHlEaXN0cmlidXRpb24ucmVkdWNlKChzdW0sIHJvdykgPT4gc3VtICsgcm93LmNvdW50LCAwKS50b0xvY2FsZVN0cmluZygpfTwvc3Bhbj5gIiwgImNlbGxOYW1lIjoib2pzLWVsZW1lbnQtaWQtNCJ9LCAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7cHJvcGVydHlEaXN0cmlidXRpb24ubGVuZ3RoLnRvTG9jYWxlU3RyaW5nKCl9PC9zcGFuPmAiLCAiY2VsbE5hbWUiOiJvanMtZWxlbWVudC1pZC01In1dfQ==
+eyJjb250ZW50cyI6WyAgeyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiaW5saW5lIjoidHJ1ZSIsInNvdXJjZSI6Imh0bC5odG1sYDxzcGFuPiR7Y2xpY2tlZFBvaW50SWR9PC9zcGFuPmAiLCAiY2VsbE5hbWUiOiJvanMtZWxlbWVudC1pZC0xIn1dfQ==
 </script>
 </div>
 </section>
 
 </main> <!-- /main -->
 <script type="ojs-module-contents">
-eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IkNlc2l1bS5Jb24uZGVmYXVsdEFjY2Vzc1Rva2VuID0gJ2V5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpxZEdraU9pSXdOemszTmpreU15MWlOR0kxTFRSa04yVXRPRFJpTXkwNE9UWXdZV0UwTjJNM1pUa2lMQ0pwWkNJNk5qazFNVGNzSW1saGRDSTZNVFl6TXpVME1UUTNOMzAuZTcwZHBOek9DRFJMREd4Umd1UUNDLXRSekd6QS0yM1hnbm81bE5nQ2VCNCc7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2YgcGFycXVldF9wYXRoID0gSW5wdXRzLnRleHQoe2xhYmVsOlwiU291cmNlXCIsIHZhbHVlOlwiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL29wZW5jb250ZXh0LXBhcnF1ZXQvb2NfaXNhbXBsZXNfcHFnLnBhcnF1ZXRcIiwgd2lkdGg6XCIxMDAlXCIsIHN1Ym1pdDp0cnVlfSk7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSB7XG4gIGNvbnN0IGluc3RhbmNlID0gYXdhaXQgRHVja0RCQ2xpZW50Lm9mKCk7XG4gIGF3YWl0IGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdmlldyBub2RlcyBhcyBzZWxlY3QgKiBmcm9tIHJlYWRfcGFycXVldCgnJHtwYXJxdWV0X3BhdGh9JylgKVxuICByZXR1cm4gaW5zdGFuY2U7XG59XG5cblxuYXN5bmMgZnVuY3Rpb24gbG9hZERhdGEocXVlcnksIHBhcmFtcz1bXSwgd2FpdGluZ19pZD1udWxsKSB7XG4gICAgLy8gR2V0IGxvYWRpbmcgaW5kaWNhdG9yXG4gICAgY29uc3Qgd2FpdGVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQod2FpdGluZ19pZCk7XG4gICAgaWYgKHdhaXRlcikge1xuICAgICAgICB3YWl0ZXIuaGlkZGVuID0gZmFsc2U7XG4gICAgfVxuICAgIHRyeSB7XG4gICAgICAgIC8vIFJ1biB0aGUgKHNsb3cpIHF1ZXJ5XG4gICAgICAgIGNvbnN0IF9yZXN1bHRzID0gYXdhaXQgZGIucXVlcnkocXVlcnksIC4uLnBhcmFtcyk7XG4gICAgICAgIHJldHVybiBfcmVzdWx0cztcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaW5uZXJIdG1sID0gYDxwcmU+JHtlcnJvcn08L3ByZT5gO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBudWxsO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIC8vIEhpZGUgdGhlIHdhaXRlciAoaWYgdGhlcmUgaXMgb25lKVxuICAgICAgICBpZiAod2FpdGVyKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaGlkZGVuID0gdHJ1ZTtcbiAgICAgICAgfVxuICAgIH1cbn1cblxubG9jYXRpb25zID0ge1xuICAgIC8vIGdldCB0aGUgY29udGVudCBmb3JtIHRoZSBwYXJxdWV0IGZpbGVcbiAgICBjb25zdCBxdWVyeSA9IGBTRUxFQ1QgcGlkLCBsYXRpdHVkZSwgbG9uZ2l0dWRlIEZST00gbm9kZXMgV0hFUkUgb3R5cGU9J0dlb3NwYXRpYWxDb29yZExvY2F0aW9uJ2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nXzFcIik7XG5cbiAgICAvLyBDbGVhciB0aGUgZXhpc3RpbmcgUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uXG4gICAgY29udGVudC5wb2ludHMucmVtb3ZlQWxsKCk7XG4gICAgLy9jb250ZW50LnBvaW50cyA9IG5ldyBDZXNpdW0uUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uKCk7XG5cbiAgICAvLyBjcmVhdGUgcG9pbnQgcHJpbWl0aXZlcyBmb3IgY2VzaXVtIGRpc3BsYXlcbiAgICBjb25zdCBzY2FsYXIgPSBuZXcgQ2VzaXVtLk5lYXJGYXJTY2FsYXIoMS41ZTIsIDIsIDguMGU2LCAwLjIpO1xuICAgIGNvbnN0IGNvbG9yID0gQ2VzaXVtLkNvbG9yLlBJTks7XG4gICAgY29uc3QgcG9pbnRfc2l6ZSA9IDQ7XG4gICAgZm9yIChjb25zdCByb3cgb2YgZGF0YSkge1xuICAgICAgICBjb250ZW50LnBvaW50cy5hZGQoe1xuICAgICAgICAgICAgaWQ6IHJvdy5waWQsXG4gICAgICAgICAgICAvLyBodHRwczovL2Nlc2l1bS5jb20vbGVhcm4vY2VzaXVtanMvcmVmLWRvYy9DYXJ0ZXNpYW4zLmh0bWwjLmZyb21EZWdyZWVzXG4gICAgICAgICAgICBwb3NpdGlvbjogQ2VzaXVtLkNhcnRlc2lhbjMuZnJvbURlZ3JlZXMoXG4gICAgICAgICAgICAgICAgcm93LmxvbmdpdHVkZSwgIC8vbG9uZ2l0dWRlXG4gICAgICAgICAgICAgICAgcm93LmxhdGl0dWRlLCAgIC8vbGF0aXR1ZGVcbiAgICAgICAgICAgICAgICAwLC8vcmFuZG9tQ29vcmRpbmF0ZUppdHRlcigxMC4wLCAxMC4wKSwgLy9lbGV2YXRpb24sIG1cbiAgICAgICAgICAgICksXG4gICAgICAgICAgICBwaXhlbFNpemU6IHBvaW50X3NpemUsXG4gICAgICAgICAgICBjb2xvcjogY29sb3IsXG4gICAgICAgICAgICBzY2FsZUJ5RGlzdGFuY2U6IHNjYWxhcixcbiAgICAgICAgfSk7XG4gICAgfVxuICAgIGNvbnRlbnQuZW5hYmxlVHJhY2tpbmcoKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cblxuXG5mdW5jdGlvbiBjcmVhdGVTaG93UHJpbWl0aXZlKHZpZXdlcikge1xuICAgIHJldHVybiBmdW5jdGlvbihtb3ZlbWVudCkge1xuICAgICAgICAvLyBHZXQgdGhlIHBvaW50IGF0IHRoZSBtb3VzZSBlbmQgcG9zaXRpb25cbiAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB2aWV3ZXIudmlld2VyLnNjZW5lLnBpY2sobW92ZW1lbnQuZW5kUG9zaXRpb24pOyAgICAgICAgXG5cbiAgICAgICAgLy8gQ2xlYXIgdGhlIGN1cnJlbnQgc2VsZWN0aW9uLCBpZiB0aGVyZSBpcyBvbmUgYW5kIGl0IGlzIGRpZmZlcmVudCB0byB0aGUgc2VsZWN0UG9pbnRcbiAgICAgICAgaWYgKHZpZXdlci5jdXJyZW50U2VsZWN0aW9uICE9PSBudWxsKSB7XG4gICAgICAgICAgICAvL2NvbnNvbGUubG9nKGBzZWxlY3RlZC5wICR7dmlld2VyLmN1cnJlbnRTZWxlY3Rpb259YClcbiAgICAgICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQgIT09IHZpZXdlci5jdXJyZW50U2VsZWN0aW9uKSB7XG4gICAgICAgICAgICAgICAgY29uc29sZS5sb2coYHNlbGVjdGVkLnAgMiAke3ZpZXdlci5jdXJyZW50U2VsZWN0aW9ufWApXG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDQ7XG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5UUkFOU1BBUkVOVDtcbiAgICAgICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbi5vdXRsaW5lV2lkdGggPSAwO1xuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gbnVsbDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuXG4gICAgICAgIC8vIElmIHNlbGVjdFBvaW50IGlzIHZhbGlkIGFuZCBubyBjdXJyZW50bHkgc2VsZWN0ZWQgcG9pbnRcbiAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgLy9jb25zb2xlLmxvZyhgc2hvd1ByaW1pdGl2ZUlkICR7c2VsZWN0UG9pbnQuaWR9YCk7XG4gICAgICAgICAgICAvL2NvbnN0IGNhcnRvID0gQ2VzaXVtLkNhcnRvZ3JhcGhpYy5mcm9tQ2FydGVzaWFuKHNlbGVjdFBvaW50LnByaW1pdGl2ZS5wb3NpdGlvbilcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLnBvc2l0aW9uID0gc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBvc2l0aW9uO1xuICAgICAgICAgICAgdmlld2VyLnBvaW50TGFiZWwubGFiZWwuc2hvdyA9IHRydWU7XG4gICAgICAgICAgICAvL3ZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgaWQ6JHtzZWxlY3RQb2ludC5pZH0sICR7Y2FydG99YDtcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLmxhYmVsLnRleHQgPSBgJHtzZWxlY3RQb2ludC5pZH1gO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLnBpeGVsU2l6ZSA9IDIwO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLm91dGxpbmVDb2xvciA9IENlc2l1bS5Db2xvci5ZRUxMT1c7XG4gICAgICAgICAgICBzZWxlY3RQb2ludC5wcmltaXRpdmUub3V0bGluZVdpZHRoID0gMztcbiAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uID0gc2VsZWN0UG9pbnQ7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC5zaG93ID0gZmFsc2U7XG4gICAgICAgIH0gICAgICAgICAgICBcbiAgICB9XG59XG5cbmNsYXNzIENWaWV3IHtcbiAgICBjb25zdHJ1Y3Rvcih0YXJnZXQpIHtcbiAgICAgICAgdGhpcy52aWV3ZXIgPSBuZXcgQ2VzaXVtLlZpZXdlcihcbiAgICAgICAgICAgIHRhcmdldCwge1xuICAgICAgICAgICAgICAgIHRpbWVsaW5lOiBmYWxzZSxcbiAgICAgICAgICAgICAgICBhbmltYXRpb246IGZhbHNlLFxuICAgICAgICAgICAgICAgIGJhc2VMYXllclBpY2tlcjogZmFsc2UsXG4gICAgICAgICAgICAgICAgZnVsbHNjcmVlbkVsZW1lbnQ6IHRhcmdldCxcbiAgICAgICAgICAgICAgICB0ZXJyYWluOiBDZXNpdW0uVGVycmFpbi5mcm9tV29ybGRUZXJyYWluKClcbiAgICAgICAgICAgIH0pO1xuICAgICAgICB0aGlzLmN1cnJlbnRTZWxlY3Rpb24gPSBudWxsO1xuICAgICAgICB0aGlzLnBvaW50X3NpemUgPSAxO1xuICAgICAgICB0aGlzLm5fcG9pbnRzID0gMDtcbiAgICAgICAgLy8gaHR0cHM6Ly9jZXNpdW0uY29tL2xlYXJuL2Nlc2l1bWpzL3JlZi1kb2MvUG9pbnRQcmltaXRpdmVDb2xsZWN0aW9uLmh0bWxcbiAgICAgICAgdGhpcy5wb2ludHMgPSBuZXcgQ2VzaXVtLlBvaW50UHJpbWl0aXZlQ29sbGVjdGlvbigpO1xuICAgICAgICB0aGlzLnZpZXdlci5zY2VuZS5wcmltaXRpdmVzLmFkZCh0aGlzLnBvaW50cyk7XG4gICAgIFxuICAgICAgICB0aGlzLnBvaW50TGFiZWwgPSB0aGlzLnZpZXdlci5lbnRpdGllcy5hZGQoe1xuICAgICAgICAgICAgbGFiZWw6IHtcbiAgICAgICAgICAgIHNob3c6IGZhbHNlLFxuICAgICAgICAgICAgc2hvd0JhY2tncm91bmQ6IHRydWUsXG4gICAgICAgICAgICBmb250OiBcIjE0cHggbW9ub3NwYWNlXCIsXG4gICAgICAgICAgICBob3Jpem9udGFsT3JpZ2luOiBDZXNpdW0uSG9yaXpvbnRhbE9yaWdpbi5MRUZULFxuICAgICAgICAgICAgdmVydGljYWxPcmlnaW46IENlc2l1bS5WZXJ0aWNhbE9yaWdpbi5CT1RUT00sXG4gICAgICAgICAgICBwaXhlbE9mZnNldDogbmV3IENlc2l1bS5DYXJ0ZXNpYW4yKDE1LCAwKSxcbiAgICAgICAgICAgIC8vIHRoaXMgYXR0cmlidXRlIHdpbGwgcHJldmVudCB0aGlzIGVudGl0eSBjbGlwcGVkIGJ5IHRoZSB0ZXJyYWluXG4gICAgICAgICAgICBkaXNhYmxlRGVwdGhUZXN0RGlzdGFuY2U6IE51bWJlci5QT1NJVElWRV9JTkZJTklUWSxcbiAgICAgICAgICAgIHRleHQ6XCJcIixcbiAgICAgICAgICAgIH0sXG4gICAgICAgIH0pO1xuXG4gICAgICAgIHRoaXMucGlja0hhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIC8vIENhbiBhbHNvIGRvIHRoaXMgcmF0aGVyIHRoYW4gd2FpdCBmb3IgdGhlIHBvaW50cyB0byBiZSBnZW5lcmF0ZWRcbiAgICAgICAgLy90aGlzLnBpY2tIYW5kbGVyLnNldElucHV0QWN0aW9uKGNyZWF0ZVNob3dQcmltaXRpdmUodGhpcyksIENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50VHlwZS5NT1VTRV9NT1ZFKTtcblxuICAgICAgICB0aGlzLnNlbGVjdEhhbmRsZXIgPSBuZXcgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRIYW5kbGVyKHRoaXMudmlld2VyLnNjZW5lLmNhbnZhcyk7XG4gICAgICAgIHRoaXMuc2VsZWN0SGFuZGxlci5zZXRJbnB1dEFjdGlvbigoZSkgPT4ge1xuICAgICAgICAgICAgY29uc3Qgc2VsZWN0UG9pbnQgPSB0aGlzLnZpZXdlci5zY2VuZS5waWNrKGUucG9zaXRpb24pO1xuICAgICAgICAgICAgaWYgKENlc2l1bS5kZWZpbmVkKHNlbGVjdFBvaW50KSAmJiBzZWxlY3RQb2ludC5oYXNPd25Qcm9wZXJ0eShcInByaW1pdGl2ZVwiKSkge1xuICAgICAgICAgICAgICAgIG11dGFibGUgY2xpY2tlZFBvaW50SWQgPSBzZWxlY3RQb2ludC5pZDtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSxDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTEVGVF9DTElDSyk7XG5cbiAgICB9XG5cbiAgICBlbmFibGVUcmFja2luZygpIHtcbiAgICAgICAgdGhpcy5waWNrSGFuZGxlci5zZXRJbnB1dEFjdGlvbihjcmVhdGVTaG93UHJpbWl0aXZlKHRoaXMpLCBDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTU9VU0VfTU9WRSk7XG4gICAgfVxufVxuXG5jb250ZW50ID0gbmV3IENWaWV3KFwiY2VzaXVtQ29udGFpbmVyXCIpO1xuXG5hc3luYyBmdW5jdGlvbiBnZXRHZW9SZWNvcmQocGlkKSB7XG4gICAgaWYgKHBpZCA9PT0gbnVsbCB8fCBwaWQgPT09XCJcIiB8fCBwaWQgPT0gXCJ1bnNldFwiKSB7XG4gICAgICAgIHJldHVybiBcInVuc2V0XCI7XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgU0VMRUNUIHJvd19pZCwgcGlkLCBvdHlwZSwgbGF0aXR1ZGUsIGxvbmdpdHVkZSBGUk9NIG5vZGVzIFdIRVJFIG90eXBlPSdHZW9zcGF0aWFsQ29vcmRMb2NhdGlvbicgQU5EIHBpZD0/YDtcbiAgICBjb25zdCByZXN1bHQgPSBhd2FpdCBkYi5xdWVyeVJvdyhxLCBbcGlkXSk7XG4gICAgcmV0dXJuIHJlc3VsdDtcbn1cblxuYXN5bmMgZnVuY3Rpb24gbG9jYXRpb25Vc2VkQnkocm93aWQpe1xuICAgIGlmIChyb3dpZCA9PT0gdW5kZWZpbmVkIHx8IHJvd2lkID09PSBudWxsKSB7XG4gICAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgY29uc3QgcSA9IGBzZWxlY3QgcGlkLCBvdHlwZSBmcm9tIG5vZGVzIHdoZXJlIHJvd19pZCBpbiAoc2VsZWN0IG5vZGVzLnMgZnJvbSBub2RlcyB3aGVyZSBsaXN0X2NvbnRhaW5zKG5vZGVzLm8sID8pKTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxubXV0YWJsZSBjbGlja2VkUG9pbnRJZCA9IFwidW5zZXRcIjtcbnNlbGVjdGVkR2VvUmVjb3JkID0gYXdhaXQgZ2V0R2VvUmVjb3JkKGNsaWNrZWRQb2ludElkKTtcblxubWRgUmV0cmlldmVkICR7cG9pbnRkYXRhLmxlbmd0aH0gbG9jYXRpb25zIGZyb20gJHtwYXJxdWV0X3BhdGh9LmA7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTQiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbnZpZXdvZiBwb2ludGRhdGEgPSB7XG4gICAgY29uc3QgZGF0YV90YWJsZSA9IElucHV0cy50YWJsZShsb2NhdGlvbnMsIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICByb3dfaWQ6XCJSb3cgSURcIixcbiAgICAgICAgICAgIHBpZDogXCJQSURcIixcbiAgICAgICAgICAgIGxhdGl0dWRlOiBcIkxhdGl0dWRlXCIsXG4gICAgICAgICAgICBsb25naXR1ZGU6IFwiTG9uZ2l0dWRlXCJcbiAgICAgICAgfSxcbiAgICB9KTtcbiAgICByZXR1cm4gZGF0YV90YWJsZTtcbn0gICAgXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTUiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJtZGBcXGBcXGBcXGBcbiR7SlNPTi5zdHJpbmdpZnkoc2VsZWN0ZWRHZW9SZWNvcmQsIG51bGwsIDIpfVxuXFxgXFxgXFxgXG5gXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTYiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ0YWJsZVNjaGVtYSA9IHtcbiAgICBjb25zdCBxdWVyeSA9IGBERVNDUklCRSBub2Rlc2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX3NjaGVtYVwiKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtNyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBzY2hlbWFUYWJsZSA9IHtcbiAgICBjb25zdCBkYXRhX3RhYmxlID0gSW5wdXRzLnRhYmxlKHRhYmxlU2NoZW1hLCB7XG4gICAgICAgIGhlYWRlcjoge1xuICAgICAgICAgICAgY29sdW1uX25hbWU6IFwiQ29sdW1uIE5hbWVcIixcbiAgICAgICAgICAgIGNvbHVtbl90eXBlOiBcIkRhdGEgVHlwZVwiLFxuICAgICAgICAgICAgbnVsbDogXCJOdWxsYWJsZVwiLFxuICAgICAgICAgICAga2V5OiBcIktleVwiLFxuICAgICAgICAgICAgZGVmYXVsdDogXCJEZWZhdWx0XCIsXG4gICAgICAgICAgICBleHRyYTogXCJFeHRyYVwiXG4gICAgICAgIH1cbiAgICB9KTtcbiAgICByZXR1cm4gZGF0YV90YWJsZTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtOCIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InNhbXBsZURhdGEgPSB7XG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUICogRlJPTSBub2RlcyBMSU1JVCAxMGA7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX3NhbXBsZVwiKTtcbiAgICByZXR1cm4gZGF0YTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtOSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBzYW1wbGVUYWJsZSA9IHtcbiAgICBjb25zdCBkYXRhX3RhYmxlID0gSW5wdXRzLnRhYmxlKHNhbXBsZURhdGEsIHtcbiAgICAgICAgbGF5b3V0OiBcImF1dG9cIixcbiAgICAgICAgd2lkdGg6IHtcbiAgICAgICAgICAgIHBpZDogMjAwLFxuICAgICAgICAgICAgb3R5cGU6IDE1MFxuICAgICAgICB9XG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTEwIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoic2FtcGxlRGF0YUJ5T3R5cGUgPSB7XG4gICAgLy8gRmlyc3QgZ2V0IHRoZSBsaXN0IG9mIHVuaXF1ZSBvYmplY3QgdHlwZXNcbiAgICBjb25zdCBvdHlwZVF1ZXJ5ID0gYFNFTEVDVCBESVNUSU5DVCBvdHlwZSBGUk9NIG5vZGVzIE9SREVSIEJZIG90eXBlYDtcbiAgICBjb25zdCBvdHlwZXMgPSBhd2FpdCBsb2FkRGF0YShvdHlwZVF1ZXJ5LCBbXSwgXCJsb2FkaW5nX290eXBlX3NhbXBsZXNcIik7XG4gICAgXG4gICAgY29uc3QgcmVzdWx0cyA9IFtdO1xuICAgIGZvciAoY29uc3Qgb3R5cGVSb3cgb2Ygb3R5cGVzKSB7XG4gICAgICAgIGNvbnN0IG90eXBlID0gb3R5cGVSb3cub3R5cGU7XG4gICAgICAgIC8vIEdldCAzIHNhbXBsZSByZWNvcmRzIGZvciBlYWNoIG90eXBlXG4gICAgICAgIGNvbnN0IHNhbXBsZVF1ZXJ5ID0gYFNFTEVDVCAqIEZST00gbm9kZXMgV0hFUkUgb3R5cGUgPSA/IExJTUlUIDNgO1xuICAgICAgICBjb25zdCBzYW1wbGVzID0gYXdhaXQgZGIucXVlcnkoc2FtcGxlUXVlcnksIFtvdHlwZV0pO1xuICAgICAgICBcbiAgICAgICAgcmVzdWx0cy5wdXNoKHtcbiAgICAgICAgICAgIG90eXBlOiBvdHlwZSxcbiAgICAgICAgICAgIGNvdW50OiBzYW1wbGVzLmxlbmd0aCxcbiAgICAgICAgICAgIHNhbXBsZXM6IHNhbXBsZXNcbiAgICAgICAgfSk7XG4gICAgfVxuICAgIHJldHVybiByZXN1bHRzO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBvdHlwZVNhbXBsZXNEaXNwbGF5ID0ge1xuICAgIGNvbnN0IGNvbnRhaW5lciA9IGh0bWxgPGRpdj48L2Rpdj5gO1xuICAgIFxuICAgIGZvciAoY29uc3Qgb3R5cGVEYXRhIG9mIHNhbXBsZURhdGFCeU90eXBlKSB7XG4gICAgICAgIGNvbnN0IHNlY3Rpb24gPSBodG1sYDxkaXYgc3R5bGU9XCJtYXJnaW4tYm90dG9tOiAycmVtO1wiPlxuICAgICAgICAgICAgPGg0IHN0eWxlPVwiY29sb3I6ICMyNTYzZWI7IG1hcmdpbi1ib3R0b206IDAuNXJlbTtcIj5PYmplY3QgVHlwZTogJHtvdHlwZURhdGEub3R5cGV9PC9oND5cbiAgICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiAwLjVyZW0gMDsgZm9udC1zdHlsZTogaXRhbGljO1wiPlNhbXBsZSByZWNvcmRzIChzaG93aW5nIHVwIHRvIDMpOjwvcD5cbiAgICAgICAgPC9kaXY+YDtcbiAgICAgICAgXG4gICAgICAgIC8vIENyZWF0ZSBhIHRhYmxlIGZvciB0aGlzIG90eXBlJ3Mgc2FtcGxlc1xuICAgICAgICBjb25zdCB0YWJsZSA9IElucHV0cy50YWJsZShvdHlwZURhdGEuc2FtcGxlcywge1xuICAgICAgICAgICAgbGF5b3V0OiBcImF1dG9cIixcbiAgICAgICAgICAgIHdpZHRoOiB7XG4gICAgICAgICAgICAgICAgcGlkOiAxNTAsXG4gICAgICAgICAgICAgICAgb3R5cGU6IDEyMCxcbiAgICAgICAgICAgICAgICBsYXRpdHVkZTogMTAwLFxuICAgICAgICAgICAgICAgIGxvbmdpdHVkZTogMTAwXG4gICAgICAgICAgICB9XG4gICAgICAgIH0pO1xuICAgICAgICBcbiAgICAgICAgc2VjdGlvbi5hcHBlbmRDaGlsZCh0YWJsZSk7XG4gICAgICAgIGNvbnRhaW5lci5hcHBlbmRDaGlsZChzZWN0aW9uKTtcbiAgICB9XG4gICAgXG4gICAgcmV0dXJuIGNvbnRhaW5lcjtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJvdHlwZUNvdW50cyA9IHtcbiAgICBjb25zdCBxdWVyeSA9IGBTRUxFQ1Qgb3R5cGUsIENPVU5UKCopIGFzIGNvdW50IEZST00gbm9kZXMgR1JPVVAgQlkgb3R5cGUgT1JERVIgQlkgY291bnQgREVTQ2A7XG4gICAgY29uc3QgZGF0YSA9IGF3YWl0IGxvYWREYXRhKHF1ZXJ5LCBbXSwgXCJsb2FkaW5nX290eXBlXCIpO1xuICAgIHJldHVybiBkYXRhO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xMyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBvdHlwZVRhYmxlID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUob3R5cGVDb3VudHMsIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICBvdHlwZTogXCJPYmplY3QgVHlwZVwiLFxuICAgICAgICAgICAgY291bnQ6IFwiQ291bnRcIlxuICAgICAgICB9LFxuICAgICAgICBmb3JtYXQ6IHtcbiAgICAgICAgICAgIGNvdW50OiBkID0+IGQudG9Mb2NhbGVTdHJpbmcoKVxuICAgICAgICB9XG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTE0IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoicHJvcGVydHlEaXN0cmlidXRpb24gPSB7XG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUIHAgYXMgcHJvcGVydHksIENPVU5UKCopIGFzIGNvdW50IEZST00gbm9kZXMgV0hFUkUgcCBJUyBOT1QgTlVMTCBHUk9VUCBCWSBwIE9SREVSIEJZIGNvdW50IERFU0NgO1xuICAgIGNvbnN0IGRhdGEgPSBhd2FpdCBsb2FkRGF0YShxdWVyeSwgW10sIFwibG9hZGluZ19wcm9wZXJ0aWVzXCIpO1xuICAgIHJldHVybiBkYXRhO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0xNSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBwcm9wZXJ0eVRhYmxlID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUocHJvcGVydHlEaXN0cmlidXRpb24sIHtcbiAgICAgICAgaGVhZGVyOiB7XG4gICAgICAgICAgICBwcm9wZXJ0eTogXCJQcm9wZXJ0eSAoUHJlZGljYXRlKVwiLFxuICAgICAgICAgICAgY291bnQ6IFwiQ291bnRcIlxuICAgICAgICB9LFxuICAgICAgICBmb3JtYXQ6IHtcbiAgICAgICAgICAgIGNvdW50OiBkID0+IGQudG9Mb2NhbGVTdHJpbmcoKVxuICAgICAgICB9LFxuICAgICAgICBsYXlvdXQ6IFwiYXV0b1wiXG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3BhcnF1ZXRfcGF0aCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdwb2ludGRhdGEnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnc2NoZW1hVGFibGUnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnc2FtcGxlVGFibGUnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnb3R5cGVTYW1wbGVzRGlzcGxheScpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdvdHlwZVRhYmxlJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3Byb3BlcnR5VGFibGUnKSJ9XX0=
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IkNlc2l1bS5Jb24uZGVmYXVsdEFjY2Vzc1Rva2VuID0gJ2V5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpxZEdraU9pSXdOemszTmpreU15MWlOR0kxTFRSa04yVXRPRFJpTXkwNE9UWXdZV0UwTjJNM1pUa2lMQ0pwWkNJNk5qazFNVGNzSW1saGRDSTZNVFl6TXpVME1UUTNOMzAuZTcwZHBOek9DRFJMREd4Umd1UUNDLXRSekd6QS0yM1hnbm81bE5nQ2VCNCc7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2YgcGFycXVldF9wYXRoID0gSW5wdXRzLnRleHQoe2xhYmVsOlwiU291cmNlXCIsIHZhbHVlOlwiaHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL29wZW5jb250ZXh0LXBhcnF1ZXQvb2NfaXNhbXBsZXNfcHFnLnBhcnF1ZXRcIiwgd2lkdGg6XCIxMDAlXCIsIHN1Ym1pdDp0cnVlfSk7XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbi8vIENyZWF0ZSBhIER1Y2tEQiBpbnN0YW5jZVxuZGIgPSB7XG4gIGNvbnN0IGluc3RhbmNlID0gYXdhaXQgRHVja0RCQ2xpZW50Lm9mKCk7XG4gIGF3YWl0IGluc3RhbmNlLnF1ZXJ5KGBjcmVhdGUgdmlldyBub2RlcyBhcyBzZWxlY3QgKiBmcm9tIHJlYWRfcGFycXVldCgnJHtwYXJxdWV0X3BhdGh9JylgKVxuICByZXR1cm4gaW5zdGFuY2U7XG59XG5cblxuYXN5bmMgZnVuY3Rpb24gbG9hZERhdGEocXVlcnksIHBhcmFtcyA9IFtdLCB3YWl0aW5nX2lkID0gbnVsbCwga2V5ID0gXCJkZWZhdWx0XCIpIHtcbiAgICAvLyBsYXRlc3Qtb25seSBndWFyZCBwZXIga2V5XG4gICAgbG9hZERhdGEuX2xhdGVzdCA9IGxvYWREYXRhLl9sYXRlc3QgfHwgbmV3IE1hcCgpO1xuICAgIGNvbnN0IHJlcXVlc3RUb2tlbiA9IFN5bWJvbCgpO1xuICAgIGxvYWREYXRhLl9sYXRlc3Quc2V0KGtleSwgcmVxdWVzdFRva2VuKTtcblxuICAgIC8vIEdldCBsb2FkaW5nIGluZGljYXRvclxuICAgIGNvbnN0IHdhaXRlciA9IHdhaXRpbmdfaWQgPyBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCh3YWl0aW5nX2lkKSA6IG51bGw7XG4gICAgaWYgKHdhaXRlcikgd2FpdGVyLmhpZGRlbiA9IGZhbHNlO1xuXG4gICAgdHJ5IHtcbiAgICAgICAgLy8gUnVuIHRoZSAoc2xvdykgcXVlcnlcbiAgICAgICAgY29uc3QgX3Jlc3VsdHMgPSBhd2FpdCBkYi5xdWVyeShxdWVyeSwgcGFyYW1zKTtcbiAgICAgICAgLy8gSWdub3JlIHN0YWxlIHJlc3BvbnNlc1xuICAgICAgICBpZiAobG9hZERhdGEuX2xhdGVzdC5nZXQoa2V5KSAhPT0gcmVxdWVzdFRva2VuKSByZXR1cm4gbnVsbDtcbiAgICAgICAgcmV0dXJuIF9yZXN1bHRzO1xuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICAgIGlmICh3YWl0ZXIgJiYgbG9hZERhdGEuX2xhdGVzdC5nZXQoa2V5KSA9PT0gcmVxdWVzdFRva2VuKSB7XG4gICAgICAgICAgICB3YWl0ZXIuaW5uZXJIVE1MID0gYDxwcmU+JHtlcnJvcn08L3ByZT5gO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBudWxsO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIC8vIEhpZGUgdGhlIHdhaXRlciAoaWYgdGhlcmUgaXMgb25lKSBvbmx5IGlmIGxhdGVzdFxuICAgICAgICBpZiAod2FpdGVyICYmIGxvYWREYXRhLl9sYXRlc3QuZ2V0KGtleSkgPT09IHJlcXVlc3RUb2tlbikge1xuICAgICAgICAgICAgd2FpdGVyLmhpZGRlbiA9IHRydWU7XG4gICAgICAgIH1cbiAgICB9XG59XG5cbmxvY2F0aW9ucyA9IHtcbiAgICAvLyBnZXQgdGhlIGNvbnRlbnQgZm9ybSB0aGUgcGFycXVldCBmaWxlXG4gICAgY29uc3QgcXVlcnkgPSBgU0VMRUNUIHBpZCwgbGF0aXR1ZGUsIGxvbmdpdHVkZSBGUk9NIG5vZGVzIFdIRVJFIG90eXBlPSdHZW9zcGF0aWFsQ29vcmRMb2NhdGlvbidgO1xuICAgIGNvbnN0IGRhdGEgPSBhd2FpdCBsb2FkRGF0YShxdWVyeSwgW10sIFwibG9hZGluZ18xXCIsIFwibG9jYXRpb25zXCIpO1xuXG4gICAgLy8gQ2xlYXIgdGhlIGV4aXN0aW5nIFBvaW50UHJpbWl0aXZlQ29sbGVjdGlvblxuICAgIGNvbnRlbnQucG9pbnRzLnJlbW92ZUFsbCgpO1xuICAgIC8vY29udGVudC5wb2ludHMgPSBuZXcgQ2VzaXVtLlBvaW50UHJpbWl0aXZlQ29sbGVjdGlvbigpO1xuXG4gICAgLy8gY3JlYXRlIHBvaW50IHByaW1pdGl2ZXMgZm9yIGNlc2l1bSBkaXNwbGF5XG4gICAgY29uc3Qgc2NhbGFyID0gbmV3IENlc2l1bS5OZWFyRmFyU2NhbGFyKDEuNWUyLCAyLCA4LjBlNiwgMC4yKTtcbiAgICBjb25zdCBjb2xvciA9IENlc2l1bS5Db2xvci5QSU5LO1xuICAgIGNvbnN0IHBvaW50X3NpemUgPSA0O1xuICAgIGZvciAoY29uc3Qgcm93IG9mIGRhdGEpIHtcbiAgICAgICAgY29udGVudC5wb2ludHMuYWRkKHtcbiAgICAgICAgICAgIGlkOiByb3cucGlkLFxuICAgICAgICAgICAgLy8gaHR0cHM6Ly9jZXNpdW0uY29tL2xlYXJuL2Nlc2l1bWpzL3JlZi1kb2MvQ2FydGVzaWFuMy5odG1sIy5mcm9tRGVncmVlc1xuICAgICAgICAgICAgcG9zaXRpb246IENlc2l1bS5DYXJ0ZXNpYW4zLmZyb21EZWdyZWVzKFxuICAgICAgICAgICAgICAgIHJvdy5sb25naXR1ZGUsICAvL2xvbmdpdHVkZVxuICAgICAgICAgICAgICAgIHJvdy5sYXRpdHVkZSwgICAvL2xhdGl0dWRlXG4gICAgICAgICAgICAgICAgMCwvL3JhbmRvbUNvb3JkaW5hdGVKaXR0ZXIoMTAuMCwgMTAuMCksIC8vZWxldmF0aW9uLCBtXG4gICAgICAgICAgICApLFxuICAgICAgICAgICAgcGl4ZWxTaXplOiBwb2ludF9zaXplLFxuICAgICAgICAgICAgY29sb3I6IGNvbG9yLFxuICAgICAgICAgICAgc2NhbGVCeURpc3RhbmNlOiBzY2FsYXIsXG4gICAgICAgIH0pO1xuICAgIH1cbiAgICBjb250ZW50LmVuYWJsZVRyYWNraW5nKCk7XG4gICAgcmV0dXJuIGRhdGE7XG59XG5cblxuZnVuY3Rpb24gY3JlYXRlU2hvd1ByaW1pdGl2ZSh2aWV3ZXIpIHtcbiAgICByZXR1cm4gZnVuY3Rpb24obW92ZW1lbnQpIHtcbiAgICAgICAgLy8gR2V0IHRoZSBwb2ludCBhdCB0aGUgbW91c2UgZW5kIHBvc2l0aW9uXG4gICAgICAgIGNvbnN0IHNlbGVjdFBvaW50ID0gdmlld2VyLnZpZXdlci5zY2VuZS5waWNrKG1vdmVtZW50LmVuZFBvc2l0aW9uKTsgICAgICAgIFxuXG4gICAgICAgIC8vIENsZWFyIHRoZSBjdXJyZW50IHNlbGVjdGlvbiwgaWYgdGhlcmUgaXMgb25lIGFuZCBpdCBpcyBkaWZmZXJlbnQgdG8gdGhlIHNlbGVjdFBvaW50XG4gICAgICAgIGlmICh2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiAhPT0gbnVsbCkge1xuICAgICAgICAgICAgLy9jb25zb2xlLmxvZyhgc2VsZWN0ZWQucCAke3ZpZXdlci5jdXJyZW50U2VsZWN0aW9ufWApXG4gICAgICAgICAgICBpZiAoQ2VzaXVtLmRlZmluZWQoc2VsZWN0UG9pbnQpICYmIHNlbGVjdFBvaW50ICE9PSB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbikge1xuICAgICAgICAgICAgICAgIGNvbnNvbGUubG9nKGBzZWxlY3RlZC5wIDIgJHt2aWV3ZXIuY3VycmVudFNlbGVjdGlvbn1gKVxuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uLnByaW1pdGl2ZS5waXhlbFNpemUgPSA0O1xuICAgICAgICAgICAgICAgIHZpZXdlci5jdXJyZW50U2VsZWN0aW9uLnByaW1pdGl2ZS5vdXRsaW5lQ29sb3IgPSBDZXNpdW0uQ29sb3IuVFJBTlNQQVJFTlQ7XG4gICAgICAgICAgICAgICAgdmlld2VyLmN1cnJlbnRTZWxlY3Rpb24ub3V0bGluZVdpZHRoID0gMDtcbiAgICAgICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiA9IG51bGw7XG4gICAgICAgICAgICB9XG4gICAgICAgIH1cblxuICAgICAgICAvLyBJZiBzZWxlY3RQb2ludCBpcyB2YWxpZCBhbmQgbm8gY3VycmVudGx5IHNlbGVjdGVkIHBvaW50XG4gICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQuaGFzT3duUHJvcGVydHkoXCJwcmltaXRpdmVcIikpIHtcbiAgICAgICAgICAgIC8vY29uc29sZS5sb2coYHNob3dQcmltaXRpdmVJZCAke3NlbGVjdFBvaW50LmlkfWApO1xuICAgICAgICAgICAgLy9jb25zdCBjYXJ0byA9IENlc2l1bS5DYXJ0b2dyYXBoaWMuZnJvbUNhcnRlc2lhbihzZWxlY3RQb2ludC5wcmltaXRpdmUucG9zaXRpb24pXG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5wb3NpdGlvbiA9IHNlbGVjdFBvaW50LnByaW1pdGl2ZS5wb3NpdGlvbjtcbiAgICAgICAgICAgIHZpZXdlci5wb2ludExhYmVsLmxhYmVsLnNob3cgPSB0cnVlO1xuICAgICAgICAgICAgLy92aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC50ZXh0ID0gYGlkOiR7c2VsZWN0UG9pbnQuaWR9LCAke2NhcnRvfWA7XG4gICAgICAgICAgICB2aWV3ZXIucG9pbnRMYWJlbC5sYWJlbC50ZXh0ID0gYCR7c2VsZWN0UG9pbnQuaWR9YDtcbiAgICAgICAgICAgIHNlbGVjdFBvaW50LnByaW1pdGl2ZS5waXhlbFNpemUgPSAyMDtcbiAgICAgICAgICAgIHNlbGVjdFBvaW50LnByaW1pdGl2ZS5vdXRsaW5lQ29sb3IgPSBDZXNpdW0uQ29sb3IuWUVMTE9XO1xuICAgICAgICAgICAgc2VsZWN0UG9pbnQucHJpbWl0aXZlLm91dGxpbmVXaWR0aCA9IDM7XG4gICAgICAgICAgICB2aWV3ZXIuY3VycmVudFNlbGVjdGlvbiA9IHNlbGVjdFBvaW50O1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgdmlld2VyLnBvaW50TGFiZWwubGFiZWwuc2hvdyA9IGZhbHNlO1xuICAgICAgICB9ICAgICAgICAgICAgXG4gICAgfVxufVxuXG5jbGFzcyBDVmlldyB7XG4gICAgY29uc3RydWN0b3IodGFyZ2V0KSB7XG4gICAgICAgIHRoaXMudmlld2VyID0gbmV3IENlc2l1bS5WaWV3ZXIoXG4gICAgICAgICAgICB0YXJnZXQsIHtcbiAgICAgICAgICAgICAgICB0aW1lbGluZTogZmFsc2UsXG4gICAgICAgICAgICAgICAgYW5pbWF0aW9uOiBmYWxzZSxcbiAgICAgICAgICAgICAgICBiYXNlTGF5ZXJQaWNrZXI6IGZhbHNlLFxuICAgICAgICAgICAgICAgIGZ1bGxzY3JlZW5FbGVtZW50OiB0YXJnZXQsXG4gICAgICAgICAgICAgICAgdGVycmFpbjogQ2VzaXVtLlRlcnJhaW4uZnJvbVdvcmxkVGVycmFpbigpXG4gICAgICAgICAgICB9KTtcbiAgICAgICAgdGhpcy5jdXJyZW50U2VsZWN0aW9uID0gbnVsbDtcbiAgICAgICAgdGhpcy5wb2ludF9zaXplID0gMTtcbiAgICAgICAgdGhpcy5uX3BvaW50cyA9IDA7XG4gICAgICAgIC8vIGh0dHBzOi8vY2VzaXVtLmNvbS9sZWFybi9jZXNpdW1qcy9yZWYtZG9jL1BvaW50UHJpbWl0aXZlQ29sbGVjdGlvbi5odG1sXG4gICAgICAgIHRoaXMucG9pbnRzID0gbmV3IENlc2l1bS5Qb2ludFByaW1pdGl2ZUNvbGxlY3Rpb24oKTtcbiAgICAgICAgdGhpcy52aWV3ZXIuc2NlbmUucHJpbWl0aXZlcy5hZGQodGhpcy5wb2ludHMpO1xuICAgICBcbiAgICAgICAgdGhpcy5wb2ludExhYmVsID0gdGhpcy52aWV3ZXIuZW50aXRpZXMuYWRkKHtcbiAgICAgICAgICAgIGxhYmVsOiB7XG4gICAgICAgICAgICBzaG93OiBmYWxzZSxcbiAgICAgICAgICAgIHNob3dCYWNrZ3JvdW5kOiB0cnVlLFxuICAgICAgICAgICAgZm9udDogXCIxNHB4IG1vbm9zcGFjZVwiLFxuICAgICAgICAgICAgaG9yaXpvbnRhbE9yaWdpbjogQ2VzaXVtLkhvcml6b250YWxPcmlnaW4uTEVGVCxcbiAgICAgICAgICAgIHZlcnRpY2FsT3JpZ2luOiBDZXNpdW0uVmVydGljYWxPcmlnaW4uQk9UVE9NLFxuICAgICAgICAgICAgcGl4ZWxPZmZzZXQ6IG5ldyBDZXNpdW0uQ2FydGVzaWFuMigxNSwgMCksXG4gICAgICAgICAgICAvLyB0aGlzIGF0dHJpYnV0ZSB3aWxsIHByZXZlbnQgdGhpcyBlbnRpdHkgY2xpcHBlZCBieSB0aGUgdGVycmFpblxuICAgICAgICAgICAgZGlzYWJsZURlcHRoVGVzdERpc3RhbmNlOiBOdW1iZXIuUE9TSVRJVkVfSU5GSU5JVFksXG4gICAgICAgICAgICB0ZXh0OlwiXCIsXG4gICAgICAgICAgICB9LFxuICAgICAgICB9KTtcblxuICAgICAgICB0aGlzLnBpY2tIYW5kbGVyID0gbmV3IENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50SGFuZGxlcih0aGlzLnZpZXdlci5zY2VuZS5jYW52YXMpO1xuICAgICAgICAvLyBDYW4gYWxzbyBkbyB0aGlzIHJhdGhlciB0aGFuIHdhaXQgZm9yIHRoZSBwb2ludHMgdG8gYmUgZ2VuZXJhdGVkXG4gICAgICAgIC8vdGhpcy5waWNrSGFuZGxlci5zZXRJbnB1dEFjdGlvbihjcmVhdGVTaG93UHJpbWl0aXZlKHRoaXMpLCBDZXNpdW0uU2NyZWVuU3BhY2VFdmVudFR5cGUuTU9VU0VfTU9WRSk7XG5cbiAgICAgICAgdGhpcy5zZWxlY3RIYW5kbGVyID0gbmV3IENlc2l1bS5TY3JlZW5TcGFjZUV2ZW50SGFuZGxlcih0aGlzLnZpZXdlci5zY2VuZS5jYW52YXMpO1xuICAgICAgICB0aGlzLnNlbGVjdEhhbmRsZXIuc2V0SW5wdXRBY3Rpb24oKGUpID0+IHtcbiAgICAgICAgICAgIGNvbnN0IHNlbGVjdFBvaW50ID0gdGhpcy52aWV3ZXIuc2NlbmUucGljayhlLnBvc2l0aW9uKTtcbiAgICAgICAgICAgIGlmIChDZXNpdW0uZGVmaW5lZChzZWxlY3RQb2ludCkgJiYgc2VsZWN0UG9pbnQuaGFzT3duUHJvcGVydHkoXCJwcmltaXRpdmVcIikpIHtcbiAgICAgICAgICAgICAgICBtdXRhYmxlIGNsaWNrZWRQb2ludElkID0gc2VsZWN0UG9pbnQuaWQ7XG4gICAgICAgICAgICB9XG4gICAgICAgIH0sQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRUeXBlLkxFRlRfQ0xJQ0spO1xuXG4gICAgfVxuXG4gICAgZW5hYmxlVHJhY2tpbmcoKSB7XG4gICAgICAgIHRoaXMucGlja0hhbmRsZXIuc2V0SW5wdXRBY3Rpb24oY3JlYXRlU2hvd1ByaW1pdGl2ZSh0aGlzKSwgQ2VzaXVtLlNjcmVlblNwYWNlRXZlbnRUeXBlLk1PVVNFX01PVkUpO1xuICAgIH1cbn1cblxuY29udGVudCA9IG5ldyBDVmlldyhcImNlc2l1bUNvbnRhaW5lclwiKTtcblxuYXN5bmMgZnVuY3Rpb24gZ2V0R2VvUmVjb3JkKHBpZCkge1xuICAgIGlmIChwaWQgPT09IG51bGwgfHwgcGlkID09PVwiXCIgfHwgcGlkID09IFwidW5zZXRcIikge1xuICAgICAgICByZXR1cm4gXCJ1bnNldFwiO1xuICAgIH1cbiAgICBjb25zdCBxID0gYFNFTEVDVCByb3dfaWQsIHBpZCwgb3R5cGUsIGxhdGl0dWRlLCBsb25naXR1ZGUgRlJPTSBub2RlcyBXSEVSRSBvdHlwZT0nR2Vvc3BhdGlhbENvb3JkTG9jYXRpb24nIEFORCBwaWQ9P2A7XG4gICAgY29uc3Qgcm93cyA9IGF3YWl0IGxvYWREYXRhKHEsIFtwaWRdLCBcImxvYWRpbmdfZ2VvXCIsIFwiZ2VvXCIpO1xuICAgIHJldHVybiByb3dzICYmIHJvd3MubGVuZ3RoID8gcm93c1swXSA6IG51bGw7XG59XG5cbmFzeW5jIGZ1bmN0aW9uIGdldF9zYW1wbGVzXzEocGlkKSB7XG4gICAgaWYgKHBpZCA9PT0gbnVsbCB8fCBwaWQgPT09XCJcIiB8fCBwaWQgPT0gXCJ1bnNldFwiKSB7XG4gICAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgY29uc3QgcSA9IGBcbiAgICAgICAgU0VMRUNUIERJU1RJTkNUXG4gICAgICAgICAgICBzLnBpZCBhcyBzYW1wbGVfaWQsXG4gICAgICAgICAgICBzLmxhYmVsIGFzIHNhbXBsZV9sYWJlbCxcbiAgICAgICAgICAgIHMubmFtZSBhcyBzYW1wbGVfbmFtZSxcbiAgICAgICAgICAgIGV2ZW50LnBpZCBhcyBldmVudF9pZCxcbiAgICAgICAgICAgIGV2ZW50LmxhYmVsIGFzIGV2ZW50X2xhYmVsLFxuICAgICAgICAgICAgJ2RpcmVjdF9ldmVudF9sb2NhdGlvbicgYXMgbG9jYXRpb25fcGF0aFxuICAgICAgICBGUk9NIG5vZGVzIHNcbiAgICAgICAgSk9JTiBub2RlcyBlMSBPTiBzLnJvd19pZCA9IGUxLnMgQU5EIGUxLnAgPSAncHJvZHVjZWRfYnknXG4gICAgICAgIEpPSU4gbm9kZXMgZXZlbnQgT04gZTEub1sxXSA9IGV2ZW50LnJvd19pZFxuICAgICAgICBKT0lOIG5vZGVzIGUyIE9OIGV2ZW50LnJvd19pZCA9IGUyLnMgQU5EIGUyLnAgPSAnc2FtcGxlX2xvY2F0aW9uJ1xuICAgICAgICBKT0lOIG5vZGVzIGcgT04gZTIub1sxXSA9IGcucm93X2lkXG4gICAgICAgIFdIRVJFIHMub3R5cGUgPSAnTWF0ZXJpYWxTYW1wbGVSZWNvcmQnXG4gICAgICAgICAgQU5EIGV2ZW50Lm90eXBlID0gJ1NhbXBsaW5nRXZlbnQnXG4gICAgICAgICAgQU5EIGcub3R5cGUgPSAnR2Vvc3BhdGlhbENvb3JkTG9jYXRpb24nXG4gICAgICAgICAgQU5EIGcucGlkID0gP1xuICAgIGA7XG4gICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgbG9hZERhdGEocSwgW3BpZF0sIFwibG9hZGluZ19zMVwiLCBcInNhbXBsZXNfMVwiKTtcbiAgICByZXR1cm4gcmVzdWx0ID8/IFtdO1xufVxuXG5hc3luYyBmdW5jdGlvbiBnZXRfc2FtcGxlc18yKHBpZCkge1xuICAgIGlmIChwaWQgPT09IG51bGwgfHwgcGlkID09PVwiXCIgfHwgcGlkID09IFwidW5zZXRcIikge1xuICAgICAgICByZXR1cm4gW107XG4gICAgfVxuICAgIGNvbnN0IHEgPSBgXG4gICAgICAgIFNFTEVDVCBESVNUSU5DVFxuICAgICAgICAgICAgcy5waWQgYXMgc2FtcGxlX2lkLFxuICAgICAgICAgICAgcy5sYWJlbCBhcyBzYW1wbGVfbGFiZWwsXG4gICAgICAgICAgICBzLm5hbWUgYXMgc2FtcGxlX25hbWUsXG4gICAgICAgICAgICBldmVudC5waWQgYXMgZXZlbnRfaWQsXG4gICAgICAgICAgICBldmVudC5sYWJlbCBhcyBldmVudF9sYWJlbCxcbiAgICAgICAgICAgIHNpdGUubGFiZWwgYXMgc2l0ZV9uYW1lLFxuICAgICAgICAgICAgJ3ZpYV9zaXRlX2xvY2F0aW9uJyBhcyBsb2NhdGlvbl9wYXRoXG4gICAgICAgIEZST00gbm9kZXMgc1xuICAgICAgICBKT0lOIG5vZGVzIGUxIE9OIHMucm93X2lkID0gZTEucyBBTkQgZTEucCA9ICdwcm9kdWNlZF9ieSdcbiAgICAgICAgSk9JTiBub2RlcyBldmVudCBPTiBlMS5vWzFdID0gZXZlbnQucm93X2lkXG4gICAgICAgIEpPSU4gbm9kZXMgZTIgT04gZXZlbnQucm93X2lkID0gZTIucyBBTkQgZTIucCA9ICdzYW1wbGluZ19zaXRlJ1xuICAgICAgICBKT0lOIG5vZGVzIHNpdGUgT04gZTIub1sxXSA9IHNpdGUucm93X2lkXG4gICAgICAgIEpPSU4gbm9kZXMgZTMgT04gc2l0ZS5yb3dfaWQgPSBlMy5zIEFORCBlMy5wID0gJ3NpdGVfbG9jYXRpb24nXG4gICAgICAgIEpPSU4gbm9kZXMgZyBPTiBlMy5vWzFdID0gZy5yb3dfaWRcbiAgICAgICAgV0hFUkUgcy5vdHlwZSA9ICdNYXRlcmlhbFNhbXBsZVJlY29yZCdcbiAgICAgICAgICBBTkQgZXZlbnQub3R5cGUgPSAnU2FtcGxpbmdFdmVudCdcbiAgICAgICAgICBBTkQgc2l0ZS5vdHlwZSA9ICdTYW1wbGluZ1NpdGUnXG4gICAgICAgICAgQU5EIGcub3R5cGUgPSAnR2Vvc3BhdGlhbENvb3JkTG9jYXRpb24nXG4gICAgICAgICAgQU5EIGcucGlkID0gP1xuICAgIGA7XG4gICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgbG9hZERhdGEocSwgW3BpZF0sIFwibG9hZGluZ19zMlwiLCBcInNhbXBsZXNfMlwiKTtcbiAgICByZXR1cm4gcmVzdWx0ID8/IFtdOyBcbn1cblxuYXN5bmMgZnVuY3Rpb24gbG9jYXRpb25Vc2VkQnkocm93aWQpe1xuICAgIGlmIChyb3dpZCA9PT0gdW5kZWZpbmVkIHx8IHJvd2lkID09PSBudWxsKSB7XG4gICAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgY29uc3QgcSA9IGBzZWxlY3QgcGlkLCBvdHlwZSBmcm9tIG5vZGVzIHdoZXJlIHJvd19pZCBpbiAoc2VsZWN0IG5vZGVzLnMgZnJvbSBub2RlcyB3aGVyZSBsaXN0X2NvbnRhaW5zKG5vZGVzLm8sID8pKTtgO1xuICAgIHJldHVybiBkYi5xdWVyeShxLCBbcm93aWRdKTtcbn1cblxubXV0YWJsZSBjbGlja2VkUG9pbnRJZCA9IFwidW5zZXRcIjtcbi8vIExvYWRpbmcgZmxhZ3MgdG8gY29udHJvbCBVSSBjbGVhcmluZyB3aGlsZSBmZXRjaGluZ1xubXV0YWJsZSBnZW9Mb2FkaW5nID0gZmFsc2U7XG5tdXRhYmxlIHMxTG9hZGluZyA9IGZhbHNlO1xubXV0YWJsZSBzMkxvYWRpbmcgPSBmYWxzZTtcblxuLy8gUHJlY29tcHV0ZSBzZWxlY3Rpb24tZHJpdmVuIGRhdGEgd2l0aCBsb2FkaW5nIGZsYWdzXG5zZWxlY3RlZEdlb1JlY29yZCA9IHtcbiAgICBtdXRhYmxlIGdlb0xvYWRpbmcgPSB0cnVlO1xuICAgIHRyeSB7XG4gICAgICAgIHJldHVybiBhd2FpdCBnZXRHZW9SZWNvcmQoY2xpY2tlZFBvaW50SWQpO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIG11dGFibGUgZ2VvTG9hZGluZyA9IGZhbHNlO1xuICAgIH1cbn1cblxuc2VsZWN0ZWRTYW1wbGVzMSA9IHtcbiAgICBtdXRhYmxlIHMxTG9hZGluZyA9IHRydWU7XG4gICAgdHJ5IHtcbiAgICAgICAgcmV0dXJuIGF3YWl0IGdldF9zYW1wbGVzXzEoY2xpY2tlZFBvaW50SWQpO1xuICAgIH0gZmluYWxseSB7XG4gICAgICAgIG11dGFibGUgczFMb2FkaW5nID0gZmFsc2U7XG4gICAgfVxufVxuXG5zZWxlY3RlZFNhbXBsZXMyID0ge1xuICAgIG11dGFibGUgczJMb2FkaW5nID0gdHJ1ZTtcbiAgICB0cnkge1xuICAgICAgICByZXR1cm4gYXdhaXQgZ2V0X3NhbXBsZXNfMihjbGlja2VkUG9pbnRJZCk7XG4gICAgfSBmaW5hbGx5IHtcbiAgICAgICAgbXV0YWJsZSBzMkxvYWRpbmcgPSBmYWxzZTtcbiAgICB9XG59XG5cbm1kYFJldHJpZXZlZCAke3BvaW50ZGF0YS5sZW5ndGh9IGxvY2F0aW9ucyBmcm9tICR7cGFycXVldF9wYXRofS5gO1xuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC00IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiXG52aWV3b2YgcG9pbnRkYXRhID0ge1xuICAgIGNvbnN0IGRhdGFfdGFibGUgPSBJbnB1dHMudGFibGUobG9jYXRpb25zLCB7XG4gICAgICAgIGhlYWRlcjoge1xuICAgICAgICAgICAgcm93X2lkOlwiUm93IElEXCIsXG4gICAgICAgICAgICBwaWQ6IFwiUElEXCIsXG4gICAgICAgICAgICBsYXRpdHVkZTogXCJMYXRpdHVkZVwiLFxuICAgICAgICAgICAgbG9uZ2l0dWRlOiBcIkxvbmdpdHVkZVwiXG4gICAgICAgIH0sXG4gICAgfSk7XG4gICAgcmV0dXJuIGRhdGFfdGFibGU7XG59ICAgIFxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC01IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiZ2VvTG9hZGluZyA/IG1kYChsb2FkaW5n4oCmKWAgOiBtZGBcXGBcXGBcXGBcbiR7SlNPTi5zdHJpbmdpZnkoc2VsZWN0ZWRHZW9SZWNvcmQsIG51bGwsIDIpfVxuXFxgXFxgXFxgXG5gXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTYiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJwaWQgPSBjbGlja2VkUG9pbnRJZFxudGVzdHJlY29yZCA9IHNlbGVjdGVkR2VvUmVjb3JkO1xuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC03IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoibWRgXFxgXFxgXFxgXG4ke0pTT04uc3RyaW5naWZ5KHRlc3RyZWNvcmQsIG51bGwsIDIpfVxuXFxgXFxgXFxgXG5gXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTgiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJzYW1wbGVzXzEgPSBzZWxlY3RlZFNhbXBsZXMxXG5zMUxvYWRpbmcgPyBtZGAobG9hZGluZ+KApilgIDogbWRgXFxgXFxgXFxgXG4ke0pTT04uc3RyaW5naWZ5KHNhbXBsZXNfMSwgbnVsbCwgMil9XG5cXGBcXGBcXGBcbmBcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtOSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InNhbXBsZXNfMiA9IHNlbGVjdGVkU2FtcGxlczJcbnMyTG9hZGluZyA/IG1kYChsb2FkaW5n4oCmKWAgOiBtZGBcXGBcXGBcXGBcbiR7SlNPTi5zdHJpbmdpZnkoc2FtcGxlc18yLCBudWxsLCAyKX1cblxcYFxcYFxcYFxuYFxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdwYXJxdWV0X3BhdGgnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgncG9pbnRkYXRhJykifV19
 </script>
 <script type="module">
 if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
