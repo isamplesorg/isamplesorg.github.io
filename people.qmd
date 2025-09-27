@@ -1,7 +1,10 @@
 ---
-title: "People who contributed to iSamples"
+title: "Some of those who contributed to iSamples"
+lightbox: true
 ---
 
+:::: {.columns}
+::: {.column width="34%"}
 * Cao, Sean
 * Choe, Saebyl
 * Cui, Hong
@@ -9,6 +12,8 @@ title: "People who contributed to iSamples"
 * Deck, John
 * Kansa, Eric C
 * Kansa, Sarah Whitcher
+:::
+::: {.column width="34%"}
 * Kunze, John
 * Lehnert, Kerstin
 * Mandel, Danny
@@ -16,6 +21,8 @@ title: "People who contributed to iSamples"
 * Ramdeen, Sarah
 * Raia, Natalie
 * Richard, Steve
+:::
+::: {.column width="32%"}
 * Robinson, Erin
 * Snyder, Rebecca
 * Song, Lu-lin
@@ -23,5 +30,21 @@ title: "People who contributed to iSamples"
 * Vieglais, Dave
 * Walls, Ramona L
 * Yee, Raymond
+:::
+::::
 
-xxx! [do we hve a group photo or two? ] (assets/iSamplesArchitecture.png)
+::: {layout-ncol=3}
+
+![](assets/RCN_workshop_NYU.jpg){group="my-group"}
+
+![](assets/workshop_Tucson.jpg){group="my-group"}
+
+![](assets/workshop_SI.jpg){group="my-group"}
+
+![](assets/outside_SI_MSC.jpg){group="my-group"}
+
+![](assets/tour_SI_MSC.jpg){group="my-group"}
+
+![](assets/workshop_Moorea.jpg){group="my-group"}
+
+:::

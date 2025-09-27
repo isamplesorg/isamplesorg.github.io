@@ -1,7 +1,6 @@
 ---
 title: "Internet of Samples: iSamples"
-subtitle: "Toward an Interdisciplinary Cyberinfrastructure for Material Samples [![](https://img.shields.io/badge/NSF-2004839-blue.svg)](https://nsf.gov/awardsearch
-/showAward?AWD_ID=2004839)"
+subtitle: "Toward an Interdisciplinary Cyberinfrastructure for Material Samples [![](https://img.shields.io/badge/NSF-2004839-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839)"
 number-sections: false
 ---
 
