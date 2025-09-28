@@ -1,6 +1,5 @@
 ---
 title: "Some of those who contributed to iSamples"
-lightbox: true
 ---
 
 :::: {.columns}

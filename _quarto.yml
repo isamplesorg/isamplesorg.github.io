@@ -22,7 +22,7 @@ website:
         aria-label: "iSamples home"
       - href: about.qmd
         text: Goals
-        aria-label: "About the iSamples project"
+        aria-label: "Goals of the iSamples project"
       - href: people.qmd
         text: People
         aria-label: "People of the iSamples project"
@@ -53,23 +53,21 @@ website:
           - text: "Cesium View split sources"
             href: tutorials/parquet_cesium_split.qmd
 
-        
-
-# configure for correct source repository
-#  repo-url: https://github.com/isamples.org/isamples.github.io
-  repo-url: https://github.com/smrgeoinfo/isamples.github.io
+  repo-url: https://github.com/isamplesorg/isamplesorg.github.io
   repo-actions: [edit, issue]
 
   page-footer: 
     left: >
-        © Copyright 2020, iSamples Project.
-        
-        This material is based upon work supported by the National Science Foundation under Grant Numbers 
-        [2004839](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839), 
-        [2004562](https://nsf.gov/awardsearch/showAward?AWD_ID=2004562), 
-        [2004642](https://nsf.gov/awardsearch/showAward?AWD_ID=2004642), 
-        and [2004815](https://nsf.gov/awardsearch/showAward?AWD_ID=2004815). 
-        Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the [National Science Foundation](https://nsf.gov/).
+      © Copyright 2020, iSamples Project. This material is based upon work
+      supported by the National Science Foundation under Grant Numbers
+      [2004839](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839),
+      [2004562](https://nsf.gov/awardsearch/showAward?AWD_ID=2004562),
+      [2004642](https://nsf.gov/awardsearch/showAward?AWD_ID=2004642), and
+      [2004815](https://nsf.gov/awardsearch/showAward?AWD_ID=2004815).
+    right: >
+      Any opinions, findings, and conclusions or recommendations expressed in
+      this material are those of the author(s) and do not necessarily reflect
+      the views of the [National Science Foundation](https://nsf.gov/).
   
 format:
   html:
