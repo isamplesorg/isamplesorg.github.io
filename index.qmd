@@ -10,10 +10,13 @@ The Internet of Samples (iSamples) is a multi-disciplinary and multi-institution
 
 **Note**: iSamples Central is currently unavailable. The project now uses **geoparquet files** for efficient, browser-based data access and analysis:
 
-- 📊 **[Interactive Tutorials](/tutorials/)** - Modern browser-based analysis with DuckDB-WASM
-- 🗺️ **Comprehensive Coverage** - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian
-- 🚀 **High Performance** - Fast, efficient data access with minimal memory usage
-- 🌐 **Universal Access** - Works in any modern browser without software installation
+📊 **[Interactive Tutorials](/tutorials/)** - Modern browser-based analysis with DuckDB-WASM
+<br/>
+🗺️ **Comprehensive Coverage** - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian
+<br/>
+🚀 **High Performance** - Fast, efficient data access with minimal memory usage
+<br/>
+🌐 **Universal Access** - Works in any modern browser without software installation
 
 **Resources**
 

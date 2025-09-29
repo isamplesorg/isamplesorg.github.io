@@ -18,7 +18,7 @@ listing:
     sort: "title asc"
     fields: [title, subtitle]
     type: table
-
+number-sections: false
 ---
 
 see [description of model](https://isamplesorg.github.io/metadata/) at https://isamplesorg.github.io/metadata/

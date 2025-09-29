@@ -7,14 +7,14 @@ title: "Some of those who contributed to iSamples"
 * Cao, Sean
 * Choe, Saebyl
 * Cui, Hong
-* Davies, Neil
+* Davies, Neil (PI)
 * Deck, John
 * Kansa, Eric C
 * Kansa, Sarah Whitcher
 :::
 ::: {.column width="34%"}
 * Kunze, John
-* Lehnert, Kerstin
+* Lehnert, Kerstin (PI)
 * Mandel, Danny
 * Meyer, Christopher
 * Ramdeen, Sarah
@@ -25,8 +25,8 @@ title: "Some of those who contributed to iSamples"
 * Robinson, Erin
 * Snyder, Rebecca
 * Song, Lu-lin
-* Thomer, Andrea
-* Vieglais, Dave
+* Thomer, Andrea (PI)
+* Vieglais, Dave (PI)
 * Walls, Ramona L
 * Yee, Raymond
 :::

@@ -5,6 +5,7 @@ format:
     toc: true
     toc-location: body
     toc-title: Contents
+number-sections: false
 ---
 
 ## 01 Mint Identifiers

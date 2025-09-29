@@ -12,20 +12,20 @@ format:
     theme: cosmo
 ---
 
-## Introduction
+# Introduction
 
 This tutorial demonstrates how to efficiently analyze large geospatial datasets directly in your browser without downloading entire files. We'll use DuckDB-WASM and Observable JS to perform fast, memory-efficient analysis and create interactive visualizations.
 
 **Note**: This tutorial attempts to connect to the live iSamples dataset (~300MB, 6+ million records). If CORS restrictions prevent access to the remote file, it automatically falls back to a representative demo dataset that demonstrates the same analytical techniques.
 
-### Key Technologies
+## Key Technologies
 
 - **DuckDB-WASM**: In-browser analytical database with HTTP range request support
 - **Observable Plot**: Grammar of graphics for interactive visualizations
 - **Observable Inputs**: Interactive controls for data exploration
 - **CORS Handling**: Automatic fallback for cross-origin restrictions
 
-### Dataset Information
+## Dataset Information
 
 **Primary dataset**:
 - **URL**: `https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet` *(temporary for testing)*
@@ -40,7 +40,7 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 - **Size**: 10K records with same schema and representative geographic distribution
 - **Purpose**: Demonstrates all analytical techniques with faster loading
 
-## Setup and Database Connection
+# Setup and Database Connection
 
 ```{ojs}
 //| label: test-reactivity
@@ -58,7 +58,7 @@ test_value = test_input
 test_output = test_value * 2
 
 md`
-### 🧪 Reactivity Test
+## 🧪 Reactivity Test
 
 **Raw input object**: ${typeof test_input} (Constructor: ${test_input?.constructor?.name})  
 **Extracted value**: ${test_value}  
@@ -241,7 +241,7 @@ createDemoData = async (conn) => {
 //| label: connection-status
 
 md`
-### Connection Status
+## Connection Status
 
 ${working_parquet_url ? 
   `✅ **Connected to live data**: Using ${working_parquet_url.includes('zenodo.org') ? 'Zenodo direct' : working_parquet_url.includes('cors-anywhere') ? 'CORS proxy' : 'original'} URL  
@@ -255,7 +255,7 @@ ${working_parquet_url ?
 `
 ```
 
-## Basic Data Exploration
+# Basic Data Exploration
 
 Let's start with fundamental queries to understand the dataset structure and size.
 
@@ -289,7 +289,7 @@ geo_percentage = Math.round((geo_count / total_count) * 100)
 //| label: display-basic-stats
 
 md`
-### Dataset Overview
+## Dataset Overview
 
 - **Total records**: ${total_count.toLocaleString()}
 - **Records with coordinates**: ${geo_count.toLocaleString()} (${geo_percentage}%)
@@ -298,7 +298,7 @@ md`
 `
 ```
 
-## Source Collection Analysis
+# Source Collection Analysis
 
 Analyze the distribution of samples across different source collections.
 
@@ -389,7 +389,7 @@ source_chart = {
 }
 ```
 
-## Geographic Distribution Analysis
+# Geographic Distribution Analysis
 
 Examine the geographic spread of samples and identify regional patterns.
 
@@ -457,7 +457,7 @@ regional_data = {
 //| label: display-geo-stats
 
 md`
-### Geographic Statistics
+## Geographic Statistics
 
 - **Latitude range**: ${geo_stats.min_lat.toFixed(3)}° to ${geo_stats.max_lat.toFixed(3)}°
 - **Longitude range**: ${geo_stats.min_lon.toFixed(3)}° to ${geo_stats.max_lon.toFixed(3)}°
@@ -467,7 +467,7 @@ md`
 `
 ```
 
-## Interactive Regional Explorer
+# Interactive Regional Explorer
 
 Create an interactive visualization to explore samples by region and source.
 
@@ -538,7 +538,7 @@ regional_chart = {
 }
 ```
 
-## Efficient Sampling for Visualization
+# Efficient Sampling for Visualization
 
 Create a representative sample of the data for detailed visualization while minimizing data transfer.
 
@@ -614,7 +614,7 @@ sample_stats = {
 //| label: display-sample-stats
 
 md`
-### Sample Statistics
+## Sample Statistics
 
 **Total sample size**: ${sample_stats.total.toLocaleString()} points  
 **Data transfer**: ~${Math.round(sample_stats.total * 6 * 8 / 1024 / 1024)} MB (estimated)  
@@ -625,7 +625,7 @@ ${sample_stats.by_source.map(d => `- ${d.source}: ${d.count.toLocaleString()}`).
 `
 ```
 
-## Interactive World Map
+# Interactive World Map
 
 Create an interactive scatter plot map showing the geographic distribution of samples.
 
@@ -708,7 +708,7 @@ world_map = {
 }
 ```
 
-## Material Category Analysis
+# Material Category Analysis
 
 Explore the distribution of material categories across different sources.
 
@@ -864,7 +864,7 @@ material_by_source_chart = {
 }
 ```
 
-## Performance Summary
+# Performance Summary
 
 This browser-based approach demonstrates remarkable efficiency compared to traditional methods.
 
@@ -872,9 +872,9 @@ This browser-based approach demonstrates remarkable efficiency compared to tradi
 //| label: performance-summary
 
 md`
-## Performance Analysis
+# Performance Analysis
 
-### Browser-Based vs Traditional Approaches
+## Browser-Based vs Traditional Approaches
 
 | Approach | Time | Memory | Data Transfer | Environment |
 |----------|------|--------|---------------|-------------|
@@ -882,7 +882,7 @@ md`
 | **Our browser approach** | 10-30s | <100 MB | <5 KB + samples | Any browser |
 | **Improvement** | **~5x faster** | **~10x less memory** | **~99% less transfer** | **Universal** |
 
-### Key Benefits
+## Key Benefits
 
 ✅ **Universal Access**: Runs in any modern browser  
 ✅ **Memory Efficient**: Analyze 300MB datasets using <100MB browser memory  
@@ -891,7 +891,7 @@ md`
 ✅ **Scalable**: Same approach works for GB or TB datasets  
 ✅ **Reproducible**: Self-contained analysis with no local setup required
 
-### Technical Achievements
+## Technical Achievements
 
 - **HTTP Range Requests**: Only downloads needed data portions
 - **Columnar Processing**: Parquet format enables efficient column-wise operations  
@@ -903,13 +903,13 @@ This approach enables **big data analysis in any browser** and makes large-scale
 `
 ```
 
-## Additional Resources
+# Additional Resources
 
 ```{ojs}
 //| label: resources
 
 md`
-### 📚 Learn More
+## 📚 Learn More
 
 - [DuckDB-WASM Documentation](https://duckdb.org/docs/api/wasm/)
 - [Observable Plot](https://observablehq.com/plot/)
@@ -918,7 +918,7 @@ md`
 - [HTTP Range Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
 - [iSamples Project](https://www.isamples.org/)
 
-### 🔧 Technical Implementation
+## 🔧 Technical Implementation
 
 This notebook demonstrates how to:
 1. Connect to remote Parquet files using DuckDB-WASM
