@@ -32,23 +32,29 @@ website:
           - models/index.qmd
       - section: "Outputs"
         contents:
+        - text: 2020 SPNHC conference talk (video)
+          href: https://youtu.be/eRUw5NMksFo?t=105
+        - text: iSamples metadata model talk (slides, PDF)
+          href: assets/2022-11_iSamplesMetadata.pdf
         - text: Publications
           href: pubs.qmd
+        - text: Zenodo community
+          href: https://zenodo.org/communities/isamples
         - icon: github
-          text: Github
+          text: Github repositories
           href: "https://github.com/isamplesorg/"
       - section: "Getting Started"
         contents:
-          - text: "iSamples Tutorials Overview"
-            href: tutorials/index.qmd
-          - text: "iSamples Parquet Tutorial"
-            href: tutorials/parquet.qmd
-          - text: "Zenodo iSamples OpenContext Tutorial"
-            href: tutorials/zenodo_isamples_analysis.qmd
-          - text: "Cesium View"
-            href: tutorials/parquet_cesium.qmd
-          - text: "Cesium View split sources"
-            href: tutorials/parquet_cesium_split.qmd
+        - text: "iSamples Tutorials Overview"
+          href: tutorials/index.qmd
+        - text: "iSamples Parquet Tutorial"
+          href: tutorials/parquet.qmd
+        - text: "Zenodo iSamples OpenContext Tutorial"
+          href: tutorials/zenodo_isamples_analysis.qmd
+        - text: "Cesium View"
+          href: tutorials/parquet_cesium.qmd
+        - text: "Cesium View split sources"
+          href: tutorials/parquet_cesium_split.qmd
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io
   repo-actions: [edit, issue]
