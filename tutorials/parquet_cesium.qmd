@@ -302,6 +302,66 @@ async function get_samples_2(pid) {
     return result ?? []; 
 }
 
+async function get_samples_at_geo_cord_location_via_sample_event(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    const q = `
+        -- Path 1: Direct event location
+        SELECT DISTINCT
+            s.pid as sample_pid,
+            s.label as sample_label,
+            s.description as sample_description,
+            s.thumbnail_url,
+            s.alternate_identifiers,
+            event.label as event_label,
+            site.label as site_label,
+            site.pid as site_pid,
+            'direct_event_location' as location_path
+        FROM nodes s
+        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
+        JOIN nodes event ON e1.o[1] = event.row_id
+        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'
+        JOIN nodes g ON e2.o[1] = g.row_id
+        LEFT JOIN nodes e3 ON event.row_id = e3.s AND e3.p = 'sampling_site'
+        LEFT JOIN nodes site ON e3.o[1] = site.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+          AND event.otype = 'SamplingEvent'
+          AND g.otype = 'GeospatialCoordLocation'
+          AND g.pid = ?
+
+        UNION
+
+        -- Path 2: Via site location
+        SELECT DISTINCT
+            s.pid as sample_pid,
+            s.label as sample_label,
+            s.description as sample_description,
+            s.thumbnail_url,
+            s.alternate_identifiers,
+            event.label as event_label,
+            site.label as site_label,
+            site.pid as site_pid,
+            'via_site_location' as location_path
+        FROM nodes s
+        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
+        JOIN nodes event ON e1.o[1] = event.row_id
+        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'
+        JOIN nodes site ON e2.o[1] = site.row_id
+        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'
+        JOIN nodes g ON e3.o[1] = g.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+          AND event.otype = 'SamplingEvent'
+          AND site.otype = 'SamplingSite'
+          AND g.otype = 'GeospatialCoordLocation'
+          AND g.pid = ?
+
+        ORDER BY thumbnail_url IS NOT NULL DESC, sample_label
+    `;
+    const result = await loadData(q, [pid, pid], "loading_combined", "samples_combined");
+    return result ?? [];
+}
+
 async function locationUsedBy(rowid){
     if (rowid === undefined || rowid === null) {
         return [];
@@ -315,6 +375,7 @@ mutable clickedPointId = "unset";
 mutable geoLoading = false;
 mutable s1Loading = false;
 mutable s2Loading = false;
+mutable combinedLoading = false;
 
 // Precompute selection-driven data with loading flags
 selectedGeoRecord = {
@@ -341,6 +402,15 @@ selectedSamples2 = {
         return await get_samples_2(clickedPointId);
     } finally {
         mutable s2Loading = false;
+    }
+}
+
+selectedSamplesCombined = {
+    mutable combinedLoading = true;
+    try {
+        return await get_samples_at_geo_cord_location_via_sample_event(clickedPointId);
+    } finally {
+        mutable combinedLoading = false;
     }
 }
 
@@ -551,6 +621,30 @@ Path 2 (via_site_location): find MaterialSampleRecord items whose producing Samp
 samples_2 = selectedSamples2
 s2Loading ? md`(loading…)` : md`\`\`\`
 ${JSON.stringify(samples_2, null, 2)}
+\`\`\`
+`
+```
+
+
+## Combined Samples at Location (Path 1 + Path 2 with Rich Metadata)
+
+<div id="loading_combined" hidden>Loading combined samples…</div>
+
+This query implements Eric Kansa's `get_samples_at_geo_cord_location_via_sample_event` function, which combines both Path 1 and Path 2 using UNION and returns richer sample metadata including:
+
+- Sample metadata: `sample_pid`, `sample_label`, `sample_description`
+- Visual assets: `thumbnail_url`, `alternate_identifiers`
+- Event context: `event_label`
+- Site information: `site_label`, `site_pid` (when available)
+- Path indicator: `location_path` (direct_event_location or via_site_location)
+
+Results are ordered with samples that have thumbnails first, making it easier to find visually rich records.
+
+```{ojs}
+//| echo: false
+samples_combined = selectedSamplesCombined
+combinedLoading ? md`(loading…)` : md`\`\`\`
+${JSON.stringify(samples_combined, null, 2)}
 \`\`\`
 `
 ```
