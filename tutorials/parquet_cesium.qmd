@@ -28,8 +28,50 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 ```{ojs}
 //| echo: false
-viewof parquet_path = Inputs.text({label:"Source", value:"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet", width:"100%", submit:true});
+viewof parquet_path = Inputs.text({
+  label:"Source",
+  value:"https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet",
+  placeholder: "URL or file:///path/to/file.parquet",
+  width:"100%",
+  submit:true
+});
 ```
+
+::: {.callout-tip collapse="true"}
+#### Using a local cached file for faster performance
+
+DuckDB-WASM running in the browser **cannot access local files via `file://` URLs** due to browser security restrictions. However, you can use a local cached file when running `quarto preview`:
+
+**Local Development (recommended)**
+
+The repository includes a cached parquet file. To use it:
+
+1. Ensure the file exists in `docs/assets/oc_isamples_pqg.parquet` (691MB)
+   - The file must be in Quarto's output directory `docs/assets/`, not just the source `assets/` directory
+   - If needed, copy: `cp assets/oc_isamples_pqg.parquet docs/assets/`
+
+2. When running `quarto preview`, use the full localhost URL:
+   ```
+   http://localhost:4979/assets/oc_isamples_pqg.parquet
+   ```
+   (Replace `4979` with your actual preview port)
+
+**Alternative: Python HTTP server**
+```bash
+# In the directory containing your parquet file:
+cd /Users/raymondyee/Data/iSample
+python3 -m http.server 8000
+```
+
+Then use: `http://localhost:8000/oc_isamples_pqg.parquet`
+
+**Benefits of local cached file:**
+- Much faster initial load (no network transfer)
+- Works offline
+- Matches the notebook's local file access pattern
+
+**Limitation:** Only works during local development, not on published GitHub Pages.
+:::
 
 ::: callout-warning
 #### Heads up: first interaction may be slow
@@ -360,6 +402,121 @@ ${JSON.stringify(testrecord, null, 2)}
 \`\`\`
 `
 ```
+
+## Understanding Paths in the iSamples Property Graph
+
+### Why "Path 1" and "Path 2"?
+
+These terms describe the **two main ways to get from a MaterialSampleRecord to geographic coordinates**. They're not the only relationship paths in the graph, but they're the most commonly used for spatial queries.
+
+**Path 1 (Direct Event Location)**
+```
+MaterialSampleRecord
+  → produced_by →
+SamplingEvent
+  → sample_location →
+GeospatialCoordLocation
+```
+
+**Path 2 (Via Sampling Site)**
+```
+MaterialSampleRecord
+  → produced_by →
+SamplingEvent
+  → sampling_site →
+SamplingSite
+  → site_location →
+GeospatialCoordLocation
+```
+
+**Key Differences:**
+- **Path 1 is direct**: Event → Location (3 hops total)
+- **Path 2 goes through Site**: Event → Site → Location (4 hops total)
+- **Path 1** = "Where was this specific sample collected?"
+- **Path 2** = "What named site is this sample from, and where is that site?"
+
+**Important:** The queries below use INNER JOIN for both paths, meaning samples must have connections through both paths to appear in results. Samples with only one path will be excluded.
+
+### Full Relationship Map (Beyond Path 1 and Path 2)
+
+The iSamples property graph contains many more relationships than just the geographic paths:
+
+```
+                                    Agent
+                                      ↑
+                                      | {responsibility, registrant}
+                                      |
+MaterialSampleRecord ────produced_by──→ SamplingEvent ────sample_location──→ GeospatialCoordLocation
+    |                                       |                                         ↑
+    |                                       |                                         |
+    | {keywords,                            └────sampling_site──→ SamplingSite ──site_location─┘
+    |  has_sample_object_type,
+    |  has_material_category}
+    |
+    └──→ IdentifiedConcept
+```
+
+**Path Categories:**
+- **PATH 1**: MaterialSampleRecord → SamplingEvent → GeospatialCoordLocation (direct location)
+- **PATH 2**: MaterialSampleRecord → SamplingEvent → SamplingSite → GeospatialCoordLocation (via site)
+- **AGENT PATH**: MaterialSampleRecord → SamplingEvent → Agent (who collected/registered)
+- **CONCEPT PATH**: MaterialSampleRecord → IdentifiedConcept (types, keywords - direct, no event!)
+
+**Key Insight:** SamplingEvent is the central hub for most relationships, except concepts which attach directly to MaterialSampleRecord.
+
+### Query Pattern Analysis (from Eric Kansa's open-context-py)
+
+The following analysis is based on Eric's query functions that demonstrate different path traversal patterns:
+
+#### 1. `get_sample_data_via_sample_pid` - Uses BOTH Path 1 AND Path 2
+```
+MaterialSampleRecord (WHERE pid = ?)
+  → produced_by → SamplingEvent
+    ├─→ sample_location → GeospatialCoordLocation [Path 1]
+    └─→ sampling_site → SamplingSite [Path 2]
+
+Returns: sample metadata + lat/lon + site label/pid
+Required: BOTH paths must exist (INNER JOIN)
+```
+
+#### 2. `get_sample_data_agents_sample_pid` - Uses AGENT PATH
+```
+MaterialSampleRecord (WHERE pid = ?)
+  → produced_by → SamplingEvent
+    → {responsibility, registrant} → Agent
+
+Returns: sample metadata + agent info (who collected/registered)
+Independent of: Path 1 and Path 2 (no geographic data)
+```
+
+#### 3. `get_sample_types_and_keywords_via_sample_pid` - Uses CONCEPT PATH
+```
+MaterialSampleRecord (WHERE pid = ?)
+  → {keywords, has_sample_object_type, has_material_category} → IdentifiedConcept
+
+Returns: sample metadata + classification keywords/types
+Independent of: Path 1, Path 2, and SamplingEvent!
+```
+
+#### 4. `get_samples_at_geo_cord_location_via_sample_event` - REVERSE Path 1 + Path 2
+```
+GeospatialCoordLocation (WHERE pid = ?)  ← START HERE (reverse!)
+  ← sample_location ← SamplingEvent [Path 1 REVERSED]
+    ├─→ sampling_site → SamplingSite [Path 2 enrichment]
+    └─← produced_by ← MaterialSampleRecord [complete chain]
+
+Returns: all samples at a given location + site info
+Direction: geo → samples (opposite of other queries)
+```
+
+**Summary Table:**
+
+| Function | Path 1 | Path 2 | Direction | Notes |
+|----------|--------|--------|-----------|-------|
+| `get_sample_data_via_sample_pid` | ✅ Required | ✅ Required | Forward | INNER JOIN - no row if either missing |
+| `get_sample_data_agents_sample_pid` | ❌ N/A | ❌ N/A | N/A | Uses agent path instead |
+| `get_sample_types_and_keywords_via_sample_pid` | ❌ N/A | ❌ N/A | N/A | Direct edges to concepts |
+| `get_samples_at_geo_cord_location_via_sample_event` | ✅ Required | ✅ Required | Reverse | Walks from geo to samples |
 
 ## Related Sample Path 1 (selected)
 
