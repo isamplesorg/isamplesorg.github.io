@@ -417,6 +417,27 @@ selectedSamplesCombined = {
 md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 ```
 
+```{ojs}
+//| echo: false
+// Center initial Cesium view on Italy and also set Home to Italy!
+{
+    const viewer = content.viewer;
+    // Approximate bounding box for Italy (degrees)
+    const italyRect = Cesium.Rectangle.fromDegrees(6.6, 36.6, 18.8, 47.1);
+
+    // Make the Home button go to Italy as well
+    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = italyRect;
+    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
+
+    // Apply camera after the first render to avoid resize/tab visibility issues
+    const once = () => {
+        viewer.camera.setView({ destination: italyRect });
+        viewer.scene.postRender.removeEventListener(once);
+    };
+    viewer.scene.postRender.addEventListener(once);
+}
+```
+
 ::: {.panel-tabset}
 
 ## Map
@@ -647,4 +668,135 @@ combinedLoading ? md`(loading…)` : md`\`\`\`
 ${JSON.stringify(samples_combined, null, 2)}
 \`\`\`
 `
+```
+
+## Design Note: Differentiated Geographic Visualization
+
+::: {.callout-note icon=false}
+## Future Enhancement - Geographic Location Classification
+
+**Current implementation**: All 198,433 GeospatialCoordLocations are rendered identically (orange points), without differentiating their semantic roles in the graph.
+
+**Discovery**: Analysis of the OpenContext parquet data reveals that geos fall into three distinct categories based on their usage:
+
+1. **`sample_location_only`**: Precise field collection points (Path 1)
+   - Most common category
+   - Represents exact GPS coordinates where sampling events occurred
+   - Varies per event, even within the same site
+
+2. **`site_location_only`**: Administrative site markers (Path 2)
+   - Represents general/reference locations for named archaeological sites
+   - One coordinate per site
+   - May not correspond to any actual collection point
+
+3. **`both`**: 10,346 geos (5.2%) - Dual-purpose locations
+   - Used as BOTH `sample_location` AND `site_location`
+   - Primarily single-location sites (85% of all sites)
+   - Occasionally one of many locations at multi-location sites (e.g., PKAP)
+
+**Site spatial patterns**:
+- **85.4%** of sites are compact (single location) - all events at one coordinate
+  - Example: Suberde - 384 events at one location
+- **14.6%** of sites are distributed (multiple locations) - events spread across space
+  - Example: PKAP Survey Area - 15,446 events across 544 different coordinates
+  - Poggio Civitate - 29,985 events across 11,112 coordinates
+
+### Proposed Enhancement
+
+**Visual differentiation by semantic role**:
+
+```javascript
+// Color coding
+const styles = {
+  sample_location_only: { color: '#2E86AB', size: 3 },  // Blue - field collection points
+  site_location_only:   { color: '#A23B72', size: 6 },  // Purple - administrative markers
+  both:                 { color: '#F18F01', size: 5 }   // Orange - dual-purpose
+};
+```
+
+**UI Controls**:
+```
+☑ Show sample locations (precise field data - Path 1)
+☑ Show site locations (administrative site markers - Path 2)
+☐ Highlight overlap points only (10,346 dual-purpose geos)
+```
+
+**Query modification needed**:
+
+```sql
+-- Add classification to geo query
+WITH geo_classification AS (
+  SELECT
+    geo.pid,
+    geo.latitude,
+    geo.longitude,
+    MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
+    MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
+  FROM pqg geo
+  JOIN pqg e ON (geo.row_id = list_extract(e.o, 1))
+  WHERE geo.otype = 'GeospatialCoordLocation'
+  GROUP BY geo.pid, geo.latitude, geo.longitude
+)
+SELECT
+  pid,
+  latitude,
+  longitude,
+  CASE
+    WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
+    WHEN is_sample_location = 1 THEN 'sample_location_only'
+    WHEN is_site_location = 1 THEN 'site_location_only'
+  END as location_type
+FROM geo_classification
+```
+
+### Benefits
+
+1. **Educational**: Makes Path 1 vs Path 2 distinction visually concrete
+   - Users can SEE the semantic difference between precise and administrative locations
+   - Demonstrates the complementary nature of the two geographic paths
+
+2. **Exploratory**: Enables focused spatial queries
+   - "Show me archaeological sites in Turkey" → filter to `site_location_only`
+   - "Where were samples actually collected?" → filter to `sample_location_only`
+   - "Which locations serve dual purposes?" → show `both` category
+
+3. **Analytical**: Reveals site spatial structure
+   - Compact sites: tight cluster of blue points around purple marker
+   - Survey areas: purple marker with cloud of blue points spread across region
+   - Identifies sampling strategies and field methodologies
+
+### Advanced Features (Future)
+
+**Site Explorer Mode**:
+- Click a `site_location` (purple marker) → reveal all its `sample_locations` (blue points)
+- Draw convex hull or region around the site's collection points
+- Display site statistics: event count, spatial extent, temporal range
+
+**Example interaction**:
+```
+User clicks PKAP Survey Area marker (purple)
+→ Highlights 544 blue sample_location points within the survey area
+→ Shows: "15,446 events across 544 locations (0.7% at site marker, 99.3% elsewhere)"
+→ Draws polygon boundary around the survey extent
+```
+
+### Implementation Status
+
+**Status**: Design note only - not yet implemented
+
+**Implementation complexity**: Moderate
+- Query modification: Simple (add classification CTE)
+- Client-side rendering: Medium (conditional styling in Cesium primitives)
+- UI controls: Medium (checkbox filters + event handlers)
+- Advanced features: High (site explorer mode with interactive highlighting)
+
+**Performance impact**: Minimal
+- Same 198k points, just enriched with `location_type` metadata
+- Filtering happens client-side (fast)
+- Could add server-side aggregation for zoom-based LOD
+
+This enhancement would transform the visualization from "pretty dots on a map" into a pedagogical tool for understanding the iSamples metadata model architecture.
+
+:::
+```
 ```
