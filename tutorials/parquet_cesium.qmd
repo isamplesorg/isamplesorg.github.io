@@ -419,19 +419,28 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 
 ```{ojs}
 //| echo: false
-// Center initial Cesium view on Italy and also set Home to Italy!
+// Center initial Cesium view on PKAP Survey Area and also set Home to PKAP!
 {
     const viewer = content.viewer;
-    // Approximate bounding box for Italy (degrees)
-    const italyRect = Cesium.Rectangle.fromDegrees(6.6, 36.6, 18.8, 47.1);
+    // PKAP Survey Area near Cyprus
+    // Source: https://opencontext.org/subjects/48fd434c-f6d3...
+    const pkapLat = 34.987406;
+    const pkapLon = 33.708047;
+    const delta = 0.3; // degrees padding around point
+    const pkapRect = Cesium.Rectangle.fromDegrees(
+        pkapLon - delta, // west (lon)
+        pkapLat - delta, // south (lat)
+        pkapLon + delta, // east (lon)
+        pkapLat + delta  // north (lat)
+    );
 
-    // Make the Home button go to Italy as well
-    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = italyRect;
+    // Make the Home button go to PKAP as well
+    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = pkapRect;
     Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
 
     // Apply camera after the first render to avoid resize/tab visibility issues
     const once = () => {
-        viewer.camera.setView({ destination: italyRect });
+        viewer.camera.setView({ destination: pkapRect });
         viewer.scene.postRender.removeEventListener(once);
     };
     viewer.scene.postRender.addEventListener(once);
