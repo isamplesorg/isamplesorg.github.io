@@ -343,57 +343,190 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
+    // Eric Kansa's authoritative query from open-context-py
+    // Source: https://github.com/ekansa/open-context-py/blob/staging/opencontext_py/apps/all_items/isamples/isamples_explore.py
     const q = `
-        -- Path 1: Direct event location
-        SELECT DISTINCT
-            s.pid as sample_pid,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.label as event_label,
-            event.pid as event_pid,
-            site.label as site_label,
-            site.pid as site_pid,
-            'direct_event_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'
-        JOIN nodes g ON e2.o[1] = g.row_id
-        LEFT JOIN nodes e3 ON event.row_id = e3.s AND e3.p = 'sampling_site'
-        LEFT JOIN nodes site ON e3.o[1] = site.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
-
-        UNION
-
-        -- Path 2: Via site location
-        SELECT DISTINCT
-            s.pid as sample_pid,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.label as event_label,
-            event.pid as event_pid,
-            site.label as site_label,
-            site.pid as site_pid,
-            'via_site_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'
-        JOIN nodes site ON e2.o[1] = site.row_id
-        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'
-        JOIN nodes g ON e3.o[1] = g.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND site.otype = 'SamplingSite'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
-
-        ORDER BY sample_label
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail
+        FROM nodes AS geo
+        JOIN nodes AS rel_se ON (
+            rel_se.p = 'sample_location'
+            AND
+            list_contains(rel_se.o, geo.row_id)
+        )
+        JOIN nodes AS se ON (
+            rel_se.s = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS rel_site ON (
+            se.row_id = rel_site.s
+            AND
+            rel_site.p = 'sampling_site'
+        )
+        JOIN nodes AS site ON (
+            rel_site.o[1] = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        JOIN nodes AS rel_samp ON (
+            rel_samp.p = 'produced_by'
+            AND
+            list_contains(rel_samp.o, se.row_id)
+        )
+        JOIN nodes AS samp ON (
+            rel_samp.s = samp.row_id
+            AND
+            samp.otype = 'MaterialSampleRecord'
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        ORDER BY has_thumbnail DESC
     `;
-    const result = await loadData(q, [pid, pid], "loading_combined", "samples_combined");
+    const result = await loadData(q, [pid], "loading_combined", "samples_combined");
+    return result ?? [];
+}
+
+async function get_sample_data_via_sample_pid(sample_pid) {
+    if (sample_pid === null || sample_pid === "" || sample_pid === "unset") {
+        return null;
+    }
+    // Eric Kansa's query: Get full sample data including geo and site info
+    const q = `
+        SELECT
+            samp.row_id,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid
+        FROM nodes AS samp
+        JOIN nodes AS samp_rel_se ON (
+            samp_rel_se.s = samp.row_id
+            AND
+            samp_rel_se.p = 'produced_by'
+        )
+        JOIN nodes AS se ON (
+            samp_rel_se.o[1] = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS geo_rel_se ON (
+            geo_rel_se.s = se.row_id
+            AND
+            geo_rel_se.p = 'sample_location'
+        )
+        JOIN nodes AS geo ON (
+            geo_rel_se.o[1] = geo.row_id
+            AND
+            geo.otype = 'GeospatialCoordLocation'
+        )
+        JOIN nodes AS site_rel_se ON (
+            site_rel_se.s = se.row_id
+            AND
+            site_rel_se.p = 'sampling_site'
+        )
+        JOIN nodes AS site ON (
+            site_rel_se.o[1] = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        WHERE samp.pid = ?
+          AND samp.otype = 'MaterialSampleRecord'
+    `;
+    const result = await loadData(q, [sample_pid], "loading_sample_data", "sample_data");
+    return result && result.length ? result[0] : null;
+}
+
+async function get_sample_data_agents_sample_pid(sample_pid) {
+    if (sample_pid === null || sample_pid === "" || sample_pid === "unset") {
+        return [];
+    }
+    // Eric Kansa's query: Get agent info (who collected/registered)
+    const q = `
+        SELECT
+            samp.row_id,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
+            agent_rel_se.p AS predicate,
+            agent.pid AS agent_pid,
+            agent.name AS agent_name,
+            agent.alternate_identifiers AS agent_alternate_identifiers
+        FROM nodes AS samp
+        JOIN nodes AS samp_rel_se ON (
+            samp_rel_se.s = samp.row_id
+            AND
+            samp_rel_se.p = 'produced_by'
+        )
+        JOIN nodes AS se ON (
+            samp_rel_se.o[1] = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS agent_rel_se ON (
+            agent_rel_se.s = se.row_id
+            AND
+            list_contains(['responsibility', 'registrant'], agent_rel_se.p)
+        )
+        JOIN nodes AS agent ON (
+            list_contains(agent_rel_se.o, agent.row_id)
+            AND
+            agent.otype = 'Agent'
+        )
+        WHERE samp.pid = ?
+          AND samp.otype = 'MaterialSampleRecord'
+    `;
+    const result = await loadData(q, [sample_pid], "loading_agents", "agents");
+    return result ?? [];
+}
+
+async function get_sample_types_and_keywords_via_sample_pid(sample_pid) {
+    if (sample_pid === null || sample_pid === "" || sample_pid === "unset") {
+        return [];
+    }
+    // Eric Kansa's query: Get classification keywords and types
+    const q = `
+        SELECT
+            samp.row_id,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            kw_rel.p AS predicate,
+            kw.pid AS keyword_pid,
+            kw.label AS keyword
+        FROM nodes AS samp
+        JOIN nodes AS kw_rel ON (
+            kw_rel.s = samp.row_id
+            AND
+            list_contains(['keywords', 'has_sample_object_type', 'has_material_category'], kw_rel.p)
+        )
+        JOIN nodes AS kw ON (
+            list_contains(kw_rel.o, kw.row_id)
+            AND
+            kw.otype = 'IdentifiedConcept'
+        )
+        WHERE samp.pid = ?
+          AND samp.otype = 'MaterialSampleRecord'
+    `;
+    const result = await loadData(q, [sample_pid], "loading_keywords", "keywords");
     return result ?? [];
 }
 
@@ -691,18 +824,27 @@ ${JSON.stringify(samples_2, null, 2)}
 ```
 
 
-## Combined Samples at Location (Path 1 + Path 2 with Rich Metadata)
+## Samples at Location via Sampling Event (Eric Kansa's Query)
 
-<div id="loading_combined" hidden>Loading combined samples…</div>
+<div id="loading_combined" hidden>Loading samples…</div>
 
-This query implements Eric Kansa's `get_samples_at_geo_cord_location_via_sample_event` function, which combines both Path 1 and Path 2 using UNION and returns sample metadata including:
+This query implements Eric Kansa's authoritative `get_samples_at_geo_cord_location_via_sample_event` function from [open-context-py](https://github.com/ekansa/open-context-py/blob/staging/opencontext_py/apps/all_items/isamples/isamples_explore.py).
 
-- Sample metadata: `sample_pid`, `sample_label`, `sample_name`
-- Event context: `event_label`, `event_pid`
-- Site information: `site_label`, `site_pid` (when available via Path 2)
-- Path indicator: `location_path` (direct_event_location or via_site_location)
+**Query Strategy (Path 1 Only)**:
+- Starts at a GeospatialCoordLocation (clicked point)
+- Walks **backward** via `sample_location` edges to find SamplingEvents that reference this location
+- From those events, finds MaterialSampleRecords produced by them
+- Requires site context (INNER JOIN on `sampling_site` → SamplingSite)
 
-Results are ordered alphabetically by sample label.
+**Returns**:
+- Geographic coordinates: `latitude`, `longitude`
+- Sample metadata: `sample_pid`, `sample_label`, `sample_description`, `sample_alternate_identifiers`
+- Site context: `sample_site_label`, `sample_site_pid`
+- Media: `sample_thumbnail_url`, `has_thumbnail`
+
+**Ordering**: Prioritizes samples with images (`ORDER BY has_thumbnail DESC`)
+
+**Important**: This query only returns samples whose **sampling events directly reference this geolocation** via `sample_location` (Path 1). Samples that reach this location only through their site's `site_location` (Path 2) are **not included**. This means site marker locations may return 0 results if no events were recorded at that exact coordinate.
 
 ```{ojs}
 //| echo: false
