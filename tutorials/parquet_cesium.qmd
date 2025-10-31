@@ -890,69 +890,24 @@ ${JSON.stringify(samples_combined, null, 2)}
   - Example: PKAP Survey Area - 15,446 events across 544 different coordinates
   - Poggio Civitate - 29,985 events across 11,112 coordinates
 
-### Proposed Enhancement
-
-**Visual differentiation by semantic role**:
-
-```javascript
-// Color coding
-const styles = {
-  sample_location_only: { color: '#2E86AB', size: 3 },  // Blue - field collection points
-  site_location_only:   { color: '#A23B72', size: 6 },  // Purple - administrative markers
-  both:                 { color: '#F18F01', size: 5 }   // Orange - dual-purpose
-};
-```
-
-**UI Controls**:
-```
-☑ Show sample locations (precise field data - Path 1)
-☑ Show site locations (administrative site markers - Path 2)
-☐ Highlight overlap points only (10,346 dual-purpose geos)
-```
-
-**Implementation - Classification Query**:
-
-```sql
--- Classify geos by usage type
-WITH geo_classification AS (
-  SELECT
-    geo.pid,
-    geo.latitude,
-    geo.longitude,
-    MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
-    MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
-  FROM nodes geo
-  JOIN nodes e ON (geo.row_id = e.o[1])
-  WHERE geo.otype = 'GeospatialCoordLocation'
-  GROUP BY geo.pid, geo.latitude, geo.longitude
-)
-SELECT
-  pid,
-  latitude,
-  longitude,
-  CASE
-    WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
-    WHEN is_sample_location = 1 THEN 'sample_location_only'
-    WHEN is_site_location = 1 THEN 'site_location_only'
-  END as location_type
-FROM geo_classification
-```
-
-### Benefits
+### Benefits of Current Implementation
 
 1. **Educational**: Makes Path 1 vs Path 2 distinction visually concrete
    - Users can SEE the semantic difference between precise and administrative locations
+   - Blue points show where samples were actually collected (Path 1)
+   - Purple points show administrative site markers (Path 2)
    - Demonstrates the complementary nature of the two geographic paths
 
-2. **Exploratory**: Enables focused spatial queries
-   - "Show me archaeological sites in Turkey" → filter to `site_location_only`
-   - "Where were samples actually collected?" → filter to `sample_location_only`
-   - "Which locations serve dual purposes?" → show `both` category
+2. **Exploratory**: Enables visual understanding of spatial patterns
+   - Archaeological sites appear as purple markers (large points)
+   - Field collection points appear as blue markers (small points)
+   - Dual-purpose locations appear as orange markers (medium points)
+   - No UI filters required - the colors provide immediate visual differentiation
 
-3. **Analytical**: Reveals site spatial structure
+3. **Analytical**: Reveals site spatial structure at a glance
    - Compact sites: tight cluster of blue points around purple marker
    - Survey areas: purple marker with cloud of blue points spread across region
-   - Identifies sampling strategies and field methodologies
+   - Identifies sampling strategies and field methodologies by visual inspection
 
 ### Advanced Features (Future)
 
