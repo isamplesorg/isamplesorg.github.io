@@ -297,23 +297,54 @@ async function get_samples_1(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
+    // Path 1: Direct event location - enhanced to match Eric's query structure
     const q = `
-        SELECT DISTINCT
-            s.pid as sample_id,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.pid as event_id,
-            event.label as event_label,
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
             'direct_event_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'
-        JOIN nodes g ON e2.o[1] = g.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
+        FROM nodes AS geo
+        JOIN nodes AS rel_se ON (
+            rel_se.p = 'sample_location'
+            AND
+            list_contains(rel_se.o, geo.row_id)
+        )
+        JOIN nodes AS se ON (
+            rel_se.s = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS rel_site ON (
+            se.row_id = rel_site.s
+            AND
+            rel_site.p = 'sampling_site'
+        )
+        JOIN nodes AS site ON (
+            rel_site.o[1] = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        JOIN nodes AS rel_samp ON (
+            rel_samp.p = 'produced_by'
+            AND
+            list_contains(rel_samp.o, se.row_id)
+        )
+        JOIN nodes AS samp ON (
+            rel_samp.s = samp.row_id
+            AND
+            samp.otype = 'MaterialSampleRecord'
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        ORDER BY has_thumbnail DESC
     `;
     const result = await loadData(q, [pid], "loading_s1", "samples_1");
     return result ?? [];
@@ -323,30 +354,57 @@ async function get_samples_2(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
+    // Path 2: Via site location - enhanced to match Eric's query structure
     const q = `
-        SELECT DISTINCT
-            s.pid as sample_id,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.pid as event_id,
-            event.label as event_label,
-            site.label as site_name,
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
             'via_site_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'
-        JOIN nodes site ON e2.o[1] = site.row_id
-        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'
-        JOIN nodes g ON e3.o[1] = g.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND site.otype = 'SamplingSite'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
+        FROM nodes AS geo
+        JOIN nodes AS rel_site_geo ON (
+            rel_site_geo.p = 'site_location'
+            AND
+            list_contains(rel_site_geo.o, geo.row_id)
+        )
+        JOIN nodes AS site ON (
+            rel_site_geo.s = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        JOIN nodes AS rel_se_site ON (
+            rel_se_site.p = 'sampling_site'
+            AND
+            list_contains(rel_se_site.o, site.row_id)
+        )
+        JOIN nodes AS se ON (
+            rel_se_site.s = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS rel_samp ON (
+            rel_samp.p = 'produced_by'
+            AND
+            list_contains(rel_samp.o, se.row_id)
+        )
+        JOIN nodes AS samp ON (
+            rel_samp.s = samp.row_id
+            AND
+            samp.otype = 'MaterialSampleRecord'
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        ORDER BY has_thumbnail DESC
     `;
     const result = await loadData(q, [pid], "loading_s2", "samples_2");
-    return result ?? []; 
+    return result ?? [];
 }
 
 async function get_samples_at_geo_cord_location_via_sample_event(pid) {
@@ -846,10 +904,86 @@ Path 1 (direct_event_location): find MaterialSampleRecord items whose producing 
 ```{ojs}
 //| echo: false
 samples_1 = selectedSamples1
-s1Loading ? md`(loading…)` : md`\`\`\`
-${JSON.stringify(samples_1, null, 2)}
-\`\`\`
-`
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s1Loading ?
+    html`<div class="loading">Loading Path 1 samples…</div>`
+  :
+  samples_1 && samples_1.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_1.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_1.length} sample${samples_1.length !== 1 ? 's' : ''} via Path 1 (direct event location)
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via Path 1 (direct event location).
+    </div>`
+}`
 ```
 
 
@@ -865,10 +999,86 @@ Path 2 (via_site_location): find MaterialSampleRecord items whose producing Samp
 ```{ojs}
 //| echo: false
 samples_2 = selectedSamples2
-s2Loading ? md`(loading…)` : md`\`\`\`
-${JSON.stringify(samples_2, null, 2)}
-\`\`\`
-`
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s2Loading ?
+    html`<div class="loading">Loading Path 2 samples…</div>`
+  :
+  samples_2 && samples_2.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_2.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_2.length} sample${samples_2.length !== 1 ? 's' : ''} via Path 2 (via site location)
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via Path 2 (via site location).
+    </div>`
+}`
 ```
 
 
