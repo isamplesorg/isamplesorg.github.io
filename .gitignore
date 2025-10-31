@@ -3,6 +3,9 @@ uv.lock
 plantuml-images
 docs
 
+# Large data files
+*.parquet
+
 .$*
 
 # Byte-compiled / optimized / DLL files

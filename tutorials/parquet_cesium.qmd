@@ -37,6 +37,16 @@ viewof parquet_path = Inputs.text({
 });
 ```
 
+```{ojs}
+//| echo: false
+viewof searchGeoPid = Inputs.text({
+  label:"Jump to Geocode",
+  placeholder: "Paste geocode PID (e.g., geoloc_04d6e816218b1a8798fa90b3d1d43bf4c043a57f)",
+  width:"100%",
+  submit:true
+});
+```
+
 ::: {.callout-tip collapse="true"}
 #### Using a local cached file for faster performance
 
@@ -612,6 +622,44 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
         viewer.scene.postRender.removeEventListener(once);
     };
     viewer.scene.postRender.addEventListener(once);
+}
+```
+
+```{ojs}
+//| echo: false
+// Handle geocode search: fly to location and trigger queries
+{
+    if (searchGeoPid && searchGeoPid.trim() !== "") {
+        const pid = searchGeoPid.trim();
+
+        // Look up the geocode in the database
+        const q = `SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
+        const result = await db.query(q, [pid]);
+
+        if (result && result.length > 0) {
+            const geo = result[0];
+            const viewer = content.viewer;
+
+            // Fly camera to the location
+            const position = Cesium.Cartesian3.fromDegrees(
+                geo.longitude,
+                geo.latitude,
+                15000  // 15km altitude for good view
+            );
+
+            viewer.camera.flyTo({
+                destination: position,
+                duration: 2.0,  // 2 second flight
+                complete: () => {
+                    // After camera arrives, trigger the click to load data
+                    mutable clickedPointId = pid;
+                }
+            });
+        } else {
+            // Geocode not found - could display error to user
+            console.warn(`Geocode not found: ${pid}`);
+        }
+    }
 }
 ```
 
