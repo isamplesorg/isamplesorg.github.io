@@ -1483,68 +1483,33 @@ Loading samples…
 </ul></li>
 </ol>
 <p><strong>Site spatial patterns</strong>: - <strong>85.4%</strong> of sites are compact (single location) - all events at one coordinate - Example: Suberde - 384 events at one location - <strong>14.6%</strong> of sites are distributed (multiple locations) - events spread across space - Example: PKAP Survey Area - 15,446 events across 544 different coordinates - Poggio Civitate - 29,985 events across 11,112 coordinates</p>
-<section id="proposed-enhancement" class="level3" data-number="6.1">
-<h3 data-number="6.1" data-anchor-id="proposed-enhancement"><span class="header-section-number">6.1</span> Proposed Enhancement</h3>
-<p><strong>Visual differentiation by semantic role</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Color coding</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> styles <span class="op">=</span> {</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_location_only</span><span class="op">:</span> { <span class="dt">color</span><span class="op">:</span> <span class="st">'#2E86AB'</span><span class="op">,</span> <span class="dt">size</span><span class="op">:</span> <span class="dv">3</span> }<span class="op">,</span>  <span class="co">// Blue - field collection points</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">site_location_only</span><span class="op">:</span>   { <span class="dt">color</span><span class="op">:</span> <span class="st">'#A23B72'</span><span class="op">,</span> <span class="dt">size</span><span class="op">:</span> <span class="dv">6</span> }<span class="op">,</span>  <span class="co">// Purple - administrative markers</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">both</span><span class="op">:</span>                 { <span class="dt">color</span><span class="op">:</span> <span class="st">'#F18F01'</span><span class="op">,</span> <span class="dt">size</span><span class="op">:</span> <span class="dv">5</span> }   <span class="co">// Orange - dual-purpose</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>UI Controls</strong>:</p>
-<pre><code>☑ Show sample locations (precise field data - Path 1)
-☑ Show site locations (administrative site markers - Path 2)
-☐ Highlight overlap points only (10,346 dual-purpose geos)</code></pre>
-<p><strong>Implementation - Classification Query</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Classify geos by usage type</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> geo_classification <span class="kw">AS</span> (</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    geo.pid,</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    geo.latitude,</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    geo.longitude,</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">MAX</span>(<span class="cf">CASE</span> <span class="cf">WHEN</span> e.p <span class="op">=</span> <span class="st">'sample_location'</span> <span class="cf">THEN</span> <span class="dv">1</span> <span class="cf">ELSE</span> <span class="dv">0</span> <span class="cf">END</span>) <span class="kw">as</span> is_sample_location,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">MAX</span>(<span class="cf">CASE</span> <span class="cf">WHEN</span> e.p <span class="op">=</span> <span class="st">'site_location'</span> <span class="cf">THEN</span> <span class="dv">1</span> <span class="cf">ELSE</span> <span class="dv">0</span> <span class="cf">END</span>) <span class="kw">as</span> is_site_location</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> nodes geo</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">JOIN</span> nodes e <span class="kw">ON</span> (geo.row_id <span class="op">=</span> e.o[<span class="dv">1</span>])</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">WHERE</span> geo.otype <span class="op">=</span> <span class="st">'GeospatialCoordLocation'</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">GROUP</span> <span class="kw">BY</span> geo.pid, geo.latitude, geo.longitude</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  pid,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>  latitude,</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  longitude,</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">CASE</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">WHEN</span> is_sample_location <span class="op">=</span> <span class="dv">1</span> <span class="kw">AND</span> is_site_location <span class="op">=</span> <span class="dv">1</span> <span class="cf">THEN</span> <span class="st">'both'</span></span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">WHEN</span> is_sample_location <span class="op">=</span> <span class="dv">1</span> <span class="cf">THEN</span> <span class="st">'sample_location_only'</span></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">WHEN</span> is_site_location <span class="op">=</span> <span class="dv">1</span> <span class="cf">THEN</span> <span class="st">'site_location_only'</span></span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">END</span> <span class="kw">as</span> location_type</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> geo_classification</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="benefits" class="level3" data-number="6.2">
-<h3 data-number="6.2" data-anchor-id="benefits"><span class="header-section-number">6.2</span> Benefits</h3>
+<section id="benefits-of-current-implementation" class="level3" data-number="6.1">
+<h3 data-number="6.1" data-anchor-id="benefits-of-current-implementation"><span class="header-section-number">6.1</span> Benefits of Current Implementation</h3>
 <ol type="1">
 <li><strong>Educational</strong>: Makes Path 1 vs Path 2 distinction visually concrete
 <ul>
 <li>Users can SEE the semantic difference between precise and administrative locations</li>
+<li>Blue points show where samples were actually collected (Path 1)</li>
+<li>Purple points show administrative site markers (Path 2)</li>
 <li>Demonstrates the complementary nature of the two geographic paths</li>
 </ul></li>
-<li><strong>Exploratory</strong>: Enables focused spatial queries
+<li><strong>Exploratory</strong>: Enables visual understanding of spatial patterns
 <ul>
-<li>“Show me archaeological sites in Turkey” → filter to <code>site_location_only</code></li>
-<li>“Where were samples actually collected?” → filter to <code>sample_location_only</code></li>
-<li>“Which locations serve dual purposes?” → show <code>both</code> category</li>
+<li>Archaeological sites appear as purple markers (large points)</li>
+<li>Field collection points appear as blue markers (small points)</li>
+<li>Dual-purpose locations appear as orange markers (medium points)</li>
+<li>No UI filters required - the colors provide immediate visual differentiation</li>
 </ul></li>
-<li><strong>Analytical</strong>: Reveals site spatial structure
+<li><strong>Analytical</strong>: Reveals site spatial structure at a glance
 <ul>
 <li>Compact sites: tight cluster of blue points around purple marker</li>
 <li>Survey areas: purple marker with cloud of blue points spread across region</li>
-<li>Identifies sampling strategies and field methodologies</li>
+<li>Identifies sampling strategies and field methodologies by visual inspection</li>
 </ul></li>
 </ol>
 </section>
-<section id="advanced-features-future" class="level3" data-number="6.3">
-<h3 data-number="6.3" data-anchor-id="advanced-features-future"><span class="header-section-number">6.3</span> Advanced Features (Future)</h3>
+<section id="advanced-features-future" class="level3" data-number="6.2">
+<h3 data-number="6.2" data-anchor-id="advanced-features-future"><span class="header-section-number">6.2</span> Advanced Features (Future)</h3>
 <p><strong>Site Explorer Mode</strong>: - Click a <code>site_location</code> (purple marker) → reveal all its <code>sample_locations</code> (blue points) - Draw convex hull or region around the site’s collection points - Display site statistics: event count, spatial extent, temporal range</p>
 <p><strong>Example interaction</strong>:</p>
 <pre><code>User clicks PKAP Survey Area marker (purple)
@@ -1552,8 +1517,8 @@ Loading samples…
 → Shows: "15,446 events across 544 locations (0.7% at site marker, 99.3% elsewhere)"
 → Draws polygon boundary around the survey extent</code></pre>
 </section>
-<section id="implementation-status" class="level3" data-number="6.4">
-<h3 data-number="6.4" data-anchor-id="implementation-status"><span class="header-section-number">6.4</span> Implementation Status</h3>
+<section id="implementation-status" class="level3" data-number="6.3">
+<h3 data-number="6.3" data-anchor-id="implementation-status"><span class="header-section-number">6.3</span> Implementation Status</h3>
 <p><strong>Status</strong>: ✅ <strong>IMPLEMENTED</strong> (Basic color-coding by location type)</p>
 <p><strong>What’s implemented</strong>: - ✅ Classification query with CTE (lines 123-146) - ✅ Conditional styling by location_type (lines 153-166) - ✅ Color-coded points: Blue (sample_location), Purple (site_location), Orange (both) - ✅ Size differentiation: 3px (field points), 6px (sites), 5px (dual-purpose)</p>
 <p><strong>Performance impact</strong>: - Query execution time increased slightly due to JOIN and GROUP BY - Same 198k points rendered, now with semantic color coding - No noticeable performance degradation in browser rendering</p>
