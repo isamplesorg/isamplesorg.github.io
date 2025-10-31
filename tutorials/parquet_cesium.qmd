@@ -897,10 +897,86 @@ This query implements Eric Kansa's authoritative `get_samples_at_geo_cord_locati
 ```{ojs}
 //| echo: false
 samples_combined = selectedSamplesCombined
-combinedLoading ? md`(loading…)` : md`\`\`\`
-${JSON.stringify(samples_combined, null, 2)}
-\`\`\`
-`
+```
+
+```{ojs}
+//| echo: false
+html`${
+  combinedLoading ?
+    html`<div class="loading">Loading samples…</div>`
+  :
+  samples_combined && samples_combined.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_combined.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_combined.length} sample${samples_combined.length !== 1 ? 's' : ''}
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found at this location via Path 1 (direct sampling events).
+    </div>`
+}`
 ```
 
 ## Geographic Location Classification
