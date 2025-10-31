@@ -348,10 +348,9 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
         SELECT DISTINCT
             s.pid as sample_pid,
             s.label as sample_label,
-            s.description as sample_description,
-            s.thumbnail_url,
-            s.alternate_identifiers,
+            s.name as sample_name,
             event.label as event_label,
+            event.pid as event_pid,
             site.label as site_label,
             site.pid as site_pid,
             'direct_event_location' as location_path
@@ -373,10 +372,9 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
         SELECT DISTINCT
             s.pid as sample_pid,
             s.label as sample_label,
-            s.description as sample_description,
-            s.thumbnail_url,
-            s.alternate_identifiers,
+            s.name as sample_name,
             event.label as event_label,
+            event.pid as event_pid,
             site.label as site_label,
             site.pid as site_pid,
             'via_site_location' as location_path
@@ -393,7 +391,7 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
           AND g.otype = 'GeospatialCoordLocation'
           AND g.pid = ?
 
-        ORDER BY thumbnail_url IS NOT NULL DESC, sample_label
+        ORDER BY sample_label
     `;
     const result = await loadData(q, [pid, pid], "loading_combined", "samples_combined");
     return result ?? [];
@@ -697,15 +695,14 @@ ${JSON.stringify(samples_2, null, 2)}
 
 <div id="loading_combined" hidden>Loading combined samples…</div>
 
-This query implements Eric Kansa's `get_samples_at_geo_cord_location_via_sample_event` function, which combines both Path 1 and Path 2 using UNION and returns richer sample metadata including:
+This query implements Eric Kansa's `get_samples_at_geo_cord_location_via_sample_event` function, which combines both Path 1 and Path 2 using UNION and returns sample metadata including:
 
-- Sample metadata: `sample_pid`, `sample_label`, `sample_description`
-- Visual assets: `thumbnail_url`, `alternate_identifiers`
-- Event context: `event_label`
-- Site information: `site_label`, `site_pid` (when available)
+- Sample metadata: `sample_pid`, `sample_label`, `sample_name`
+- Event context: `event_label`, `event_pid`
+- Site information: `site_label`, `site_pid` (when available via Path 2)
 - Path indicator: `location_path` (direct_event_location or via_site_location)
 
-Results are ordered with samples that have thumbnails first, making it easier to find visually rich records.
+Results are ordered alphabetically by sample label.
 
 ```{ojs}
 //| echo: false
