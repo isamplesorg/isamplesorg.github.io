@@ -6,6 +6,14 @@ docs
 # Large data files
 *.parquet
 
+# Node / Playwright
+node_modules/
+package-lock.json
+tests/playwright-report/
+test-results/
+playwright-report/
+playwright/.cache/
+
 .$*
 
 # Byte-compiled / optimized / DLL files
