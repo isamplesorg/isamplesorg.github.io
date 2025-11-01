@@ -47,6 +47,14 @@ viewof searchGeoPid = Inputs.text({
 });
 ```
 
+```{ojs}
+//| echo: false
+viewof classifyDots = Inputs.button("Color-code by type (sample/site/both)", {
+  value: null,
+  reduce: () => Date.now()
+});
+```
+
 ::: {.callout-tip collapse="true"}
 #### Using a local cached file for faster performance
 
@@ -129,69 +137,91 @@ async function loadData(query, params = [], waiting_id = null, key = "default") 
 }
 
 locations = {
-    // Get geographic locations with classification by usage type
+    // Performance telemetry
+    performance.mark('locations-start');
+
+    // Get loading indicator element for progress updates
+    const loadingDiv = document.getElementById('loading_1');
+    if (loadingDiv) {
+        loadingDiv.hidden = false;
+        loadingDiv.innerHTML = 'Loading geocodes...';
+    }
+
+    // Fast query: just get all distinct geocodes (no classification!)
     const query = `
-        WITH geo_classification AS (
-            SELECT
-                geo.pid,
-                geo.latitude,
-                geo.longitude,
-                MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
-                MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
-            FROM nodes geo
-            JOIN nodes e ON (geo.row_id = e.o[1])
-            WHERE geo.otype = 'GeospatialCoordLocation'
-            GROUP BY geo.pid, geo.latitude, geo.longitude
-        )
-        SELECT
+        SELECT DISTINCT
             pid,
             latitude,
-            longitude,
-            CASE
-                WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
-                WHEN is_sample_location = 1 THEN 'sample_location_only'
-                WHEN is_site_location = 1 THEN 'site_location_only'
-            END as location_type
-        FROM geo_classification
+            longitude
+        FROM nodes
+        WHERE otype = 'GeospatialCoordLocation'
     `;
+
+    performance.mark('query-start');
     const data = await loadData(query, [], "loading_1", "locations");
+    performance.mark('query-end');
+    performance.measure('locations-query', 'query-start', 'query-end');
+    const queryTime = performance.getEntriesByName('locations-query')[0].duration;
+    console.log(`Query executed in ${queryTime.toFixed(0)}ms - retrieved ${data.length} locations`);
 
     // Clear the existing PointPrimitiveCollection
     content.points.removeAll();
 
-    // Color and size styling by location type
-    const styles = {
-        sample_location_only: {
-            color: Cesium.Color.fromCssColorString('#2E86AB'),
-            size: 3
-        },  // Blue - field collection points
-        site_location_only: {
-            color: Cesium.Color.fromCssColorString('#A23B72'),
-            size: 6
-        },  // Purple - administrative markers
-        both: {
-            color: Cesium.Color.fromCssColorString('#F18F01'),
-            size: 5
-        }   // Orange - dual-purpose
-    };
+    // Single color for all points (blue)
+    const defaultColor = Cesium.Color.fromCssColorString('#2E86AB');
+    const defaultSize = 4;
 
-    // Create point primitives for cesium display
+    // Render points in chunks to keep UI responsive
+    const CHUNK_SIZE = 500;
     const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
-    for (const row of data) {
-        const style = styles[row.location_type] || styles.both; // fallback to orange
-        content.points.add({
-            id: row.pid,
-            // https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees
-            position: Cesium.Cartesian3.fromDegrees(
-                row.longitude,  //longitude
-                row.latitude,   //latitude
-                0,//randomCoordinateJitter(10.0, 10.0), //elevation, m
-            ),
-            pixelSize: style.size,
-            color: style.color,
-            scaleByDistance: scalar,
-        });
+
+    performance.mark('render-start');
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        const endIdx = Math.min(i + CHUNK_SIZE, data.length);
+
+        // Update progress indicator
+        if (loadingDiv) {
+            const pct = Math.round((endIdx / data.length) * 100);
+            loadingDiv.innerHTML = `Rendering geocodes... ${endIdx.toLocaleString()}/${data.length.toLocaleString()} (${pct}%)`;
+        }
+
+        // Add points for this chunk
+        for (const row of chunk) {
+            content.points.add({
+                id: row.pid,
+                position: Cesium.Cartesian3.fromDegrees(
+                    row.longitude,  //longitude
+                    row.latitude,   //latitude
+                    0               //elevation, m
+                ),
+                pixelSize: defaultSize,
+                color: defaultColor,
+                scaleByDistance: scalar,
+            });
+        }
+
+        // Yield to browser between chunks to keep UI responsive
+        if (i + CHUNK_SIZE < data.length) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
     }
+    performance.mark('render-end');
+    performance.measure('locations-render', 'render-start', 'render-end');
+    const renderTime = performance.getEntriesByName('locations-render')[0].duration;
+
+    // Hide loading indicator
+    if (loadingDiv) {
+        loadingDiv.hidden = true;
+    }
+
+    performance.mark('locations-end');
+    performance.measure('locations-total', 'locations-start', 'locations-end');
+    const totalTime = performance.getEntriesByName('locations-total')[0].duration;
+
+    console.log(`Rendering completed in ${renderTime.toFixed(0)}ms`);
+    console.log(`Total time (query + render): ${totalTime.toFixed(0)}ms`);
+
     content.enableTracking();
     return data;
 }
@@ -297,25 +327,61 @@ async function get_samples_1(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
+    // Path 1: Direct event location - enhanced to match Eric's query structure
     const q = `
-        SELECT DISTINCT
-            s.pid as sample_id,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.pid as event_id,
-            event.label as event_label,
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
             'direct_event_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sample_location'
-        JOIN nodes g ON e2.o[1] = g.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
+        FROM nodes AS geo
+        JOIN nodes AS rel_se ON (
+            rel_se.p = 'sample_location'
+            AND
+            list_contains(rel_se.o, geo.row_id)
+        )
+        JOIN nodes AS se ON (
+            rel_se.s = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS rel_site ON (
+            se.row_id = rel_site.s
+            AND
+            rel_site.p = 'sampling_site'
+        )
+        JOIN nodes AS site ON (
+            rel_site.o[1] = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        JOIN nodes AS rel_samp ON (
+            rel_samp.p = 'produced_by'
+            AND
+            list_contains(rel_samp.o, se.row_id)
+        )
+        JOIN nodes AS samp ON (
+            rel_samp.s = samp.row_id
+            AND
+            samp.otype = 'MaterialSampleRecord'
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        ORDER BY has_thumbnail DESC
     `;
+    performance.mark('samples1-start');
     const result = await loadData(q, [pid], "loading_s1", "samples_1");
+    performance.mark('samples1-end');
+    performance.measure('samples1-query', 'samples1-start', 'samples1-end');
+    const queryTime = performance.getEntriesByName('samples1-query')[0].duration;
+    console.log(`Path 1 query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
@@ -323,30 +389,62 @@ async function get_samples_2(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
+    // Path 2: Via site location - enhanced to match Eric's query structure
     const q = `
-        SELECT DISTINCT
-            s.pid as sample_id,
-            s.label as sample_label,
-            s.name as sample_name,
-            event.pid as event_id,
-            event.label as event_label,
-            site.label as site_name,
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.alternate_identifiers AS sample_alternate_identifiers,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            samp.thumbnail_url AS sample_thumbnail_url,
+            samp.thumbnail_url IS NOT NULL as has_thumbnail,
             'via_site_location' as location_path
-        FROM nodes s
-        JOIN nodes e1 ON s.row_id = e1.s AND e1.p = 'produced_by'
-        JOIN nodes event ON e1.o[1] = event.row_id
-        JOIN nodes e2 ON event.row_id = e2.s AND e2.p = 'sampling_site'
-        JOIN nodes site ON e2.o[1] = site.row_id
-        JOIN nodes e3 ON site.row_id = e3.s AND e3.p = 'site_location'
-        JOIN nodes g ON e3.o[1] = g.row_id
-        WHERE s.otype = 'MaterialSampleRecord'
-          AND event.otype = 'SamplingEvent'
-          AND site.otype = 'SamplingSite'
-          AND g.otype = 'GeospatialCoordLocation'
-          AND g.pid = ?
+        FROM nodes AS geo
+        JOIN nodes AS rel_site_geo ON (
+            rel_site_geo.p = 'site_location'
+            AND
+            list_contains(rel_site_geo.o, geo.row_id)
+        )
+        JOIN nodes AS site ON (
+            rel_site_geo.s = site.row_id
+            AND
+            site.otype = 'SamplingSite'
+        )
+        JOIN nodes AS rel_se_site ON (
+            rel_se_site.p = 'sampling_site'
+            AND
+            list_contains(rel_se_site.o, site.row_id)
+        )
+        JOIN nodes AS se ON (
+            rel_se_site.s = se.row_id
+            AND
+            se.otype = 'SamplingEvent'
+        )
+        JOIN nodes AS rel_samp ON (
+            rel_samp.p = 'produced_by'
+            AND
+            list_contains(rel_samp.o, se.row_id)
+        )
+        JOIN nodes AS samp ON (
+            rel_samp.s = samp.row_id
+            AND
+            samp.otype = 'MaterialSampleRecord'
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        ORDER BY has_thumbnail DESC
     `;
+    performance.mark('samples2-start');
     const result = await loadData(q, [pid], "loading_s2", "samples_2");
-    return result ?? []; 
+    performance.mark('samples2-end');
+    performance.measure('samples2-query', 'samples2-start', 'samples2-end');
+    const queryTime = performance.getEntriesByName('samples2-query')[0].duration;
+    console.log(`Path 2 query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    return result ?? [];
 }
 
 async function get_samples_at_geo_cord_location_via_sample_event(pid) {
@@ -402,7 +500,12 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
           AND geo.otype = 'GeospatialCoordLocation'
         ORDER BY has_thumbnail DESC
     `;
+    performance.mark('eric-query-start');
     const result = await loadData(q, [pid], "loading_combined", "samples_combined");
+    performance.mark('eric-query-end');
+    performance.measure('eric-query', 'eric-query-start', 'eric-query-end');
+    const queryTime = performance.getEntriesByName('eric-query')[0].duration;
+    console.log(`Eric's query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
@@ -663,6 +766,84 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 }
 ```
 
+```{ojs}
+//| echo: false
+// Handle optional classification button: recolor dots by type
+{
+    if (classifyDots !== null) {
+        console.log("Classifying dots by type...");
+        performance.mark('classify-start');
+
+        // Run the classification query
+        const query = `
+            WITH geo_classification AS (
+                SELECT
+                    geo.pid,
+                    MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
+                    MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
+                FROM nodes geo
+                JOIN nodes e ON (geo.row_id = e.o[1])
+                WHERE geo.otype = 'GeospatialCoordLocation'
+                GROUP BY geo.pid
+            )
+            SELECT
+                pid,
+                CASE
+                    WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
+                    WHEN is_sample_location = 1 THEN 'sample_location_only'
+                    WHEN is_site_location = 1 THEN 'site_location_only'
+                END as location_type
+            FROM geo_classification
+        `;
+
+        const classifications = await db.query(query);
+
+        // Build lookup map: pid -> location_type
+        const typeMap = new Map();
+        for (const row of classifications) {
+            typeMap.set(row.pid, row.location_type);
+        }
+
+        // Color and size styling by location type
+        const styles = {
+            sample_location_only: {
+                color: Cesium.Color.fromCssColorString('#2E86AB'),
+                size: 3
+            },  // Blue - field collection points
+            site_location_only: {
+                color: Cesium.Color.fromCssColorString('#A23B72'),
+                size: 6
+            },  // Purple - administrative markers
+            both: {
+                color: Cesium.Color.fromCssColorString('#F18F01'),
+                size: 5
+            }   // Orange - dual-purpose
+        };
+
+        // Update colors of existing points
+        const points = content.points;
+        for (let i = 0; i < points.length; i++) {
+            const point = points.get(i);
+            const pid = point.id;
+            const locationType = typeMap.get(pid);
+
+            if (locationType && styles[locationType]) {
+                point.color = styles[locationType].color;
+                point.pixelSize = styles[locationType].size;
+            }
+        }
+
+        performance.mark('classify-end');
+        performance.measure('classification', 'classify-start', 'classify-end');
+        const classifyTime = performance.getEntriesByName('classification')[0].duration;
+        console.log(`Classification completed in ${classifyTime.toFixed(0)}ms - updated ${points.length} points`);
+        console.log(`  - Blue (sample_location_only): field collection points`);
+        console.log(`  - Purple (site_location_only): administrative markers`);
+        console.log(`  - Orange (both): dual-purpose locations`);
+    }
+}
+```
+
 ::: {.panel-tabset}
 
 ## Map
@@ -846,10 +1027,86 @@ Path 1 (direct_event_location): find MaterialSampleRecord items whose producing 
 ```{ojs}
 //| echo: false
 samples_1 = selectedSamples1
-s1Loading ? md`(loading…)` : md`\`\`\`
-${JSON.stringify(samples_1, null, 2)}
-\`\`\`
-`
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s1Loading ?
+    html`<div class="loading">Loading Path 1 samples…</div>`
+  :
+  samples_1 && samples_1.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_1.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_1.length} sample${samples_1.length !== 1 ? 's' : ''} via Path 1 (direct event location)
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via Path 1 (direct event location).
+    </div>`
+}`
 ```
 
 
@@ -865,10 +1122,86 @@ Path 2 (via_site_location): find MaterialSampleRecord items whose producing Samp
 ```{ojs}
 //| echo: false
 samples_2 = selectedSamples2
-s2Loading ? md`(loading…)` : md`\`\`\`
-${JSON.stringify(samples_2, null, 2)}
-\`\`\`
-`
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s2Loading ?
+    html`<div class="loading">Loading Path 2 samples…</div>`
+  :
+  samples_2 && samples_2.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_2.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_2.length} sample${samples_2.length !== 1 ? 's' : ''} via Path 2 (via site location)
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via Path 2 (via site location).
+    </div>`
+}`
 ```
 
 
