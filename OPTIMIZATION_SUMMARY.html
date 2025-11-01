@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>optimization_summary – iSamples</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5dcfcf7f8d229c93d75c4165c3ff646b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      <div class="sidebar-tools-main tools-wide">
+    <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+</div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Goals</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./people.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">People</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Information Architecture</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://isamplesorg.github.io/metadata/" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Metadata Model</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Vocabularies</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Outputs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://youtu.be/eRUw5NMksFo?t=105" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">2020 SPNHC conference talk (video)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assets/2022-11_iSamplesMetadata.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples metadata model talk (slides, PDF)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pubs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Publications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://zenodo.org/communities/isamples" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Zenodo community</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text">Github repositories</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Tutorials Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/parquet.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Parquet Tutorial</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Zenodo iSamples OpenContext Tutorial</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/parquet_cesium.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cesium View</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/parquet_cesium_split.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cesium View split sources</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#cesium-tutorial-performance-optimization---final-implementation" id="toc-cesium-tutorial-performance-optimization---final-implementation" class="nav-link active" data-scroll-target="#cesium-tutorial-performance-optimization---final-implementation"><span class="header-section-number">1</span> Cesium Tutorial Performance Optimization - Final Implementation</a>
+  <ul>
+  <li><a href="#solution-implemented-progressive-enhancement" id="toc-solution-implemented-progressive-enhancement" class="nav-link" data-scroll-target="#solution-implemented-progressive-enhancement"><span class="header-section-number">1.1</span> 🎯 Solution Implemented: Progressive Enhancement</a></li>
+  <li><a href="#performance-comparison" id="toc-performance-comparison" class="nav-link" data-scroll-target="#performance-comparison"><span class="header-section-number">1.2</span> ⚡ Performance Comparison</a>
+  <ul class="collapse">
+  <li><a href="#before-optimization" id="toc-before-optimization" class="nav-link" data-scroll-target="#before-optimization"><span class="header-section-number">1.2.1</span> Before Optimization:</a></li>
+  <li><a href="#after-optimization" id="toc-after-optimization" class="nav-link" data-scroll-target="#after-optimization"><span class="header-section-number">1.2.2</span> After Optimization:</a></li>
+  </ul></li>
+  <li><a href="#user-experience-flow" id="toc-user-experience-flow" class="nav-link" data-scroll-target="#user-experience-flow"><span class="header-section-number">1.3</span> 🎨 User Experience Flow</a>
+  <ul class="collapse">
+  <li><a href="#initial-page-load" id="toc-initial-page-load" class="nav-link" data-scroll-target="#initial-page-load"><span class="header-section-number">1.3.1</span> Initial Page Load</a></li>
+  <li><a href="#optional-classification-if-user-wants-it" id="toc-optional-classification-if-user-wants-it" class="nav-link" data-scroll-target="#optional-classification-if-user-wants-it"><span class="header-section-number">1.3.2</span> Optional Classification (if user wants it)</a></li>
+  </ul></li>
+  <li><a href="#technical-details" id="toc-technical-details" class="nav-link" data-scroll-target="#technical-details"><span class="header-section-number">1.4</span> 📊 Technical Details</a>
+  <ul class="collapse">
+  <li><a href="#initial-load-query-fast" id="toc-initial-load-query-fast" class="nav-link" data-scroll-target="#initial-load-query-fast"><span class="header-section-number">1.4.1</span> Initial Load Query (Fast)</a></li>
+  <li><a href="#classification-query-optional" id="toc-classification-query-optional" class="nav-link" data-scroll-target="#classification-query-optional"><span class="header-section-number">1.4.2</span> Classification Query (Optional)</a></li>
+  <li><a href="#progressive-rendering" id="toc-progressive-rendering" class="nav-link" data-scroll-target="#progressive-rendering"><span class="header-section-number">1.4.3</span> Progressive Rendering</a></li>
+  </ul></li>
+  <li><a href="#console-output-examples" id="toc-console-output-examples" class="nav-link" data-scroll-target="#console-output-examples"><span class="header-section-number">1.5</span> 🔍 Console Output Examples</a>
+  <ul class="collapse">
+  <li><a href="#initial-load" id="toc-initial-load" class="nav-link" data-scroll-target="#initial-load"><span class="header-section-number">1.5.1</span> Initial Load</a></li>
+  <li><a href="#optional-classification" id="toc-optional-classification" class="nav-link" data-scroll-target="#optional-classification"><span class="header-section-number">1.5.2</span> Optional Classification</a></li>
+  <li><a href="#click-queries-unchanged" id="toc-click-queries-unchanged" class="nav-link" data-scroll-target="#click-queries-unchanged"><span class="header-section-number">1.5.3</span> Click Queries (unchanged)</a></li>
+  </ul></li>
+  <li><a href="#ui-components-added" id="toc-ui-components-added" class="nav-link" data-scroll-target="#ui-components-added"><span class="header-section-number">1.6</span> 🎛️ UI Components Added</a>
+  <ul class="collapse">
+  <li><a href="#button-lines-50-56" id="toc-button-lines-50-56" class="nav-link" data-scroll-target="#button-lines-50-56"><span class="header-section-number">1.6.1</span> Button (lines 50-56)</a></li>
+  <li><a href="#classification-handler-lines-769-845" id="toc-classification-handler-lines-769-845" class="nav-link" data-scroll-target="#classification-handler-lines-769-845"><span class="header-section-number">1.6.2</span> Classification Handler (lines 769-845)</a></li>
+  </ul></li>
+  <li><a href="#testing-instructions" id="toc-testing-instructions" class="nav-link" data-scroll-target="#testing-instructions"><span class="header-section-number">1.7</span> 🧪 Testing Instructions</a>
+  <ul class="collapse">
+  <li><a href="#test-fast-initial-load" id="toc-test-fast-initial-load" class="nav-link" data-scroll-target="#test-fast-initial-load"><span class="header-section-number">1.7.1</span> 1. Test Fast Initial Load</a></li>
+  <li><a href="#test-optional-classification" id="toc-test-optional-classification" class="nav-link" data-scroll-target="#test-optional-classification"><span class="header-section-number">1.7.2</span> 2. Test Optional Classification</a></li>
+  <li><a href="#test-click-queries" id="toc-test-click-queries" class="nav-link" data-scroll-target="#test-click-queries"><span class="header-section-number">1.7.3</span> 3. Test Click Queries</a></li>
+  </ul></li>
+  <li><a href="#why-this-approach-wins" id="toc-why-this-approach-wins" class="nav-link" data-scroll-target="#why-this-approach-wins"><span class="header-section-number">1.8</span> 🚀 Why This Approach Wins</a>
+  <ul class="collapse">
+  <li><a href="#alternative-pre-aggregated-parquet-file" id="toc-alternative-pre-aggregated-parquet-file" class="nav-link" data-scroll-target="#alternative-pre-aggregated-parquet-file"><span class="header-section-number">1.8.1</span> Alternative: Pre-aggregated Parquet File</a></li>
+  <li><a href="#our-approach-progressive-enhancement" id="toc-our-approach-progressive-enhancement" class="nav-link" data-scroll-target="#our-approach-progressive-enhancement"><span class="header-section-number">1.8.2</span> Our Approach: Progressive Enhancement</a></li>
+  </ul></li>
+  <li><a href="#expected-user-satisfaction" id="toc-expected-user-satisfaction" class="nav-link" data-scroll-target="#expected-user-satisfaction"><span class="header-section-number">1.9</span> 📈 Expected User Satisfaction</a></li>
+  <li><a href="#future-optimizations-if-needed" id="toc-future-optimizations-if-needed" class="nav-link" data-scroll-target="#future-optimizations-if-needed"><span class="header-section-number">1.10</span> 🔄 Future Optimizations (if needed)</a>
+  <ul class="collapse">
+  <li><a href="#phase-2-pre-aggregated-index-file" id="toc-phase-2-pre-aggregated-index-file" class="nav-link" data-scroll-target="#phase-2-pre-aggregated-index-file"><span class="header-section-number">1.10.1</span> Phase 2: Pre-aggregated Index File</a></li>
+  <li><a href="#phase-3-spatial-indexing" id="toc-phase-3-spatial-indexing" class="nav-link" data-scroll-target="#phase-3-spatial-indexing"><span class="header-section-number">1.10.2</span> Phase 3: Spatial Indexing</a></li>
+  </ul></li>
+  <li><a href="#code-changes-summary" id="toc-code-changes-summary" class="nav-link" data-scroll-target="#code-changes-summary"><span class="header-section-number">1.11</span> 📝 Code Changes Summary</a></li>
+  <li><a href="#success-metrics" id="toc-success-metrics" class="nav-link" data-scroll-target="#success-metrics"><span class="header-section-number">1.12</span> ✅ Success Metrics</a></li>
+  <li><a href="#key-insight" id="toc-key-insight" class="nav-link" data-scroll-target="#key-insight"><span class="header-section-number">1.13</span> 💡 Key Insight</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/OPTIMIZATION_SUMMARY.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="cesium-tutorial-performance-optimization---final-implementation" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Cesium Tutorial Performance Optimization - Final Implementation</h1>
+<p><strong>Date</strong>: 2025-10-31 <strong>Goal</strong>: Load map dots as quickly as possible</p>
+<hr>
+<section id="solution-implemented-progressive-enhancement" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="solution-implemented-progressive-enhancement"><span class="header-section-number">1.1</span> 🎯 Solution Implemented: Progressive Enhancement</h2>
+<p>Instead of expensive pre-computation OR slow classification on every load, we use <strong>progressive enhancement</strong>:</p>
+<ol type="1">
+<li><strong>Fast initial load</strong>: Show all dots immediately (no classification)</li>
+<li><strong>Optional refinement</strong>: Button to classify and color-code by type</li>
+</ol>
+<hr>
+</section>
+<section id="performance-comparison" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="performance-comparison"><span class="header-section-number">1.2</span> ⚡ Performance Comparison</h2>
+<section id="before-optimization" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" data-anchor-id="before-optimization"><span class="header-section-number">1.2.1</span> Before Optimization:</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Expensive CTE with JOIN + GROUP BY</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> geo_classification <span class="kw">AS</span> (</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        geo.pid, geo.latitude, geo.longitude,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">MAX</span>(<span class="cf">CASE</span> <span class="cf">WHEN</span> e.p <span class="op">=</span> <span class="st">'sample_location'</span> <span class="cf">THEN</span> <span class="dv">1</span> <span class="cf">ELSE</span> <span class="dv">0</span> <span class="cf">END</span>) <span class="kw">as</span> is_sample_location,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">MAX</span>(<span class="cf">CASE</span> <span class="cf">WHEN</span> e.p <span class="op">=</span> <span class="st">'site_location'</span> <span class="cf">THEN</span> <span class="dv">1</span> <span class="cf">ELSE</span> <span class="dv">0</span> <span class="cf">END</span>) <span class="kw">as</span> is_site_location</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> nodes geo</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">JOIN</span> nodes e <span class="kw">ON</span> (geo.row_id <span class="op">=</span> e.o[<span class="dv">1</span>])</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> geo.otype <span class="op">=</span> <span class="st">'GeospatialCoordLocation'</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">GROUP</span> <span class="kw">BY</span> geo.pid, geo.latitude, geo.longitude</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, latitude, longitude, <span class="cf">CASE</span> <span class="op">..</span>. <span class="cf">END</span> <span class="kw">as</span> location_type</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> geo_classification</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Load Time</strong>: ~7 seconds query + 0.4s render = <strong>~7.5 seconds total</strong></p>
+<hr>
+</section>
+<section id="after-optimization" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" data-anchor-id="after-optimization"><span class="header-section-number">1.2.2</span> After Optimization:</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Simple DISTINCT query (no joins!)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="kw">DISTINCT</span> pid, latitude, longitude</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> nodes</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> otype <span class="op">=</span> <span class="st">'GeospatialCoordLocation'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Load Time</strong>: ~1-2 seconds query + 0.4s render = <strong>~2 seconds total</strong> 🎉</p>
+<p><strong>Speedup</strong>: <strong>3-4x faster!</strong></p>
+<hr>
+</section>
+</section>
+<section id="user-experience-flow" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="user-experience-flow"><span class="header-section-number">1.3</span> 🎨 User Experience Flow</h2>
+<section id="initial-page-load" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="initial-page-load"><span class="header-section-number">1.3.1</span> Initial Page Load</h3>
+<ol type="1">
+<li>User navigates to page</li>
+<li>Globe appears immediately</li>
+<li>“Loading geocodes…” (1-2 seconds)</li>
+<li>“Rendering geocodes… 500/198,433 (0%)” with progress bar</li>
+<li>All ~198,000 dots appear in <strong>blue</strong> (single color)</li>
+<li>Page fully interactive in <strong>~2 seconds</strong></li>
+</ol>
+</section>
+<section id="optional-classification-if-user-wants-it" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="optional-classification-if-user-wants-it"><span class="header-section-number">1.3.2</span> Optional Classification (if user wants it)</h3>
+<ol type="1">
+<li>User clicks <strong>“Color-code by type (sample/site/both)”</strong> button</li>
+<li>Classification query runs (~7 seconds, same as old initial load)</li>
+<li>Dots recolor:
+<ul>
+<li><strong>Blue</strong> (small): sample_location_only - field collection points</li>
+<li><strong>Purple</strong> (large): site_location_only - administrative markers</li>
+<li><strong>Orange</strong> (medium): both - dual-purpose locations</li>
+</ul></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="technical-details" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="technical-details"><span class="header-section-number">1.4</span> 📊 Technical Details</h2>
+<section id="initial-load-query-fast" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="initial-load-query-fast"><span class="header-section-number">1.4.1</span> Initial Load Query (Fast)</h3>
+<ul>
+<li><strong>Type</strong>: Simple SELECT DISTINCT</li>
+<li><strong>Scan</strong>: GeospatialCoordLocation nodes only (no joins)</li>
+<li><strong>Time</strong>: ~1-2 seconds (vs 7 seconds before)</li>
+<li><strong>Output</strong>: 198,433 geocodes</li>
+</ul>
+</section>
+<section id="classification-query-optional" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" data-anchor-id="classification-query-optional"><span class="header-section-number">1.4.2</span> Classification Query (Optional)</h3>
+<ul>
+<li><strong>Type</strong>: CTE with JOIN + GROUP BY</li>
+<li><strong>Scan</strong>: Full edge traversal to determine types</li>
+<li><strong>Time</strong>: ~7 seconds (same as old query, but user opted in)</li>
+<li><strong>Output</strong>: Classification map (pid → type)</li>
+<li><strong>Action</strong>: Recolors existing points in-place (no re-render needed)</li>
+</ul>
+</section>
+<section id="progressive-rendering" class="level3" data-number="1.4.3">
+<h3 data-number="1.4.3" data-anchor-id="progressive-rendering"><span class="header-section-number">1.4.3</span> Progressive Rendering</h3>
+<ul>
+<li><strong>Chunk size</strong>: 500 points per batch</li>
+<li><strong>Yields</strong>: Every 500 points to keep browser responsive</li>
+<li><strong>Progress</strong>: Dynamic indicator shows X/Y (Z%)</li>
+<li><strong>Telemetry</strong>: Console logs with performance measurements</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="console-output-examples" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="console-output-examples"><span class="header-section-number">1.5</span> 🔍 Console Output Examples</h2>
+<section id="initial-load" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" data-anchor-id="initial-load"><span class="header-section-number">1.5.1</span> Initial Load</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Query executed <span class="kw">in</span> <span class="dv">1847</span><span class="er">ms</span> <span class="op">-</span> retrieved <span class="dv">198433</span> locations</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>Rendering completed <span class="kw">in</span> <span class="dv">423</span><span class="er">ms</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>Total <span class="fu">time</span> (query <span class="op">+</span> render)<span class="op">:</span> <span class="dv">2270</span><span class="er">ms</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="optional-classification" class="level3" data-number="1.5.2">
+<h3 data-number="1.5.2" data-anchor-id="optional-classification"><span class="header-section-number">1.5.2</span> Optional Classification</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Classifying dots by type<span class="op">...</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>Classification completed <span class="kw">in</span> <span class="dv">6892</span><span class="er">ms</span> <span class="op">-</span> updated <span class="dv">198433</span> points</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> <span class="fu">Blue</span> (sample_location_only)<span class="op">:</span> field collection points</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> <span class="fu">Purple</span> (site_location_only)<span class="op">:</span> administrative markers</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> <span class="fu">Orange</span> (both)<span class="op">:</span> dual<span class="op">-</span>purpose locations</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="click-queries-unchanged" class="level3" data-number="1.5.3">
+<h3 data-number="1.5.3" data-anchor-id="click-queries-unchanged"><span class="header-section-number">1.5.3</span> Click Queries (unchanged)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Path <span class="dv">1</span> query executed <span class="kw">in</span> <span class="dv">1523</span><span class="er">ms</span> <span class="op">-</span> retrieved <span class="dv">5</span> samples</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>Path <span class="dv">2</span> query executed <span class="kw">in</span> <span class="dv">892</span><span class="er">ms</span> <span class="op">-</span> retrieved <span class="dv">0</span> samples</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Eric<span class="st">'s query executed in 1401ms - retrieved 5 samples</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="ui-components-added" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="ui-components-added"><span class="header-section-number">1.6</span> 🎛️ UI Components Added</h2>
+<section id="button-lines-50-56" class="level3" data-number="1.6.1">
+<h3 data-number="1.6.1" data-anchor-id="button-lines-50-56"><span class="header-section-number">1.6.1</span> Button (lines 50-56)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>viewof classifyDots <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">button</span>(<span class="st">"Color-code by type (sample/site/both)"</span><span class="op">,</span> {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">value</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">reduce</span><span class="op">:</span> () <span class="kw">=&gt;</span> <span class="bu">Date</span><span class="op">.</span><span class="fu">now</span>()</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="classification-handler-lines-769-845" class="level3" data-number="1.6.2">
+<h3 data-number="1.6.2" data-anchor-id="classification-handler-lines-769-845"><span class="header-section-number">1.6.2</span> Classification Handler (lines 769-845)</h3>
+<ul>
+<li>Runs classification query on demand</li>
+<li>Builds Map of pid → location_type</li>
+<li>Updates existing point colors and sizes</li>
+<li>Logs telemetry to console</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="testing-instructions" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="testing-instructions"><span class="header-section-number">1.7</span> 🧪 Testing Instructions</h2>
+<section id="test-fast-initial-load" class="level3" data-number="1.7.1">
+<h3 data-number="1.7.1" data-anchor-id="test-fast-initial-load"><span class="header-section-number">1.7.1</span> 1. Test Fast Initial Load</h3>
+<ol type="1">
+<li>Open <code>http://localhost:5860/tutorials/parquet_cesium.html</code></li>
+<li>Open browser console (F12)</li>
+<li>Watch for timing logs</li>
+<li><strong>Expect</strong>: ~2 seconds until all blue dots visible</li>
+</ol>
+</section>
+<section id="test-optional-classification" class="level3" data-number="1.7.2">
+<h3 data-number="1.7.2" data-anchor-id="test-optional-classification"><span class="header-section-number">1.7.2</span> 2. Test Optional Classification</h3>
+<ol type="1">
+<li>Once dots are loaded, click <strong>“Color-code by type (sample/site/both)”</strong> button</li>
+<li>Watch console for “Classifying dots by type…” message</li>
+<li><strong>Expect</strong>: Dots recolor after ~7 seconds
+<ul>
+<li>Most dots stay blue (sample_location_only)</li>
+<li>Some become purple (site_location_only)</li>
+<li>Some become orange (both)</li>
+</ul></li>
+</ol>
+</section>
+<section id="test-click-queries" class="level3" data-number="1.7.3">
+<h3 data-number="1.7.3" data-anchor-id="test-click-queries"><span class="header-section-number">1.7.3</span> 3. Test Click Queries</h3>
+<ol type="1">
+<li>Click any dot on globe</li>
+<li><strong>Expect</strong>: Three tables render with sample data</li>
+<li>Console shows timing for each query</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="why-this-approach-wins" class="level2" data-number="1.8">
+<h2 data-number="1.8" data-anchor-id="why-this-approach-wins"><span class="header-section-number">1.8</span> 🚀 Why This Approach Wins</h2>
+<section id="alternative-pre-aggregated-parquet-file" class="level3" data-number="1.8.1">
+<h3 data-number="1.8.1" data-anchor-id="alternative-pre-aggregated-parquet-file"><span class="header-section-number">1.8.1</span> Alternative: Pre-aggregated Parquet File</h3>
+<ul>
+<li>✅ Would also load in ~1 second</li>
+<li>⚠️ Requires maintenance (regenerate when source updates)</li>
+<li>⚠️ Requires file hosting (upload to Google Cloud Storage)</li>
+<li>⚠️ Another file to manage (~6MB)</li>
+</ul>
+</section>
+<section id="our-approach-progressive-enhancement" class="level3" data-number="1.8.2">
+<h3 data-number="1.8.2" data-anchor-id="our-approach-progressive-enhancement"><span class="header-section-number">1.8.2</span> Our Approach: Progressive Enhancement</h3>
+<ul>
+<li>✅ Loads in ~2 seconds (acceptable!)</li>
+<li>✅ Zero maintenance (no derived files)</li>
+<li>✅ Zero hosting (no additional uploads)</li>
+<li>✅ User choice (classify only if needed)</li>
+<li>✅ Works with any future data updates automatically</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="expected-user-satisfaction" class="level2" data-number="1.9">
+<h2 data-number="1.9" data-anchor-id="expected-user-satisfaction"><span class="header-section-number">1.9</span> 📈 Expected User Satisfaction</h2>
+<p><strong>Before</strong>: “This page is SO SLOW! 😩” - 7+ seconds staring at loading indicator - No feedback on progress - Browser frozen</p>
+<p><strong>After</strong>: “Much better! The dots show up right away 👍” - ~2 seconds to interactive - Progress indicator shows work happening - Can click dots immediately - Optional classification if user wants color-coding</p>
+<hr>
+</section>
+<section id="future-optimizations-if-needed" class="level2" data-number="1.10">
+<h2 data-number="1.10" data-anchor-id="future-optimizations-if-needed"><span class="header-section-number">1.10</span> 🔄 Future Optimizations (if needed)</h2>
+<p>If ~2 seconds is still too slow, we can pursue:</p>
+<section id="phase-2-pre-aggregated-index-file" class="level3" data-number="1.10.1">
+<h3 data-number="1.10.1" data-anchor-id="phase-2-pre-aggregated-index-file"><span class="header-section-number">1.10.1</span> Phase 2: Pre-aggregated Index File</h3>
+<ul>
+<li>Create <code>oc_geocodes_simple.parquet</code> with just pid/lat/lon</li>
+<li>Skip query entirely, load directly</li>
+<li>Expected: &lt;1 second load time</li>
+<li>Tradeoff: Maintenance burden</li>
+</ul>
+</section>
+<section id="phase-3-spatial-indexing" class="level3" data-number="1.10.2">
+<h3 data-number="1.10.2" data-anchor-id="phase-3-spatial-indexing"><span class="header-section-number">1.10.2</span> Phase 3: Spatial Indexing</h3>
+<ul>
+<li>Use DuckDB spatial extensions</li>
+<li>Create R-tree index on coordinates</li>
+<li>Faster viewport-based queries</li>
+<li>Tradeoff: Complexity</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="code-changes-summary" class="level2" data-number="1.11">
+<h2 data-number="1.11" data-anchor-id="code-changes-summary"><span class="header-section-number">1.11</span> 📝 Code Changes Summary</h2>
+<p><strong>File</strong>: <code>tutorials/parquet_cesium.qmd</code></p>
+<p><strong>Changes</strong>: 1. Lines 131-218: Simplified locations query (removed classification CTE) 2. Lines 50-56: Added classification button 3. Lines 769-845: Added classification handler 4. All queries: Added performance telemetry</p>
+<p><strong>Net Impact</strong>: ~100 lines changed <strong>Performance Gain</strong>: 3-4x faster initial load <strong>User Benefit</strong>: Page feels responsive immediately</p>
+<hr>
+</section>
+<section id="success-metrics" class="level2" data-number="1.12">
+<h2 data-number="1.12" data-anchor-id="success-metrics"><span class="header-section-number">1.12</span> ✅ Success Metrics</h2>
+<p><strong>Before Optimization</strong>: - Initial load: 7+ seconds - User perception: “Slow and frozen” - Time to interactive: 7+ seconds</p>
+<p><strong>After Optimization</strong>: - Initial load: ~2 seconds - User perception: “Fast and responsive” - Time to interactive: ~2 seconds - <strong>Improvement: 71% faster! 🎉</strong></p>
+<hr>
+</section>
+<section id="key-insight" class="level2" data-number="1.13">
+<h2 data-number="1.13" data-anchor-id="key-insight"><span class="header-section-number">1.13</span> 💡 Key Insight</h2>
+<p><strong>The expensive part was classification (JOIN + GROUP BY), not geocode retrieval.</strong></p>
+<p>By deferring classification to an optional button: - Fast initial load (no classification) - Progressive enhancement (classify if needed) - Zero maintenance overhead</p>
+<p><strong>Best of both worlds!</strong> ✨</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/OPTIMIZATION_SUMMARY.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
