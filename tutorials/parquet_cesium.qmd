@@ -914,6 +914,113 @@ ${JSON.stringify(testrecord, null, 2)}
 `
 ```
 
+## Samples at Location via Sampling Event (Eric Kansa's Query)
+
+<div id="loading_combined" hidden>Loading samples…</div>
+
+This query implements Eric Kansa's authoritative `get_samples_at_geo_cord_location_via_sample_event` function from [open-context-py](https://github.com/ekansa/open-context-py/blob/staging/opencontext_py/apps/all_items/isamples/isamples_explore.py).
+
+**Query Strategy (Path 1 Only)**:
+- Starts at a GeospatialCoordLocation (clicked point)
+- Walks **backward** via `sample_location` edges to find SamplingEvents that reference this location
+- From those events, finds MaterialSampleRecords produced by them
+- Requires site context (INNER JOIN on `sampling_site` → SamplingSite)
+
+**Returns**:
+- Geographic coordinates: `latitude`, `longitude`
+- Sample metadata: `sample_pid`, `sample_label`, `sample_description`, `sample_alternate_identifiers`
+- Site context: `sample_site_label`, `sample_site_pid`
+- Media: `sample_thumbnail_url`, `has_thumbnail`
+
+**Ordering**: Prioritizes samples with images (`ORDER BY has_thumbnail DESC`)
+
+**Important**: This query only returns samples whose **sampling events directly reference this geolocation** via `sample_location` (Path 1). Samples that reach this location only through their site's `site_location` (Path 2) are **not included**. This means site marker locations may return 0 results if no events were recorded at that exact coordinate.
+
+```{ojs}
+//| echo: false
+samples_combined = selectedSamplesCombined
+```
+
+```{ojs}
+//| echo: false
+html`${
+  combinedLoading ?
+    html`<div class="loading">Loading samples…</div>`
+  :
+  samples_combined && samples_combined.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Thumbnail</th>
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_combined.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px; width: 100px;">
+                ${sample.has_thumbnail ?
+                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
+                    <img src="${sample.sample_thumbnail_url}"
+                         alt="${sample.sample_label}"
+                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
+                  </a>`
+                :
+                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
+                }
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em;">
+                  <a href="${sample.sample_site_pid}"
+                     target="_blank"
+                     style="color: #007bff; text-decoration: none;">
+                    View site
+                  </a>
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_combined.length} sample${samples_combined.length !== 1 ? 's' : ''}
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found at this location via Path 1 (direct sampling events).
+    </div>`
+}`
+```
+
 ## Understanding Paths in the iSamples Property Graph
 
 ### Why "Path 1" and "Path 2"?
@@ -1214,114 +1321,6 @@ html`${
   :
     html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
       No samples found via Path 2 (via site location).
-    </div>`
-}`
-```
-
-
-## Samples at Location via Sampling Event (Eric Kansa's Query)
-
-<div id="loading_combined" hidden>Loading samples…</div>
-
-This query implements Eric Kansa's authoritative `get_samples_at_geo_cord_location_via_sample_event` function from [open-context-py](https://github.com/ekansa/open-context-py/blob/staging/opencontext_py/apps/all_items/isamples/isamples_explore.py).
-
-**Query Strategy (Path 1 Only)**:
-- Starts at a GeospatialCoordLocation (clicked point)
-- Walks **backward** via `sample_location` edges to find SamplingEvents that reference this location
-- From those events, finds MaterialSampleRecords produced by them
-- Requires site context (INNER JOIN on `sampling_site` → SamplingSite)
-
-**Returns**:
-- Geographic coordinates: `latitude`, `longitude`
-- Sample metadata: `sample_pid`, `sample_label`, `sample_description`, `sample_alternate_identifiers`
-- Site context: `sample_site_label`, `sample_site_pid`
-- Media: `sample_thumbnail_url`, `has_thumbnail`
-
-**Ordering**: Prioritizes samples with images (`ORDER BY has_thumbnail DESC`)
-
-**Important**: This query only returns samples whose **sampling events directly reference this geolocation** via `sample_location` (Path 1). Samples that reach this location only through their site's `site_location` (Path 2) are **not included**. This means site marker locations may return 0 results if no events were recorded at that exact coordinate.
-
-```{ojs}
-//| echo: false
-samples_combined = selectedSamplesCombined
-```
-
-```{ojs}
-//| echo: false
-html`${
-  combinedLoading ?
-    html`<div class="loading">Loading samples…</div>`
-  :
-  samples_combined && samples_combined.length > 0 ?
-    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
-        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
-          <tr style="border-bottom: 2px solid #dee2e6;">
-            <th style="padding: 12px; text-align: left;">Thumbnail</th>
-            <th style="padding: 12px; text-align: left;">Sample</th>
-            <th style="padding: 12px; text-align: left;">Description</th>
-            <th style="padding: 12px; text-align: left;">Site</th>
-            <th style="padding: 12px; text-align: left;">Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${samples_combined.map((sample, i) => html`
-            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
-              <td style="padding: 8px; width: 100px;">
-                ${sample.has_thumbnail ?
-                  html`<a href="${sample.sample_thumbnail_url}" target="_blank">
-                    <img src="${sample.sample_thumbnail_url}"
-                         alt="${sample.sample_label}"
-                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;">
-                  </a>`
-                :
-                  html`<div style="width: 80px; height: 80px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em;">No image</div>`
-                }
-              </td>
-              <td style="padding: 8px;">
-                <div style="margin-bottom: 4px;">
-                  <strong>${sample.sample_label}</strong>
-                </div>
-                <div style="font-size: 0.85em; color: #666;">
-                  <a href="${sample.sample_pid.startsWith('http') ? sample.sample_pid : sample.sample_alternate_identifiers?.[0] || '#'}"
-                     target="_blank"
-                     style="color: #007bff; text-decoration: none;">
-                    ${sample.sample_pid.replace('ark:/28722/', 'ark:…/')}
-                  </a>
-                </div>
-              </td>
-              <td style="padding: 8px; max-width: 300px;">
-                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
-                  ${sample.sample_description || 'No description'}
-                </div>
-              </td>
-              <td style="padding: 8px;">
-                <div style="margin-bottom: 2px;">
-                  <strong>${sample.sample_site_label}</strong>
-                </div>
-                <div style="font-size: 0.75em;">
-                  <a href="${sample.sample_site_pid}"
-                     target="_blank"
-                     style="color: #007bff; text-decoration: none;">
-                    View site
-                  </a>
-                </div>
-              </td>
-              <td style="padding: 8px; font-size: 0.85em; color: #666;">
-                ${sample.latitude.toFixed(5)}°N<br>
-                ${sample.longitude.toFixed(5)}°E
-              </td>
-            </tr>
-          `)}
-        </tbody>
-      </table>
-    </div>
-    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
-      Found ${samples_combined.length} sample${samples_combined.length !== 1 ? 's' : ''}
-    </div>`
-  :
-    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
-      No samples found at this location via Path 1 (direct sampling events).
     </div>`
 }`
 ```
