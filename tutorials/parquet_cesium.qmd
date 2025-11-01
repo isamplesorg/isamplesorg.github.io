@@ -48,10 +48,25 @@ viewof searchGeoPid = Inputs.text({
 ```
 
 ```{ojs}
-viewof classifyDots = Inputs.button("Color-code by type (sample/site/both)", {
-  value: null,
-  reduce: () => Date.now()
-});
+//| echo: false
+// Simple trigger variable that increments on button click
+viewof classifyTrigger = {
+  let count = 0;
+  const button = html`<button
+    style="padding: 8px 16px; margin: 10px 0; background: #2E86AB; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+    🎨 Color-code by type (sample/site/both)
+  </button>`;
+  button.onclick = () => {
+    count++;
+    button.value = count;
+    button.dispatchEvent(new CustomEvent("input"));
+  };
+  button.value = count;
+  return button;
+}
+
+// Alias for handler compatibility
+classifyDots = classifyTrigger > 0 ? classifyTrigger : null
 ```
 
 ::: {.callout-tip collapse="true"}
