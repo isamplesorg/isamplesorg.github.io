@@ -47,6 +47,14 @@ viewof searchGeoPid = Inputs.text({
 });
 ```
 
+```{ojs}
+//| echo: false
+viewof classifyDots = Inputs.button("Color-code by type (sample/site/both)", {
+  value: null,
+  reduce: () => Date.now()
+});
+```
+
 ::: {.callout-tip collapse="true"}
 #### Using a local cached file for faster performance
 
@@ -129,69 +137,91 @@ async function loadData(query, params = [], waiting_id = null, key = "default") 
 }
 
 locations = {
-    // Get geographic locations with classification by usage type
+    // Performance telemetry
+    performance.mark('locations-start');
+
+    // Get loading indicator element for progress updates
+    const loadingDiv = document.getElementById('loading_1');
+    if (loadingDiv) {
+        loadingDiv.hidden = false;
+        loadingDiv.innerHTML = 'Loading geocodes...';
+    }
+
+    // Fast query: just get all distinct geocodes (no classification!)
     const query = `
-        WITH geo_classification AS (
-            SELECT
-                geo.pid,
-                geo.latitude,
-                geo.longitude,
-                MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
-                MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
-            FROM nodes geo
-            JOIN nodes e ON (geo.row_id = e.o[1])
-            WHERE geo.otype = 'GeospatialCoordLocation'
-            GROUP BY geo.pid, geo.latitude, geo.longitude
-        )
-        SELECT
+        SELECT DISTINCT
             pid,
             latitude,
-            longitude,
-            CASE
-                WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
-                WHEN is_sample_location = 1 THEN 'sample_location_only'
-                WHEN is_site_location = 1 THEN 'site_location_only'
-            END as location_type
-        FROM geo_classification
+            longitude
+        FROM nodes
+        WHERE otype = 'GeospatialCoordLocation'
     `;
+
+    performance.mark('query-start');
     const data = await loadData(query, [], "loading_1", "locations");
+    performance.mark('query-end');
+    performance.measure('locations-query', 'query-start', 'query-end');
+    const queryTime = performance.getEntriesByName('locations-query')[0].duration;
+    console.log(`Query executed in ${queryTime.toFixed(0)}ms - retrieved ${data.length} locations`);
 
     // Clear the existing PointPrimitiveCollection
     content.points.removeAll();
 
-    // Color and size styling by location type
-    const styles = {
-        sample_location_only: {
-            color: Cesium.Color.fromCssColorString('#2E86AB'),
-            size: 3
-        },  // Blue - field collection points
-        site_location_only: {
-            color: Cesium.Color.fromCssColorString('#A23B72'),
-            size: 6
-        },  // Purple - administrative markers
-        both: {
-            color: Cesium.Color.fromCssColorString('#F18F01'),
-            size: 5
-        }   // Orange - dual-purpose
-    };
+    // Single color for all points (blue)
+    const defaultColor = Cesium.Color.fromCssColorString('#2E86AB');
+    const defaultSize = 4;
 
-    // Create point primitives for cesium display
+    // Render points in chunks to keep UI responsive
+    const CHUNK_SIZE = 500;
     const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
-    for (const row of data) {
-        const style = styles[row.location_type] || styles.both; // fallback to orange
-        content.points.add({
-            id: row.pid,
-            // https://cesium.com/learn/cesiumjs/ref-doc/Cartesian3.html#.fromDegrees
-            position: Cesium.Cartesian3.fromDegrees(
-                row.longitude,  //longitude
-                row.latitude,   //latitude
-                0,//randomCoordinateJitter(10.0, 10.0), //elevation, m
-            ),
-            pixelSize: style.size,
-            color: style.color,
-            scaleByDistance: scalar,
-        });
+
+    performance.mark('render-start');
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        const endIdx = Math.min(i + CHUNK_SIZE, data.length);
+
+        // Update progress indicator
+        if (loadingDiv) {
+            const pct = Math.round((endIdx / data.length) * 100);
+            loadingDiv.innerHTML = `Rendering geocodes... ${endIdx.toLocaleString()}/${data.length.toLocaleString()} (${pct}%)`;
+        }
+
+        // Add points for this chunk
+        for (const row of chunk) {
+            content.points.add({
+                id: row.pid,
+                position: Cesium.Cartesian3.fromDegrees(
+                    row.longitude,  //longitude
+                    row.latitude,   //latitude
+                    0               //elevation, m
+                ),
+                pixelSize: defaultSize,
+                color: defaultColor,
+                scaleByDistance: scalar,
+            });
+        }
+
+        // Yield to browser between chunks to keep UI responsive
+        if (i + CHUNK_SIZE < data.length) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
     }
+    performance.mark('render-end');
+    performance.measure('locations-render', 'render-start', 'render-end');
+    const renderTime = performance.getEntriesByName('locations-render')[0].duration;
+
+    // Hide loading indicator
+    if (loadingDiv) {
+        loadingDiv.hidden = true;
+    }
+
+    performance.mark('locations-end');
+    performance.measure('locations-total', 'locations-start', 'locations-end');
+    const totalTime = performance.getEntriesByName('locations-total')[0].duration;
+
+    console.log(`Rendering completed in ${renderTime.toFixed(0)}ms`);
+    console.log(`Total time (query + render): ${totalTime.toFixed(0)}ms`);
+
     content.enableTracking();
     return data;
 }
@@ -346,7 +376,12 @@ async function get_samples_1(pid) {
           AND geo.otype = 'GeospatialCoordLocation'
         ORDER BY has_thumbnail DESC
     `;
+    performance.mark('samples1-start');
     const result = await loadData(q, [pid], "loading_s1", "samples_1");
+    performance.mark('samples1-end');
+    performance.measure('samples1-query', 'samples1-start', 'samples1-end');
+    const queryTime = performance.getEntriesByName('samples1-query')[0].duration;
+    console.log(`Path 1 query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
@@ -403,7 +438,12 @@ async function get_samples_2(pid) {
           AND geo.otype = 'GeospatialCoordLocation'
         ORDER BY has_thumbnail DESC
     `;
+    performance.mark('samples2-start');
     const result = await loadData(q, [pid], "loading_s2", "samples_2");
+    performance.mark('samples2-end');
+    performance.measure('samples2-query', 'samples2-start', 'samples2-end');
+    const queryTime = performance.getEntriesByName('samples2-query')[0].duration;
+    console.log(`Path 2 query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
@@ -460,7 +500,12 @@ async function get_samples_at_geo_cord_location_via_sample_event(pid) {
           AND geo.otype = 'GeospatialCoordLocation'
         ORDER BY has_thumbnail DESC
     `;
+    performance.mark('eric-query-start');
     const result = await loadData(q, [pid], "loading_combined", "samples_combined");
+    performance.mark('eric-query-end');
+    performance.measure('eric-query', 'eric-query-start', 'eric-query-end');
+    const queryTime = performance.getEntriesByName('eric-query')[0].duration;
+    console.log(`Eric's query executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
@@ -717,6 +762,84 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
             // Geocode not found - could display error to user
             console.warn(`Geocode not found: ${pid}`);
         }
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+// Handle optional classification button: recolor dots by type
+{
+    if (classifyDots !== null) {
+        console.log("Classifying dots by type...");
+        performance.mark('classify-start');
+
+        // Run the classification query
+        const query = `
+            WITH geo_classification AS (
+                SELECT
+                    geo.pid,
+                    MAX(CASE WHEN e.p = 'sample_location' THEN 1 ELSE 0 END) as is_sample_location,
+                    MAX(CASE WHEN e.p = 'site_location' THEN 1 ELSE 0 END) as is_site_location
+                FROM nodes geo
+                JOIN nodes e ON (geo.row_id = e.o[1])
+                WHERE geo.otype = 'GeospatialCoordLocation'
+                GROUP BY geo.pid
+            )
+            SELECT
+                pid,
+                CASE
+                    WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
+                    WHEN is_sample_location = 1 THEN 'sample_location_only'
+                    WHEN is_site_location = 1 THEN 'site_location_only'
+                END as location_type
+            FROM geo_classification
+        `;
+
+        const classifications = await db.query(query);
+
+        // Build lookup map: pid -> location_type
+        const typeMap = new Map();
+        for (const row of classifications) {
+            typeMap.set(row.pid, row.location_type);
+        }
+
+        // Color and size styling by location type
+        const styles = {
+            sample_location_only: {
+                color: Cesium.Color.fromCssColorString('#2E86AB'),
+                size: 3
+            },  // Blue - field collection points
+            site_location_only: {
+                color: Cesium.Color.fromCssColorString('#A23B72'),
+                size: 6
+            },  // Purple - administrative markers
+            both: {
+                color: Cesium.Color.fromCssColorString('#F18F01'),
+                size: 5
+            }   // Orange - dual-purpose
+        };
+
+        // Update colors of existing points
+        const points = content.points;
+        for (let i = 0; i < points.length; i++) {
+            const point = points.get(i);
+            const pid = point.id;
+            const locationType = typeMap.get(pid);
+
+            if (locationType && styles[locationType]) {
+                point.color = styles[locationType].color;
+                point.pixelSize = styles[locationType].size;
+            }
+        }
+
+        performance.mark('classify-end');
+        performance.measure('classification', 'classify-start', 'classify-end');
+        const classifyTime = performance.getEntriesByName('classification')[0].duration;
+        console.log(`Classification completed in ${classifyTime.toFixed(0)}ms - updated ${points.length} points`);
+        console.log(`  - Blue (sample_location_only): field collection points`);
+        console.log(`  - Purple (site_location_only): administrative markers`);
+        console.log(`  - Orange (both): dual-purpose locations`);
     }
 }
 ```
