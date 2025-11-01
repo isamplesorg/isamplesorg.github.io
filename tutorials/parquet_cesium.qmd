@@ -48,7 +48,6 @@ viewof searchGeoPid = Inputs.text({
 ```
 
 ```{ojs}
-//| echo: false
 viewof classifyDots = Inputs.button("Color-code by type (sample/site/both)", {
   value: null,
   reduce: () => Date.now()
