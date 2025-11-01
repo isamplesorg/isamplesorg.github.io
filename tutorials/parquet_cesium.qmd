@@ -714,6 +714,7 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 
 ```{ojs}
 //| echo: false
+//| output: false
 // Center initial Cesium view on PKAP Survey Area and also set Home to PKAP!
 {
     const viewer = content.viewer;
@@ -744,6 +745,7 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 
 ```{ojs}
 //| echo: false
+//| output: false
 // Handle geocode search: fly to location and trigger queries
 {
     if (searchGeoPid && searchGeoPid.trim() !== "") {
@@ -782,6 +784,7 @@ md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
 
 ```{ojs}
 //| echo: false
+//| output: false
 // Handle optional classification button: recolor dots by type
 {
     if (classifyDots !== null) {
