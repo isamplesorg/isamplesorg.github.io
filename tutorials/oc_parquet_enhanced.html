@@ -315,7 +315,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#critical-discovery-correct-relationship-paths" id="toc-critical-discovery-correct-relationship-paths" class="nav-link" data-scroll-target="#critical-discovery-correct-relationship-paths"><span class="header-section-number">4</span> 🚨 Critical Discovery: Correct Relationship Paths</a>
   <ul class="collapse">
-  <li><a href="#the-correct-paths-discovered" id="toc-the-correct-paths-discovered" class="nav-link" data-scroll-target="#the-correct-paths-discovered"><span class="header-section-number">4.1</span> The Correct Paths Discovered</a></li>
+  <li><a href="#the-correct-traversals-discovered-using-typed-edges" id="toc-the-correct-traversals-discovered-using-typed-edges" class="nav-link" data-scroll-target="#the-correct-traversals-discovered-using-typed-edges"><span class="header-section-number">4.1</span> The Correct Traversals Discovered (Using Typed Edges)</a></li>
   </ul></li>
   <li><a href="#working-with-the-graph-query-patterns" id="toc-working-with-the-graph-query-patterns" class="nav-link" data-scroll-target="#working-with-the-graph-query-patterns"><span class="header-section-number">5</span> Working with the Graph: Query Patterns</a>
   <ul class="collapse">
@@ -646,12 +646,12 @@ Loading relationship patterns…
 <h2 data-number="4" data-anchor-id="critical-discovery-correct-relationship-paths"><span class="header-section-number">4</span> 🚨 Critical Discovery: Correct Relationship Paths</h2>
 <p><strong>Before you query this data, understand this key insight:</strong></p>
 <p>❌ <strong>Common Mistake</strong>: Assuming direct Sample → Location relationships ✅ <strong>Reality</strong>: All location queries require multi-hop traversal through SamplingEvent</p>
-<section id="the-correct-paths-discovered" class="level3" data-number="4.1">
-<h3 data-number="4.1" data-anchor-id="the-correct-paths-discovered"><span class="header-section-number">4.1</span> The Correct Paths Discovered</h3>
-<p><strong>Path 1: Direct Event Location</strong></p>
-<pre><code>MaterialSampleRecord → produced_by → SamplingEvent → sample_location → GeospatialCoordLocation</code></pre>
-<p><strong>Path 2: Via Site Location</strong></p>
-<pre><code>MaterialSampleRecord → produced_by → SamplingEvent → sampling_site → SamplingSite → site_location → GeospatialCoordLocation</code></pre>
+<section id="the-correct-traversals-discovered-using-typed-edges" class="level3" data-number="4.1">
+<h3 data-number="4.1" data-anchor-id="the-correct-traversals-discovered-using-typed-edges"><span class="header-section-number">4.1</span> The Correct Traversals Discovered (Using Typed Edges)</h3>
+<p><strong>Direct Location (via EVENT_SAMPLE_LOCATION)</strong></p>
+<pre><code>MaterialSampleRecord → MSR_PRODUCED_BY → SamplingEvent → EVENT_SAMPLE_LOCATION → GeospatialCoordLocation</code></pre>
+<p><strong>Site-Mediated Location (via EVENT_SAMPLING_SITE → SITE_LOCATION)</strong></p>
+<pre><code>MaterialSampleRecord → MSR_PRODUCED_BY → SamplingEvent → EVENT_SAMPLING_SITE → SamplingSite → SITE_LOCATION → GeospatialCoordLocation</code></pre>
 <p>This discovery unlocked <strong>1,096,274 samples</strong> that were previously inaccessible due to incorrect query patterns!</p>
 </section>
 </section>
