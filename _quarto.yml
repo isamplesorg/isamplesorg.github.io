@@ -55,6 +55,8 @@ website:
           href: tutorials/parquet_cesium.qmd
         - text: "Cesium View split sources"
           href: tutorials/parquet_cesium_split.qmd
+        - text: "Narrow vs Wide Performance"
+          href: tutorials/narrow_vs_wide_performance.qmd
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io
   repo-actions: [edit, issue]
