@@ -190,16 +190,16 @@ viewof relationshipTable = Inputs.table(relationshipPatterns, {
 ❌ **Common Mistake**: Assuming direct Sample → Location relationships
 ✅ **Reality**: All location queries require multi-hop traversal through SamplingEvent
 
-### The Correct Paths Discovered
+### The Correct Traversals Discovered (Using Typed Edges)
 
-**Path 1: Direct Event Location**
+**Direct Location (via EVENT_SAMPLE_LOCATION)**
 ```
-MaterialSampleRecord → produced_by → SamplingEvent → sample_location → GeospatialCoordLocation
+MaterialSampleRecord → MSR_PRODUCED_BY → SamplingEvent → EVENT_SAMPLE_LOCATION → GeospatialCoordLocation
 ```
 
-**Path 2: Via Site Location**
+**Site-Mediated Location (via EVENT_SAMPLING_SITE → SITE_LOCATION)**
 ```
-MaterialSampleRecord → produced_by → SamplingEvent → sampling_site → SamplingSite → site_location → GeospatialCoordLocation
+MaterialSampleRecord → MSR_PRODUCED_BY → SamplingEvent → EVENT_SAMPLING_SITE → SamplingSite → SITE_LOCATION → GeospatialCoordLocation
 ```
 
 This discovery unlocked **1,096,274 samples** that were previously inaccessible due to incorrect query patterns!

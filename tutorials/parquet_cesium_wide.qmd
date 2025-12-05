@@ -351,13 +351,13 @@ async function getGeoRecord(pid) {
     return rows && rows.length ? rows[0] : null;
 }
 
-// WIDE FORMAT: Path 1 - Direct event location
+// WIDE FORMAT: Direct Location (p__sample_location / EVENT_SAMPLE_LOCATION)
 // Uses p__sample_location column instead of edge row JOINs
 async function get_samples_1(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
-    // Path 1: Direct event location - WIDE FORMAT version
+    // Direct Location (EVENT_SAMPLE_LOCATION) - WIDE FORMAT version
     // Uses p__* columns instead of edge rows
     const q = `
         SELECT
@@ -397,17 +397,17 @@ async function get_samples_1(pid) {
     performance.mark('samples1-end');
     performance.measure('samples1-query', 'samples1-start', 'samples1-end');
     const queryTime = performance.getEntriesByName('samples1-query')[0].duration;
-    console.log(`Path 1 query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    console.log(`Direct location query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
-// WIDE FORMAT: Path 2 - Via site location
+// WIDE FORMAT: Site-Mediated Location (p__sampling_site → p__site_location)
 // Uses p__site_location and p__sampling_site columns
 async function get_samples_2(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
         return [];
     }
-    // Path 2: Via site location - WIDE FORMAT version
+    // Site-Mediated Location (SITE_LOCATION) - WIDE FORMAT version
     const q = `
         SELECT
             geo.latitude,
@@ -446,11 +446,11 @@ async function get_samples_2(pid) {
     performance.mark('samples2-end');
     performance.measure('samples2-query', 'samples2-start', 'samples2-end');
     const queryTime = performance.getEntriesByName('samples2-query')[0].duration;
-    console.log(`Path 2 query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    console.log(`Site-mediated location query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
     return result ?? [];
 }
 
-// WIDE FORMAT: Eric Kansa's authoritative query (Path 1 only)
+// WIDE FORMAT: Eric Kansa's authoritative query (p__sample_location + p__sampling_site)
 // This is the wide format equivalent of get_samples_at_geo_cord_location_via_sample_event
 async function get_samples_at_geo_cord_location_via_sample_event(pid) {
     if (pid === null || pid ==="" || pid == "unset") {
@@ -959,7 +959,7 @@ JOIN nodes AS se ON (se.otype = 'SamplingEvent' AND list_contains(se.p__sample_l
 This is typically **2-4x faster** over HTTP.
 :::
 
-**Query Strategy (Path 1 Only)**:
+**Query Strategy (p__sample_location + p__sampling_site)**:
 - Starts at a GeospatialCoordLocation (clicked point)
 - Walks **backward** via `p__sample_location` column to find SamplingEvents that reference this location
 - From those events, finds MaterialSampleRecords via `p__produced_by` column
@@ -973,7 +973,7 @@ This is typically **2-4x faster** over HTTP.
 
 **Ordering**: Prioritizes samples with images (`ORDER BY has_thumbnail DESC`)
 
-**Important**: This query only returns samples whose **sampling events directly reference this geolocation** via `p__sample_location` (Path 1). Samples that reach this location only through their site's `p__site_location` (Path 2) are **not included**. This means site marker locations may return 0 results if no events were recorded at that exact coordinate.
+**Important**: This query only returns samples whose **sampling events directly reference this geolocation** via `p__sample_location` (EVENT_SAMPLE_LOCATION). Samples that reach this location only through their site's `p__site_location` (SITE_LOCATION) are **not included**. This means site marker locations may return 0 results if no events were recorded at that exact coordinate.
 
 ```{ojs}
 //| echo: false
@@ -1055,18 +1055,33 @@ html`${
     </div>`
   :
     html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
-      No samples found at this location via Path 1 (direct sampling events).
+      No samples found at this location via direct location (p__sample_location).
     </div>`
 }`
 ```
 
-## Understanding Paths in the iSamples Property Graph
+## Understanding Location Traversals Using Typed Edges (Wide Format)
 
-### Why "Path 1" and "Path 2"?
+### The 14 iSamples Typed Edge Types
 
-These terms describe the **two main ways to get from a MaterialSampleRecord to geographic coordinates**. They're not the only relationship paths in the graph, but they're the most commonly used for spatial queries.
+The iSamples property graph uses **14 typed edges** to express all relationships. In wide format, these are represented as `p__*` columns on entity rows rather than separate edge rows:
 
-**Path 1 (Direct Event Location) - Wide Format**
+| Edge Type | Wide Format Column | From → To |
+|-----------|-------------------|-----------|
+| `MSR_PRODUCED_BY` | `p__produced_by` | MaterialSampleRecord → SamplingEvent |
+| `MSR_REGISTRANT` | `p__registrant` | MaterialSampleRecord → Agent |
+| `MSR_KEYWORDS` | `p__keywords` | MaterialSampleRecord → IdentifiedConcept |
+| `MSR_HAS_CONTEXT_CATEGORY` | `p__has_context_category` | MaterialSampleRecord → IdentifiedConcept |
+| `MSR_HAS_MATERIAL_CATEGORY` | `p__has_material_category` | MaterialSampleRecord → IdentifiedConcept |
+| `MSR_HAS_SAMPLE_OBJECT_TYPE` | `p__has_sample_object_type` | MaterialSampleRecord → IdentifiedConcept |
+| `EVENT_SAMPLING_SITE` | `p__sampling_site` | SamplingEvent → SamplingSite |
+| `EVENT_SAMPLE_LOCATION` | `p__sample_location` | SamplingEvent → GeospatialCoordLocation |
+| `EVENT_RESPONSIBILITY` | `p__responsibility` | SamplingEvent → Agent |
+| `SITE_LOCATION` | `p__site_location` | SamplingSite → GeospatialCoordLocation |
+
+### Two Ways to Get Geographic Coordinates (Wide Format)
+
+**Direct Location (via p__sample_location / EVENT_SAMPLE_LOCATION)**
 ```
 MaterialSampleRecord
   → p__produced_by →
@@ -1075,7 +1090,7 @@ SamplingEvent
 GeospatialCoordLocation
 ```
 
-**Path 2 (Via Sampling Site) - Wide Format**
+**Site-Mediated Location (via p__sampling_site + p__site_location)**
 ```
 MaterialSampleRecord
   → p__produced_by →
@@ -1087,101 +1102,103 @@ GeospatialCoordLocation
 ```
 
 **Key Differences:**
-- **Path 1 is direct**: Event → Location (3 hops total)
-- **Path 2 goes through Site**: Event → Site → Location (4 hops total)
-- **Path 1** = "Where was this specific sample collected?"
-- **Path 2** = "What named site is this sample from, and where is that site?"
+- **Direct** uses `p__sample_location`: 2 edges from Sample to Location
+- **Site-Mediated** uses `p__sampling_site` + `p__site_location`: 3 edges from Sample to Location
+- **Direct** = "Where was this specific sample collected?"
+- **Site-Mediated** = "What named site is this sample from, and where is that site?"
 
-**Wide Format Advantage**: Instead of JOINing through separate edge rows (otype='_edge_'), we directly access the `p__*` columns on entity rows.
+**Wide Format Advantage**: Instead of JOINing through separate edge rows (otype='_edge_'), we directly access the `p__*` columns on entity rows using `list_contains()`.
 
-**Important:** The queries below use INNER JOIN for both paths, meaning samples must have connections through both paths to appear in results. Samples with only one path will be excluded.
+**Important:** The queries below use INNER JOIN for both traversals, meaning samples must have connections through both to appear in results. Samples with only one traversal will be excluded.
 
-### Full Relationship Map (Beyond Path 1 and Path 2)
-
-The iSamples property graph contains many more relationships than just the geographic paths:
+### Full Relationship Map Using Typed Edges (Wide Format)
 
 ```
                                     Agent
                                       ↑
-                                      | {p__responsibility, p__registrant}
+                                      | p__responsibility, p__registrant
                                       |
-MaterialSampleRecord ──p__produced_by──→ SamplingEvent ──p__sample_location──→ GeospatialCoordLocation
+MaterialSampleRecord ─p__produced_by─→ SamplingEvent ─p__sample_location─→ GeospatialCoordLocation
     |                                       |                                         ↑
     |                                       |                                         |
-    | {p__keywords,                         └──p__sampling_site──→ SamplingSite ──p__site_location─┘
-    |  p__has_sample_object_type,
-    |  p__has_material_category}
+    | p__keywords,                          └─p__sampling_site─→ SamplingSite ─p__site_location─┘
+    | p__has_sample_object_type,
+    | p__has_material_category
     |
     └──→ IdentifiedConcept
 ```
 
-**Path Categories (Wide Format):**
-- **PATH 1**: MaterialSampleRecord → SamplingEvent → GeospatialCoordLocation (via `p__produced_by`, `p__sample_location`)
-- **PATH 2**: MaterialSampleRecord → SamplingEvent → SamplingSite → GeospatialCoordLocation (via `p__sampling_site`, `p__site_location`)
-- **AGENT PATH**: MaterialSampleRecord → SamplingEvent → Agent (via `p__responsibility`, `p__registrant`)
-- **CONCEPT PATH**: MaterialSampleRecord → IdentifiedConcept (via `p__keywords`, `p__has_sample_object_type`, `p__has_material_category` - direct, no event!)
+**Edge Categories (Wide Format Columns):**
+- **DIRECT LOCATION**: `p__produced_by` → `p__sample_location`
+- **SITE-MEDIATED LOCATION**: `p__produced_by` → `p__sampling_site` → `p__site_location`
+- **AGENT EDGES**: `p__registrant`, `p__responsibility`
+- **CONCEPT EDGES**: `p__keywords`, `p__has_*_category`, `p__has_sample_object_type`
 
-**Key Insight:** SamplingEvent is the central hub for most relationships, except concepts which attach directly to MaterialSampleRecord.
+**Key Insight:** SamplingEvent is the central hub for most relationships, except concept edges which attach directly to MaterialSampleRecord.
 
-### Query Pattern Analysis (Wide Format Translations)
+### Query Pattern Analysis (Wide Format)
 
-The following analysis shows Eric's query functions translated to wide format:
+The following analysis shows Eric's query functions in wide format:
 
-#### 1. `get_sample_data_via_sample_pid` - Uses BOTH Path 1 AND Path 2
+#### 1. `get_sample_data_via_sample_pid` - Uses BOTH Location Traversals
 ```
 MaterialSampleRecord (WHERE pid = ?)
   → p__produced_by → SamplingEvent
-    ├─→ p__sample_location → GeospatialCoordLocation [Path 1]
-    └─→ p__sampling_site → SamplingSite [Path 2]
+    ├─→ p__sample_location → GeospatialCoordLocation [Direct]
+    └─→ p__sampling_site → SamplingSite [Site-Mediated]
 
 Returns: sample metadata + lat/lon + site label/pid
-Required: BOTH paths must exist (INNER JOIN)
+Required: BOTH traversals must exist (INNER JOIN)
 ```
 
-#### 2. `get_sample_data_agents_sample_pid` - Uses AGENT PATH
+#### 2. `get_sample_data_agents_sample_pid` - Uses Agent Edges
 ```
 MaterialSampleRecord (WHERE pid = ?)
   → p__produced_by → SamplingEvent
     → p__responsibility → Agent
 
 Returns: sample metadata + agent info (who collected/registered)
-Independent of: Path 1 and Path 2 (no geographic data)
+Independent of: Location traversals (no geographic data)
 ```
 
-#### 3. `get_sample_types_and_keywords_via_sample_pid` - Uses CONCEPT PATH
+#### 3. `get_sample_types_and_keywords_via_sample_pid` - Uses Concept Edges
 ```
 MaterialSampleRecord (WHERE pid = ?)
-  → {p__keywords, p__has_sample_object_type, p__has_material_category} → IdentifiedConcept
+  → p__keywords → IdentifiedConcept
+  → p__has_sample_object_type → IdentifiedConcept
+  → p__has_material_category → IdentifiedConcept
 
 Returns: sample metadata + classification keywords/types
-Independent of: Path 1, Path 2, and SamplingEvent!
+Independent of: Location traversals and SamplingEvent!
 ```
 
-#### 4. `get_samples_at_geo_cord_location_via_sample_event` - REVERSE Path 1 + Path 2
+#### 4. `get_samples_at_geo_cord_location_via_sample_event` - Eric's Canonical Query
 ```
 GeospatialCoordLocation (WHERE pid = ?)  ← START HERE (reverse!)
-  ← p__sample_location ← SamplingEvent [Path 1 REVERSED]
-    ├─→ p__sampling_site → SamplingSite [Path 2 enrichment]
+  ← p__sample_location ← SamplingEvent [Direct, reversed]
+    ├─→ p__sampling_site → SamplingSite [Site context - provenance!]
     └─← p__produced_by ← MaterialSampleRecord [complete chain]
 
 Returns: all samples at a given location + site info
 Direction: geo → samples (opposite of other queries)
 ```
 
+**Key Insight (from Eric Kansa):** This canonical query requires BOTH `p__sample_location` AND `p__sampling_site` - it's not just "find samples at this location" but "find samples at this location that have proper site provenance."
+
 **Summary Table:**
 
-| Function | Path 1 | Path 2 | Direction | Notes |
-|----------|--------|--------|-----------|-------|
+| Function | Direct Location | Site-Mediated | Direction | Notes |
+|----------|-----------------|---------------|-----------|-------|
 | `get_sample_data_via_sample_pid` | ✅ Required | ✅ Required | Forward | INNER JOIN - no row if either missing |
-| `get_sample_data_agents_sample_pid` | ❌ N/A | ❌ N/A | N/A | Uses agent path instead |
-| `get_sample_types_and_keywords_via_sample_pid` | ❌ N/A | ❌ N/A | N/A | Direct edges to concepts |
-| `get_samples_at_geo_cord_location_via_sample_event` | ✅ Required | ✅ Required | Reverse | Walks from geo to samples |
+| `get_sample_data_agents_sample_pid` | ❌ N/A | ❌ N/A | N/A | Uses agent edges instead |
+| `get_sample_types_and_keywords_via_sample_pid` | ❌ N/A | ❌ N/A | N/A | Direct concept edges |
+| `get_samples_at_geo_cord_location_via_sample_event` | ✅ Required | ✅ Required | Reverse | Geo → samples with site provenance |
 
-## Related Sample Path 1 (selected)
+## Related Samples via Direct Location (p__sample_location)
 
-<div id="loading_s1" hidden>Loading related samples (path 1)…</div>
+<div id="loading_s1" hidden>Loading related samples (direct location)…</div>
 
-Path 1 (direct_event_location): find MaterialSampleRecord items whose producing SamplingEvent has a direct `p__sample_location` pointing to the clicked GeospatialCoordLocation (pid).
+Direct Location (via p__sample_location / EVENT_SAMPLE_LOCATION): find MaterialSampleRecord items whose producing SamplingEvent has a direct `p__sample_location` pointing to the clicked GeospatialCoordLocation (pid).
 
 - Chain: MaterialSampleRecord → p__produced_by → SamplingEvent → p__sample_location → GeospatialCoordLocation (clicked pid)
 - This matches the "direct_samples" concept in the Python notebook and is labeled as `location_path = 'direct_event_location'` in the query.
@@ -1195,7 +1212,7 @@ samples_1 = selectedSamples1
 //| echo: false
 html`${
   s1Loading ?
-    html`<div class="loading">Loading Path 1 samples…</div>`
+    html`<div class="loading">Loading direct location samples…</div>`
   :
   samples_1 && samples_1.length > 0 ?
     html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
@@ -1262,21 +1279,21 @@ html`${
       </table>
     </div>
     <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
-      Found ${samples_1.length} sample${samples_1.length !== 1 ? 's' : ''} via Path 1 (direct event location)
+      Found ${samples_1.length} sample${samples_1.length !== 1 ? 's' : ''} via direct location (EVENT_SAMPLE_LOCATION)
     </div>`
   :
     html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
-      No samples found via Path 1 (direct event location).
+      No samples found via direct location (EVENT_SAMPLE_LOCATION).
     </div>`
 }`
 ```
 
 
-## Related Sample Path 2 (selected)
+## Related Samples via Site-Mediated Location (p__site_location)
 
-<div id="loading_s2" hidden>Loading related samples (path 2)…</div>
+<div id="loading_s2" hidden>Loading related samples (site-mediated)…</div>
 
-Path 2 (via_site_location): find MaterialSampleRecord items whose producing SamplingEvent references a SamplingSite via `p__sampling_site`, and that site's `p__site_location` points to the clicked GeospatialCoordLocation (pid).
+Site-Mediated Location (SITE_LOCATION): find MaterialSampleRecord items whose producing SamplingEvent references a SamplingSite via `p__sampling_site`, and that site's `p__site_location` points to the clicked GeospatialCoordLocation (pid).
 
 - Chain: MaterialSampleRecord → p__produced_by → SamplingEvent → p__sampling_site → SamplingSite → p__site_location → GeospatialCoordLocation (clicked pid)
 - This matches the "samples_via_sites" concept in the Python notebook and is labeled as `location_path = 'via_site_location'` in the query.
@@ -1290,7 +1307,7 @@ samples_2 = selectedSamples2
 //| echo: false
 html`${
   s2Loading ?
-    html`<div class="loading">Loading Path 2 samples…</div>`
+    html`<div class="loading">Loading site-mediated samples…</div>`
   :
   samples_2 && samples_2.length > 0 ?
     html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
@@ -1357,11 +1374,11 @@ html`${
       </table>
     </div>
     <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
-      Found ${samples_2.length} sample${samples_2.length !== 1 ? 's' : ''} via Path 2 (via site location)
+      Found ${samples_2.length} sample${samples_2.length !== 1 ? 's' : ''} via site-mediated location (SITE_LOCATION)
     </div>`
   :
     html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
-      No samples found via Path 2 (via site location).
+      No samples found via site-mediated location (SITE_LOCATION).
     </div>`
 }`
 ```
@@ -1373,18 +1390,18 @@ html`${
 
 **Current implementation**: GeospatialCoordLocations are now color-coded by their semantic role in the property graph:
 
-- 🔵 **Blue (small)** - `sample_location_only`: Precise field collection points (Path 1)
-- 🟣 **Purple (large)** - `site_location_only`: Administrative site markers (Path 2)
-- 🟠 **Orange (medium)** - `both`: Dual-purpose locations (used for both Path 1 and Path 2)
+- 🔵 **Blue (small)** - `sample_location_only`: Precise field collection points (EVENT_SAMPLE_LOCATION)
+- 🟣 **Purple (large)** - `site_location_only`: Administrative site markers (SITE_LOCATION)
+- 🟠 **Orange (medium)** - `both`: Dual-purpose locations (used for both direct and site-mediated location)
 
 **Discovery**: Analysis of the OpenContext parquet data reveals that geos fall into three distinct categories based on their usage:
 
-1. **`sample_location_only`**: Precise field collection points (Path 1)
+1. **`sample_location_only`**: Precise field collection points (EVENT_SAMPLE_LOCATION)
    - Most common category
    - Represents exact GPS coordinates where sampling events occurred
    - Varies per event, even within the same site
 
-2. **`site_location_only`**: Administrative site markers (Path 2)
+2. **`site_location_only`**: Administrative site markers (SITE_LOCATION)
    - Represents general/reference locations for named archaeological sites
    - One coordinate per site
    - May not correspond to any actual collection point
@@ -1403,10 +1420,10 @@ html`${
 
 ### Benefits of Current Implementation
 
-1. **Educational**: Makes Path 1 vs Path 2 distinction visually concrete
+1. **Educational**: Makes EVENT_SAMPLE_LOCATION vs SITE_LOCATION distinction visually concrete
    - Users can SEE the semantic difference between precise and administrative locations
-   - Blue points show where samples were actually collected (Path 1)
-   - Purple points show administrative site markers (Path 2)
+   - Blue points show where samples were actually collected (EVENT_SAMPLE_LOCATION)
+   - Purple points show administrative site markers (SITE_LOCATION)
    - Demonstrates the complementary nature of the two geographic paths
 
 2. **Exploratory**: Enables visual understanding of spatial patterns
@@ -1452,7 +1469,7 @@ LEFT JOIN nodes AS site ON (list_contains(site.p__site_location, geo.row_id))
 - ⬜ Convex hull/region drawing for distributed sites
 - ⬜ Dynamic statistics display on site selection
 
-This implementation transforms the visualization from uniform points into a pedagogical tool that visually demonstrates the Path 1 vs Path 2 distinction in the iSamples metadata model architecture.
+This implementation transforms the visualization from uniform points into a pedagogical tool that visually demonstrates the EVENT_SAMPLE_LOCATION vs SITE_LOCATION distinction in the iSamples metadata model architecture.
 
 :::
 
