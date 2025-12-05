@@ -106,22 +106,10 @@ viewof runBenchmarks = Inputs.button("Run All Benchmarks", {
 
 ```{ojs}
 //| echo: false
-// Database initialization is lazy - only happens when button is clicked
-// This is stored as a mutable to track state
-mutable dbState = { narrow: null, wide: null, error: null, initialized: false }
-```
-
-```{ojs}
-//| echo: false
 // Initialize databases only when button is clicked (lazy loading)
+// Returns { narrow, wide } or null if not yet clicked
 initDatabases = {
-    // Only initialize when button is clicked
     if (runBenchmarks < 1) return null;
-
-    // Return cached instances if already initialized
-    if (dbState.initialized && !dbState.error) {
-        return { narrow: dbState.narrow, wide: dbState.wide };
-    }
 
     const loadingDiv = document.getElementById('loading_init');
     const errorDiv = document.getElementById('error_display');
@@ -130,35 +118,27 @@ initDatabases = {
     if (errorDiv) errorDiv.style.display = 'none';
 
     try {
-        // Initialize narrow database
         const narrowDb = await DuckDBClient.of();
         await narrowDb.query(`CREATE VIEW narrow AS SELECT * FROM read_parquet('${narrowUrl}')`);
 
-        // Initialize wide database
         const wideDb = await DuckDBClient.of();
         await wideDb.query(`CREATE VIEW wide AS SELECT * FROM read_parquet('${wideUrl}')`);
 
-        // Cache the instances
-        mutable dbState = { narrow: narrowDb, wide: wideDb, error: null, initialized: true };
-
+        if (loadingDiv) loadingDiv.style.display = 'none';
         return { narrow: narrowDb, wide: wideDb };
     } catch (e) {
         const errorMsg = `Failed to initialize databases: ${e.message}. This may be due to network issues or CORS restrictions.`;
-        mutable dbState = { narrow: null, wide: null, error: errorMsg, initialized: false };
-
         if (errorDiv) {
             errorDiv.textContent = errorMsg;
             errorDiv.style.display = 'block';
         }
-        throw e;
-    } finally {
         if (loadingDiv) loadingDiv.style.display = 'none';
+        return { error: errorMsg };
     }
 }
 
-// Convenience accessors that wait for initialization
-dbNarrow = initDatabases ? initDatabases.narrow : null
-dbWide = initDatabases ? initDatabases.wide : null
+dbNarrow = initDatabases && !initDatabases.error ? initDatabases.narrow : null
+dbWide = initDatabases && !initDatabases.error ? initDatabases.wide : null
 ```
 
 ## Data Validity Check
