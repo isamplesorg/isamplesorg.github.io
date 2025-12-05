@@ -38,20 +38,21 @@ When using DuckDB-WASM in the browser:
 ::: {.callout-note}
 ### Benchmarking Approach
 
-- **Cold run**: First query after page load (includes metadata fetch, JIT compilation)
-- **Warm runs**: Subsequent queries (metadata cached, JIT warmed up)
-- **Multiple runs**: Each benchmark runs 3 times, we report the median
+- **Cold run**: First query (includes metadata fetch, JIT compilation) - reported separately
+- **Warm runs**: Runs 2-3 (metadata cached, JIT warmed up)
+- **Warm median**: Median of warm runs only (excludes cold run for fair comparison)
+- **Sequential execution**: Benchmarks run one after another, not concurrently
 - **Network variability**: Results will vary based on your network connection and hardware
 
-Results are shown in real-time as benchmarks complete.
+Results are shown in real-time as benchmarks complete. Data loading only begins when you click the button.
 :::
 
 ## Setup
 
 ```{ojs}
 //| output: false
-// Import DuckDB for browser-based SQL analysis
-import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@latest/+esm"
+// Import DuckDB for browser-based SQL analysis (pinned version for reproducibility)
+import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@0.7.1/+esm"
 ```
 
 ```{ojs}
@@ -87,7 +88,7 @@ Connection: ${envInfo.effectiveType} (${envInfo.downlink}, RTT: ${envInfo.rtt})<
 </div>`
 ```
 
-### Initialize Databases
+### Run Benchmarks
 
 ```{ojs}
 //| echo: false
@@ -96,30 +97,68 @@ viewof runBenchmarks = Inputs.button("Run All Benchmarks", {
 })
 ```
 
-<div id="loading_init" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
-Initializing databases...
+<div id="loading_init" style="padding: 10px; background: #fff3cd; border-radius: 4px; display: none;">
+<strong>Initializing...</strong> Loading databases and preparing benchmarks. This may take a moment as parquet metadata is fetched over HTTP.
+</div>
+
+<div id="error_display" style="padding: 10px; background: #f8d7da; border-radius: 4px; color: #721c24; display: none;">
 </div>
 
 ```{ojs}
-// Create separate DuckDB instances for narrow and wide schemas
-dbNarrow = {
+//| echo: false
+// Database initialization is lazy - only happens when button is clicked
+// This is stored as a mutable to track state
+mutable dbState = { narrow: null, wide: null, error: null, initialized: false }
+```
+
+```{ojs}
+//| echo: false
+// Initialize databases only when button is clicked (lazy loading)
+initDatabases = {
+    // Only initialize when button is clicked
+    if (runBenchmarks < 1) return null;
+
+    // Return cached instances if already initialized
+    if (dbState.initialized && !dbState.error) {
+        return { narrow: dbState.narrow, wide: dbState.wide };
+    }
+
     const loadingDiv = document.getElementById('loading_init');
-    if (loadingDiv) loadingDiv.hidden = false;
+    const errorDiv = document.getElementById('error_display');
+
+    if (loadingDiv) loadingDiv.style.display = 'block';
+    if (errorDiv) errorDiv.style.display = 'none';
 
     try {
-        const instance = await DuckDBClient.of();
-        await instance.query(`CREATE VIEW narrow AS SELECT * FROM read_parquet('${narrowUrl}')`);
-        return instance;
+        // Initialize narrow database
+        const narrowDb = await DuckDBClient.of();
+        await narrowDb.query(`CREATE VIEW narrow AS SELECT * FROM read_parquet('${narrowUrl}')`);
+
+        // Initialize wide database
+        const wideDb = await DuckDBClient.of();
+        await wideDb.query(`CREATE VIEW wide AS SELECT * FROM read_parquet('${wideUrl}')`);
+
+        // Cache the instances
+        mutable dbState = { narrow: narrowDb, wide: wideDb, error: null, initialized: true };
+
+        return { narrow: narrowDb, wide: wideDb };
+    } catch (e) {
+        const errorMsg = `Failed to initialize databases: ${e.message}. This may be due to network issues or CORS restrictions.`;
+        mutable dbState = { narrow: null, wide: null, error: errorMsg, initialized: false };
+
+        if (errorDiv) {
+            errorDiv.textContent = errorMsg;
+            errorDiv.style.display = 'block';
+        }
+        throw e;
     } finally {
-        if (loadingDiv) loadingDiv.hidden = true;
+        if (loadingDiv) loadingDiv.style.display = 'none';
     }
 }
 
-dbWide = {
-    const instance = await DuckDBClient.of();
-    await instance.query(`CREATE VIEW wide AS SELECT * FROM read_parquet('${wideUrl}')`);
-    return instance;
-}
+// Convenience accessors that wait for initialization
+dbNarrow = initDatabases ? initDatabases.narrow : null
+dbWide = initDatabases ? initDatabases.wide : null
 ```
 
 ## Data Validity Check
@@ -132,10 +171,11 @@ Checking data validity...
 
 ```{ojs}
 validityCheck = {
-    // Only run when button clicked
-    if (runBenchmarks < 1) return null;
+    // Only run when button clicked AND databases are initialized
+    if (runBenchmarks < 1 || !dbNarrow || !dbWide) return null;
 
     const loadingDiv = document.getElementById('loading_validity');
+    const errorDiv = document.getElementById('error_display');
     if (loadingDiv) loadingDiv.hidden = false;
 
     try {
@@ -173,6 +213,12 @@ validityCheck = {
             wideSamples: wideSamples[0].cnt,
             sampleMatch: narrowSamples[0].cnt === wideSamples[0].cnt
         };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Validity check failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
     } finally {
         if (loadingDiv) loadingDiv.hidden = true;
     }
@@ -207,9 +253,11 @@ Running Benchmark 1...
 
 ```{ojs}
 benchmark1 = {
-    if (runBenchmarks < 1) return null;
+    // Wait for validity check to complete first (sequential execution)
+    if (runBenchmarks < 1 || !validityCheck || validityCheck.error) return null;
 
     const loadingDiv = document.getElementById('loading_b1');
+    const errorDiv = document.getElementById('error_display');
     if (loadingDiv) loadingDiv.hidden = false;
 
     const query = `SELECT otype, COUNT(*) as cnt FROM {table} GROUP BY otype ORDER BY cnt DESC`;
@@ -232,14 +280,19 @@ benchmark1 = {
             wideTimes.push(performance.now() - start);
         }
 
-        // Calculate medians
+        // Calculate medians (excluding cold run for warm median)
         const median = arr => {
             const sorted = [...arr].sort((a, b) => a - b);
             return sorted[Math.floor(sorted.length / 2)];
         };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1); // exclude first (cold) run
+            return median(warm);
+        };
 
-        const narrowMedian = median(narrowTimes);
-        const wideMedian = median(wideTimes);
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
 
         return {
             name: "Entity Count (GROUP BY otype)",
@@ -251,6 +304,12 @@ benchmark1 = {
             wideAll: wideTimes,
             speedup: narrowMedian / wideMedian
         };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 1 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
     } finally {
         if (loadingDiv) loadingDiv.hidden = true;
     }
@@ -301,9 +360,11 @@ Running Benchmark 2...
 
 ```{ojs}
 benchmark2 = {
-    if (runBenchmarks < 1) return null;
+    // Wait for benchmark1 to complete first (sequential execution)
+    if (runBenchmarks < 1 || !benchmark1 || benchmark1.error) return null;
 
     const loadingDiv = document.getElementById('loading_b2');
+    const errorDiv = document.getElementById('error_display');
     if (loadingDiv) loadingDiv.hidden = false;
 
     // Narrow query: traverse edges to get from sample -> event -> site
@@ -378,9 +439,14 @@ benchmark2 = {
             const sorted = [...arr].sort((a, b) => a - b);
             return sorted[Math.floor(sorted.length / 2)];
         };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1);
+            return median(warm);
+        };
 
-        const narrowMedian = median(narrowTimes);
-        const wideMedian = median(wideTimes);
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
 
         return {
             name: "Sample Count by Site (multi-join)",
@@ -392,6 +458,12 @@ benchmark2 = {
             wideAll: wideTimes,
             speedup: narrowMedian / wideMedian
         };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 2 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
     } finally {
         if (loadingDiv) loadingDiv.hidden = true;
     }
@@ -438,9 +510,11 @@ Running Benchmark 3...
 
 ```{ojs}
 benchmark3 = {
-    if (runBenchmarks < 1) return null;
+    // Wait for benchmark2 to complete first (sequential execution)
+    if (runBenchmarks < 1 || !benchmark2 || benchmark2.error) return null;
 
     const loadingDiv = document.getElementById('loading_b3');
+    const errorDiv = document.getElementById('error_display');
     if (loadingDiv) loadingDiv.hidden = false;
 
     // Narrow query: join through edges to material concepts
@@ -494,9 +568,14 @@ benchmark3 = {
             const sorted = [...arr].sort((a, b) => a - b);
             return sorted[Math.floor(sorted.length / 2)];
         };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1);
+            return median(warm);
+        };
 
-        const narrowMedian = median(narrowTimes);
-        const wideMedian = median(wideTimes);
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
 
         return {
             name: "Material Type Distribution",
@@ -508,6 +587,12 @@ benchmark3 = {
             wideAll: wideTimes,
             speedup: narrowMedian / wideMedian
         };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 3 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
     } finally {
         if (loadingDiv) loadingDiv.hidden = true;
     }
