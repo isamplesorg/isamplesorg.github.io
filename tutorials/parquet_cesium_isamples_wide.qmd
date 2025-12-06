@@ -1,0 +1,949 @@
+---
+title: Using Cesium for display of remote parquet (iSamples Wide Format).
+categories: [parquet, spatial, recipe, wide, isamples]
+---
+
+This page renders points from the **full iSamples wide-format** parquet file (all sources: SESAR, OpenContext, GEOME, Smithsonian) on Cesium using point primitives.
+
+::: {.callout-note}
+## iSamples Full Dataset (Wide Format)
+
+This page uses the **iSamples combined dataset** (Dec 2025) which includes:
+
+- **6.68M MaterialSampleRecords** from all iSamples sources
+- **Source breakdown**: SESAR (70%), OpenContext (16%), GEOME (9%), Smithsonian (5%)
+- **242 MB** wide format (vs 709 MB narrow)
+- **19.5M total rows** (entities only, no edge rows)
+- **47 columns** with flattened latitude/longitude (direct column access, no JSON parsing)
+
+Compare with [OpenContext-only Cesium View](/tutorials/parquet_cesium_wide.html) (275 MB, ~2.5M rows).
+:::
+
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
+<style>
+    div.cesium-topleft {
+        display: block;
+        position: absolute;
+        background: #00000099;
+        color: white;
+        height: auto;
+        z-index: 999;
+    }
+    #cesiumContainer {
+        aspect-ratio: 1/1;
+    }
+</style>
+
+```{ojs}
+//| output: false
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
+```
+
+```{ojs}
+//| echo: false
+viewof parquet_path = Inputs.text({
+  label:"Source (iSamples Wide Format)",
+  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_wide.parquet",
+  placeholder: "URL or file:///path/to/file.parquet",
+  width:"100%",
+  submit:true
+});
+```
+
+```{ojs}
+//| echo: false
+viewof searchGeoPid = Inputs.text({
+  label:"Jump to Geocode",
+  placeholder: "Paste geocode PID (e.g., geoloc_04d6e816218b1a8798fa90b3d1d43bf4c043a57f)",
+  width:"100%",
+  submit:true
+});
+```
+
+```{ojs}
+//| echo: false
+// Simple trigger variable that increments on button click
+viewof classifyTrigger = {
+  let count = 0;
+  const button = html`<button
+    style="padding: 8px 16px; margin: 10px 0; background: #2E86AB; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+    🎨 Color-code by type (sample/site/both)
+  </button>`;
+  button.onclick = () => {
+    count++;
+    button.value = count;
+    button.dispatchEvent(new CustomEvent("input"));
+  };
+  button.value = count;
+  return button;
+}
+
+// Alias for handler compatibility
+classifyDots = classifyTrigger > 0 ? classifyTrigger : null
+```
+
+::: {.callout-tip collapse="true"}
+#### Using a local cached file for faster performance
+
+DuckDB-WASM running in the browser **cannot access local files via `file://` URLs** due to browser security restrictions. However, you can use a local cached file when running `quarto preview`:
+
+**Local Development (recommended)**
+
+Download the file locally, then serve it:
+
+```bash
+# Download the wide parquet file (~242MB)
+curl -O https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_wide.parquet
+
+# Serve it locally
+python3 -m http.server 8000
+```
+
+Then use: `http://localhost:8000/isamples_202512_wide.parquet`
+
+**Benefits of wide format file:**
+- 66% smaller than narrow format (242 MB vs 709 MB)
+- Much faster initial load (less network transfer)
+- Simpler queries with direct column access
+- Works offline once cached
+
+**Limitation:** Only works during local development, not on published GitHub Pages.
+:::
+
+::: callout-warning
+#### Heads up: first interaction may be slow
+The first click or query can take a few seconds while the in‑browser database engine initializes and the remote Parquet file is fetched and indexed. Subsequent interactions are much faster because both the browser and DuckDB cache metadata and column chunks, so later queries reuse what was already loaded.
+:::
+
+```{ojs}
+//| code-fold: true
+
+// Create a DuckDB instance
+db = {
+  const instance = await DuckDBClient.of();
+  await instance.query(`create view nodes as select * from read_parquet('${parquet_path}')`)
+  return instance;
+}
+
+
+async function loadData(query, params = [], waiting_id = null, key = "default") {
+    // latest-only guard per key
+    loadData._latest = loadData._latest || new Map();
+    const requestToken = Symbol();
+    loadData._latest.set(key, requestToken);
+
+    // Get loading indicator
+    const waiter = waiting_id ? document.getElementById(waiting_id) : null;
+    if (waiter) waiter.hidden = false;
+
+    try {
+        // Run the (slow) query
+        const _results = await db.query(query, params);
+        // Ignore stale responses
+        if (loadData._latest.get(key) !== requestToken) return null;
+        return _results;
+    } catch (error) {
+        console.error('Query error:', error);
+        if (waiter && loadData._latest.get(key) === requestToken) {
+            waiter.innerHTML = `<pre>${error}</pre>`;
+        }
+        return null;
+    } finally {
+        // Hide the waiter (if there is one) only if latest
+        if (waiter && loadData._latest.get(key) === requestToken) {
+            waiter.hidden = true;
+        }
+    }
+}
+
+locations = {
+    // Performance telemetry
+    performance.mark('locations-start');
+
+    // Get loading indicator element for progress updates
+    const loadingDiv = document.getElementById('loading_1');
+    if (loadingDiv) {
+        loadingDiv.hidden = false;
+        loadingDiv.innerHTML = 'Loading geocodes...';
+    }
+
+    // Fast query: just get all distinct geocodes (no classification!)
+    // The Zenodo wide parquet has latitude/longitude as direct columns (like Eric's OpenContext)
+    const query = `
+        SELECT DISTINCT
+            pid,
+            latitude,
+            longitude
+        FROM nodes
+        WHERE otype = 'GeospatialCoordLocation'
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
+    `;
+
+    performance.mark('query-start');
+    const data = await loadData(query, [], "loading_1", "locations");
+    performance.mark('query-end');
+    performance.measure('locations-query', 'query-start', 'query-end');
+    const queryTime = performance.getEntriesByName('locations-query')[0].duration;
+
+    // Handle null data (query failed)
+    if (!data) {
+        console.error('Query failed - data is null');
+        if (loadingDiv) {
+            loadingDiv.innerHTML = 'Query failed - check console for errors';
+            loadingDiv.hidden = false;
+        }
+        return [];
+    }
+
+    console.log(`Query executed in ${queryTime.toFixed(0)}ms - retrieved ${data.length} locations`);
+
+    // Clear the existing PointPrimitiveCollection
+    content.points.removeAll();
+
+    // Single color for all points (blue)
+    const defaultColor = Cesium.Color.fromCssColorString('#2E86AB');
+    const defaultSize = 4;
+
+    // Render points in chunks to keep UI responsive
+    const CHUNK_SIZE = 500;
+    const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
+
+    performance.mark('render-start');
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        const endIdx = Math.min(i + CHUNK_SIZE, data.length);
+
+        // Update progress indicator
+        if (loadingDiv) {
+            const pct = Math.round((endIdx / data.length) * 100);
+            loadingDiv.innerHTML = `Rendering geocodes... ${endIdx.toLocaleString()}/${data.length.toLocaleString()} (${pct}%)`;
+        }
+
+        // Add points for this chunk
+        for (const row of chunk) {
+            content.points.add({
+                id: row.pid,
+                position: Cesium.Cartesian3.fromDegrees(
+                    row.longitude,  //longitude
+                    row.latitude,   //latitude
+                    0               //elevation, m
+                ),
+                pixelSize: defaultSize,
+                color: defaultColor,
+                scaleByDistance: scalar,
+            });
+        }
+
+        // Yield to browser between chunks to keep UI responsive
+        if (i + CHUNK_SIZE < data.length) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+    }
+    performance.mark('render-end');
+    performance.measure('locations-render', 'render-start', 'render-end');
+    const renderTime = performance.getEntriesByName('locations-render')[0].duration;
+
+    // Hide loading indicator
+    if (loadingDiv) {
+        loadingDiv.hidden = true;
+    }
+
+    performance.mark('locations-end');
+    performance.measure('locations-total', 'locations-start', 'locations-end');
+    const totalTime = performance.getEntriesByName('locations-total')[0].duration;
+
+    console.log(`Rendering completed in ${renderTime.toFixed(0)}ms`);
+    console.log(`Total time (query + render): ${totalTime.toFixed(0)}ms`);
+
+    content.enableTracking();
+    return data;
+}
+
+
+function createShowPrimitive(viewer) {
+    return function(movement) {
+        // Get the point at the mouse end position
+        const selectPoint = viewer.viewer.scene.pick(movement.endPosition);
+
+        // Clear the current selection, if there is one and it is different to the selectPoint
+        if (viewer.currentSelection !== null) {
+            //console.log(`selected.p ${viewer.currentSelection}`)
+            if (Cesium.defined(selectPoint) && selectPoint !== viewer.currentSelection) {
+                console.log(`selected.p 2 ${viewer.currentSelection}`)
+                viewer.currentSelection.primitive.pixelSize = 4;
+                viewer.currentSelection.primitive.outlineColor = Cesium.Color.TRANSPARENT;
+                viewer.currentSelection.outlineWidth = 0;
+                viewer.currentSelection = null;
+            }
+        }
+
+        // If selectPoint is valid and no currently selected point
+        if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
+            //console.log(`showPrimitiveId ${selectPoint.id}`);
+            //const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)
+            viewer.pointLabel.position = selectPoint.primitive.position;
+            viewer.pointLabel.label.show = true;
+            //viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;
+            viewer.pointLabel.label.text = `${selectPoint.id}`;
+            selectPoint.primitive.pixelSize = 20;
+            selectPoint.primitive.outlineColor = Cesium.Color.YELLOW;
+            selectPoint.primitive.outlineWidth = 3;
+            viewer.currentSelection = selectPoint;
+        } else {
+            viewer.pointLabel.label.show = false;
+        }
+    }
+}
+
+class CView {
+    constructor(target) {
+        this.viewer = new Cesium.Viewer(
+            target, {
+                timeline: false,
+                animation: false,
+                baseLayerPicker: false,
+                fullscreenElement: target,
+                terrain: Cesium.Terrain.fromWorldTerrain()
+            });
+        this.currentSelection = null;
+        this.point_size = 1;
+        this.n_points = 0;
+        // https://cesium.com/learn/cesiumjs/ref-doc/PointPrimitiveCollection.html
+        this.points = new Cesium.PointPrimitiveCollection();
+        this.viewer.scene.primitives.add(this.points);
+
+        this.pointLabel = this.viewer.entities.add({
+            label: {
+            show: false,
+            showBackground: true,
+            font: "14px monospace",
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(15, 0),
+            // this attribute will prevent this entity clipped by the terrain
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            text:"",
+            },
+        });
+
+        this.pickHandler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
+        // Can also do this rather than wait for the points to be generated
+        //this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+        this.selectHandler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
+        this.selectHandler.setInputAction((e) => {
+            const selectPoint = this.viewer.scene.pick(e.position);
+            if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
+                mutable clickedPointId = selectPoint.id;
+            }
+        },Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    }
+
+    enableTracking() {
+        this.pickHandler.setInputAction(createShowPrimitive(this), Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    }
+}
+
+content = new CView("cesiumContainer");
+
+async function getGeoRecord(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return "unset";
+    }
+    // Zenodo wide parquet has latitude/longitude as direct columns
+    const q = `SELECT row_id, pid, otype, latitude, longitude
+               FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
+    const rows = await loadData(q, [pid], "loading_geo", "geo");
+    return rows && rows.length ? rows[0] : null;
+}
+
+// WIDE FORMAT: Direct Location (p__sample_location / EVENT_SAMPLE_LOCATION)
+// Uses p__sample_location column instead of edge row JOINs
+async function get_samples_1(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    // Direct Location (EVENT_SAMPLE_LOCATION) - WIDE FORMAT version
+    // Uses p__* columns instead of edge rows
+    // Zenodo wide parquet has latitude/longitude as direct columns
+    const q = `
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            'direct_event_location' as location_path
+        FROM nodes AS geo
+        -- Wide format: SamplingEvent has p__sample_location column with geo row_ids
+        JOIN nodes AS se ON (
+            se.otype = 'SamplingEvent'
+            AND list_contains(se.p__sample_location, geo.row_id)
+        )
+        -- Wide format: SamplingEvent has p__sampling_site column with site row_ids
+        JOIN nodes AS site ON (
+            site.otype = 'SamplingSite'
+            AND list_contains(se.p__sampling_site, site.row_id)
+        )
+        -- Wide format: MaterialSampleRecord has p__produced_by column with event row_ids
+        JOIN nodes AS samp ON (
+            samp.otype = 'MaterialSampleRecord'
+            AND list_contains(samp.p__produced_by, se.row_id)
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        LIMIT 100
+    `;
+    performance.mark('samples1-start');
+    const result = await loadData(q, [pid], "loading_s1", "samples_1");
+    performance.mark('samples1-end');
+    performance.measure('samples1-query', 'samples1-start', 'samples1-end');
+    const queryTime = performance.getEntriesByName('samples1-query')[0].duration;
+    console.log(`Direct location query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    return result ?? [];
+}
+
+// WIDE FORMAT: Site-Mediated Location (p__sampling_site → p__site_location)
+// Uses p__site_location and p__sampling_site columns
+async function get_samples_2(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    // Site-Mediated Location (SITE_LOCATION) - WIDE FORMAT version
+    // Zenodo wide parquet has latitude/longitude as direct columns
+    const q = `
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.label AS sample_label,
+            samp.description AS sample_description,
+            'via_site_location' as location_path
+        FROM nodes AS geo
+        -- Wide format: SamplingSite has p__site_location column with geo row_ids
+        JOIN nodes AS site ON (
+            site.otype = 'SamplingSite'
+            AND list_contains(site.p__site_location, geo.row_id)
+        )
+        -- Wide format: SamplingEvent has p__sampling_site column with site row_ids
+        JOIN nodes AS se ON (
+            se.otype = 'SamplingEvent'
+            AND list_contains(se.p__sampling_site, site.row_id)
+        )
+        -- Wide format: MaterialSampleRecord has p__produced_by column with event row_ids
+        JOIN nodes AS samp ON (
+            samp.otype = 'MaterialSampleRecord'
+            AND list_contains(samp.p__produced_by, se.row_id)
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        LIMIT 100
+    `;
+    performance.mark('samples2-start');
+    const result = await loadData(q, [pid], "loading_s2", "samples_2");
+    performance.mark('samples2-end');
+    performance.measure('samples2-query', 'samples2-start', 'samples2-end');
+    const queryTime = performance.getEntriesByName('samples2-query')[0].duration;
+    console.log(`Site-mediated location query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    return result ?? [];
+}
+
+// WIDE FORMAT: Combined query (p__sample_location + p__sampling_site)
+async function get_samples_at_geo_cord_location_via_sample_event(pid) {
+    if (pid === null || pid ==="" || pid == "unset") {
+        return [];
+    }
+    // Combined query - WIDE FORMAT version
+    // Zenodo wide parquet has latitude/longitude as direct columns
+    const q = `
+        SELECT
+            geo.latitude,
+            geo.longitude,
+            site.label AS sample_site_label,
+            site.pid AS sample_site_pid,
+            samp.pid AS sample_pid,
+            samp.label AS sample_label,
+            samp.description AS sample_description
+        FROM nodes AS geo
+        -- Wide format: SamplingEvent.p__sample_location contains geo row_ids
+        JOIN nodes AS se ON (
+            se.otype = 'SamplingEvent'
+            AND list_contains(se.p__sample_location, geo.row_id)
+        )
+        -- Wide format: SamplingEvent.p__sampling_site contains site row_ids
+        JOIN nodes AS site ON (
+            site.otype = 'SamplingSite'
+            AND list_contains(se.p__sampling_site, site.row_id)
+        )
+        -- Wide format: MaterialSampleRecord.p__produced_by contains event row_ids
+        JOIN nodes AS samp ON (
+            samp.otype = 'MaterialSampleRecord'
+            AND list_contains(samp.p__produced_by, se.row_id)
+        )
+        WHERE geo.pid = ?
+          AND geo.otype = 'GeospatialCoordLocation'
+        LIMIT 100
+    `;
+    performance.mark('eric-query-start');
+    const result = await loadData(q, [pid], "loading_combined", "samples_combined");
+    performance.mark('eric-query-end');
+    performance.measure('eric-query', 'eric-query-start', 'eric-query-end');
+    const queryTime = performance.getEntriesByName('eric-query')[0].duration;
+    console.log(`Combined query (wide) executed in ${queryTime.toFixed(0)}ms - retrieved ${result?.length || 0} samples`);
+    return result ?? [];
+}
+
+async function locationUsedBy(rowid){
+    if (rowid === undefined || rowid === null) {
+        return [];
+    }
+    // Wide format: Check which entities reference this location via p__* columns
+    const q = `
+        SELECT pid, otype FROM nodes
+        WHERE list_contains(p__sample_location, ?)
+           OR list_contains(p__site_location, ?)
+    `;
+    return db.query(q, [rowid, rowid]);
+}
+
+mutable clickedPointId = "unset";
+// Loading flags to control UI clearing while fetching
+mutable geoLoading = false;
+mutable s1Loading = false;
+mutable s2Loading = false;
+mutable combinedLoading = false;
+
+// Precompute selection-driven data with loading flags
+selectedGeoRecord = {
+    mutable geoLoading = true;
+    try {
+        return await getGeoRecord(clickedPointId);
+    } finally {
+        mutable geoLoading = false;
+    }
+}
+
+selectedSamples1 = {
+    mutable s1Loading = true;
+    try {
+        return await get_samples_1(clickedPointId);
+    } finally {
+        mutable s1Loading = false;
+    }
+}
+
+selectedSamples2 = {
+    mutable s2Loading = true;
+    try {
+        return await get_samples_2(clickedPointId);
+    } finally {
+        mutable s2Loading = false;
+    }
+}
+
+selectedSamplesCombined = {
+    mutable combinedLoading = true;
+    try {
+        return await get_samples_at_geo_cord_location_via_sample_event(clickedPointId);
+    } finally {
+        mutable combinedLoading = false;
+    }
+}
+
+md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Center initial Cesium view on global view (since data is worldwide)
+{
+    const viewer = content.viewer;
+    // Global view - center on prime meridian, show whole world
+    const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
+
+    // Make the Home button go to global view
+    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = globalRect;
+    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
+
+    // Apply camera after the first render to avoid resize/tab visibility issues
+    const once = () => {
+        viewer.camera.setView({ destination: globalRect });
+        viewer.scene.postRender.removeEventListener(once);
+    };
+    viewer.scene.postRender.addEventListener(once);
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Handle geocode search: fly to location and trigger queries
+{
+    if (searchGeoPid && searchGeoPid.trim() !== "") {
+        const pid = searchGeoPid.trim();
+
+        // Look up the geocode in the database
+        const q = `SELECT pid, latitude, longitude FROM nodes WHERE otype='GeospatialCoordLocation' AND pid=?`;
+        const result = await db.query(q, [pid]);
+
+        if (result && result.length > 0) {
+            const geo = result[0];
+            const viewer = content.viewer;
+
+            // Fly camera to the location
+            const position = Cesium.Cartesian3.fromDegrees(
+                geo.longitude,
+                geo.latitude,
+                15000  // 15km altitude for good view
+            );
+
+            viewer.camera.flyTo({
+                destination: position,
+                duration: 2.0,  // 2 second flight
+                complete: () => {
+                    // After camera arrives, trigger the click to load data
+                    mutable clickedPointId = pid;
+                }
+            });
+        } else {
+            // Geocode not found - could display error to user
+            console.warn(`Geocode not found: ${pid}`);
+        }
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// Handle optional classification button: recolor dots by type
+// WIDE FORMAT: Uses p__sample_location and p__site_location columns directly
+{
+    if (classifyDots !== null) {
+        console.log("Classifying dots by type (wide format)...");
+        performance.mark('classify-start');
+
+        try {
+            // Wide format classification query - uses p__* columns directly
+            const query = `
+                WITH geo_classification AS (
+                    SELECT
+                        geo.pid,
+                        MAX(CASE WHEN se.row_id IS NOT NULL THEN 1 ELSE 0 END) as is_sample_location,
+                        MAX(CASE WHEN site.row_id IS NOT NULL THEN 1 ELSE 0 END) as is_site_location
+                    FROM nodes geo
+                    LEFT JOIN nodes se ON (
+                        se.otype = 'SamplingEvent'
+                        AND list_contains(se.p__sample_location, geo.row_id)
+                    )
+                    LEFT JOIN nodes site ON (
+                        site.otype = 'SamplingSite'
+                        AND list_contains(site.p__site_location, geo.row_id)
+                    )
+                    WHERE geo.otype = 'GeospatialCoordLocation'
+                    GROUP BY geo.pid
+                )
+                SELECT
+                    pid,
+                    CASE
+                        WHEN is_sample_location = 1 AND is_site_location = 1 THEN 'both'
+                        WHEN is_sample_location = 1 THEN 'sample_location_only'
+                        WHEN is_site_location = 1 THEN 'site_location_only'
+                    END as location_type
+                FROM geo_classification
+            `;
+
+            const classifications = await db.query(query);
+
+            // Build lookup map: pid -> location_type
+            const typeMap = new Map();
+            for (const row of classifications) {
+                typeMap.set(row.pid, row.location_type);
+            }
+
+            // Color and size styling by location type
+            const styles = {
+                sample_location_only: {
+                    color: Cesium.Color.fromCssColorString('#2E86AB'),
+                    size: 3
+                },  // Blue - field collection points
+                site_location_only: {
+                    color: Cesium.Color.fromCssColorString('#A23B72'),
+                    size: 6
+                },  // Purple - administrative markers
+                both: {
+                    color: Cesium.Color.fromCssColorString('#F18F01'),
+                    size: 5
+                }   // Orange - dual-purpose
+            };
+
+            // Update colors of existing points
+            const points = content.points;
+            for (let i = 0; i < points.length; i++) {
+                const point = points.get(i);
+                const pid = point.id;
+                const locationType = typeMap.get(pid);
+
+                if (locationType && styles[locationType]) {
+                    point.color = styles[locationType].color;
+                    point.pixelSize = styles[locationType].size;
+                }
+            }
+
+            performance.mark('classify-end');
+            performance.measure('classification', 'classify-start', 'classify-end');
+            const classifyTime = performance.getEntriesByName('classification')[0].duration;
+            console.log(`Classification completed in ${classifyTime.toFixed(0)}ms - updated ${points.length} points`);
+            console.log(`  - Blue (sample_location_only): field collection points`);
+            console.log(`  - Purple (site_location_only): administrative markers`);
+            console.log(`  - Orange (both): dual-purpose locations`);
+        } catch (error) {
+            console.error("Classification failed:", error);
+            console.error("Error details:", error.message);
+
+            // Show user-friendly message in browser console
+            console.warn("⚠️ Color-coding failed due to a data loading issue.");
+            console.warn("💡 Tip: This is an intermittent DuckDB-WASM issue with remote files.");
+            console.warn("    Try clicking the button again, or use a local cached file for better reliability.");
+        }
+    }
+}
+```
+
+::: {.panel-tabset}
+
+## Map
+
+<div id="cesiumContainer"></div>
+
+## Data
+
+<div id="loading_1">Loading...</div>
+
+```{ojs}
+//| code-fold: true
+
+viewof pointdata = {
+    const data_table = Inputs.table(locations, {
+        header: {
+            pid: "PID",
+            latitude: "Latitude",
+            longitude: "Longitude",
+            location_type: "Location Type"
+        },
+    });
+    return data_table;
+}
+```
+
+:::
+
+The click point ID is "${clickedPointId}".
+
+<div id="loading_geo" hidden>Loading selected location…</div>
+
+```{ojs}
+//| echo: false
+geoLoading ? md`(loading…)` : md`\`\`\`
+${JSON.stringify(selectedGeoRecord, null, 2)}
+\`\`\`
+`
+```
+
+## getGeoRecord (selected)
+
+```{ojs}
+//| code-fold: true
+pid = clickedPointId
+testrecord = selectedGeoRecord;
+```
+
+```{ojs}
+//| echo: false
+md`\`\`\`
+${JSON.stringify(testrecord, null, 2)}
+\`\`\`
+`
+```
+
+## Samples at Location (Wide Format)
+
+<div id="loading_combined" hidden>Loading samples…</div>
+
+This query finds MaterialSampleRecords whose SamplingEvent references this GeospatialCoordLocation via the `p__sample_location` column.
+
+```{ojs}
+//| echo: false
+samples_combined = selectedSamplesCombined
+```
+
+```{ojs}
+//| echo: false
+html`${
+  combinedLoading ?
+    html`<div class="loading">Loading samples…</div>`
+  :
+  samples_combined && samples_combined.length > 0 ?
+    html`<div style="max-height: 600px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+            <th style="padding: 12px; text-align: left;">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_combined.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 4px;">
+                  <strong>${sample.sample_label || sample.sample_pid}</strong>
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  ${sample.sample_pid}
+                </div>
+              </td>
+              <td style="padding: 8px; max-width: 300px;">
+                <div style="font-size: 0.85em; color: #495057; line-height: 1.4;">
+                  ${sample.sample_description || 'No description'}
+                </div>
+              </td>
+              <td style="padding: 8px;">
+                <div style="margin-bottom: 2px;">
+                  <strong>${sample.sample_site_label}</strong>
+                </div>
+                <div style="font-size: 0.75em; color: #666;">
+                  ${sample.sample_site_pid}
+                </div>
+              </td>
+              <td style="padding: 8px; font-size: 0.85em; color: #666;">
+                ${sample.latitude.toFixed(5)}°N<br>
+                ${sample.longitude.toFixed(5)}°E
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_combined.length} sample${samples_combined.length !== 1 ? 's' : ''} (limited to 100)
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found at this location via direct location (p__sample_location).
+    </div>`
+}`
+```
+
+## Related Samples via Direct Location (p__sample_location)
+
+<div id="loading_s1" hidden>Loading related samples (direct location)…</div>
+
+```{ojs}
+//| echo: false
+samples_1 = selectedSamples1
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s1Loading ?
+    html`<div class="loading">Loading direct location samples…</div>`
+  :
+  samples_1 && samples_1.length > 0 ?
+    html`<div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_1.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px;">
+                <strong>${sample.sample_label || sample.sample_pid}</strong>
+              </td>
+              <td style="padding: 8px;">
+                ${sample.sample_site_label}
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_1.length} sample${samples_1.length !== 1 ? 's' : ''} via direct location
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via direct location (EVENT_SAMPLE_LOCATION).
+    </div>`
+}`
+```
+
+
+## Related Samples via Site-Mediated Location (p__site_location)
+
+<div id="loading_s2" hidden>Loading related samples (site-mediated)…</div>
+
+```{ojs}
+//| echo: false
+samples_2 = selectedSamples2
+```
+
+```{ojs}
+//| echo: false
+html`${
+  s2Loading ?
+    html`<div class="loading">Loading site-mediated samples…</div>`
+  :
+  samples_2 && samples_2.length > 0 ?
+    html`<div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 1;">
+          <tr style="border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px; text-align: left;">Sample</th>
+            <th style="padding: 12px; text-align: left;">Site</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${samples_2.map((sample, i) => html`
+            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 8px;">
+                <strong>${sample.sample_label || sample.sample_pid}</strong>
+              </td>
+              <td style="padding: 8px;">
+                ${sample.sample_site_label}
+              </td>
+            </tr>
+          `)}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+      Found ${samples_2.length} sample${samples_2.length !== 1 ? 's' : ''} via site-mediated location
+    </div>`
+  :
+    html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
+      No samples found via site-mediated location (SITE_LOCATION).
+    </div>`
+}`
+```
+
+## See Also
+
+- [Cesium View (OpenContext Wide)](/tutorials/parquet_cesium_wide.html) - OpenContext-only data (275 MB)
+- [Cesium View (Narrow)](/tutorials/parquet_cesium.html) - Narrow schema visualization
+- [Narrow vs Wide Performance](/tutorials/narrow_vs_wide_performance.html) - Benchmark comparison
