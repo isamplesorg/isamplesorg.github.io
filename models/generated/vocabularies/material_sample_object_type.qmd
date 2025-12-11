@@ -1,0 +1,375 @@
+---
+comment: | 
+  WARNING: This file is generated. Any edits will be lost!
+title: "iSamples Material Sample Object Type Vocabulary"
+date: "2025-12-11T02:41:28.407856+00:00"
+subtitle: |
+  Broad categories to specify the kind of physical thing identified as the ‘sample’.
+execute:
+  echo: false
+categories: ["vocabulary"]
+---
+
+Source: 
+[`https://raw.githubusercontent.com/isamplesorg/vocabularies/main/vocabulary/material_sample_object_type.ttl`](https://raw.githubusercontent.com/isamplesorg/vocabularies/main/vocabulary/material_sample_object_type.ttl)
+
+
+Namespace: 
+[`https://w3id.org/isample/vocabulary/materialsampleobjecttype/conceptscheme`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/conceptscheme)
+
+**History**
+
+* 2022-01-07 SMR Change base URI to https://w3id.org/isample/vocabulary/, setting up resolution using w3id. Make the conceptScheme and ontology. Add Dublin core imports.
+* 2022-03-11 SMR change definitions from rdfs:comment to skos:definition. Minor fixes in definitions. Add skos matches to URIs from other vocabularies.
+* 2022-09-30 SMR per https://github.com/isamplesorg/metadata/issues/109, change specimen to sample in vocabulary names and labels. Add 'Slurry biome aggregation' and 'Bundle biome aggregation' (github issue 110). Rename 'liquid or gas' sample type to 'fluid in container' (github issue 108).
+* 2023-07-27 SMR modify base specimen type vocabulary, add 'Non biologic solid object'  change broader relations in this vocab to use that as parent class where appropriate.  Intention is a specimen category for solid objects that are not biologic; this subsumes 'Fossil' and 'Artifact', but excludes living organism, their parts and products. Obviously there is some overlap with Research specimens.
+* 2023-11-06 SMR add missing inScheme on Non-biologic solid object and solid materal specimen. Update version number in URI to 1.0
+* 2024-04-19 SMR update language to always use 'material sample' instead of specimen or physical specimen, including in text, labels, and in the URI tokens.  Edit defintions to improve clarity.
+* 2024-09-13 remove version numbers from URI
+
+**Concepts**
+
+- [Material sample](#materialsample)
+    - [Any aggregation material sample](#anyaggregation)
+        - [Anthropogenic aggregation](#anthropogenicaggregation)
+        - [Biome aggregation sample](#biomeaggregation)
+            - [Bundle biome aggregation](#bundlebiomeaggregation)
+            - [Slurry biome aggregation](#slurrybiomeaggregation)
+        - [Aggregation](#genericaggregation)
+    - [Biological material sample](#biologicalmaterialsample)
+        - [Biome aggregation sample](#biomeaggregation)
+            - [Bundle biome aggregation](#bundlebiomeaggregation)
+            - [Slurry biome aggregation](#slurrybiomeaggregation)
+        - [Organism part](#organismpart)
+        - [Organism product](#organismproduct)
+        - [Whole organism material sample](#wholeorganism)
+    - [Fluid in container](#fluidincontainer)
+    - [Non biologic solid object](#nonbiologicsolidobject)
+        - [Artifact](#artifact)
+        - [Fossil](#fossil)
+        - [Other solid object](#othersolidobject)
+        - [Solid material sample](#solidmaterialsample)
+    - [Research product](#researchproduct)
+        - [Analytical preparation](#analyticalpreparation)
+        - [Experiment product](#experimentalproduct)
+
+##  Material sample
+
+[]{#materialsample}
+
+Concept: [`materialsample`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/materialsample)
+
+A material entity that represents an entity of interest in whole or in
+part (http://rs.tdwg.org/dwc/terms/MaterialSample). Top concept in
+material sample object type hierarchy.  Represents any material sample
+object.
+
+###  Any aggregation material sample
+
+[]{#anyaggregation}
+
+Concept: [`anyaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/anyaggregation)
+
+Child of:
+ [`materialsample`](#materialsample)
+
+Sample consists of a bunch of material fragments, not related to the
+same object (e.g. not a bunch of broken pot sherds that might be
+reassembled), but taken together representative of the sampled
+feature. Examples: loose soil, sediment, crushed rock,  particulate,
+bunches of unrelated pot sherd, human production waste, filtrates and
+residues. The sample requires some kind of container to keep it
+together. Cores of loosely consolidated material are considered 'Solid
+material specimen' when preserved such that the internal parts have
+spatial relationships (e.g. upper part, lower part, sedimentary
+structures).
+
+####  Anthropogenic aggregation
+
+[]{#anthropogenicaggregation}
+
+Concept: [`anthropogenicaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/anthropogenicaggregation)
+
+Child of:
+ [`anyaggregation`](#anyaggregation)
+
+An aggregate material sample consisting of fragments of material
+produced by human activity, not described individually, and generally
+not all originating from the same object.  Includes pottery in an
+excavation unit that gets an aggregate description, production waste,
+production raw-materials, or other residues (broken bits of plaster
+from a destroyed wall), synthetic powders.
+
+####  Biome aggregation sample
+
+[]{#biomeaggregation}
+
+Concept: [`biomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/biomeaggregation)
+
+Child of:
+ [`anyaggregation`](#anyaggregation)
+ [`biologicalmaterialsample`](#biologicalmaterialsample)
+
+Material sample that is an aggregation of whole or fragmentary parts
+of multiple organisms, microscopic or megascopic, representative of
+some sampled feature.
+
+#####  Bundle biome aggregation
+
+[]{#bundlebiomeaggregation}
+
+Concept: [`bundlebiomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/bundlebiomeaggregation)
+
+Child of:
+ [`biomeaggregation`](#biomeaggregation)
+
+Material sample that is an aggregation of whole organisms
+representative of some biome.
+
+#####  Slurry biome aggregation
+
+[]{#slurrybiomeaggregation}
+
+Concept: [`slurrybiomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/slurrybiomeaggregation)
+
+Child of:
+ [`biomeaggregation`](#biomeaggregation)
+
+Material sample that consists of mixed organic and inorganic material,
+including whole organisms and organism fragments.
+
+####  Aggregation
+
+[]{#genericaggregation}
+
+Concept: [`genericaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/genericaggregation)
+
+Child of:
+ [`anyaggregation`](#anyaggregation)
+
+An aggregate material sample that is not biogenic or composed of
+anthropogenic material fragments.  Examples: loose soil or sediment
+(e.g. in a bag), rock chips, particulate filtrate or precipitate; rock
+powders.
+
+###  Biological material sample
+
+[]{#biologicalmaterialsample}
+
+Concept: [`biologicalmaterialsample`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/biologicalmaterialsample)
+
+Child of:
+ [`materialsample`](#materialsample)
+
+Material sample representative of one or more living organisms from a
+particular biome context, megascopic or microscopic
+
+####  Biome aggregation sample
+
+[]{#biomeaggregation}
+
+Concept: [`biomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/biomeaggregation)
+
+Child of:
+ [`anyaggregation`](#anyaggregation)
+ [`biologicalmaterialsample`](#biologicalmaterialsample)
+
+Material sample that is an aggregation of whole or fragmentary parts
+of multiple organisms, microscopic or megascopic, representative of
+some sampled feature.
+
+#####  Bundle biome aggregation
+
+[]{#bundlebiomeaggregation}
+
+Concept: [`bundlebiomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/bundlebiomeaggregation)
+
+Child of:
+ [`biomeaggregation`](#biomeaggregation)
+
+Material sample that is an aggregation of whole organisms
+representative of some biome.
+
+#####  Slurry biome aggregation
+
+[]{#slurrybiomeaggregation}
+
+Concept: [`slurrybiomeaggregation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/slurrybiomeaggregation)
+
+Child of:
+ [`biomeaggregation`](#biomeaggregation)
+
+Material sample that consists of mixed organic and inorganic material,
+including whole organisms and organism fragments.
+
+####  Organism part
+
+[]{#organismpart}
+
+Concept: [`organismpart`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/organismpart)
+
+Child of:
+ [`biologicalmaterialsample`](#biologicalmaterialsample)
+
+Material sample that is part of an organism, e.g. a tissue sample,
+plant leaf, flower, bird feather. Include internal parts not composed
+of organic material (e.g. teeth, bone), and hard body parts that are
+not shed (hoof, horn, tusk, claw).  Hair is tricky, include here for
+now.  Does not necessarily imply existance of parent sample. Not
+fossilized; generally includes organism parts native to deposits of
+Holocene to Recent age.
+
+####  Organism product
+
+[]{#organismproduct}
+
+Concept: [`organismproduct`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/organismproduct)
+
+Child of:
+ [`biologicalmaterialsample`](#biologicalmaterialsample)
+
+Material sample is a thing produced by some organism, generally not
+composed of organic material or including biological tissue, e.g.
+Shell, antler, egg shell, coral skeleton (organic tissue not
+included), fecal matter, cocoon, web.  Consider internal parts not
+composed of organic material (e.g. teeth, bone) and hard body parts
+that are not shed (hoof, horn, tusk) to be organism parts.
+
+####  Whole organism material sample
+
+[]{#wholeorganism}
+
+Concept: [`wholeorganism`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/wholeorganism)
+
+Child of:
+ [`biologicalmaterialsample`](#biologicalmaterialsample)
+
+Material sample consists of the bodies of one or more entire organisms
+of the same species, from any kingdom.
+
+###  Fluid in container
+
+[]{#fluidincontainer}
+
+Concept: [`fluidincontainer`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/fluidincontainer)
+
+Child of:
+ [`materialsample`](#materialsample)
+
+Material sample is a liquid, gas, or mixed dominantly fluid phase
+material that is necessarily inside some container. Fluids might
+include minor solid particles. The container is typically human made,
+but also includes natural fluid containers, e.g. a fluid inclusion in
+a mineral grain.  Fluids might be colloids, foams, gels, or
+suspensions. The sample is the fluid substance; fluid samples
+collected to analyze the contained biome should be considered 'Biome
+aggregation sample'
+
+###  Non biologic solid object
+
+[]{#nonbiologicsolidobject}
+
+Concept: [`nonbiologicsolidobject`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/nonbiologicsolidobject)
+
+Child of:
+ [`materialsample`](#materialsample)
+
+Individual solid object, the substance of which is not formed directly
+by or part of a living organism
+
+####  Artifact
+
+[]{#artifact}
+
+Concept: [`artifact`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/artifact)
+
+Child of:
+ [`nonbiologicsolidobject`](#nonbiologicsolidobject)
+
+An object made (manufactured, shaped, modified) by a human being, or
+precursor hominid. Include a set of pieces belonging originally to a
+single object and treated as a single sample.
+
+####  Fossil
+
+[]{#fossil}
+
+Concept: [`fossil`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/fossil)
+
+Child of:
+ [`nonbiologicsolidobject`](#nonbiologicsolidobject)
+
+Material sample is the remains or trace of one or more organisms
+preserved in rock; includes whole body, body parts (usually bone or
+shell), and trace fossils. An organism or organism part becomes a
+fossil when it has undergone some fossilization process that entails
+physical and chemical changes akin to diagenesis in a sedimentary
+rock. Includes trace fossils, which are manifestations of biologic
+activity preserved in a rock body (typically sedimentary), without
+included preserved body parts.
+
+####  Other solid object
+
+[]{#othersolidobject}
+
+Concept: [`othersolidobject`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/othersolidobject)
+
+Child of:
+ [`nonbiologicsolidobject`](#nonbiologicsolidobject)
+
+A non-biologic solid object that is not one of the other types.
+
+####  Solid material sample
+
+[]{#solidmaterialsample}
+
+Concept: [`solidmaterialsample`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/solidmaterialsample)
+
+Child of:
+ [`nonbiologicsolidobject`](#nonbiologicsolidobject)
+
+Individual solid object, not formed directly by or part of a living
+organism, that is intended to be representative of some material.
+
+###  Research product
+
+[]{#researchproduct}
+
+Concept: [`researchproduct`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/researchproduct)
+
+Child of:
+ [`materialsample`](#materialsample)
+
+Material sample is a product of some research workflow, e.g. a thin
+section, an XRF pellet, a grain mount, SEM stub, synthetic rock or
+mineral ...  In general there should be a link to a parent material
+sample from which this was derived.  Might be aggregation (e.g. a
+synthetic material powder) or a solid object.
+
+####  Analytical preparation
+
+[]{#analyticalpreparation}
+
+Concept: [`analyticalpreparation`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/analyticalpreparation)
+
+Child of:
+ [`researchproduct`](#researchproduct)
+
+Material sample is a product of processing required for some
+observation procedure, e.g. thin section, XRF bead, SEM stub, rock
+powder. If identified separately, this should have a ‘parent’ link to
+the original sample
+
+####  Experiment product
+
+[]{#experimentalproduct}
+
+Concept: [`experimentalproduct`](https://w3id.org/isample/vocabulary/materialsampleobjecttype/experimentalproduct)
+
+Child of:
+ [`researchproduct`](#researchproduct)
+
+Material sample that is the product of an experimental procedure (e.g.
+synthetic material)
+
+
