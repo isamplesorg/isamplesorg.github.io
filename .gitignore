@@ -3,6 +3,13 @@ uv.lock
 plantuml-images
 docs
 
+# Generated vocabulary documentation (but keep readme.md files)
+models/generated/vocabularies/*.qmd
+models/generated/vocabularies/*.md
+!models/generated/vocabularies/readme.md
+models/generated/extensions/*.md
+!models/generated/extensions/readme.md
+
 # Large data files
 *.parquet
 
