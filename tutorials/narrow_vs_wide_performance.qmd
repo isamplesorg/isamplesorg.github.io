@@ -16,12 +16,14 @@ This page benchmarks the performance difference between **narrow** and **wide** 
 
 The iSamples property graph data can be serialized in two different parquet formats:
 
-| Format | Description | File Size | Row Count |
-|--------|-------------|-----------|-----------|
-| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | 691 MB | ~11.6M rows |
-| **Wide** | Stores relationships as `p__*` columns on entity rows | 275 MB | ~2.5M rows |
+| Format | Description | File Size | Row Count | Sources |
+|--------|-------------|-----------|-----------|---------|
+| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | 844 MB | ~106M rows | All 4 sources |
+| **Wide** | Stores relationships as `p__*` columns on entity rows | 282 MB | ~20M rows | All 4 sources |
 
-Both formats represent the **same underlying data** with identical semantics, but the wide format is optimized for analytical queries by eliminating edge rows.
+Both formats represent the **same underlying data** (SESAR, OpenContext, GEOME, Smithsonian) with identical semantics, but the wide format is optimized for analytical queries by eliminating edge rows.
+
+**Data source**: Cloudflare R2 (updated January 2026)
 
 ### Why Performance Matters
 
@@ -57,9 +59,10 @@ import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@
 
 ```{ojs}
 //| echo: false
-// Define parquet URLs
-narrowUrl = "https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet"
-wideUrl = "https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg_wide.parquet"
+// Define parquet URLs - iSamples full dataset on Cloudflare R2 (all sources)
+// Updated 2026-01-14: Using Zenodo narrow/wide files on Cloudflare R2
+narrowUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_narrow.parquet"
+wideUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
 ```
 
 ### Environment Info

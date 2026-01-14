@@ -44,7 +44,7 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //| echo: false
 viewof parquet_path = Inputs.text({
   label:"Source (iSamples Wide Format)",
-  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_wide.parquet",
+  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet",
   placeholder: "URL or file:///path/to/file.parquet",
   width:"100%",
   submit:true
@@ -94,13 +94,13 @@ Download the file locally, then serve it:
 
 ```bash
 # Download the wide parquet file (~242MB)
-curl -O https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_wide.parquet
+curl -O https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet
 
 # Serve it locally
 python3 -m http.server 8000
 ```
 
-Then use: `http://localhost:8000/isamples_202512_wide.parquet`
+Then use: `http://localhost:8000/isamples_202601_wide.parquet`
 
 **Benefits of wide format file:**
 - 66% smaller than narrow format (242 MB vs 709 MB)
