@@ -53,8 +53,10 @@ website:
           href: tutorials/zenodo_isamples_analysis.qmd
         - text: "Cesium View (Narrow)"
           href: tutorials/parquet_cesium.qmd
-        - text: "Cesium View (Wide)"
+        - text: "Cesium View (Wide - OpenContext)"
           href: tutorials/parquet_cesium_wide.qmd
+        - text: "Cesium View (Wide - iSamples Full)"
+          href: tutorials/parquet_cesium_isamples_wide.qmd
         - text: "Cesium View split sources"
           href: tutorials/parquet_cesium_split.qmd
         - text: "Narrow vs Wide Performance"
