@@ -17,6 +17,9 @@ website:
       - icon: twitter
         href: https://twitter.com/isamplesorg
     contents:
+      - href: index_alt.qmd
+        text: Alt Home Page
+        aria-label: "Goals of the iSamples project"
       - href: about.qmd
         text: Goals
         aria-label: "Goals of the iSamples project"

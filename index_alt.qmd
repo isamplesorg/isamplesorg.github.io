@@ -1,0 +1,39 @@
+---
+title: "Internet of Samples: iSamples"
+number-sections: false
+toc: false
+---
+
+# Explore the Internet of Samples
+
+::: {layout-ncol=3}
+
+![](assets/RCN_workshop_NYU.jpg){group="my-group"}
+
+![](assets/workshop_Tucson.jpg){group="my-group"}
+
+![](assets/workshop_SI.jpg){group="my-group"}
+
+![](assets/outside_SI_MSC.jpg){group="my-group"}
+
+![](assets/tour_SI_MSC.jpg){group="my-group"}
+
+![](assets/workshop_Moorea.jpg){group="my-group"}
+
+:::
+
+The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.
+
+# Current Data Access: Geoparquet-Based Approach
+
+**Note**: iSamples Central is currently unavailable. The project now uses **geoparquet files** for efficient, browser-based data access and analysis:
+
+📊 &nbsp;&nbsp; **[Interactive Tutorials](/tutorials/)** - Modern browser-based analysis with DuckDB-WASM
+<br/>
+🗺️ &nbsp;&nbsp; **Comprehensive Coverage** - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian
+<br/>
+🚀 &nbsp;&nbsp; **High Performance** - Fast, efficient data access with minimal memory usage
+<br/>
+🌐 &nbsp;&nbsp; **Universal Access** - Works in any modern browser without software installation
+
+subtitle: "Toward an Interdisciplinary Cyberinfrastructure for Material Samples [![](https://img.shields.io/badge/NSF-2004839-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839)"
