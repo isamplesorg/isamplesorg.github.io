@@ -1,0 +1,471 @@
+---
+title: "iSamples Interactive Explorer"
+categories: [parquet, spatial, interactive]
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 3
+---
+
+An interactive interface for exploring iSamples data across all sources directly in your browser.
+
+**Features:**
+
+- 3D globe view with 6M+ samples (Cesium)
+- Interactive data table
+- Sample cards on selection
+- Source filtering
+- Bidirectional selection sync (click globe ↔ table)
+
+**Data:** Zenodo wide parquet (~282 MB, 20M rows) via DuckDB-WASM
+
+::: {.callout-note}
+### Browser-Based Analysis
+All queries run directly in your browser using DuckDB-WASM. No server required!
+First load may take a few seconds as the parquet metadata is fetched.
+:::
+
+## Setup
+
+```{ojs}
+//| code-fold: true
+// Imports
+import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@0.7.1/+esm"
+```
+
+```{ojs}
+//| code-fold: true
+// Data source configuration
+parquet_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+
+// Source color scheme (consistent with Jupyter version)
+SOURCE_COLORS = ({
+  'SESAR': '#3366CC',       // Blue
+  'OPENCONTEXT': '#DC3912', // Red
+  'GEOME': '#109618',       // Green
+  'SMITHSONIAN': '#FF9900', // Orange
+  'default': '#808080'      // Gray
+})
+
+// Cesium colors (need to be created fresh each time)
+function getCesiumColor(source) {
+  const colors = {
+    'SESAR': Cesium.Color.fromCssColorString('#3366CC'),
+    'OPENCONTEXT': Cesium.Color.fromCssColorString('#DC3912'),
+    'GEOME': Cesium.Color.fromCssColorString('#109618'),
+    'SMITHSONIAN': Cesium.Color.fromCssColorString('#FF9900'),
+  };
+  return colors[source] || Cesium.Color.GRAY;
+}
+```
+
+## Controls
+
+```{ojs}
+//| code-fold: false
+viewof sourceFilter = Inputs.select(
+  ['All Sources', 'SESAR', 'OPENCONTEXT', 'GEOME', 'SMITHSONIAN'],
+  {label: "Source", value: "All Sources"}
+)
+
+viewof maxSamples = Inputs.range([1000, 100000], {
+  label: "Max samples",
+  value: 25000,
+  step: 1000
+})
+
+viewof loadButton = Inputs.button("Load Data", {
+  style: "padding: 8px 16px; background: #2E86AB; color: white; border: none; border-radius: 4px; cursor: pointer;"
+})
+```
+
+<div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px; display: none;">
+Loading data...
+</div>
+
+## Database Connection
+
+```{ojs}
+//| code-fold: true
+// Initialize DuckDB
+db = {
+  const instance = await DuckDBClient.of();
+  await instance.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  return instance;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Load data when button clicked
+sampleData = {
+  if (loadButton < 1) return [];
+
+  const statusDiv = document.getElementById('loading_status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Loading samples...';
+  }
+
+  try {
+    const sourceClause = sourceFilter === 'All Sources'
+      ? ''
+      : `AND n = '${sourceFilter}'`;
+
+    const query = `
+      SELECT
+        row_id,
+        pid,
+        label,
+        COALESCE(description, '') as description,
+        latitude,
+        longitude,
+        n as source,
+        place_name
+      FROM samples
+      WHERE otype = 'MaterialSampleRecord'
+        AND latitude IS NOT NULL
+        ${sourceClause}
+      ORDER BY RANDOM()
+      LIMIT ${maxSamples}
+    `;
+
+    const result = await db.query(query);
+    const data = Array.from(result);
+
+    if (statusDiv) {
+      statusDiv.textContent = `Loaded ${data.length.toLocaleString()} samples`;
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
+    }
+
+    return data;
+  } catch (error) {
+    if (statusDiv) {
+      statusDiv.textContent = `Error: ${error.message}`;
+      statusDiv.style.background = '#ffebee';
+    }
+    return [];
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Source statistics
+sourceStats = {
+  if (loadButton < 1) return null;
+
+  const query = `
+    SELECT
+      n as source,
+      COUNT(*) as count
+    FROM samples
+    WHERE otype = 'MaterialSampleRecord'
+      AND latitude IS NOT NULL
+    GROUP BY n
+    ORDER BY count DESC
+  `;
+
+  try {
+    return await db.query(query);
+  } catch (e) {
+    return null;
+  }
+}
+```
+
+## Explorer
+
+::: {.panel-tabset}
+
+### Globe
+
+<div id="cesiumContainer" style="width: 100%; aspect-ratio: 4/3;"></div>
+
+<div style="display: flex; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
+</div>
+
+```{ojs}
+//| code-fold: true
+// Mutable for tracking clicked point
+mutable clickedPointId = null
+mutable clickedPointIndex = null
+```
+
+```{ojs}
+//| code-fold: true
+// Cesium viewer setup
+viewer = {
+  // Wait for Cesium to be available
+  await new Promise(resolve => {
+    if (typeof Cesium !== 'undefined') resolve();
+    else {
+      const check = setInterval(() => {
+        if (typeof Cesium !== 'undefined') {
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+    }
+  });
+
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1YjQzMzgxNC00Y2M4LTRjZjktOTgzYS04MWI4YjE5OWNmMzciLCJpZCI6MjY1MTM4LCJpYXQiOjE3MzQ3MzI2MDZ9.O4SQmImLB7L98J65G_N-Kx2LGrv8_WQnfbGPCd8qjF0';
+
+  const container = document.getElementById('cesiumContainer');
+
+  const v = new Cesium.Viewer(container, {
+    timeline: false,
+    animation: false,
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: true,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    fullscreenElement: container,
+    terrain: Cesium.Terrain.fromWorldTerrain()
+  });
+
+  // Point collection for efficient rendering
+  v.pointCollection = new Cesium.PointPrimitiveCollection();
+  v.scene.primitives.add(v.pointCollection);
+
+  // Click handler
+  const handler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
+  handler.setInputAction((e) => {
+    const picked = v.scene.pick(e.position);
+    if (Cesium.defined(picked) && picked.primitive && picked.id !== undefined) {
+      mutable clickedPointId = picked.id.pid;
+      mutable clickedPointIndex = picked.id.index;
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  return v;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Render points on globe
+renderPoints = {
+  if (!viewer || sampleData.length === 0) return null;
+
+  const statusDiv = document.getElementById('loading_status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Rendering points...';
+  }
+
+  // Clear existing points
+  viewer.pointCollection.removeAll();
+
+  const scalar = new Cesium.NearFarScalar(1.5e2, 3, 8.0e6, 0.5);
+  const CHUNK_SIZE = 500;
+
+  for (let i = 0; i < sampleData.length; i += CHUNK_SIZE) {
+    const chunk = sampleData.slice(i, i + CHUNK_SIZE);
+
+    for (let j = 0; j < chunk.length; j++) {
+      const row = chunk[j];
+      viewer.pointCollection.add({
+        id: { pid: row.pid, index: i + j, row: row },
+        position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
+        pixelSize: 5,
+        color: getCesiumColor(row.source),
+        scaleByDistance: scalar,
+      });
+    }
+
+    // Update progress
+    if (statusDiv && i % 5000 === 0) {
+      const pct = Math.round((i / sampleData.length) * 100);
+      statusDiv.textContent = `Rendering points... ${pct}%`;
+    }
+
+    // Yield to browser
+    if (i + CHUNK_SIZE < sampleData.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  if (statusDiv) {
+    statusDiv.textContent = `Rendered ${sampleData.length.toLocaleString()} points`;
+    setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
+  }
+
+  return sampleData.length;
+}
+```
+
+### Data Table
+
+```{ojs}
+//| code-fold: true
+viewof selectedRow = Inputs.table(sampleData, {
+  columns: ['source', 'label', 'latitude', 'longitude'],
+  header: {
+    source: 'Source',
+    label: 'Label',
+    latitude: 'Lat',
+    longitude: 'Lon'
+  },
+  width: {
+    source: 100,
+    label: 300,
+    latitude: 80,
+    longitude: 80
+  },
+  height: 400,
+  layout: "auto"
+})
+```
+
+```{ojs}
+//| code-fold: true
+// Fly to selected row from table
+flyToSelection = {
+  if (!viewer || !selectedRow || selectedRow.length === 0) return null;
+
+  const row = selectedRow[0];
+  if (row && row.latitude && row.longitude) {
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 50000),
+      duration: 1.5
+    });
+
+    // Update clicked state for card
+    mutable clickedPointId = row.pid;
+    mutable clickedPointIndex = sampleData.findIndex(r => r.pid === row.pid);
+  }
+  return row;
+}
+```
+
+### Sample Card
+
+```{ojs}
+//| code-fold: true
+// Get selected sample data
+selectedSample = {
+  if (clickedPointIndex === null || clickedPointIndex < 0) return null;
+  if (clickedPointIndex >= sampleData.length) return null;
+  return sampleData[clickedPointIndex];
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Render sample card
+sampleCard = {
+  if (!selectedSample) {
+    return html`<div style="padding: 20px; color: #666; text-align: center;">
+      Click a point on the globe or select a row in the table to see details
+    </div>`;
+  }
+
+  const s = selectedSample;
+  const sourceColor = SOURCE_COLORS[s.source] || SOURCE_COLORS.default;
+
+  const label = s.label || 'No label';
+  const description = s.description || '';
+  const truncDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
+
+  let placeStr = '';
+  if (s.place_name) {
+    if (Array.isArray(s.place_name)) {
+      placeStr = s.place_name.filter(p => p).join(' > ');
+    } else {
+      placeStr = String(s.place_name);
+    }
+  }
+
+  const placeHtml = placeStr ? `<div style="margin-bottom: 4px;"><strong>Place:</strong> ${placeStr.substring(0, 100)}</div>` : '';
+
+  const pidShort = s.pid ? (s.pid.length > 50 ? s.pid.substring(0, 50) + '...' : s.pid) : '';
+
+  return html`
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                border: 1px solid #ddd; border-radius: 8px; padding: 16px;
+                max-width: 500px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="background: ${sourceColor}; color: white; padding: 4px 8px;
+                    border-radius: 4px; font-size: 12px; font-weight: 600;">${s.source}</span>
+      </div>
+      <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${label}</h3>
+      <p style="margin: 0 0 12px 0; font-size: 13px; color: #666; line-height: 1.4;">
+        ${truncDesc || '<em>No description</em>'}
+      </p>
+      <div style="font-size: 12px; color: #888;">
+        <div style="margin-bottom: 4px;"><strong>Location:</strong> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
+        ${placeHtml}
+        <div><strong>ID:</strong> <code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${pidShort}</code></div>
+      </div>
+    </div>
+  `;
+}
+```
+
+### Statistics
+
+```{ojs}
+//| code-fold: true
+// Show source statistics
+statsDisplay = {
+  if (!sourceStats) return html`<p>Load data to see statistics</p>`;
+
+  return html`
+    <h4>Samples by Source (Full Dataset)</h4>
+    ${Inputs.table(sourceStats, {
+      header: { source: 'Source', count: 'Total Samples' }
+    })}
+
+    <h4>Current Selection</h4>
+    <p><strong>${sampleData.length.toLocaleString()}</strong> samples loaded</p>
+  `;
+}
+```
+
+:::
+
+## Usage
+
+1. **Select source filter**: Choose a specific data source or "All Sources"
+2. **Set max samples**: Adjust the slider for performance vs. coverage
+3. **Click "Load Data"**: Fetch samples from the parquet file
+4. **Explore the globe**: Pan, zoom, and click points to see details
+5. **Use the table**: Click rows to fly to locations on the globe
+
+### Color Legend
+
+- **Blue (SESAR)**: Geological samples with IGSNs
+- **Red (OpenContext)**: Archaeological samples
+- **Green (GEOME)**: Genomic/biological samples
+- **Orange (Smithsonian)**: Museum collections
+
+::: {.callout-tip collapse="true"}
+### Performance Tips
+
+- Start with fewer samples (10K-25K) for faster initial load
+- The globe renders points in chunks to keep the browser responsive
+- First query takes longer as DuckDB initializes; subsequent queries are faster
+- Use source filter to focus on specific domains
+:::
+
+<!-- Cesium resources -->
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<style>
+#cesiumContainer {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cesium-viewer-bottom {
+  display: none !important;
+}
+</style>
