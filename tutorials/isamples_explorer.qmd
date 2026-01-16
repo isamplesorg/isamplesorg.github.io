@@ -214,7 +214,7 @@ viewer = {
     }
   });
 
-  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1YjQzMzgxNC00Y2M4LTRjZjktOTgzYS04MWI4YjE5OWNmMzciLCJpZCI6MjY1MTM4LCJpYXQiOjE3MzQ3MzI2MDZ9.O4SQmImLB7L98J65G_N-Kx2LGrv8_WQnfbGPCd8qjF0';
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
 
   const container = document.getElementById('cesiumContainer');
 
@@ -222,10 +222,6 @@ viewer = {
     timeline: false,
     animation: false,
     baseLayerPicker: false,
-    geocoder: false,
-    homeButton: true,
-    sceneModePicker: false,
-    navigationHelpButton: false,
     fullscreenElement: container,
     terrain: Cesium.Terrain.fromWorldTerrain()
   });
