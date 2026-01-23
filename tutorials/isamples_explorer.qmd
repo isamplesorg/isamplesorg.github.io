@@ -8,22 +8,11 @@ format:
     toc-depth: 3
 ---
 
-An interactive interface for exploring iSamples data across all sources directly in your browser.
-
-**Features:**
-
-- 3D globe view with 6M+ samples (Cesium)
-- Interactive data table
-- Sample cards on selection
-- Source filtering
-- Bidirectional selection sync (click globe ↔ table)
-
-**Data:** Zenodo wide parquet (~282 MB, 20M rows) via DuckDB-WASM
+Search and explore **6.7 million physical samples** from scientific collections worldwide.
 
 ::: {.callout-note}
-### Browser-Based Analysis
-All queries run directly in your browser using DuckDB-WASM. No server required!
-First load may take a few seconds as the parquet metadata is fetched.
+### Serverless Architecture
+This app queries a 282 MB Parquet file directly in your browser using DuckDB-WASM. No server required!
 :::
 
 ## Setup
@@ -39,7 +28,7 @@ import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@
 // Data source configuration
 parquet_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
 
-// Source color scheme (consistent with Jupyter version)
+// Source color scheme (consistent with iSamples conventions)
 SOURCE_COLORS = ({
   'SESAR': '#3366CC',       // Blue
   'OPENCONTEXT': '#DC3912', // Red
@@ -48,7 +37,7 @@ SOURCE_COLORS = ({
   'default': '#808080'      // Gray
 })
 
-// Cesium colors (need to be created fresh each time)
+// Cesium colors
 function getCesiumColor(source) {
   const colors = {
     'SESAR': Cesium.Color.fromCssColorString('#3366CC'),
@@ -60,31 +49,175 @@ function getCesiumColor(source) {
 }
 ```
 
-## Controls
+```{ojs}
+//| code-fold: true
+// Parse URL params for bookmarkable searches
+initialParams = {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: params.get("q") || "",
+    sources: params.get("sources")?.split(",").filter(s => s) || [],
+    view: ["list", "table", "globe"].includes(params.get("view")) ? params.get("view") : "globe"
+  };
+}
+```
+
+## Search & Filters
 
 ```{ojs}
 //| code-fold: false
-viewof sourceFilter = Inputs.select(
-  ['All Sources', 'SESAR', 'OPENCONTEXT', 'GEOME', 'SMITHSONIAN'],
-  {label: "Source", value: "All Sources"}
-)
-
-viewof maxSamples = Inputs.range([1000, 100000], {
-  label: "Max samples",
-  value: 25000,
-  step: 1000
-})
-
-viewof loadButton = Inputs.button("Load Data", {
-  style: "padding: 8px 16px; background: #2E86AB; color: white; border: none; border-radius: 4px; cursor: pointer;"
+// Search input
+viewof searchInput = Inputs.text({
+  placeholder: "Search samples (e.g., pottery, basalt, Cyprus...)",
+  value: initialParams.q,
+  submit: "Search"
 })
 ```
 
-<div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px; display: none;">
+<div class="grid" style="grid-template-columns: 1fr 3fr; gap: 20px;">
+<div class="card" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px;">
+
+### Filters
+
+**Source**
+
+```{ojs}
+//| code-fold: true
+// Source checkboxes with counts
+viewof sourceCheckboxes = {
+  // Get source counts based on current search
+  const counts = await sourceCounts;
+  const options = counts.map(r => r.value);
+
+  return Inputs.checkbox(options, {
+    value: initialParams.sources.filter(s => options.includes(s)),
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const color = SOURCE_COLORS[x] || SOURCE_COLORS.default;
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
+        ${x} <span style="color: #888;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+```{ojs}
+//| code-fold: true
+html`<a href="?" style="font-size: 13px;">Clear All Filters</a>`
+```
+
+**Max Samples**
+
+```{ojs}
+//| code-fold: false
+viewof maxSamples = Inputs.range([1000, 100000], {
+  value: 25000,
+  step: 1000
+})
+```
+
+</div>
+<div>
+
+### Results
+
+```{ojs}
+//| code-fold: true
+// Update URL without reloading
+{
+  const params = new URLSearchParams();
+  if (searchInput) params.set("q", searchInput);
+  if (sourceCheckboxes?.length) params.set("sources", sourceCheckboxes.join(","));
+  if (viewMode !== "globe") params.set("view", viewMode);
+
+  const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+  if (window.location.search !== `?${params.toString()}`) {
+    history.replaceState(null, "", newUrl);
+  }
+}
+```
+
+```{ojs}
+//| code-fold: false
+// View mode selector
+viewof viewMode = Inputs.radio(["globe", "list", "table"], {
+  value: initialParams.view,
+  format: (x) => x === "globe" ? "🌍 Globe" : x === "list" ? "📋 List" : "📊 Table"
+})
+```
+
+<div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px;">
 Loading data...
 </div>
 
-## Database Connection
+```{ojs}
+//| code-fold: true
+// Show result count
+html`<div style="margin-bottom: 16px;">
+  <strong>Showing ${sampleData.length.toLocaleString()} of ${Number(totalCount).toLocaleString()} matching samples</strong>
+</div>`
+```
+
+```{ojs}
+//| code-fold: true
+// Render results based on view mode
+{
+  if (viewMode === "globe") {
+    // Globe is rendered in its own section below
+    return html`<div style="color: #666; font-style: italic;">See globe view below</div>`;
+  } else if (viewMode === "table") {
+    return Inputs.table(sampleData, {
+      columns: ['source', 'label', 'latitude', 'longitude'],
+      header: {
+        source: 'Source',
+        label: 'Label',
+        latitude: 'Lat',
+        longitude: 'Lon'
+      },
+      format: {
+        source: (x) => html`<span style="color: ${SOURCE_COLORS[x] || '#808080'}; font-weight: 600;">${x}</span>`,
+        latitude: (x) => x?.toFixed(4),
+        longitude: (x) => x?.toFixed(4)
+      },
+      rows: 20
+    });
+  } else {
+    // List view
+    if (sampleData.length === 0) {
+      return html`<div style="color: #888; padding: 20px; text-align: center;">No results found</div>`;
+    }
+
+    const items = sampleData.map(r => {
+      const color = SOURCE_COLORS[r.source] || SOURCE_COLORS.default;
+      const desc = r.description || "";
+      const description = desc.length > 150 ? desc.slice(0, 150) + "..." : (desc || "<em>No description</em>");
+
+      return html`<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+            ${r.source}
+          </span>
+        </div>
+        <div style="font-weight: 600; margin-bottom: 4px;">${r.label || "Unlabeled"}</div>
+        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${description}</div>
+        <div style="font-size: 12px; color: #888;">
+          📍 ${r.latitude?.toFixed(4)}, ${r.longitude?.toFixed(4)}
+        </div>
+      </div>`;
+    });
+
+    return html`<div style="max-height: 500px; overflow-y: auto;">${items}</div>`;
+  }
+}
+```
+
+</div>
+</div>
+
+## Database & Queries
 
 ```{ojs}
 //| code-fold: true
@@ -98,10 +231,86 @@ db = {
 
 ```{ojs}
 //| code-fold: true
-// Load data when button clicked
-sampleData = {
-  if (loadButton < 1) return [];
+// Build WHERE clause from current filters
+whereClause = {
+  const conditions = [
+    "otype = 'MaterialSampleRecord'",
+    "latitude IS NOT NULL"
+  ];
 
+  // Text search
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    conditions.push(`(
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`);
+  }
+
+  // Source filter
+  const sources = Array.from(sourceCheckboxes || []);
+  if (sources.length > 0) {
+    const sourceList = sources.map(s => `'${s}'`).join(", ");
+    conditions.push(`n IN (${sourceList})`);
+  }
+
+  return conditions.join(" AND ");
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Get source facet counts (respects text search but not source filter)
+sourceCounts = {
+  let baseWhere = "otype = 'MaterialSampleRecord' AND latitude IS NOT NULL";
+
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    baseWhere += ` AND (
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`;
+  }
+
+  const query = `
+    SELECT n as value, COUNT(*) as count
+    FROM samples
+    WHERE ${baseWhere}
+    GROUP BY n
+    ORDER BY count DESC
+  `;
+
+  try {
+    const result = await db.query(query);
+    return Array.from(result);
+  } catch (e) {
+    console.error("Facet query error:", e);
+    return [];
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Get total count matching current filters
+totalCount = {
+  const query = `SELECT COUNT(*) as count FROM samples WHERE ${whereClause}`;
+  try {
+    const result = await db.query(query);
+    const rows = Array.from(result);
+    return rows[0]?.count || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Load sample data
+sampleData = {
   const statusDiv = document.getElementById('loading_status');
   if (statusDiv) {
     statusDiv.style.display = 'block';
@@ -109,10 +318,6 @@ sampleData = {
   }
 
   try {
-    const sourceClause = sourceFilter === 'All Sources'
-      ? ''
-      : `AND n = '${sourceFilter}'`;
-
     const query = `
       SELECT
         row_id,
@@ -124,9 +329,7 @@ sampleData = {
         n as source,
         place_name
       FROM samples
-      WHERE otype = 'MaterialSampleRecord'
-        AND latitude IS NOT NULL
-        ${sourceClause}
+      WHERE ${whereClause}
       ORDER BY RANDOM()
       LIMIT ${maxSamples}
     `;
@@ -150,52 +353,22 @@ sampleData = {
 }
 ```
 
+## Globe View
+
 ```{ojs}
 //| code-fold: true
-// Source statistics
-sourceStats = {
-  if (loadButton < 1) return null;
-
-  const query = `
-    SELECT
-      n as source,
-      COUNT(*) as count
-    FROM samples
-    WHERE otype = 'MaterialSampleRecord'
-      AND latitude IS NOT NULL
-    GROUP BY n
-    ORDER BY count DESC
-  `;
-
-  try {
-    return await db.query(query);
-  } catch (e) {
-    return null;
-  }
-}
+mutable clickedPointId = null
+mutable clickedPointIndex = null
 ```
 
-## Explorer
+<div id="cesiumContainer" style="width: 100%; aspect-ratio: 16/9; display: ${viewMode === 'globe' ? 'block' : 'none'};"></div>
 
-::: {.panel-tabset}
-
-### Globe
-
-<div id="cesiumContainer" style="width: 100%; aspect-ratio: 4/3;"></div>
-
-<div style="display: flex; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
+<div style="display: ${viewMode === 'globe' ? 'flex' : 'none'}; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
   <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
   <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
   <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
   <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
 </div>
-
-```{ojs}
-//| code-fold: true
-// Mutable for tracking clicked point
-mutable clickedPointId = null
-mutable clickedPointIndex = null
-```
 
 ```{ojs}
 //| code-fold: true
@@ -297,51 +470,7 @@ renderPoints = {
 }
 ```
 
-### Data Table
-
-```{ojs}
-//| code-fold: true
-viewof selectedRow = Inputs.table(sampleData, {
-  columns: ['source', 'label', 'latitude', 'longitude'],
-  header: {
-    source: 'Source',
-    label: 'Label',
-    latitude: 'Lat',
-    longitude: 'Lon'
-  },
-  width: {
-    source: 100,
-    label: 300,
-    latitude: 80,
-    longitude: 80
-  },
-  height: 400,
-  layout: "auto"
-})
-```
-
-```{ojs}
-//| code-fold: true
-// Fly to selected row from table
-flyToSelection = {
-  if (!viewer || !selectedRow || selectedRow.length === 0) return null;
-
-  const row = selectedRow[0];
-  if (row && row.latitude && row.longitude) {
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 50000),
-      duration: 1.5
-    });
-
-    // Update clicked state for card
-    mutable clickedPointId = row.pid;
-    mutable clickedPointIndex = sampleData.findIndex(r => r.pid === row.pid);
-  }
-  return row;
-}
-```
-
-### Sample Card
+## Sample Card
 
 ```{ojs}
 //| code-fold: true
@@ -358,8 +487,8 @@ selectedSample = {
 // Render sample card
 sampleCard = {
   if (!selectedSample) {
-    return html`<div style="padding: 20px; color: #666; text-align: center;">
-      Click a point on the globe or select a row in the table to see details
+    return html`<div style="padding: 20px; color: #666; text-align: center; background: #f9f9f9; border-radius: 8px;">
+      Click a point on the globe to see details
     </div>`;
   }
 
@@ -405,57 +534,47 @@ sampleCard = {
 }
 ```
 
-### Statistics
+---
+
+## Debug Info
+
+<details>
+<summary>Current State & Query</summary>
 
 ```{ojs}
 //| code-fold: true
-// Show source statistics
-statsDisplay = {
-  if (!sourceStats) return html`<p>Load data to see statistics</p>`;
+html`<pre style="font-size: 12px; background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
+State:
+  search: "${searchInput || ''}"
+  sources: ${JSON.stringify(Array.from(sourceCheckboxes || []))}
+  view: "${viewMode}"
+  maxSamples: ${maxSamples}
 
-  return html`
-    <h4>Samples by Source (Full Dataset)</h4>
-    ${Inputs.table(sourceStats, {
-      header: { source: 'Source', count: 'Total Samples' }
-    })}
+WHERE clause:
+${whereClause}
 
-    <h4>Current Selection</h4>
-    <p><strong>${sampleData.length.toLocaleString()}</strong> samples loaded</p>
-  `;
-}
+Total matching: ${Number(totalCount).toLocaleString()}
+Loaded: ${sampleData.length.toLocaleString()}
+</pre>`
 ```
 
-:::
+</details>
 
-## Usage
-
-1. **Select source filter**: Choose a specific data source or "All Sources"
-2. **Set max samples**: Adjust the slider for performance vs. coverage
-3. **Click "Load Data"**: Fetch samples from the parquet file
-4. **Explore the globe**: Pan, zoom, and click points to see details
-5. **Use the table**: Click rows to fly to locations on the globe
-
-### Color Legend
-
-- **Blue (SESAR)**: Geological samples with IGSNs
-- **Red (OpenContext)**: Archaeological samples
-- **Green (GEOME)**: Genomic/biological samples
-- **Orange (Smithsonian)**: Museum collections
-
-::: {.callout-tip collapse="true"}
-### Performance Tips
-
-- Start with fewer samples (10K-25K) for faster initial load
-- The globe renders points in chunks to keep the browser responsive
-- First query takes longer as DuckDB initializes; subsequent queries are faster
-- Use source filter to focus on specific domains
-:::
-
-<!-- Cesium resources -->
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+---
 
 <style>
+.card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+form[name="checkbox"] label {
+  display: block;
+  margin: 4px 0;
+}
+
 #cesiumContainer {
   border-radius: 8px;
   overflow: hidden;
@@ -465,3 +584,7 @@ statsDisplay = {
   display: none !important;
 }
 </style>
+
+<!-- Cesium resources -->
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">

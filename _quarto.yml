@@ -43,6 +43,9 @@ website:
         - icon: github
           text: Github repositories
           href: "https://github.com/isamplesorg/"
+      - text: "Interactive Explorer"
+        href: tutorials/isamples_explorer.qmd
+        aria-label: "Search and explore 6.7M samples"
       - section: "Getting Started"
         contents:
         - text: "iSamples Tutorials Overview"
