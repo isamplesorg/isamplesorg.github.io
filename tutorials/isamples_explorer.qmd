@@ -19,8 +19,8 @@ This app queries a 282 MB Parquet file directly in your browser using DuckDB-WAS
 
 ```{ojs}
 //| code-fold: true
-// Imports
-import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@0.7.1/+esm"
+// Imports - use dynamic import to avoid CORS issues
+duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm")
 ```
 
 ```{ojs}
@@ -221,11 +221,44 @@ html`<div style="margin-bottom: 16px;">
 
 ```{ojs}
 //| code-fold: true
-// Initialize DuckDB
+// Initialize DuckDB-WASM
 db = {
-  const instance = await DuckDBClient.of();
-  await instance.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  const bundle = await duckdbModule.selectBundle(duckdbModule.getJsDelivrBundles());
+
+  const worker_url = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+  );
+  const worker = new Worker(worker_url);
+  const logger = new duckdbModule.ConsoleLogger(duckdbModule.LogLevel.WARNING);
+
+  const instance = new duckdbModule.AsyncDuckDB(logger, worker);
+  await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  URL.revokeObjectURL(worker_url);
+
+  // Create view for convenience
+  const conn = await instance.connect();
+  await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  await conn.close();
+
   return instance;
+}
+
+// Helper function to run queries
+async function runQuery(sql) {
+  const conn = await db.connect();
+  try {
+    const result = await conn.query(sql);
+    return result.toArray().map(row => {
+      const obj = row.toJSON();
+      // Convert BigInt to Number
+      for (const key in obj) {
+        if (typeof obj[key] === 'bigint') obj[key] = Number(obj[key]);
+      }
+      return obj;
+    });
+  } finally {
+    await conn.close();
+  }
 }
 ```
 
@@ -283,8 +316,7 @@ sourceCounts = {
   `;
 
   try {
-    const result = await db.query(query);
-    return Array.from(result);
+    return await runQuery(query);
   } catch (e) {
     console.error("Facet query error:", e);
     return [];
@@ -298,8 +330,7 @@ sourceCounts = {
 totalCount = {
   const query = `SELECT COUNT(*) as count FROM samples WHERE ${whereClause}`;
   try {
-    const result = await db.query(query);
-    const rows = Array.from(result);
+    const rows = await runQuery(query);
     return rows[0]?.count || 0;
   } catch (e) {
     return 0;
@@ -334,8 +365,7 @@ sampleData = {
       LIMIT ${maxSamples}
     `;
 
-    const result = await db.query(query);
-    const data = Array.from(result);
+    const data = await runQuery(query);
 
     if (statusDiv) {
       statusDiv.textContent = `Loaded ${data.length.toLocaleString()} samples`;
