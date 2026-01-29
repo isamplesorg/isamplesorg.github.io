@@ -46,23 +46,15 @@ website:
       - text: "Interactive Explorer"
         href: tutorials/isamples_explorer.qmd
         aria-label: "Search and explore 6.7M samples"
-      - section: "Getting Started"
+      - section: "Tutorials"
         contents:
-        - text: "iSamples Tutorials Overview"
+        - text: "Overview"
           href: tutorials/index.qmd
-        - text: "iSamples Parquet Tutorial"
-          href: tutorials/parquet.qmd
-        - text: "Zenodo iSamples OpenContext Tutorial"
+        - text: "Deep-Dive Analysis"
           href: tutorials/zenodo_isamples_analysis.qmd
-        - text: "Cesium View (Narrow)"
-          href: tutorials/parquet_cesium.qmd
-        - text: "Cesium View (Wide - OpenContext)"
-          href: tutorials/parquet_cesium_wide.qmd
-        - text: "Cesium View (Wide - iSamples Full)"
+        - text: "3D Globe Visualization"
           href: tutorials/parquet_cesium_isamples_wide.qmd
-        - text: "Cesium View split sources"
-          href: tutorials/parquet_cesium_split.qmd
-        - text: "Narrow vs Wide Performance"
+        - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io

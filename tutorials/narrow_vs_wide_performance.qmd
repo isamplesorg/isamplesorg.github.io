@@ -740,5 +740,6 @@ This eliminates ~9M edge rows, resulting in the 60% file size reduction.
 
 ## See Also
 
-- [OpenContext Parquet Analysis](oc_parquet_enhanced.qmd) - Deep dive into the property graph structure
-- [Cesium Visualization](parquet_cesium.qmd) - Interactive 3D visualization of sample locations
+- [Interactive Explorer](isamples_explorer.qmd) - Search and filter samples
+- [3D Globe Visualization](parquet_cesium_isamples_wide.qmd) - Cesium-based visualization of all data
+- [Deep-Dive Analysis](zenodo_isamples_analysis.qmd) - Comprehensive DuckDB-WASM tutorial

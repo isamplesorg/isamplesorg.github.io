@@ -16,7 +16,6 @@ This page uses the **iSamples combined dataset** (Dec 2025) which includes:
 - **19.5M total rows** (entities only, no edge rows)
 - **47 columns** with flattened latitude/longitude (direct column access, no JSON parsing)
 
-Compare with [OpenContext-only Cesium View](/tutorials/parquet_cesium_wide.html) (275 MB, ~2.5M rows).
 :::
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
@@ -944,6 +943,6 @@ html`${
 
 ## See Also
 
-- [Cesium View (OpenContext Wide)](/tutorials/parquet_cesium_wide.html) - OpenContext-only data (275 MB)
-- [Cesium View (Narrow)](/tutorials/parquet_cesium.html) - Narrow schema visualization
+- [Interactive Explorer](/tutorials/isamples_explorer.html) - Search and filter samples
 - [Narrow vs Wide Performance](/tutorials/narrow_vs_wide_performance.html) - Benchmark comparison
+- [Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html) - Comprehensive DuckDB-WASM tutorial

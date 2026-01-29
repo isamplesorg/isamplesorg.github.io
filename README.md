@@ -17,11 +17,12 @@ Visit the [Quarto site](https://quarto.org/docs/guide/) for documentation on usi
 
 The `tutorials/` directory contains interactive data analysis tutorials:
 
-- **`parquet_cesium.qmd`** - Cesium-based 3D visualization of parquet data
-- **`oc_parquet_enhanced.qmd`** - **NEW**: Enhanced OpenContext property graph analysis with DuckDB-WASM
-- **`zenodo_isamples_analysis.qmd`** - Analysis of Zenodo archived iSamples data
+- **`isamples_explorer.qmd`** - Interactive search and exploration of 6.7M samples
+- **`zenodo_isamples_analysis.qmd`** - Deep-dive DuckDB-WASM analysis tutorial
+- **`parquet_cesium_isamples_wide.qmd`** - Cesium-based 3D globe visualization
+- **`narrow_vs_wide_performance.qmd`** - Technical schema comparison
 
-The enhanced OpenContext tutorial demonstrates browser-based analysis of 11M+ row archaeological datasets using property graph traversal patterns.
+All tutorials use browser-based analysis with DuckDB-WASM - no server required.
 
 ## Development
 

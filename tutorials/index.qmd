@@ -1,41 +1,30 @@
 ---
-title: "Tutorials: Overview"
+title: "Tutorials"
 ---
 
-Welcome to the iSamples tutorials! These tutorials demonstrate how to work with sample data using modern browser-based tools and geoparquet files.
+Learn to explore **6.7 million physical samples** from scientific collections worldwide using modern browser-based tools.
 
-## Available Data Sources
+## Start Here
 
-With iSamples Central currently unavailable, all tutorials now use **geoparquet files** as the primary data source:
+| Tutorial | What You'll Learn |
+|----------|-------------------|
+| [**Interactive Explorer**](isamples_explorer.qmd) | Search and filter samples with faceted search, view on 3D globe |
+| [**Deep-Dive Analysis**](zenodo_isamples_analysis.qmd) | Comprehensive DuckDB-WASM analysis with Observable JS |
+| [**3D Globe Visualization**](parquet_cesium_isamples_wide.qmd) | Cesium-based visualization of all iSamples data |
+| [**Technical: Narrow vs Wide**](narrow_vs_wide_performance.qmd) | Schema comparison and performance benchmarks |
 
-### Primary Data Sources
-- **Zenodo Complete Dataset**: ~300MB, 6+ million records from all iSamples sources
-- **OpenContext Parquet**: Curated archaeological sample data
-- **Domain-specific Collections**: Specialized datasets for focused analysis
+## Data Sources
 
-### Tutorial Categories
+All tutorials use **geoparquet files** - no server required:
 
-**🗺️ Geographic Analysis**
-- Interactive mapping and spatial exploration
-- Regional distribution analysis
-- Cesium-based 3D visualizations
+- **iSamples Full Dataset**: 282 MB, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian
+- **Available via**: Cloudflare R2 with HTTP range requests
 
-**📊 Data Analysis**
-- Statistical analysis with DuckDB-WASM
-- Material category distributions
-- Cross-collection comparisons
+## Why Browser-Based?
 
-**🚀 Performance Demonstrations**
-- Browser-based big data analysis
-- Efficient sampling and visualization techniques
-- HTTP range request optimization
+Our approach using **geoparquet + DuckDB-WASM** provides:
 
-## Why Geoparquet?
-
-Our tutorials showcase how **geoparquet + DuckDB-WASM** enables:
-
-- ✅ **Universal access**: No software installation required
-- ✅ **Fast analysis**: 5-10x faster than traditional approaches (e.g., downloading full CSV datasets and analyzing them locally). [See benchmark](https://duckdb.org/2023/05/10/duckdb-wasm.html)
-- ✅ **Memory efficient**: Analyze 300MB datasets using <100MB browser memory
-- ✅ **Minimal data transfer**: Only download what you need
-- ✅ **Interactive exploration**: Real-time parameter adjustment
+- ✅ **Universal access** - No installation, works in any browser
+- ✅ **Fast analysis** - 5-10x faster than downloading full datasets
+- ✅ **Memory efficient** - Analyze 300MB using <100MB browser memory
+- ✅ **Minimal transfer** - Only download the columns/rows you need
