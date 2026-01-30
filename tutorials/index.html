@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Tutorials: Overview – iSamples</title>
+<title>Tutorials – iSamples</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -82,7 +82,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html">iSamples Tutorials Overview</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html">Overview</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -202,10 +202,16 @@ ul.task-list li input[type="checkbox"] {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/isamples_explorer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interactive Explorer</span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
- <span class="menu-text">Getting Started</span></a>
+ <span class="menu-text">Tutorials</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -214,49 +220,25 @@ ul.task-list li input[type="checkbox"] {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../tutorials/index.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">iSamples Tutorials Overview</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">iSamples Parquet Tutorial</span></a>
+ <span class="menu-text">Overview</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Zenodo iSamples OpenContext Tutorial</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet_cesium.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Cesium View (Narrow)</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet_cesium_wide.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Cesium View (Wide - OpenContext)</span></a>
+ <span class="menu-text">Deep-Dive Analysis</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../tutorials/parquet_cesium_isamples_wide.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Cesium View (Wide - iSamples Full)</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet_cesium_split.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Cesium View split sources</span></a>
+ <span class="menu-text">3D Globe Visualization</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Narrow vs Wide Performance</span></a>
+ <span class="menu-text">Technical: Narrow vs Wide</span></a>
   </div>
 </li>
       </ul>
@@ -271,21 +253,18 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#available-data-sources" id="toc-available-data-sources" class="nav-link active" data-scroll-target="#available-data-sources"><span class="header-section-number">1</span> Available Data Sources</a>
-  <ul>
-  <li><a href="#primary-data-sources" id="toc-primary-data-sources" class="nav-link" data-scroll-target="#primary-data-sources"><span class="header-section-number">1.1</span> Primary Data Sources</a></li>
-  <li><a href="#tutorial-categories" id="toc-tutorial-categories" class="nav-link" data-scroll-target="#tutorial-categories"><span class="header-section-number">1.2</span> Tutorial Categories</a></li>
-  </ul></li>
-  <li><a href="#why-geoparquet" id="toc-why-geoparquet" class="nav-link" data-scroll-target="#why-geoparquet"><span class="header-section-number">2</span> Why Geoparquet?</a></li>
+  <li><a href="#start-here" id="toc-start-here" class="nav-link active" data-scroll-target="#start-here"><span class="header-section-number">1</span> Start Here</a></li>
+  <li><a href="#data-sources" id="toc-data-sources" class="nav-link" data-scroll-target="#data-sources"><span class="header-section-number">2</span> Data Sources</a></li>
+  <li><a href="#why-browser-based" id="toc-why-browser-based" class="nav-link" data-scroll-target="#why-browser-based"><span class="header-section-number">3</span> Why Browser-Based?</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html">iSamples Tutorials Overview</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html">Overview</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Tutorials: Overview</h1>
+<h1 class="title">Tutorials</h1>
 </div>
 
 
@@ -302,34 +281,52 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Welcome to the iSamples tutorials! These tutorials demonstrate how to work with sample data using modern browser-based tools and geoparquet files.</p>
-<section id="available-data-sources" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="available-data-sources"><span class="header-section-number">1</span> Available Data Sources</h2>
-<p>With iSamples Central currently unavailable, all tutorials now use <strong>geoparquet files</strong> as the primary data source:</p>
-<section id="primary-data-sources" class="level3" data-number="1.1">
-<h3 data-number="1.1" data-anchor-id="primary-data-sources"><span class="header-section-number">1.1</span> Primary Data Sources</h3>
+<p>Learn to explore <strong>6.7 million physical samples</strong> from scientific collections worldwide using modern browser-based tools.</p>
+<section id="start-here" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="start-here"><span class="header-section-number">1</span> Start Here</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Tutorial</th>
+<th>What You’ll Learn</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../tutorials/isamples_explorer.html"><strong>Interactive Explorer</strong></a></td>
+<td>Search and filter samples with faceted search, view on 3D globe</td>
+</tr>
+<tr class="even">
+<td><a href="../tutorials/zenodo_isamples_analysis.html"><strong>Deep-Dive Analysis</strong></a></td>
+<td>Comprehensive DuckDB-WASM analysis with Observable JS</td>
+</tr>
+<tr class="odd">
+<td><a href="../tutorials/parquet_cesium_isamples_wide.html"><strong>3D Globe Visualization</strong></a></td>
+<td>Cesium-based visualization of all iSamples data</td>
+</tr>
+<tr class="even">
+<td><a href="../tutorials/narrow_vs_wide_performance.html"><strong>Technical: Narrow vs Wide</strong></a></td>
+<td>Schema comparison and performance benchmarks</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-sources" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="data-sources"><span class="header-section-number">2</span> Data Sources</h2>
+<p>All tutorials use <strong>geoparquet files</strong> - no server required:</p>
 <ul>
-<li><strong>Zenodo Complete Dataset</strong>: ~300MB, 6+ million records from all iSamples sources</li>
-<li><strong>OpenContext Parquet</strong>: Curated archaeological sample data</li>
-<li><strong>Domain-specific Collections</strong>: Specialized datasets for focused analysis</li>
+<li><strong>iSamples Full Dataset</strong>: 282 MB, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian</li>
+<li><strong>Available via</strong>: Cloudflare R2 with HTTP range requests</li>
 </ul>
 </section>
-<section id="tutorial-categories" class="level3" data-number="1.2">
-<h3 data-number="1.2" data-anchor-id="tutorial-categories"><span class="header-section-number">1.2</span> Tutorial Categories</h3>
-<p><strong>🗺️ Geographic Analysis</strong> - Interactive mapping and spatial exploration - Regional distribution analysis - Cesium-based 3D visualizations</p>
-<p><strong>📊 Data Analysis</strong> - Statistical analysis with DuckDB-WASM - Material category distributions - Cross-collection comparisons</p>
-<p><strong>🚀 Performance Demonstrations</strong> - Browser-based big data analysis - Efficient sampling and visualization techniques - HTTP range request optimization</p>
-</section>
-</section>
-<section id="why-geoparquet" class="level2" data-number="2">
-<h2 data-number="2" data-anchor-id="why-geoparquet"><span class="header-section-number">2</span> Why Geoparquet?</h2>
-<p>Our tutorials showcase how <strong>geoparquet + DuckDB-WASM</strong> enables:</p>
+<section id="why-browser-based" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="why-browser-based"><span class="header-section-number">3</span> Why Browser-Based?</h2>
+<p>Our approach using <strong>geoparquet + DuckDB-WASM</strong> provides:</p>
 <ul>
-<li>✅ <strong>Universal access</strong>: No software installation required</li>
-<li>✅ <strong>Fast analysis</strong>: 5-10x faster than traditional approaches (e.g., downloading full CSV datasets and analyzing them locally). <a href="https://duckdb.org/2023/05/10/duckdb-wasm.html">See benchmark</a></li>
-<li>✅ <strong>Memory efficient</strong>: Analyze 300MB datasets using &lt;100MB browser memory</li>
-<li>✅ <strong>Minimal data transfer</strong>: Only download what you need</li>
-<li>✅ <strong>Interactive exploration</strong>: Real-time parameter adjustment</li>
+<li>✅ <strong>Universal access</strong> - No installation, works in any browser</li>
+<li>✅ <strong>Fast analysis</strong> - 5-10x faster than downloading full datasets</li>
+<li>✅ <strong>Memory efficient</strong> - Analyze 300MB using &lt;100MB browser memory</li>
+<li>✅ <strong>Minimal transfer</strong> - Only download the columns/rows you need</li>
 </ul>
 
 
