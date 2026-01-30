@@ -51,3 +51,23 @@ The generated docs are placed under `models/generated/vocabularies`
 After editing, push the sources to GitHub. The rendered pages are generated using the `Render using Quarto and push to GH-pages` GitHub action that is currently manually triggered.
 
 Updating dependencies using `pip -U <<package name>>` and regenerate `requirements.txt` with `pip freeze > requirements.txt`.
+
+## Data Sources
+
+All tutorials query parquet files hosted on Cloudflare R2:
+
+```javascript
+// Wide format (recommended) - 280 MB, 20M rows
+const WIDE_URL = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet";
+
+// Narrow format (advanced) - 850 MB, 106M rows
+const NARROW_URL = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_narrow.parquet";
+```
+
+## Related Repositories
+
+| Repo | Purpose | Start Here |
+|------|---------|------------|
+| [isamplesorg-metadata](https://github.com/isamplesorg/metadata) | Schema definition (8 types, 14 predicates) | `src/schemas/isamples_core.yaml` |
+| [isamples-python](https://github.com/isamplesorg/examples) | Jupyter examples (DuckDB + Lonboard) | `examples/basic/isamples_explorer.ipynb` |
+| [vocabularies](https://github.com/isamplesorg/vocabularies) | SKOS vocabulary terms | Material types, context categories |
