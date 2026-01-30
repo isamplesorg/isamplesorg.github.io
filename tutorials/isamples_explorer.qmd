@@ -12,7 +12,7 @@ Search and explore **6.7 million physical samples** from scientific collections 
 
 ::: {.callout-note}
 ### Serverless Architecture
-This app queries a 282 MB Parquet file directly in your browser using DuckDB-WASM. No server required!
+This app queries a ~280 MB Parquet file directly in your browser using DuckDB-WASM. No server required!
 :::
 
 ## Setup

@@ -27,13 +27,13 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 
 ## Dataset Information
 
-**Primary dataset**:
-- **URL**: `https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet` *(temporary for testing)*
-- **Original**: `https://zenodo.org/api/records/15278211/files/...` *(currently rate limited)*
-- **Size**: ~300 MB, 6+ million records
-- **Sources**: SESAR, OpenContext, GEOME, Smithsonian
+**Primary dataset** (Jan 2026):
+- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet`
+- **Size**: ~280 MB wide format, 6.7M MaterialSampleRecords (20M total rows)
+- **Sources**: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)
+- **Hosting**: Cloudflare R2 with HTTP range request support
 
-**Note**: *Currently using DataUnbound Labs hosting temporarily to avoid Zenodo rate limiting during development. This will be switched back to Zenodo once the notebook is stable.*
+**Note**: *Data was originally archived on Zenodo and is now served from Cloudflare R2 for better performance and reliability.*
 
 **Fallback dataset** (if remote data fails):
 - **Type**: Generated demo data with realistic structure
@@ -81,14 +81,13 @@ d3 = require("d3@7")
 topojson = require("topojson-client@3")
 
 // Dataset URLs - try multiple options for CORS compatibility
-// TEMPORARY: Using DataUnbound Labs hosting for testing to avoid Zenodo rate limiting
+// Primary: Cloudflare R2 (Jan 2026 wide format)
 parquet_urls = [
+  'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet',
+
+  // Fallback: older versions
   'https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet',
-  
-  // Original Zenodo URLs (currently rate limited)
-  'https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content',
-  'https://cors-anywhere.herokuapp.com/https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content',
-  'https://z.rslv.xyz/10.5281/zenodo.15278211/isamples_export_2025_04_21_16_23_46_geo.parquet'
+  'https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content'
 ]
 
 // Test CORS and find working URL - with rate limiting protection
@@ -243,13 +242,13 @@ createDemoData = async (conn) => {
 md`
 ## Connection Status
 
-${working_parquet_url ? 
-  `✅ **Connected to live data**: Using ${working_parquet_url.includes('zenodo.org') ? 'Zenodo direct' : working_parquet_url.includes('cors-anywhere') ? 'CORS proxy' : 'original'} URL  
-📊 **Dataset**: ~6M records from real iSamples database  
-🌐 **Data source**: ${working_parquet_url}` 
-  : 
-  `⚠️ **Using demo data**: Remote file not accessible due to CORS restrictions  
-📊 **Dataset**: 10K synthetic records with realistic structure  
+${working_parquet_url ?
+  `✅ **Connected to live data**: Using ${working_parquet_url.includes('r2.dev') ? 'Cloudflare R2' : working_parquet_url.includes('zenodo.org') ? 'Zenodo' : 'fallback'} hosting
+📊 **Dataset**: 6.7M MaterialSampleRecords from iSamples
+🌐 **Data source**: ${working_parquet_url}`
+  :
+  `⚠️ **Using demo data**: Remote file not accessible due to CORS restrictions
+📊 **Dataset**: 10K synthetic records with realistic structure
 💡 **Note**: This demonstrates the same analysis patterns with representative data`
 }
 `

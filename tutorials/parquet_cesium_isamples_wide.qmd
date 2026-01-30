@@ -8,12 +8,12 @@ This page renders points from the **full iSamples wide-format** parquet file (al
 ::: {.callout-note}
 ## iSamples Full Dataset (Wide Format)
 
-This page uses the **iSamples combined dataset** (Dec 2025) which includes:
+This page uses the **iSamples combined dataset** (Jan 2026) which includes:
 
-- **6.68M MaterialSampleRecords** from all iSamples sources
-- **Source breakdown**: SESAR (70%), OpenContext (16%), GEOME (9%), Smithsonian (5%)
-- **242 MB** wide format (vs 709 MB narrow)
-- **19.5M total rows** (entities only, no edge rows)
+- **6.7M MaterialSampleRecords** from all iSamples sources
+- **Source breakdown**: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)
+- **~280 MB** wide format (vs ~850 MB narrow) - 67% smaller
+- **20M total rows** (all entity types, no edge rows)
 - **47 columns** with flattened latitude/longitude (direct column access, no JSON parsing)
 
 :::
@@ -102,7 +102,7 @@ python3 -m http.server 8000
 Then use: `http://localhost:8000/isamples_202601_wide.parquet`
 
 **Benefits of wide format file:**
-- 66% smaller than narrow format (242 MB vs 709 MB)
+- 67% smaller than narrow format (~280 MB vs ~850 MB)
 - Much faster initial load (less network transfer)
 - Simpler queries with direct column access
 - Works offline once cached

@@ -17,7 +17,7 @@ Learn to explore **6.7 million physical samples** from scientific collections wo
 
 All tutorials use **geoparquet files** - no server required:
 
-- **iSamples Full Dataset**: 282 MB, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian
+- **iSamples Full Dataset**: ~280 MB wide format, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian
 - **Available via**: Cloudflare R2 with HTTP range requests
 
 ## Why Browser-Based?

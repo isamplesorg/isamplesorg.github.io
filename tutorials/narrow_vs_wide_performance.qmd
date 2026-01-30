@@ -18,8 +18,8 @@ The iSamples property graph data can be serialized in two different parquet form
 
 | Format | Description | File Size | Row Count | Sources |
 |--------|-------------|-----------|-----------|---------|
-| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | 844 MB | ~106M rows | All 4 sources |
-| **Wide** | Stores relationships as `p__*` columns on entity rows | 282 MB | ~20M rows | All 4 sources |
+| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~850 MB | ~106M rows | All 4 sources |
+| **Wide** | Stores relationships as `p__*` columns on entity rows | ~280 MB | ~20M rows | All 4 sources |
 
 Both formats represent the **same underlying data** (SESAR, OpenContext, GEOME, Smithsonian) with identical semantics, but the wide format is optimized for analytical queries by eliminating edge rows.
 
