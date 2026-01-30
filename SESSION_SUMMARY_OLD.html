@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>session_summary_old – iSamples</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5dcfcf7f8d229c93d75c4165c3ff646b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      <div class="sidebar-tools-main tools-wide">
+    <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
+    <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+</div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Goals</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./people.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">People</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Information Architecture</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://isamplesorg.github.io/metadata/" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Metadata Model</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples Vocabularies</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Outputs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://youtu.be/eRUw5NMksFo?t=105" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">2020 SPNHC conference talk (video)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assets/2022-11_iSamplesMetadata.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">iSamples metadata model talk (slides, PDF)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pubs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Publications</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://zenodo.org/communities/isamples" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Zenodo community</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text">Github repositories</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/isamples_explorer.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Interactive Explorer</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep-Dive Analysis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/parquet_cesium_isamples_wide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3D Globe Visualization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Technical: Narrow vs Wide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#isamples-session-summary" id="toc-isamples-session-summary" class="nav-link active" data-scroll-target="#isamples-session-summary"><span class="header-section-number">1</span> iSamples Session Summary</a>
+  <ul>
+  <li><a href="#critical-reminders-for-next-session" id="toc-critical-reminders-for-next-session" class="nav-link" data-scroll-target="#critical-reminders-for-next-session"><span class="header-section-number">1.1</span> 🔔 CRITICAL REMINDERS FOR NEXT SESSION</a>
+  <ul class="collapse">
+  <li><a href="#outstanding-pull-requests" id="toc-outstanding-pull-requests" class="nav-link" data-scroll-target="#outstanding-pull-requests"><span class="header-section-number">1.1.1</span> 1. Outstanding Pull Requests</a></li>
+  <li><a href="#recent-merges-today" id="toc-recent-merges-today" class="nav-link" data-scroll-target="#recent-merges-today"><span class="header-section-number">1.1.2</span> 2. Recent Merges (Today)</a></li>
+  <li><a href="#testing-infrastructure-ready" id="toc-testing-infrastructure-ready" class="nav-link" data-scroll-target="#testing-infrastructure-ready"><span class="header-section-number">1.1.3</span> 3. Testing Infrastructure Ready</a></li>
+  </ul></li>
+  <li><a href="#what-we-accomplished" id="toc-what-we-accomplished" class="nav-link" data-scroll-target="#what-we-accomplished"><span class="header-section-number">1.2</span> ✅ What We Accomplished</a>
+  <ul class="collapse">
+  <li><a href="#enhanced-path-1-and-path-2-queries" id="toc-enhanced-path-1-and-path-2-queries" class="nav-link" data-scroll-target="#enhanced-path-1-and-path-2-queries"><span class="header-section-number">1.2.1</span> 1. Enhanced Path 1 and Path 2 Queries</a></li>
+  <li><a href="#html-table-ui-for-all-three-queries" id="toc-html-table-ui-for-all-three-queries" class="nav-link" data-scroll-target="#html-table-ui-for-all-three-queries"><span class="header-section-number">1.2.2</span> 2. HTML Table UI for All Three Queries</a></li>
+  <li><a href="#playwright-testing-infrastructure" id="toc-playwright-testing-infrastructure" class="nav-link" data-scroll-target="#playwright-testing-infrastructure"><span class="header-section-number">1.2.3</span> 3. Playwright Testing Infrastructure</a></li>
+  <li><a href="#documentation-cleanup-earlier-in-session" id="toc-documentation-cleanup-earlier-in-session" class="nav-link" data-scroll-target="#documentation-cleanup-earlier-in-session"><span class="header-section-number">1.2.4</span> 4. Documentation Cleanup (Earlier in Session)</a></li>
+  <li><a href="#geocode-search-box-earlier-in-session" id="toc-geocode-search-box-earlier-in-session" class="nav-link" data-scroll-target="#geocode-search-box-earlier-in-session"><span class="header-section-number">1.2.5</span> 5. Geocode Search Box (Earlier in Session)</a></li>
+  <li><a href="#repository-sync" id="toc-repository-sync" class="nav-link" data-scroll-target="#repository-sync"><span class="header-section-number">1.2.6</span> 6. Repository Sync</a></li>
+  </ul></li>
+  <li><a href="#key-findings" id="toc-key-findings" class="nav-link" data-scroll-target="#key-findings"><span class="header-section-number">1.3</span> 🔍 Key Findings</a>
+  <ul class="collapse">
+  <li><a href="#consistent-query-structure-enables-consistent-ui" id="toc-consistent-query-structure-enables-consistent-ui" class="nav-link" data-scroll-target="#consistent-query-structure-enables-consistent-ui"><span class="header-section-number">1.3.1</span> 1. Consistent Query Structure Enables Consistent UI</a></li>
+  <li><a href="#testing-infrastructure-is-essential-for-ui-evolution" id="toc-testing-infrastructure-is-essential-for-ui-evolution" class="nav-link" data-scroll-target="#testing-infrastructure-is-essential-for-ui-evolution"><span class="header-section-number">1.3.2</span> 2. Testing Infrastructure is Essential for UI Evolution</a></li>
+  <li><a href="#observable-html-templates-are-powerful" id="toc-observable-html-templates-are-powerful" class="nav-link" data-scroll-target="#observable-html-templates-are-powerful"><span class="header-section-number">1.3.3</span> 3. Observable HTML Templates Are Powerful</a></li>
+  <li><a href="#git-workflow-fork-pr-merge-sync" id="toc-git-workflow-fork-pr-merge-sync" class="nav-link" data-scroll-target="#git-workflow-fork-pr-merge-sync"><span class="header-section-number">1.3.4</span> 4. Git Workflow: Fork → PR → Merge → Sync</a></li>
+  </ul></li>
+  <li><a href="#files-generated-this-session" id="toc-files-generated-this-session" class="nav-link" data-scroll-target="#files-generated-this-session"><span class="header-section-number">1.4</span> 📁 Files Generated This Session</a>
+  <ul class="collapse">
+  <li><a href="#keep-committed-to-git" id="toc-keep-committed-to-git" class="nav-link" data-scroll-target="#keep-committed-to-git"><span class="header-section-number">1.4.1</span> Keep (Committed to Git)</a>
+  <ul class="collapse">
+  <li><a href="#query-enhancements" id="toc-query-enhancements" class="nav-link" data-scroll-target="#query-enhancements"><span class="header-section-number">1.4.1.1</span> Query Enhancements</a></li>
+  <li><a href="#testing-infrastructure" id="toc-testing-infrastructure" class="nav-link" data-scroll-target="#testing-infrastructure"><span class="header-section-number">1.4.1.2</span> Testing Infrastructure</a></li>
+  </ul></li>
+  <li><a href="#can-regenerate-temporary" id="toc-can-regenerate-temporary" class="nav-link" data-scroll-target="#can-regenerate-temporary"><span class="header-section-number">1.4.2</span> Can Regenerate / Temporary</a></li>
+  </ul></li>
+  <li><a href="#next-steps-prioritized" id="toc-next-steps-prioritized" class="nav-link" data-scroll-target="#next-steps-prioritized"><span class="header-section-number">1.5</span> 🎯 Next Steps (Prioritized)</a>
+  <ul class="collapse">
+  <li><a href="#high-priority" id="toc-high-priority" class="nav-link" data-scroll-target="#high-priority"><span class="header-section-number">1.5.1</span> 🟢 HIGH Priority</a>
+  <ul class="collapse">
+  <li><a href="#review-and-merge-pr-33-10-15-minutes" id="toc-review-and-merge-pr-33-10-15-minutes" class="nav-link" data-scroll-target="#review-and-merge-pr-33-10-15-minutes"><span class="header-section-number">1.5.1.1</span> 1. Review and Merge PR #33 (10-15 minutes)</a></li>
+  <li><a href="#run-tests-locally-first-time-setup-10-minutes" id="toc-run-tests-locally-first-time-setup-10-minutes" class="nav-link" data-scroll-target="#run-tests-locally-first-time-setup-10-minutes"><span class="header-section-number">1.5.1.2</span> 2. Run Tests Locally (First Time Setup) (10 minutes)</a></li>
+  </ul></li>
+  <li><a href="#medium-priority" id="toc-medium-priority" class="nav-link" data-scroll-target="#medium-priority"><span class="header-section-number">1.5.2</span> 🟡 MEDIUM Priority</a>
+  <ul class="collapse">
+  <li><a href="#demo-to-eric-30-minutes" id="toc-demo-to-eric-30-minutes" class="nav-link" data-scroll-target="#demo-to-eric-30-minutes"><span class="header-section-number">1.5.2.1</span> 3. Demo to Eric (30 minutes)</a></li>
+  <li><a href="#add-test-to-cicd-pipeline-30-60-minutes" id="toc-add-test-to-cicd-pipeline-30-60-minutes" class="nav-link" data-scroll-target="#add-test-to-cicd-pipeline-30-60-minutes"><span class="header-section-number">1.5.2.2</span> 4. Add Test to CI/CD Pipeline (30-60 minutes)</a></li>
+  </ul></li>
+  <li><a href="#low-priority-future" id="toc-low-priority-future" class="nav-link" data-scroll-target="#low-priority-future"><span class="header-section-number">1.5.3</span> 🔵 LOW Priority (Future)</a>
+  <ul class="collapse">
+  <li><a href="#enhance-testing-ongoing" id="toc-enhance-testing-ongoing" class="nav-link" data-scroll-target="#enhance-testing-ongoing"><span class="header-section-number">1.5.3.1</span> 5. Enhance Testing (Ongoing)</a></li>
+  <li><a href="#additional-eric-queries-if-needed" id="toc-additional-eric-queries-if-needed" class="nav-link" data-scroll-target="#additional-eric-queries-if-needed"><span class="header-section-number">1.5.3.2</span> 6. Additional Eric Queries (If Needed)</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#current-blockers" id="toc-current-blockers" class="nav-link" data-scroll-target="#current-blockers"><span class="header-section-number">1.6</span> 🚫 Current Blockers</a></li>
+  <li><a href="#technical-setup-notes" id="toc-technical-setup-notes" class="nav-link" data-scroll-target="#technical-setup-notes"><span class="header-section-number">1.7</span> 🔧 Technical Setup Notes</a>
+  <ul class="collapse">
+  <li><a href="#repository-state" id="toc-repository-state" class="nav-link" data-scroll-target="#repository-state"><span class="header-section-number">1.7.1</span> Repository State</a></li>
+  <li><a href="#pull-requests" id="toc-pull-requests" class="nav-link" data-scroll-target="#pull-requests"><span class="header-section-number">1.7.2</span> Pull Requests</a></li>
+  <li><a href="#test-cases-for-validation" id="toc-test-cases-for-validation" class="nav-link" data-scroll-target="#test-cases-for-validation"><span class="header-section-number">1.7.3</span> Test Cases (for validation)</a></li>
+  <li><a href="#local-development" id="toc-local-development" class="nav-link" data-scroll-target="#local-development"><span class="header-section-number">1.7.4</span> Local Development</a></li>
+  <li><a href="#background-processes" id="toc-background-processes" class="nav-link" data-scroll-target="#background-processes"><span class="header-section-number">1.7.5</span> Background Processes</a></li>
+  </ul></li>
+  <li><a href="#session-statistics" id="toc-session-statistics" class="nav-link" data-scroll-target="#session-statistics"><span class="header-section-number">1.8</span> 📊 Session Statistics</a></li>
+  <li><a href="#lessons-learned" id="toc-lessons-learned" class="nav-link" data-scroll-target="#lessons-learned"><span class="header-section-number">1.9</span> 🎓 Lessons Learned</a>
+  <ul class="collapse">
+  <li><a href="#reusable-query-patterns" id="toc-reusable-query-patterns" class="nav-link" data-scroll-target="#reusable-query-patterns"><span class="header-section-number">1.9.1</span> 1. Reusable Query Patterns</a></li>
+  <li><a href="#observable-html-templates" id="toc-observable-html-templates" class="nav-link" data-scroll-target="#observable-html-templates"><span class="header-section-number">1.9.2</span> 2. Observable HTML Templates</a></li>
+  <li><a href="#testing-strategy-for-remote-data" id="toc-testing-strategy-for-remote-data" class="nav-link" data-scroll-target="#testing-strategy-for-remote-data"><span class="header-section-number">1.9.3</span> 3. Testing Strategy for Remote Data</a></li>
+  <li><a href="#git-workflow-for-forks" id="toc-git-workflow-for-forks" class="nav-link" data-scroll-target="#git-workflow-for-forks"><span class="header-section-number">1.9.4</span> 4. Git Workflow for Forks</a></li>
+  <li><a href="#progressive-enhancement" id="toc-progressive-enhancement" class="nav-link" data-scroll-target="#progressive-enhancement"><span class="header-section-number">1.9.5</span> 5. Progressive Enhancement</a></li>
+  </ul></li>
+  <li><a href="#quick-resume-checklist" id="toc-quick-resume-checklist" class="nav-link" data-scroll-target="#quick-resume-checklist"><span class="header-section-number">1.10</span> Quick Resume Checklist</a></li>
+  <li><a href="#context-for-ericandrea" id="toc-context-for-ericandrea" class="nav-link" data-scroll-target="#context-for-ericandrea"><span class="header-section-number">1.11</span> 📍 Context for Eric/Andrea</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SESSION_SUMMARY_OLD.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="isamples-session-summary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> iSamples Session Summary</h1>
+<p><strong>Date</strong>: 2025-10-31 <strong>Status</strong>: ✅ <strong>COMPLETE</strong> - Enhanced Queries, HTML Tables, Testing Infrastructure</p>
+<hr>
+<section id="critical-reminders-for-next-session" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="critical-reminders-for-next-session"><span class="header-section-number">1.1</span> 🔔 CRITICAL REMINDERS FOR NEXT SESSION</h2>
+<section id="outstanding-pull-requests" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="outstanding-pull-requests"><span class="header-section-number">1.1.1</span> 1. Outstanding Pull Requests</h3>
+<p><strong>PR #33</strong>: https://github.com/isamplesorg/isamplesorg.github.io/pull/33 - Enhanced Path 1 and Path 2 queries with rich data - HTML table UI for all three query sections - <strong>Action</strong>: Review and merge when ready</p>
+</section>
+<section id="recent-merges-today" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="recent-merges-today"><span class="header-section-number">1.1.2</span> 2. Recent Merges (Today)</h3>
+<ul>
+<li>✅ <strong>PR #30</strong>: Documentation cleanup (MERGED)</li>
+<li>✅ <strong>PR #31</strong>: Geocode search + gitignore (MERGED)</li>
+<li>✅ <strong>PR #32</strong>: Eric’s query HTML table (MERGED)</li>
+</ul>
+</section>
+<section id="testing-infrastructure-ready" class="level3" data-number="1.1.3">
+<h3 data-number="1.1.3" data-anchor-id="testing-infrastructure-ready"><span class="header-section-number">1.1.3</span> 3. Testing Infrastructure Ready</h3>
+<ul>
+<li>Playwright tests in <code>tests/playwright/</code></li>
+<li>Run with: <code>npm test</code> (after <code>npm install</code>)</li>
+<li>See <code>tests/README.md</code> for full guide</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="what-we-accomplished" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="what-we-accomplished"><span class="header-section-number">1.2</span> ✅ What We Accomplished</h2>
+<section id="enhanced-path-1-and-path-2-queries" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" data-anchor-id="enhanced-path-1-and-path-2-queries"><span class="header-section-number">1.2.1</span> 1. Enhanced Path 1 and Path 2 Queries</h3>
+<p><strong>Upgraded both queries to match Eric’s rich data structure:</strong></p>
+<p><strong>Before</strong> (minimal data):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_id</span><span class="op">:</span> <span class="st">"ark:/28722/..."</span><span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_label</span><span class="op">:</span> <span class="st">"4061-17"</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">event_id</span><span class="op">:</span> <span class="st">"..."</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">location_path</span><span class="op">:</span> <span class="st">"direct_event_location"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>After</strong> (rich metadata):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">latitude</span><span class="op">:</span> <span class="fl">34.990756</span><span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">longitude</span><span class="op">:</span> <span class="fl">33.708768</span><span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_site_label</span><span class="op">:</span> <span class="st">"PKAP Survey Area"</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_site_pid</span><span class="op">:</span> <span class="st">"https://opencontext.org/..."</span><span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_pid</span><span class="op">:</span> <span class="st">"ark:/28722/..."</span><span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_alternate_identifiers</span><span class="op">:</span> [<span class="op">...</span>]<span class="op">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_label</span><span class="op">:</span> <span class="st">"Batch 9"</span><span class="op">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_description</span><span class="op">:</span> <span class="st">"Open Context published..."</span><span class="op">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">sample_thumbnail_url</span><span class="op">:</span> <span class="st">"https://..."</span><span class="op">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">has_thumbnail</span><span class="op">:</span> <span class="kw">false</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Query improvements</strong>: - Path 1: Enhanced from 6 → 11 columns - Path 2: Enhanced from 7 → 11 columns - Both use <code>list_contains()</code> for proper edge traversal - Both order by <code>has_thumbnail DESC</code> (images first)</p>
+</section>
+<section id="html-table-ui-for-all-three-queries" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" data-anchor-id="html-table-ui-for-all-three-queries"><span class="header-section-number">1.2.2</span> 2. HTML Table UI for All Three Queries</h3>
+<p><strong>Replaced raw JSON with rich, scrollable tables</strong>:</p>
+<p><strong>Features</strong>: - 📷 Thumbnail column: 80x80px images or “No image” placeholders - 🔗 Clickable sample PIDs linking to OpenContext records - 📍 Clickable site names with “View site” links - 📝 Formatted descriptions with proper wrapping (300px max-width) - 🌍 Geographic coordinates (lat/lon, 5 decimal places) - 🎨 Zebra-striped rows (alternating #f8f9fa background) - 📌 Sticky headers (<code>position: sticky</code>) - 📊 Result count displays (“Found X samples via Path Y”) - ⏳ Loading states (“Loading samples…”) - ❌ Empty states with friendly messages</p>
+<p><strong>Consistent across all three</strong>: - Eric’s Query (Path 1 only, authoritative) - Path 1 Query (direct event location) - Path 2 Query (via site location)</p>
+</section>
+<section id="playwright-testing-infrastructure" class="level3" data-number="1.2.3">
+<h3 data-number="1.2.3" data-anchor-id="playwright-testing-infrastructure"><span class="header-section-number">1.2.3</span> 3. Playwright Testing Infrastructure</h3>
+<p><strong>Established comprehensive E2E testing foundation</strong>:</p>
+<p><strong>Test suite</strong> (<code>tests/playwright/cesium-queries.spec.js</code>): - 20+ tests covering structure, content, behavior, states - Tests all three HTML tables - Validates links, images, formatting, responsiveness - Uses real test data (PKAP: <code>geoloc_04d6e816...</code>)</p>
+<p><strong>Configuration</strong> (<code>playwright.config.js</code>): - Extended timeouts for remote parquet loading (60s navigation) - HTML reporting with traces and screenshots - CI-ready with automatic retries</p>
+<p><strong>NPM scripts</strong> (<code>package.json</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test              <span class="co"># Run all tests</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:headed   <span class="co"># With browser visible</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:ui       <span class="co"># Interactive mode</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:debug    <span class="co"># Debug with inspector</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:report   <span class="co"># View HTML report</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Documentation</strong> (<code>tests/README.md</code>): - Complete setup and usage guide - Test coverage matrix - Debugging instructions - Future enhancements roadmap</p>
+</section>
+<section id="documentation-cleanup-earlier-in-session" class="level3" data-number="1.2.4">
+<h3 data-number="1.2.4" data-anchor-id="documentation-cleanup-earlier-in-session"><span class="header-section-number">1.2.4</span> 4. Documentation Cleanup (Earlier in Session)</h3>
+<p><strong>PR #30</strong> - Cleaned up <code>parquet_cesium.qmd</code>: - Removed confusing “Proposed Enhancement” section - Fixed “Benefits” section to describe current capabilities - Improved flow between implemented and future features</p>
+</section>
+<section id="geocode-search-box-earlier-in-session" class="level3" data-number="1.2.5">
+<h3 data-number="1.2.5" data-anchor-id="geocode-search-box-earlier-in-session"><span class="header-section-number">1.2.5</span> 5. Geocode Search Box (Earlier in Session)</h3>
+<p><strong>PR #31</strong> - Added direct navigation feature: - Search box at top of page - Paste any geocode PID → camera flies to location - Automatically triggers all queries - Smooth 2-second animation</p>
+</section>
+<section id="repository-sync" class="level3" data-number="1.2.6">
+<h3 data-number="1.2.6" data-anchor-id="repository-sync"><span class="header-section-number">1.2.6</span> 6. Repository Sync</h3>
+<p><strong>Synced local branches with remote</strong>: - Pulled 43 commits from upstream/main - Updated both <code>main</code> and <code>issue-13-parquet-duckdb</code> - All PRs merged, branches clean</p>
+<hr>
+</section>
+</section>
+<section id="key-findings" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="key-findings"><span class="header-section-number">1.3</span> 🔍 Key Findings</h2>
+<section id="consistent-query-structure-enables-consistent-ui" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="consistent-query-structure-enables-consistent-ui"><span class="header-section-number">1.3.1</span> 1. Consistent Query Structure Enables Consistent UI</h3>
+<p><strong>Discovery</strong>: By upgrading Path 1 and Path 2 to return the same fields as Eric’s query, we could reuse the exact same HTML table template.</p>
+<p><strong>Impact</strong>: - Single UI pattern across all three query sections - Easy to maintain and extend - Visual consistency improves user experience - Users can directly compare results across query paths</p>
+<p><strong>Code pattern</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Same 11 fields for all three queries:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>latitude<span class="op">,</span> longitude<span class="op">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sample_site_label<span class="op">,</span> sample_site_pid<span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>sample_pid<span class="op">,</span> sample_alternate_identifiers<span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>sample_label<span class="op">,</span> sample_description<span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>sample_thumbnail_url<span class="op">,</span> has_thumbnail<span class="op">,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">location_path</span> (optional<span class="op">,</span> <span class="cf">for</span> differentiation)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="testing-infrastructure-is-essential-for-ui-evolution" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="testing-infrastructure-is-essential-for-ui-evolution"><span class="header-section-number">1.3.2</span> 2. Testing Infrastructure is Essential for UI Evolution</h3>
+<p><strong>Insight</strong>: As the UI grows more complex, automated tests prevent regressions and validate new features.</p>
+<p><strong>Current coverage</strong>: - 20+ tests validating structure, content, behavior - Tests handle async data loading (remote parquet) - Future-ready for visual regression, accessibility, performance</p>
+<p><strong>Value</strong>: - Confidence to refactor and enhance UI - Catches bugs before they reach production - Documents expected behavior - Enables CI/CD workflows</p>
+</section>
+<section id="observable-html-templates-are-powerful" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="observable-html-templates-are-powerful"><span class="header-section-number">1.3.3</span> 3. Observable HTML Templates Are Powerful</h3>
+<p><strong>Pattern discovered</strong>: Using Observable’s <code>html</code> tagged template with conditional rendering creates rich, reactive UIs.</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">html</span><span class="vs">`</span><span class="sc">${</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  loading <span class="op">?</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html</span><span class="vs">`&lt;div&gt;Loading...&lt;/div&gt;`</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">:</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  data<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html</span><span class="vs">`&lt;table&gt;...&lt;/table&gt;`</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">:</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html</span><span class="vs">`&lt;div&gt;No results&lt;/div&gt;`</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="sc">}</span><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Benefits</strong>: - Reactive to data changes - Clean conditional logic - Type-safe with proper escaping - Easy to maintain</p>
+</section>
+<section id="git-workflow-fork-pr-merge-sync" class="level3" data-number="1.3.4">
+<h3 data-number="1.3.4" data-anchor-id="git-workflow-fork-pr-merge-sync"><span class="header-section-number">1.3.4</span> 4. Git Workflow: Fork → PR → Merge → Sync</h3>
+<p><strong>Process established</strong>: 1. Work on <code>issue-13-parquet-duckdb</code> branch 2. Push to <code>origin</code> (your fork) 3. Create PR to <code>upstream</code> (canonical repo) 4. After merge: Pull from <code>upstream/main</code> → push to <code>origin/main</code> 5. Sync feature branch with <code>main</code></p>
+<p><strong>Commands</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch <span class="at">--all</span> <span class="at">--prune</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> checkout main</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull upstream main</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin main</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> checkout issue-13-parquet-duckdb</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> main</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin issue-13-parquet-duckdb <span class="at">--force-with-lease</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="files-generated-this-session" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="files-generated-this-session"><span class="header-section-number">1.4</span> 📁 Files Generated This Session</h2>
+<section id="keep-committed-to-git" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="keep-committed-to-git"><span class="header-section-number">1.4.1</span> Keep (Committed to Git)</h3>
+<section id="query-enhancements" class="level4" data-number="1.4.1.1">
+<h4 data-number="1.4.1.1" data-anchor-id="query-enhancements"><span class="header-section-number">1.4.1.1</span> Query Enhancements</h4>
+<p><strong><code>tutorials/parquet_cesium.qmd</code></strong> (Modified, PR #33) - Lines 296-408: Enhanced <code>get_samples_1()</code> and <code>get_samples_2()</code> - Lines 904-987: Path 1 HTML table UI - Lines 999-1082: Path 2 HTML table UI - Lines 1109-1193: Eric’s query HTML table UI (from earlier PR) - <strong>Total changes</strong>: +253 lines, -43 lines</p>
+</section>
+<section id="testing-infrastructure" class="level4" data-number="1.4.1.2">
+<h4 data-number="1.4.1.2" data-anchor-id="testing-infrastructure"><span class="header-section-number">1.4.1.2</span> Testing Infrastructure</h4>
+<p><strong><code>tests/playwright/cesium-queries.spec.js</code></strong> (New, committed) - Main test suite with 20+ tests - Validates structure, content, links, images - Tests all three query result displays - <strong>Size</strong>: ~400 lines</p>
+<p><strong><code>playwright.config.js</code></strong> (New, committed) - Test configuration with extended timeouts - HTML reporting setup - CI-ready configuration - <strong>Size</strong>: ~60 lines</p>
+<p><strong><code>package.json</code></strong> (New, committed) - NPM scripts for testing - Playwright dev dependency - <strong>Size</strong>: ~25 lines</p>
+<p><strong><code>tests/README.md</code></strong> (New, committed) - Comprehensive testing guide - Setup, usage, debugging instructions - Future enhancements roadmap - <strong>Size</strong>: ~300 lines</p>
+<p><strong><code>.gitignore</code></strong> (Modified, committed) - Added node_modules/, test-results/, etc. - Prevents committing test artifacts</p>
+</section>
+</section>
+<section id="can-regenerate-temporary" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" data-anchor-id="can-regenerate-temporary"><span class="header-section-number">1.4.2</span> Can Regenerate / Temporary</h3>
+<p><strong>Session notes</strong> (not committed): - <code>SESSION_NOTES.md</code> - Scratch notes during session - <code>enhanced_queries_test.png</code> - Screenshot (if generated) - Old test files cleaned up: - <del><code>test_enhanced_queries.js</code></del> (deleted) - <del><code>test_cesium_queries.js</code></del> (deleted)</p>
+<p><strong>Data files</strong> (ignored by git): - <code>assets/oc_isamples_pqg.parquet</code> (691MB, in .gitignore)</p>
+<p><strong>Build artifacts</strong> (ignored by git): - <code>node_modules/</code> (install with <code>npm install</code>) - <code>package-lock.json</code> (auto-generated) - <code>tests/playwright-report/</code> (generated by tests) - <code>test-results/</code> (generated by tests)</p>
+<hr>
+</section>
+</section>
+<section id="next-steps-prioritized" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="next-steps-prioritized"><span class="header-section-number">1.5</span> 🎯 Next Steps (Prioritized)</h2>
+<section id="high-priority" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" data-anchor-id="high-priority"><span class="header-section-number">1.5.1</span> 🟢 HIGH Priority</h3>
+<section id="review-and-merge-pr-33-10-15-minutes" class="level4" data-number="1.5.1.1">
+<h4 data-number="1.5.1.1" data-anchor-id="review-and-merge-pr-33-10-15-minutes"><span class="header-section-number">1.5.1.1</span> 1. Review and Merge PR #33 (10-15 minutes)</h4>
+<p><strong>URL</strong>: https://github.com/isamplesorg/isamplesorg.github.io/pull/33</p>
+<p><strong>What to review</strong>: - Enhanced Path 1 and Path 2 query SQL - HTML table UI matching Eric’s query pattern - Consistency across all three query displays</p>
+<p><strong>Test after merge</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visit live site</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">https://isamples.org/tutorials/parquet_cesium.html</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Try geocode search with:</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">geoloc_04d6e816218b1a8798fa90b3d1d43bf4c043a57f</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify:</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="ex">-</span> All three sections show HTML tables <span class="er">(</span><span class="ex">not</span> JSON<span class="kw">)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="ex">-</span> Tables have thumbnails, clickable links</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="ex">-</span> Scrollable with sticky headers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="run-tests-locally-first-time-setup-10-minutes" class="level4" data-number="1.5.1.2">
+<h4 data-number="1.5.1.2" data-anchor-id="run-tests-locally-first-time-setup-10-minutes"><span class="header-section-number">1.5.1.2</span> 2. Run Tests Locally (First Time Setup) (10 minutes)</h4>
+<p><strong>Validate testing infrastructure works</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> isamplesorg.github.io</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Install dependencies</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ex">npx</span> playwright install chromium</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Start preview server in separate terminal</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview tutorials/parquet_cesium.qmd <span class="at">--no-browser</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Run tests (in another terminal)</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co"># View results</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:report</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Expected outcome</strong>: Most tests should pass (some may timeout on slow connections due to 691MB parquet loading).</p>
+</section>
+</section>
+<section id="medium-priority" class="level3" data-number="1.5.2">
+<h3 data-number="1.5.2" data-anchor-id="medium-priority"><span class="header-section-number">1.5.2</span> 🟡 MEDIUM Priority</h3>
+<section id="demo-to-eric-30-minutes" class="level4" data-number="1.5.2.1">
+<h4 data-number="1.5.2.1" data-anchor-id="demo-to-eric-30-minutes"><span class="header-section-number">1.5.2.1</span> 3. Demo to Eric (30 minutes)</h4>
+<p><strong>After PR #33 merges</strong>:</p>
+<p><strong>Show</strong>: - Geocode search box for direct navigation - Rich HTML tables for all three query paths - Visual comparison across Path 1, Path 2, Eric’s query - Thumbnails, clickable links, formatted data</p>
+<p><strong>Explain</strong>: - Path 1 and Path 2 now return same rich data as his authoritative query - All three use consistent UI (5-column tables) - Testing infrastructure ensures quality as UI evolves</p>
+<p><strong>Get feedback</strong>: - Does the UI meet expectations? - Any additional queries to implement? - Any data fields missing?</p>
+</section>
+<section id="add-test-to-cicd-pipeline-30-60-minutes" class="level4" data-number="1.5.2.2">
+<h4 data-number="1.5.2.2" data-anchor-id="add-test-to-cicd-pipeline-30-60-minutes"><span class="header-section-number">1.5.2.2</span> 4. Add Test to CI/CD Pipeline (30-60 minutes)</h4>
+<p><strong>Integrate Playwright tests into GitHub Actions</strong>:</p>
+<p><strong>Create</strong> <code>.github/workflows/test-ui.yml</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> UI Tests</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pull_request</span><span class="kw">:</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths</span><span class="kw">:</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'tutorials/**'</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'tests/**'</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">test</span><span class="kw">:</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v3</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-node@v3</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span><span class="at"> npm install</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span><span class="at"> npx playwright install --with-deps chromium</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span><span class="at"> quarto preview tutorials/parquet_cesium.qmd --no-browser &amp;</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span><span class="at"> sleep 15</span><span class="co">  # Wait for server</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">run</span><span class="kw">:</span><span class="at"> npm test</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v3</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> playwright-report</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">path</span><span class="kw">:</span><span class="at"> tests/playwright-report/</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="low-priority-future" class="level3" data-number="1.5.3">
+<h3 data-number="1.5.3" data-anchor-id="low-priority-future"><span class="header-section-number">1.5.3</span> 🔵 LOW Priority (Future)</h3>
+<section id="enhance-testing-ongoing" class="level4" data-number="1.5.3.1">
+<h4 data-number="1.5.3.1" data-anchor-id="enhance-testing-ongoing"><span class="header-section-number">1.5.3.1</span> 5. Enhance Testing (Ongoing)</h4>
+<p><strong>Add more test coverage</strong>: - Visual regression tests (screenshot comparison) - Accessibility tests (ARIA labels, keyboard navigation) - Mobile responsive tests - Performance metrics (query execution time)</p>
+<p><strong>See</strong> <code>tests/README.md</code> for full enhancement list.</p>
+</section>
+<section id="additional-eric-queries-if-needed" class="level4" data-number="1.5.3.2">
+<h4 data-number="1.5.3.2" data-anchor-id="additional-eric-queries-if-needed"><span class="header-section-number">1.5.3.2</span> 6. Additional Eric Queries (If Needed)</h4>
+<p><strong>Currently implemented</strong>: - <code>get_samples_at_geo_cord_location_via_sample_event</code> - <code>get_sample_data_via_sample_pid</code> - <code>get_sample_data_agents_sample_pid</code> - <code>get_sample_types_and_keywords_via_sample_pid</code></p>
+<p><strong>Not yet in UI</strong> (functions defined, but not displayed): - Queries 2-4 are implemented but not called from UI - Could add sections to display: - Full sample metadata when clicking a point - Agent information (who collected/registered) - Keywords/classifications</p>
+<p><strong>Decision needed</strong>: Does Eric want these displayed in the UI?</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="current-blockers" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="current-blockers"><span class="header-section-number">1.6</span> 🚫 Current Blockers</h2>
+<p><strong>None</strong> ✅</p>
+<p>All work completed and ready for review: - ✅ Queries enhanced - ✅ HTML tables implemented - ✅ Testing infrastructure established - ✅ PR created and pushed</p>
+<p><strong>Waiting on</strong>: Your review of PR #33</p>
+<hr>
+</section>
+<section id="technical-setup-notes" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="technical-setup-notes"><span class="header-section-number">1.7</span> 🔧 Technical Setup Notes</h2>
+<section id="repository-state" class="level3" data-number="1.7.1">
+<h3 data-number="1.7.1" data-anchor-id="repository-state"><span class="header-section-number">1.7.1</span> Repository State</h3>
+<p><strong>Location</strong>: <code>/Users/raymondyee/C/src/iSamples/isamplesorg.github.io</code></p>
+<p><strong>Branches</strong>: - <code>main</code>: Up to date with upstream (commit <code>0724b35</code>) - <code>issue-13-parquet-duckdb</code>: Ahead with testing infrastructure (commit <code>4eed43d</code>)</p>
+<p><strong>Remotes</strong>: - <code>origin</code>: git@github.com:rdhyee/isamplesorg.github.io.git (your fork) - <code>upstream</code>: git@github.com:isamplesorg/isamplesorg.github.io.git (canonical)</p>
+<p><strong>Git status</strong>:</p>
+<pre><code>On branch: issue-13-parquet-duckdb
+Untracked: SESSION_NOTES.md (intentionally not committed)</code></pre>
+</section>
+<section id="pull-requests" class="level3" data-number="1.7.2">
+<h3 data-number="1.7.2" data-anchor-id="pull-requests"><span class="header-section-number">1.7.2</span> Pull Requests</h3>
+<p><strong>Open</strong>: - <strong>PR #33</strong>: Enhanced Path 1/2 queries + testing infrastructure - URL: https://github.com/isamplesorg/isamplesorg.github.io/pull/33 - Branch: <code>issue-13-parquet-duckdb</code> - Commits: 2 (<code>4a4b527</code>, <code>4eed43d</code>) - Status: Ready for review</p>
+<p><strong>Merged Today</strong>: - <strong>PR #32</strong>: Eric’s query HTML table (Oct 31, 8:17 PM) - <strong>PR #31</strong>: Geocode search + gitignore (Oct 31, 3:43 PM) - <strong>PR #30</strong>: Documentation cleanup (Oct 31, 3:47 PM)</p>
+<p><strong>Previously Merged</strong>: - <strong>PR #29</strong>: Eric’s authoritative queries (Oct 31, 2:26 PM) - <strong>PR #28</strong>: Bug fix - column ambiguity (Oct 30) - <strong>PR #27</strong>: Cesium feature (Oct 31)</p>
+</section>
+<section id="test-cases-for-validation" class="level3" data-number="1.7.3">
+<h3 data-number="1.7.3" data-anchor-id="test-cases-for-validation"><span class="header-section-number">1.7.3</span> Test Cases (for validation)</h3>
+<p><strong>Geo locations with Path 1 samples</strong>: - <code>geoloc_04d6e816218b1a8798fa90b3d1d43bf4c043a57f</code> (PKAP, 2019 events) → Returns 5 samples - Has thumbnails, full metadata, clickable links</p>
+<p><strong>Geo locations with 0 results</strong> (site markers): - <code>geoloc_7a05216d388682536f3e2abd8bd2ee3fb286e461</code> (Larnaka) → Returns 0 (Path 1 only)</p>
+<p><strong>Sample PIDs for testing</strong>: - <code>ark:/28722/k2wq0b20z</code> (4061-17, PKAP Survey Area) - Has: 3 agents, 4 keywords, thumbnail, full metadata</p>
+</section>
+<section id="local-development" class="level3" data-number="1.7.4">
+<h3 data-number="1.7.4" data-anchor-id="local-development"><span class="header-section-number">1.7.4</span> Local Development</h3>
+<p><strong>Preview site</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /Users/raymondyee/C/src/iSamples/isamplesorg.github.io</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview tutorials/parquet_cesium.qmd</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Opens on http://localhost:XXXX (port varies)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Run tests</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First time only</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ex">npx</span> playwright install chromium</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Start preview (separate terminal)</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview tutorials/parquet_cesium.qmd <span class="at">--no-browser</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Run tests (another terminal)</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co"># View report</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run test:report</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Quick HTTP check</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify page loads</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-o</span> /dev/null <span class="at">-w</span> <span class="st">"%{http_code}"</span> http://localhost:5860/tutorials/parquet_cesium.html</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Should return: 200</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for HTML tables</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://localhost:5860/tutorials/parquet_cesium.html <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-c</span> <span class="st">"max-height: 600px"</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Should return: 3 (one for each query section)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="background-processes" class="level3" data-number="1.7.5">
+<h3 data-number="1.7.5" data-anchor-id="background-processes"><span class="header-section-number">1.7.5</span> Background Processes</h3>
+<p><strong>May still be running</strong> (from earlier in session): - Check: <code>ps aux | grep -E "(quarto|python3|node)" | grep -v grep</code> - Kill all: <code>pkill -f "quarto preview"</code></p>
+<p><strong>Claude sessions to clean up</strong>: - Several background bash shells from testing - Use <code>KillShell</code> tool or manual cleanup if needed</p>
+<hr>
+</section>
+</section>
+<section id="session-statistics" class="level2" data-number="1.8">
+<h2 data-number="1.8" data-anchor-id="session-statistics"><span class="header-section-number">1.8</span> 📊 Session Statistics</h2>
+<p><strong>Duration</strong>: ~8 hours (includes analysis, implementation, testing setup, documentation, git workflow)</p>
+<p><strong>Changes</strong>: - Files modified: 2 (<code>parquet_cesium.qmd</code>, <code>.gitignore</code>) - Files created: 4 (<code>tests/</code>, <code>playwright.config.js</code>, <code>package.json</code>) - Lines changed in queries: +253, -43 - Test suite size: ~400 lines (comprehensive) - Documentation: ~300 lines (tests/README.md)</p>
+<p><strong>Commits</strong>: - <code>4a4b527</code> - “Enhance Path 1 and Path 2 queries with rich data and HTML tables” - <code>4eed43d</code> - “Add Playwright testing infrastructure for Cesium UI”</p>
+<p><strong>PRs</strong>: - Created #33 with enhanced queries and testing infrastructure - Earlier in session: Merged #30, #31, #32</p>
+<p><strong>Verified</strong>: - ✅ HTML tables render correctly (verified via curl) - ✅ All three tables have proper structure - ✅ Links, images, formatting all present in HTML - ✅ Testing infrastructure committed and pushed</p>
+<hr>
+</section>
+<section id="lessons-learned" class="level2" data-number="1.9">
+<h2 data-number="1.9" data-anchor-id="lessons-learned"><span class="header-section-number">1.9</span> 🎓 Lessons Learned</h2>
+<section id="reusable-query-patterns" class="level3" data-number="1.9.1">
+<h3 data-number="1.9.1" data-anchor-id="reusable-query-patterns"><span class="header-section-number">1.9.1</span> 1. Reusable Query Patterns</h3>
+<p><strong>Pattern</strong>: Standardize query return fields across different query paths.</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">// All three queries now return same 11 fields:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  latitude<span class="op">,</span> longitude<span class="op">,</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  sample_site_label<span class="op">,</span> sample_site_pid<span class="op">,</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  sample_pid<span class="op">,</span> sample_alternate_identifiers<span class="op">,</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  sample_label<span class="op">,</span> sample_description<span class="op">,</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  sample_thumbnail_url<span class="op">,</span> has_thumbnail</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Benefit</strong>: Single HTML table template works for all query results.</p>
+</section>
+<section id="observable-html-templates" class="level3" data-number="1.9.2">
+<h3 data-number="1.9.2" data-anchor-id="observable-html-templates"><span class="header-section-number">1.9.2</span> 2. Observable HTML Templates</h3>
+<p><strong>Pattern</strong>: Use <code>html</code> tagged template with conditional rendering.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">html</span><span class="vs">`</span><span class="sc">${</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  loading <span class="op">?</span> loadingUI <span class="op">:</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  data<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span> tableUI <span class="op">:</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  emptyStateUI</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="sc">}</span><span class="vs">`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Benefit</strong>: Reactive, clean, maintainable UI code.</p>
+</section>
+<section id="testing-strategy-for-remote-data" class="level3" data-number="1.9.3">
+<h3 data-number="1.9.3" data-anchor-id="testing-strategy-for-remote-data"><span class="header-section-number">1.9.3</span> 3. Testing Strategy for Remote Data</h3>
+<p><strong>Challenge</strong>: Remote parquet file (691MB) takes time to load.</p>
+<p><strong>Solution</strong>: - Extended timeouts (60s navigation, 15s actions) - Use <code>waitForTimeout</code> after triggers - Test static HTML structure via HTTP first - Full E2E tests validate behavior</p>
+<p><strong>Lesson</strong>: Layer testing approaches based on what’s being validated.</p>
+</section>
+<section id="git-workflow-for-forks" class="level3" data-number="1.9.4">
+<h3 data-number="1.9.4" data-anchor-id="git-workflow-for-forks"><span class="header-section-number">1.9.4</span> 4. Git Workflow for Forks</h3>
+<p><strong>Process</strong>: 1. Feature branch on fork: <code>issue-13-parquet-duckdb</code> 2. PR to upstream: <code>main</code> 3. After merge: Sync <code>main</code> from upstream 4. Rebase feature branch on updated <code>main</code></p>
+<p><strong>Commands mastered</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch <span class="at">--all</span> <span class="at">--prune</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull upstream main</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> main</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push <span class="at">--force-with-lease</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="progressive-enhancement" class="level3" data-number="1.9.5">
+<h3 data-number="1.9.5" data-anchor-id="progressive-enhancement"><span class="header-section-number">1.9.5</span> 5. Progressive Enhancement</h3>
+<p><strong>Approach</strong>: Start with working code, enhance incrementally.</p>
+<p><strong>Example</strong>: - Session started with Eric’s query having HTML table - Enhanced Path 1 and Path 2 to match - Added testing infrastructure - Each step builds on previous work</p>
+<p><strong>Benefit</strong>: Always have working state, easy to review changes.</p>
+<hr>
+</section>
+</section>
+<section id="quick-resume-checklist" class="level2" data-number="1.10">
+<h2 data-number="1.10" data-anchor-id="quick-resume-checklist"><span class="header-section-number">1.10</span> Quick Resume Checklist</h2>
+<p><strong>Next session, start here:</strong></p>
+<ol type="1">
+<li><p><label><input type="checkbox">Read this SESSION_SUMMARY.md</label></p></li>
+<li><p><label><input type="checkbox"><strong>Review PR #33</strong>: https://github.com/isamplesorg/isamplesorg.github.io/pull/33</label></p></li>
+<li><p><label><input type="checkbox"><strong>Merge PR #33</strong> when satisfied</label></p></li>
+<li><p><label><input type="checkbox"><strong>Test live site</strong> after merge: https://isamples.org/tutorials/parquet_cesium.html</label></p></li>
+<li><p><label><input type="checkbox"><strong>Run tests locally</strong>:</label></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npx</span> playwright install chromium</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview tutorials/parquet_cesium.qmd <span class="at">--no-browser</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><label><input type="checkbox"><strong>Demo to Eric</strong> when ready</label></p></li>
+<li><p><label><input type="checkbox">Consider adding tests to CI/CD (GitHub Actions)</label></p></li>
+</ol>
+<hr>
+</section>
+<section id="context-for-ericandrea" class="level2" data-number="1.11">
+<h2 data-number="1.11" data-anchor-id="context-for-ericandrea"><span class="header-section-number">1.11</span> 📍 Context for Eric/Andrea</h2>
+<p><strong>What was delivered</strong>: - Path 1 and Path 2 queries now return same rich data as your authoritative queries - All three query result sections display with consistent, beautiful HTML tables - Comprehensive testing infrastructure established for future UI evolution - Geocode search box for direct navigation to any location</p>
+<p><strong>Why the changes</strong>: - Path 1 and Path 2 previously returned minimal data (just PIDs and labels) - Now upgraded to match Eric’s complete metadata structure - Users can visually compare results across all three query approaches - Testing ensures quality as UI continues to evolve</p>
+<p><strong>How to test</strong> (after PR #33 merges): 1. Visit https://isamples.org/tutorials/parquet_cesium.html 2. Use geocode search: <code>geoloc_04d6e816218b1a8798fa90b3d1d43bf4c043a57f</code> 3. Scroll down to see three HTML tables: - “Related Sample Path 1” - should show 5 samples - “Related Sample Path 2” - may show 0 (depends on site connections) - “Samples at Location via Sampling Event (Eric Kansa’s Query)” - should show 5 samples 4. Verify tables have thumbnails, clickable links, formatted descriptions</p>
+<p><strong>Questions welcome</strong> on PR #33!</p>
+<hr>
+<p><strong>Last Updated</strong>: 2025-10-31 by Claude Code (Sonnet 4.5) <strong>Repository</strong>: isamplesorg.github.io (fork at rdhyee/isamplesorg.github.io) <strong>Focus</strong>: Enhanced queries + HTML tables + Testing infrastructure <strong>Next Action</strong>: Review PR #33, run tests locally, demo to Eric <strong>Session Duration</strong>: ~8 hours <strong>Session Status</strong>: ✅ <strong>COMPLETE - ALL DELIVERABLES READY FOR REVIEW</strong></p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020, iSamples Project. This material is based upon work supported by the National Science Foundation under Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SESSION_SUMMARY_OLD.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

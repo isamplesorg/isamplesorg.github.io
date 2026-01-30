@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>iSamples Vocabularies – iSamples</title>
+<title>session_notes – iSamples</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,29 +20,62 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<link href="../assets/isamplesfavicon.ico" rel="icon">
-<script src="../site_libs/quarto-listing/list.min.js"></script>
-<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5dcfcf7f8d229c93d75c4165c3ff646b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5dcfcf7f8d229c93d75c4165c3ff646b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -70,95 +103,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
 
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-vocabulary-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
 
-    const options = {
-      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-vocabulary-listing'] = new List('listing-vocabulary-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-extension-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-title','listing-subtitle',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-title-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-extension-listing'] = new List('listing-extension-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
-
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
-
-<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-sidebar docked quarto-light">
@@ -170,7 +117,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Information Architecture</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -184,9 +131,9 @@ window.Quarto = {
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
-      <a href="../index.html" class="sidebar-logo-link">
-      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
-      <img src="../assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
       </a>
       <div class="sidebar-tools-main tools-wide">
     <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
@@ -203,13 +150,13 @@ window.Quarto = {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../about.html" class="sidebar-item-text sidebar-link">
+  <a href="./about.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Goals</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../people.html" class="sidebar-item-text sidebar-link">
+  <a href="./people.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">People</span></a>
   </div>
 </li>
@@ -224,13 +171,13 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../design/index.html" class="sidebar-item-text sidebar-link">
+  <a href="./design/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Overview</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../design/requirements.html" class="sidebar-item-text sidebar-link">
+  <a href="./design/requirements.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Requirements</span></a>
   </div>
 </li>
@@ -242,7 +189,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../models/index.html" class="sidebar-item-text sidebar-link active">
+  <a href="./models/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">iSamples Vocabularies</span></a>
   </div>
 </li>
@@ -265,13 +212,13 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../assets/2022-11_iSamplesMetadata.pdf" class="sidebar-item-text sidebar-link">
+  <a href="./assets/2022-11_iSamplesMetadata.pdf" class="sidebar-item-text sidebar-link">
  <span class="menu-text">iSamples metadata model talk (slides, PDF)</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../pubs.html" class="sidebar-item-text sidebar-link">
+  <a href="./pubs.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Publications</span></a>
   </div>
 </li>
@@ -292,7 +239,7 @@ window.Quarto = {
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/isamples_explorer.html" class="sidebar-item-text sidebar-link">
+  <a href="./tutorials/isamples_explorer.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Interactive Explorer</span></a>
   </div>
 </li>
@@ -307,25 +254,25 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/index.html" class="sidebar-item-text sidebar-link">
+  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Overview</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
+  <a href="./tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Deep-Dive Analysis</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/parquet_cesium_isamples_wide.html" class="sidebar-item-text sidebar-link">
+  <a href="./tutorials/parquet_cesium_isamples_wide.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">3D Globe Visualization</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
+  <a href="./tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Technical: Narrow vs Wide</span></a>
   </div>
 </li>
@@ -341,214 +288,134 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#taxonomies" id="toc-taxonomies" class="nav-link active" data-scroll-target="#taxonomies">Taxonomies</a></li>
+  <li><a href="#session-continuity-notes---oct-3-2025" id="toc-session-continuity-notes---oct-3-2025" class="nav-link active" data-scroll-target="#session-continuity-notes---oct-3-2025"><span class="header-section-number">1</span> Session Continuity Notes - Oct 3, 2025</a>
+  <ul>
+  <li><a href="#current-status-phase-2-complete" id="toc-current-status-phase-2-complete" class="nav-link" data-scroll-target="#current-status-phase-2-complete"><span class="header-section-number">1.1</span> Current Status: Phase 2 Complete ✅</a>
+  <ul class="collapse">
+  <li><a href="#completed-work" id="toc-completed-work" class="nav-link" data-scroll-target="#completed-work"><span class="header-section-number">1.1.1</span> Completed Work</a></li>
+  <li><a href="#whats-next-phase-3" id="toc-whats-next-phase-3" class="nav-link" data-scroll-target="#whats-next-phase-3"><span class="header-section-number">1.1.2</span> What’s Next: Phase 3</a></li>
+  <li><a href="#key-technical-details" id="toc-key-technical-details" class="nav-link" data-scroll-target="#key-technical-details"><span class="header-section-number">1.1.3</span> Key Technical Details</a></li>
+  <li><a href="#file-locations" id="toc-file-locations" class="nav-link" data-scroll-target="#file-locations"><span class="header-section-number">1.1.4</span> File Locations</a></li>
+  <li><a href="#quick-start-commands" id="toc-quick-start-commands" class="nav-link" data-scroll-target="#quick-start-commands"><span class="header-section-number">1.1.5</span> Quick Start Commands</a></li>
+  <li><a href="#session-pickup-prompt" id="toc-session-pickup-prompt" class="nav-link" data-scroll-target="#session-pickup-prompt"><span class="header-section-number">1.1.6</span> Session Pickup Prompt</a></li>
+  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes"><span class="header-section-number">1.1.7</span> Notes</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SESSION_NOTES.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../design/index.html">Information Architecture</a></li><li class="breadcrumb-item"><a href="../models/index.html">iSamples Vocabularies</a></li></ol></nav>
-<div class="quarto-title">
-<h1 class="title">iSamples Vocabularies</h1>
-<p class="subtitle lead">Vocabularies for interoperable sample description</p>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p>see <a href="https://isamplesorg.github.io/metadata/">description of model</a> at https://isamplesorg.github.io/metadata/</p>
-<section id="taxonomies" class="level2">
-<h2 data-anchor-id="taxonomies">Taxonomies</h2>
-<p>One of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using <a href="https://www.w3.org/2009/08/skos-reference/skos.html#broader"><code>SKOS:broader</code></a>. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using <code>SKOS:broader</code> and <code>SKOS:narrower</code>.</p>
-<p>The iSamples core taxonomies are controlled vocabularies with terms related by <a href="https://www.w3.org/2009/08/skos-reference/skos.html#broader"><code>SKOS:broader</code></a> and <a href="https://www.w3.org/2009/08/skos-reference/skos.html#narrower"><code>SKOS:narrower</code></a>. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using <code>SKOS:broader</code> and <code>SKOS:narrower</code>.</p>
-<p>The iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:</p>
+<section id="session-continuity-notes---oct-3-2025" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Session Continuity Notes - Oct 3, 2025</h1>
+<section id="current-status-phase-2-complete" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="current-status-phase-2-complete"><span class="header-section-number">1.1</span> Current Status: Phase 2 Complete ✅</h2>
+<p>We’re in the middle of integrating Eric Kansa’s 4 query functions from <code>oc_parquet_analysis_enhanced.ipynb</code> into <code>/tutorials/parquet_cesium.qmd</code>.</p>
+<section id="completed-work" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="completed-work"><span class="header-section-number">1.1.1</span> Completed Work</h3>
+<p><strong>Phase 1: Documentation</strong> (Commit d5d6690) - ✅ Added comprehensive Path 1/Path 2 explanation with diagrams - ✅ Added full relationship map (Agent, IdentifiedConcept paths) - ✅ Added Eric’s 4 query function analysis with summary table</p>
+<p><strong>Phase 2: First Query Implementation</strong> (Commit 3224eb1) - ✅ Implemented <code>get_samples_at_geo_cord_location_via_sample_event()</code> - ✅ Combines Path 1 + Path 2 with UNION - ✅ Returns rich metadata: thumbnail_url, description, alternate_identifiers, site info - ✅ Added reactive cell <code>selectedSamplesCombined</code> with loading state - ✅ Added display section “Combined Samples at Location”</p>
+</section>
+<section id="whats-next-phase-3" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="whats-next-phase-3"><span class="header-section-number">1.1.2</span> What’s Next: Phase 3</h3>
+<p><strong>Remaining 2 queries from Eric’s notebook</strong> (cell 59):</p>
 <ol type="1">
-<li>The “iSamples Materials vocabulary” is a taxonomy of terms used to categorize the composition of a physical sample, that is “What material is the sample composed of?”</li>
-<li>The “Sampled Feature Type Vocabulary” is a taxonomy of terms used to indicate what the sample is representative of.</li>
-<li>The “iSamples Specimen Type Vocabulary” is a taxonomy of broad categories that classify what type of spcimen the physical sample record represents.</li>
+<li><strong>Agent Query</strong> - <code>get_sample_data_agents_sample_pid(sample_pid)</code>
+<ul>
+<li>Shows who collected/registered samples</li>
+<li>Path: MaterialSampleRecord → produced_by → SamplingEvent → {responsibility, registrant} → Agent</li>
+<li>Returns: sample metadata + agent info (agent_pid, agent_name, predicate)</li>
+<li><strong>Note</strong>: Independent of Path 1/Path 2 (no geographic data needed)</li>
+</ul></li>
+<li><strong>Keywords/Concepts Query</strong> - <code>get_sample_types_and_keywords_via_sample_pid(sample_pid)</code>
+<ul>
+<li>Shows material types and classifications</li>
+<li>Path: MaterialSampleRecord → {keywords, has_sample_object_type, has_material_category} → IdentifiedConcept</li>
+<li>Returns: sample metadata + concept info (keyword_pid, keyword, predicate)</li>
+<li><strong>Note</strong>: Direct edges to concepts, bypasses SamplingEvent entirely!</li>
+</ul></li>
 </ol>
-<p>Three taxonomies are currently defined :</p>
-<p><a href="generated/vocabularies/material_sample_object_type.html">Material Sample (specimen) Type Vocabulary</a></p>
-<p><a href="generated/vocabularies/material_type.html">Materials Vocabulary</a></p>
-<p><a href="generated/vocabularies/sampled_feature_type.html">Sampled Feature (context) Type vocabulary</a></p>
-
+</section>
+<section id="key-technical-details" class="level3" data-number="1.1.3">
+<h3 data-number="1.1.3" data-anchor-id="key-technical-details"><span class="header-section-number">1.1.3</span> Key Technical Details</h3>
+<p><strong>Table alias difference</strong>: - Eric’s Python notebook uses: <code>FROM pqg AS ...</code> - Our JavaScript implementation uses: <code>FROM nodes ...</code> - DuckDB view is created as: <code>CREATE VIEW nodes AS SELECT * FROM read_parquet('${parquet_path}')</code></p>
+<p><strong>Loading pattern to follow</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">get_FUNCTION_NAME</span>(pid) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pid <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> pid <span class="op">===</span><span class="st">""</span> <span class="op">||</span> pid <span class="op">==</span> <span class="st">"unset"</span>) <span class="cf">return</span> []<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> q <span class="op">=</span> <span class="vs">`SQL QUERY HERE`</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> <span class="fu">loadData</span>(q<span class="op">,</span> [pid]<span class="op">,</span> <span class="st">"loading_ID"</span><span class="op">,</span> <span class="st">"key"</span>)<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result <span class="op">??</span> []<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>mutable FUNCTIONLoading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>selectedFUNCTION <span class="op">=</span> {</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    mutable FUNCTIONLoading <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> <span class="fu">get_FUNCTION_NAME</span>(clickedPointId)<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">finally</span> {</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        mutable FUNCTIONLoading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Display pattern</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## Section Title</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> id</span><span class="op">=</span><span class="st">"loading_ID"</span><span class="ot"> hidden</span><span class="dt">&gt;</span>Loading message…<span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Explanation text...</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span>{ojs}</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>//| echo: false</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>variable = selectedFUNCTION</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>FUNCTIONLoading ? md<span class="in">`(loading…)`</span> : md<span class="in">`\`</span><span class="sc">\`\`</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>${JSON.stringify(variable, null, 2)}</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>`</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="sc">\`\`\`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="file-locations" class="level3" data-number="1.1.4">
+<h3 data-number="1.1.4" data-anchor-id="file-locations"><span class="header-section-number">1.1.4</span> File Locations</h3>
+<p><strong>Main working file</strong>: <code>/Users/raymondyee/C/src/iSamples/isamplesorg.github.io/tutorials/parquet_cesium.qmd</code></p>
+<p><strong>Reference notebook</strong>: <code>/Users/raymondyee/C/src/iSamples/isamples-python/examples/basic/oc_parquet_analysis_enhanced.ipynb</code> (cell 59)</p>
+<p><strong>Local parquet</strong>: <code>http://localhost:4979/assets/oc_isamples_pqg.parquet</code> (691MB, in <code>docs/assets/</code>)</p>
+<p><strong>Branch</strong>: <code>issue-13-parquet-duckdb</code></p>
+</section>
+<section id="quick-start-commands" class="level3" data-number="1.1.5">
+<h3 data-number="1.1.5" data-anchor-id="quick-start-commands"><span class="header-section-number">1.1.5</span> Quick Start Commands</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Navigate to project</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /Users/raymondyee/C/src/iSamples/isamplesorg.github.io</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check current branch</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Start Quarto preview (if needed)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># View notebook for reference</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> /Users/raymondyee/C/src/iSamples/isamples-python/examples/basic/oc_parquet_analysis_enhanced.ipynb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="session-pickup-prompt" class="level3" data-number="1.1.6">
+<h3 data-number="1.1.6" data-anchor-id="session-pickup-prompt"><span class="header-section-number">1.1.6</span> Session Pickup Prompt</h3>
+<p>“Let’s continue integrating Eric’s queries into parquet_cesium.qmd. We completed Phase 2 (combined samples query). Next we need to add the agent query and keywords/concepts query. Should we start with the agent query?”</p>
+</section>
+<section id="notes" class="level3" data-number="1.1.7">
+<h3 data-number="1.1.7" data-anchor-id="notes"><span class="header-section-number">1.1.7</span> Notes</h3>
+<ul>
+<li>All existing queries (<code>get_samples_1</code>, <code>get_samples_2</code>, <code>get_samples_at_geo_cord_location_via_sample_event</code>) are working and preserved</li>
+<li>Pattern is established - just need to adapt Eric’s remaining 2 SQL queries to JavaScript</li>
+<li>Consider UI improvements after Phase 3 complete (tables, clickable links, thumbnails)</li>
+</ul>
 
 
 </section>
+</section>
+</section>
 
-<div class="quarto-listing quarto-listing-container-table" id="listing-vocabulary-listing">
-<table class="quarto-listing-table table">
-<thead>
-<tr>
-
-<th>
-Title
-</th>
-
-<th>
-Subtitle
-</th>
-
-</tr>
-</thead>
-<tbody class="list">
-
-<tr data-index="0" data-listing-date-sort="1769736391087" data-listing-file-modified-sort="1769736392119" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1283" data-listing-title-sort="Sampled Feature Type vocabulary" data-listing-filename-sort="sampled_feature_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/sampled_feature_type.html" class="title listing-title">Sampled Feature Type vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Categories to specify the broad context that a sample is intended to represent. </span>
-</td>
-
-</tr>
-
-<tr data-index="1" data-listing-date-sort="1769736393387" data-listing-file-modified-sort="1769736394481" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1917" data-listing-title-sort="iSamples Material Sample Object Type Vocabulary" data-listing-filename-sort="material_sample_object_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/material_sample_object_type.html" class="title listing-title">iSamples Material Sample Object Type Vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Broad categories to specify the kind of physical thing identified as the ‘sample’. </span>
-</td>
-
-</tr>
-
-<tr data-index="2" data-listing-date-sort="1769736388761" data-listing-file-modified-sort="1769736389827" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1870" data-listing-title-sort="iSamples Materials Vocabulary" data-listing-filename-sort="material_type.qmd">
-<td>
-<a href="../models/generated/vocabularies/material_type.html" class="title listing-title">iSamples Materials Vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">High level vocabulary to specify the kind of material that constitutes a physical sample </span>
-</td>
-
-</tr>
-
-<tr data-index="3" data-listing-file-modified-sort="1769736364501" data-listing-reading-time-sort="1" data-listing-word-count-sort="12" data-listing-filename-sort="readme.md">
-<td>
-<a href="../models/generated/vocabularies/readme.html" class="title listing-title">&nbsp;</a>
-</td>
-<td>
-<span class="listing-subtitle">&nbsp;</span>
-</td>
-
-</tr>
-
-</tbody>
-</table>
-<div class="listing-no-matching d-none">No matching items</div>
-</div><div class="quarto-listing quarto-listing-container-table" id="listing-extension-listing">
-<table class="quarto-listing-table table">
-<thead>
-<tr>
-
-<th>
-Title
-</th>
-
-<th>
-Subtitle
-</th>
-
-</tr>
-</thead>
-<tbody class="list">
-
-<tr data-index="0" data-listing-date-sort="1769736422925" data-listing-file-modified-sort="1769736425007" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3658" data-listing-title-sort="Biology Extension: Basic taxon classes for biological entity" data-listing-filename-sort="biology_sampledfeature_extension.md">
-<td>
-<a href="../models/generated/extensions/biology_sampledfeature_extension.html" class="title listing-title">Biology Extension: Basic taxon classes for biological entity</a>
-</td>
-<td>
-<span class="listing-subtitle">This is a vocabulary to categorize sampled organisms (whole or part) according to taxonomic classes. Classes are based largely on taxonomy found in Wikipedia, particularly Whittaker’s five kingdom system (1969) (https://en.wikipedia.org/wiki/Kingdom_(biology), https://doi.org/10.1126%2Fscience.163.3863.150). The intended use is in iSamples cross domain categorization of material samples, recognizing that there are multiple view for taxonomy and cladistics for the tree of life. This is a high level view intended for cross domain purposes, not expert analysis. Other extension vocabularies should be used for other taxonomic schemes </span>
-</td>
-
-</tr>
-
-<tr data-index="1" data-listing-date-sort="1769736410169" data-listing-file-modified-sort="1769736413626" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4948" data-listing-title-sort="Earth and Environmental Science extension -  Material sample type" data-listing-filename-sort="earthenv_materialsampleobject_type.md">
-<td>
-<a href="../models/generated/extensions/earthenv_materialsampleobject_type.html" class="title listing-title">Earth and Environmental Science extension - Material sample type</a>
-</td>
-<td>
-<span class="listing-subtitle">This concept scheme contains skos concepts for categorizing kinds of Earth Material sample types, extending the iSamples Material Sample Object Type vocabulary. Defintions from SESAR, ODM2, wikipedia, ESS-DIVE, and other sources; sources are cited with each term. </span>
-</td>
-
-</tr>
-
-<tr data-index="2" data-listing-date-sort="1769736395343" data-listing-file-modified-sort="1769736395936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="756" data-listing-title-sort="Earth and Environmental Science extension -  Mineral group vocabulary" data-listing-filename-sort="earthenv_material_extension_mineral_group.md">
-<td>
-<a href="../models/generated/extensions/earthenv_material_extension_mineral_group.html" class="title listing-title">Earth and Environmental Science extension - Mineral group vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Vocabulary to extend the mineral material type category with the top level mineral group categories. Uses the Nickel–Strunz mineral classes, which divide minerals into ten classes according to chemical composition and crystal structure. Nickel-Strunz group 10 is not included because that material would be mat:organiccompounds. Version 10 of the classification is modified from v 9 (Strunz and Nickel,2002) by Jim Ferraiolo and others, and now extended and maintained by mindat.org. Some scope notes from linked.data.gov.au. </span>
-</td>
-
-</tr>
-
-<tr data-index="3" data-listing-date-sort="1769736400306" data-listing-file-modified-sort="1769736405174" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="42" data-listing-word-count-sort="8362" data-listing-title-sort="Earth and Environmental Science extension - Rock and sediment materials vocabulary" data-listing-filename-sort="earthenv_material_extension_rock_sediment.md">
-<td>
-<a href="../models/generated/extensions/earthenv_material_extension_rock_sediment.html" class="title listing-title">Earth and Environmental Science extension - Rock and sediment materials vocabulary</a>
-</td>
-<td>
-<span class="listing-subtitle">Rock and sediment categories for iSamples materialType classification. Remove anthropogenic materials and classes for consolidated or non-consolidated material; remove leaf classes subjectively based on abundance of material type and number of subclasses. There are 83 ‘mat:rock’ subclasses; these include some classes that are non-consolidated material (e.g.&nbsp;fault gouge) but these are not sediment and adding ‘material’ classes that are independent of consolidation seems like more overhead than needed. Note that a given material is likely to fit in more that one class; for example the sediment subclasses include compositional classes (e.g.&nbsp;carbonate, clastic) as well as grain size classes (gravel-size sediment). A calcareous ooze sample would be both ‘mud-size sediment’ and ‘carbonate sediment’. Change owl:class to skos:concept, and rdfs:subClassOf to skos:broader. </span>
-</td>
-
-</tr>
-
-<tr data-index="4" data-listing-date-sort="1769736406199" data-listing-file-modified-sort="1769736406953" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="682" data-listing-title-sort="Earth and Environmental Science extension - Sampled feature role" data-listing-filename-sort="earthenv_sampled_feature_role.md">
-<td>
-<a href="../models/generated/extensions/earthenv_sampled_feature_role.html" class="title listing-title">Earth and Environmental Science extension - Sampled feature role</a>
-</td>
-<td>
-<span class="listing-subtitle">Terms to categorize the relation of a sampled feature to its context. In the Earth Science realm this is typically relation of sampled feature to a containing rock body or rock body part. </span>
-</td>
-
-</tr>
-
-<tr data-index="5" data-listing-date-sort="1769736420132" data-listing-file-modified-sort="1769736420879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="635" data-listing-title-sort="Open Context vocabulary extension for material sample object type" data-listing-filename-sort="opencontext_materialsampleobjecttype.md">
-<td>
-<a href="../models/generated/extensions/opencontext_materialsampleobjecttype.html" class="title listing-title">Open Context vocabulary extension for material sample object type</a>
-</td>
-<td>
-<span class="listing-subtitle">categories for kinds of sample objects specific to archaeological studies </span>
-</td>
-
-</tr>
-
-<tr data-index="6" data-listing-date-sort="1769736416103" data-listing-file-modified-sort="1769736419145" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2529" data-listing-title-sort="OpenContext material type extension draft" data-listing-filename-sort="opencontext_material_extension.md">
-<td>
-<a href="../models/generated/extensions/opencontext_material_extension.html" class="title listing-title">OpenContext material type extension draft</a>
-</td>
-<td>
-<span class="listing-subtitle">vocabulary of materials typical of archeological samples </span>
-</td>
-
-</tr>
-
-<tr data-index="7" data-listing-file-modified-sort="1769736364501" data-listing-reading-time-sort="1" data-listing-word-count-sort="8" data-listing-filename-sort="readme.md">
-<td>
-<a href="../models/generated/extensions/readme.html" class="title listing-title">&nbsp;</a>
-</td>
-<td>
-<span class="listing-subtitle">&nbsp;</span>
-</td>
-
-</tr>
-
-</tbody>
-</table>
-<div class="listing-no-matching d-none">No matching items</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const isCodeAnnotation = (el) => {
@@ -950,7 +817,7 @@ Subtitle
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SESSION_NOTES.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the <a href="https://nsf.gov/">National Science Foundation</a>.</p>
 </div>
