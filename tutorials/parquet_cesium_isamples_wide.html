@@ -338,12 +338,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This page uses the <strong>iSamples combined dataset</strong> (Dec 2025) which includes:</p>
+<p>This page uses the <strong>iSamples combined dataset</strong> (Jan 2026) which includes:</p>
 <ul>
-<li><strong>6.68M MaterialSampleRecords</strong> from all iSamples sources</li>
-<li><strong>Source breakdown</strong>: SESAR (70%), OpenContext (16%), GEOME (9%), Smithsonian (5%)</li>
-<li><strong>242 MB</strong> wide format (vs 709 MB narrow)</li>
-<li><strong>19.5M total rows</strong> (entities only, no edge rows)</li>
+<li><strong>6.7M MaterialSampleRecords</strong> from all iSamples sources</li>
+<li><strong>Source breakdown</strong>: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)</li>
+<li><strong>~280 MB</strong> wide format (vs ~850 MB narrow) - 67% smaller</li>
+<li><strong>20M total rows</strong> (all entity types, no edge rows)</li>
 <li><strong>47 columns</strong> with flattened latitude/longitude (direct column access, no JSON parsing)</li>
 </ul>
 </div>
@@ -452,7 +452,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Serve it locally</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> http.server 8000</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then use: <code>http://localhost:8000/isamples_202601_wide.parquet</code></p>
-<p><strong>Benefits of wide format file:</strong> - 66% smaller than narrow format (242 MB vs 709 MB) - Much faster initial load (less network transfer) - Simpler queries with direct column access - Works offline once cached</p>
+<p><strong>Benefits of wide format file:</strong> - 67% smaller than narrow format (~280 MB vs ~850 MB) - Much faster initial load (less network transfer) - Simpler queries with direct column access - Works offline once cached</p>
 <p><strong>Limitation:</strong> Only works during local development, not on published GitHub Pages.</p>
 </div>
 </div>
