@@ -12,7 +12,7 @@ Search and explore **6.7 million physical samples** from scientific collections 
 
 ::: {.callout-note}
 ### Serverless Architecture
-This app queries a ~280 MB Parquet file directly in your browser using DuckDB-WASM. No server required!
+This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts (source, material, context, specimen type), while the full ~280 MB Parquet file is only queried when drilling into records. All powered by DuckDB-WASM in your browser -- no server required!
 :::
 
 ## Setup
@@ -27,6 +27,9 @@ duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+
 //| code-fold: true
 // Data source configuration
 parquet_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+
+// Pre-computed facet summaries (2KB - loads instantly)
+facet_summaries_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet"
 
 // Source color scheme (consistent with iSamples conventions)
 SOURCE_COLORS = ({
@@ -79,14 +82,18 @@ viewof searchInput = Inputs.text({
 
 ### Filters
 
+```{ojs}
+facetSummariesWarning
+```
+
 **Source**
 
 ```{ojs}
 //| code-fold: true
-// Source checkboxes with counts
+// Source checkboxes with counts - uses pre-computed summaries for instant load
 viewof sourceCheckboxes = {
-  // Get source counts based on current search
-  const counts = await sourceCounts;
+  // Use pre-computed facet summaries (instant) instead of scanning full parquet
+  const counts = facetsByType.source;
   const options = counts.map(r => r.value);
 
   return Inputs.checkbox(options, {
@@ -98,6 +105,69 @@ viewof sourceCheckboxes = {
       return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
         ${x} <span style="color: #888;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Material**
+
+```{ojs}
+//| code-fold: true
+// Material filter - loaded from pre-computed summaries
+viewof materialCheckboxes = {
+  const counts = facetsByType.material;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Sampled Feature**
+
+```{ojs}
+//| code-fold: true
+// Context filter - loaded from pre-computed summaries
+viewof contextCheckboxes = {
+  const counts = facetsByType.context;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Specimen Type**
+
+```{ojs}
+//| code-fold: true
+// Object type filter - loaded from pre-computed summaries
+viewof objectTypeCheckboxes = {
+  const counts = facetsByType.object_type;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -131,6 +201,9 @@ viewof maxSamples = Inputs.range([1000, 100000], {
   const params = new URLSearchParams();
   if (searchInput) params.set("q", searchInput);
   if (sourceCheckboxes?.length) params.set("sources", sourceCheckboxes.join(","));
+  if (materialCheckboxes?.length) params.set("material", materialCheckboxes.join(","));
+  if (contextCheckboxes?.length) params.set("context", contextCheckboxes.join(","));
+  if (objectTypeCheckboxes?.length) params.set("object_type", objectTypeCheckboxes.join(","));
   if (viewMode !== "globe") params.set("view", viewMode);
 
   const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
@@ -264,7 +337,50 @@ async function runQuery(sql) {
 
 ```{ojs}
 //| code-fold: true
-// Build WHERE clause from current filters
+// Tier 1: Load pre-computed facet summaries (2KB, instant)
+facetSummaries = {
+  facetSummariesError = null;
+  try {
+    const rows = await runQuery(`SELECT * FROM read_parquet('${facet_summaries_url}')`);
+    return rows;
+  } catch (e) {
+    console.error("Facet summaries load error:", e);
+    facetSummariesError = e;
+    return [];
+  }
+}
+
+```
+
+```{ojs}
+//| code-fold: true
+facetSummariesWarning = {
+  if (!facetSummariesError) return null;
+  return html`<div style="margin: 6px 0 10px; padding: 8px 10px; border: 1px solid #f0b429; background: #fff7e6; border-radius: 6px; color: #7a4b00; font-size: 12px;">
+    Facet summaries failed to load. Filter counts may be missing. Try refreshing.
+  </div>`;
+}
+
+// Extract facet counts by type from pre-computed summaries
+facetsByType = {
+  const grouped = { source: [], material: [], context: [], object_type: [] };
+  for (const row of facetSummaries) {
+    const ft = row.facet_type;
+    if (grouped[ft]) {
+      grouped[ft].push({ value: row.facet_value, count: Number(row.count), scheme: row.scheme });
+    }
+  }
+  // Sort each by count descending
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a, b) => b.count - a.count);
+  }
+  return grouped;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
 whereClause = {
   const conditions = [
     "otype = 'MaterialSampleRecord'",
@@ -288,40 +404,36 @@ whereClause = {
     conditions.push(`n IN (${sourceList})`);
   }
 
+  // Material filter
+  const materials = Array.from(materialCheckboxes || []);
+  if (materials.length > 0) {
+    const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_material_category IN (${matList})`);
+  }
+
+  // Context (sampled feature) filter
+  const contexts = Array.from(contextCheckboxes || []);
+  if (contexts.length > 0) {
+    const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_context_category IN (${ctxList})`);
+  }
+
+  // Object type (specimen type) filter
+  const objectTypes = Array.from(objectTypeCheckboxes || []);
+  if (objectTypes.length > 0) {
+    const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_specimen_category IN (${otList})`);
+  }
+
   return conditions.join(" AND ");
 }
 ```
 
 ```{ojs}
 //| code-fold: true
-// Get source facet counts (respects text search but not source filter)
-sourceCounts = {
-  let baseWhere = "otype = 'MaterialSampleRecord' AND latitude IS NOT NULL";
-
-  if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    baseWhere += ` AND (
-      label ILIKE '%${term}%'
-      OR description ILIKE '%${term}%'
-      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-    )`;
-  }
-
-  const query = `
-    SELECT n as value, COUNT(*) as count
-    FROM samples
-    WHERE ${baseWhere}
-    GROUP BY n
-    ORDER BY count DESC
-  `;
-
-  try {
-    return await runQuery(query);
-  } catch (e) {
-    console.error("Facet query error:", e);
-    return [];
-  }
-}
+// Source counts now come from pre-computed facet summaries (Tier 1)
+// No longer scans the full parquet file on every page load
+sourceCounts = facetsByType.source
 ```
 
 ```{ojs}

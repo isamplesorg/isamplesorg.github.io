@@ -27,11 +27,16 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 
 ## Dataset Information
 
-**Primary dataset** (Jan 2026):
-- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet`
-- **Size**: ~280 MB wide format, 6.7M MaterialSampleRecords (20M total rows)
+**Primary dataset** (Jan 2026, H3-indexed):
+- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet`
+- **Size**: ~292 MB wide format with H3 indices, 6.7M MaterialSampleRecords (20M total rows)
+- **H3 columns**: Pre-computed `h3_res4`, `h3_res6`, `h3_res8` (BIGINT) for spatial grouping
 - **Sources**: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)
 - **Hosting**: Cloudflare R2 with HTTP range request support
+
+**Facet summaries** (2KB, instant):
+- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet`
+- **Schema**: `facet_type`, `facet_value`, `scheme`, `count`
 
 **Note**: *Data was originally archived on Zenodo and is now served from Cloudflare R2 for better performance and reliability.*
 
@@ -81,14 +86,20 @@ d3 = require("d3@7")
 topojson = require("topojson-client@3")
 
 // Dataset URLs - try multiple options for CORS compatibility
-// Primary: Cloudflare R2 (Jan 2026 wide format)
+// Primary: Cloudflare R2 (Jan 2026 wide format with H3 indices)
 parquet_urls = [
+  'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet',
+
+  // Fallback: original wide format without H3
   'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet',
 
   // Fallback: older versions
   'https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet',
   'https://zenodo.org/api/records/15278211/files/isamples_export_2025_04_21_16_23_46_geo.parquet/content'
 ]
+
+// Pre-computed facet summaries (2KB - loads instantly)
+facet_summaries_url = 'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet'
 
 // Test CORS and find working URL - with rate limiting protection
 working_parquet_url = {
@@ -419,36 +430,89 @@ geo_stats = {
   };
 }
 
-// Regional analysis using bounding boxes
+// Data-driven regional analysis using H3 res4 cell grouping
+// Replaces hardcoded CASE WHEN bounding boxes with dynamic discovery
 regional_data = {
-  const result = await db.query(`
-    SELECT 
-      CASE 
-        WHEN sample_location_longitude BETWEEN -125 AND -66 
-         AND sample_location_latitude BETWEEN 24 AND 50 THEN 'North America'
-        WHEN sample_location_longitude BETWEEN -11 AND 40 
-         AND sample_location_latitude BETWEEN 35 AND 71 THEN 'Europe'
-        WHEN sample_location_longitude BETWEEN 95 AND 141 
-         AND sample_location_latitude BETWEEN 18 AND 54 THEN 'East Asia'
-        WHEN sample_location_longitude BETWEEN 113 AND 154 
-         AND sample_location_latitude BETWEEN -44 AND -10 THEN 'Australia'
-        ELSE 'Other'
-      END as region,
-      source_collection,
-      count(*) as sample_count,
-      avg(sample_location_latitude) as avg_lat,
-      avg(sample_location_longitude) as avg_lon
-    FROM isamples_data 
-    WHERE sample_location_latitude IS NOT NULL 
-    AND sample_location_longitude IS NOT NULL
-    GROUP BY 1, 2
-    ORDER BY region, sample_count DESC
-  `);
-  // Convert BigInt values to Numbers
-  return result.toArray().map(row => ({
-    ...row,
-    sample_count: Number(row.sample_count)
-  }));
+  // Check if h3_res4 column exists (H3-indexed file)
+  let hasH3 = false;
+  try {
+    const colCheck = await db.query(`SELECT h3_res4 FROM isamples_data LIMIT 1`);
+    hasH3 = true;
+  } catch (e) {
+    hasH3 = false;
+  }
+
+  if (hasH3) {
+    // H3-based regional grouping: discover dense clusters dynamically
+    const result = await db.query(`
+      SELECT
+        h3_res4,
+        COUNT(*) as sample_count,
+        AVG(sample_location_latitude) as avg_lat,
+        AVG(sample_location_longitude) as avg_lon,
+        COUNT(DISTINCT source_collection) as source_count,
+        MODE(source_collection) as dominant_source
+      FROM isamples_data
+      WHERE sample_location_latitude IS NOT NULL
+        AND sample_location_longitude IS NOT NULL
+        AND h3_res4 IS NOT NULL
+      GROUP BY h3_res4
+      HAVING COUNT(*) > 100
+      ORDER BY sample_count DESC
+    `);
+    // Assign region labels based on centroid location
+    return result.toArray().map(row => {
+      const lat = row.avg_lat;
+      const lon = row.avg_lon;
+      let region;
+      if (lon >= -130 && lon <= -60 && lat >= 20 && lat <= 55) region = 'North America';
+      else if (lon >= -15 && lon <= 45 && lat >= 30 && lat <= 75) region = 'Europe';
+      else if (lon >= 90 && lon <= 150 && lat >= 15 && lat <= 55) region = 'East Asia';
+      else if (lon >= 110 && lon <= 160 && lat >= -50 && lat <= -5) region = 'Australia';
+      else if (lon >= -90 && lon <= -30 && lat >= -60 && lat <= 15) region = 'South America';
+      else if (lon >= -20 && lon <= 55 && lat >= -40 && lat <= 30) region = 'Africa';
+      else region = 'Other';
+      return {
+        region,
+        source_collection: row.dominant_source,
+        sample_count: Number(row.sample_count),
+        avg_lat: row.avg_lat,
+        avg_lon: row.avg_lon,
+        h3_cell: row.h3_res4,
+        source_count: Number(row.source_count)
+      };
+    });
+  } else {
+    // Fallback for non-H3 files: use simple lat/lon-based grouping
+    const result = await db.query(`
+      SELECT
+        source_collection,
+        count(*) as sample_count,
+        avg(sample_location_latitude) as avg_lat,
+        avg(sample_location_longitude) as avg_lon
+      FROM isamples_data
+      WHERE sample_location_latitude IS NOT NULL
+        AND sample_location_longitude IS NOT NULL
+      GROUP BY source_collection
+      ORDER BY sample_count DESC
+    `);
+    return result.toArray().map(row => {
+      const lat = row.avg_lat;
+      const lon = row.avg_lon;
+      let region = 'Other';
+      if (lon >= -130 && lon <= -60 && lat >= 20 && lat <= 55) region = 'North America';
+      else if (lon >= -15 && lon <= 45 && lat >= 30 && lat <= 75) region = 'Europe';
+      else if (lon >= 90 && lon <= 150 && lat >= 15 && lat <= 55) region = 'East Asia';
+      else if (lon >= 110 && lon <= 160 && lat >= -50 && lat <= -5) region = 'Australia';
+      return {
+        region,
+        source_collection: row.source_collection,
+        sample_count: Number(row.sample_count),
+        avg_lat: row.avg_lat,
+        avg_lon: row.avg_lon
+      };
+    });
+  }
 }
 ```
 
@@ -461,8 +525,10 @@ md`
 - **Latitude range**: ${geo_stats.min_lat.toFixed(3)}° to ${geo_stats.max_lat.toFixed(3)}°
 - **Longitude range**: ${geo_stats.min_lon.toFixed(3)}° to ${geo_stats.max_lon.toFixed(3)}°
 - **Average location**: ${geo_stats.avg_lat.toFixed(3)}°, ${geo_stats.avg_lon.toFixed(3)}°
-- **Total regional records**: ${regional_data.length}
-- **Regions found**: ${[...new Set(regional_data.map(d => d.region))].join(', ')}
+- **Dense H3 clusters**: ${regional_data.length} (cells with >100 samples)
+- **Regions discovered**: ${[...new Set(regional_data.map(d => d.region))].join(', ')}
+
+*Regional grouping is data-driven using H3 resolution-4 hexagonal cells, replacing hardcoded bounding boxes.*
 `
 ```
 
@@ -486,27 +552,26 @@ viewof selected_region = Inputs.select(
 ```{ojs}
 //| label: regional-chart
 
-// Regional distribution chart  
+// Regional distribution chart (data-driven from H3 clusters)
 regional_chart = {
-  // Validate that regional_data is an array
   if (!Array.isArray(regional_data)) {
     return html`<div>Error: Regional data is not available</div>`;
   }
-  
-  // Aggregate the regional data by region like we do for source data
+
+  // Aggregate H3 cell data by discovered region
   const regionTotals = d3.rollup(
-    regional_data, 
-    v => d3.sum(v, d => d.sample_count), 
+    regional_data,
+    v => d3.sum(v, d => d.sample_count),
     d => d.region
   );
-  
+
   const aggregatedData = Array.from(regionTotals, ([region, total]) => ({
     region: region,
     sample_count: total
   })).sort((a, b) => b.sample_count - a.sample_count);
-  
+
   return Plot.plot({
-    title: `Sample Distribution by Region (${aggregatedData.length} regions)`,
+    title: `Sample Distribution by Region (H3-derived, ${aggregatedData.length} regions)`,
     width: 700,
     height: 300,
     marginLeft: 120,
@@ -527,7 +592,7 @@ regional_chart = {
       }),
       Plot.text(aggregatedData, {
         x: "sample_count",
-        y: "region", 
+        y: "region",
         text: d => d3.format("~s")(d.sample_count),
         dx: 10,
         textAnchor: "start"
@@ -714,42 +779,76 @@ Explore the distribution of material categories across different sources.
 ```{ojs}
 //| label: material-analysis
 
-// Get top material categories by source
+// Material data: use pre-computed facet summaries for instant results
+// Falls back to full-scan if summaries unavailable
 material_data = {
-  const result = await db.query(`
-    SELECT 
-      source_collection,
-      has_material_category,
-      count(*) as category_count
-    FROM isamples_data 
-    WHERE has_material_category IS NOT NULL
-    GROUP BY source_collection, has_material_category
-    ORDER BY source_collection, category_count DESC
-  `);
-  // Convert BigInt values to Numbers
-  return result.toArray().map(row => ({
-    ...row,
-    category_count: Number(row.category_count)
-  }));
+  try {
+    // Try pre-computed summaries first (2KB, instant)
+    const result = await db.query(`
+      SELECT
+        facet_value as has_material_category,
+        'ALL' as source_collection,
+        count as category_count
+      FROM read_parquet('${facet_summaries_url}')
+      WHERE facet_type = 'material'
+      ORDER BY count DESC
+    `);
+    return result.toArray().map(row => ({
+      ...row,
+      category_count: Number(row.category_count)
+    }));
+  } catch (e) {
+    console.warn("Facet summaries unavailable, falling back to full scan:", e.message);
+    const result = await db.query(`
+      SELECT
+        source_collection,
+        has_material_category,
+        count(*) as category_count
+      FROM isamples_data
+      WHERE has_material_category IS NOT NULL
+      GROUP BY source_collection, has_material_category
+      ORDER BY source_collection, category_count DESC
+    `);
+    return result.toArray().map(row => ({
+      ...row,
+      category_count: Number(row.category_count)
+    }));
+  }
 }
 
-// Get top 10 categories overall
+// Top categories from pre-computed summaries (instant)
 top_categories = {
-  const result = await db.query(`
-    SELECT 
-      has_material_category,
-      count(*) as total_count
-    FROM isamples_data 
-    WHERE has_material_category IS NOT NULL
-    GROUP BY has_material_category
-    ORDER BY total_count DESC
-    LIMIT 10
-  `);
-  // Convert BigInt values to Numbers
-  return result.toArray().map(row => ({
-    ...row,
-    total_count: Number(row.total_count)
-  }));
+  try {
+    const result = await db.query(`
+      SELECT
+        facet_value as has_material_category,
+        count as total_count
+      FROM read_parquet('${facet_summaries_url}')
+      WHERE facet_type = 'material'
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+    return result.toArray().map(row => ({
+      ...row,
+      total_count: Number(row.total_count)
+    }));
+  } catch (e) {
+    console.warn("Facet summaries unavailable, falling back to full scan:", e.message);
+    const result = await db.query(`
+      SELECT
+        has_material_category,
+        count(*) as total_count
+      FROM isamples_data
+      WHERE has_material_category IS NOT NULL
+      GROUP BY has_material_category
+      ORDER BY total_count DESC
+      LIMIT 10
+    `);
+    return result.toArray().map(row => ({
+      ...row,
+      total_count: Number(row.total_count)
+    }));
+  }
 }
 ```
 
