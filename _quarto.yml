@@ -54,6 +54,8 @@ website:
           href: tutorials/zenodo_isamples_analysis.qmd
         - text: "3D Globe Visualization"
           href: tutorials/parquet_cesium_isamples_wide.qmd
+        - text: "Progressive Globe (H3 + Samples)"
+          href: tutorials/progressive_globe.qmd
         - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
 

@@ -3,18 +3,20 @@ title: Using Cesium for display of remote parquet (iSamples Wide Format).
 categories: [parquet, spatial, recipe, wide, isamples]
 ---
 
-This page renders points from the **full iSamples wide-format** parquet file (all sources: SESAR, OpenContext, GEOME, Smithsonian) on Cesium using point primitives.
+This page renders points from the **full iSamples wide-format** parquet file (all sources: SESAR, OpenContext, GEOME, Smithsonian) on Cesium using point primitives, with **zoom-adaptive H3 clustering** for fast initial load.
 
 ::: {.callout-note}
-## iSamples Full Dataset (Wide Format)
+## iSamples Full Dataset (Wide Format + H3 Spatial Index)
 
 This page uses the **iSamples combined dataset** (Jan 2026) which includes:
 
 - **6.7M MaterialSampleRecords** from all iSamples sources
 - **Source breakdown**: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)
-- **~280 MB** wide format (vs ~850 MB narrow) - 67% smaller
-- **20M total rows** (all entity types, no edge rows)
-- **47 columns** with flattened latitude/longitude (direct column access, no JSON parsing)
+- **~292 MB** wide format with H3 indices (vs ~850 MB narrow) - 66% smaller
+- **H3 spatial index**: Pre-computed `h3_res4`, `h3_res6`, `h3_res8` columns for zoom-adaptive clustering
+- **Clustered view**: At high altitude shows res4 clusters, medium shows res6, close-up shows res8
+- **Toggle**: Switch between clustered (fast) and all-points (detailed) views
+- **Color-coded**: Points/clusters colored by dominant data source
 
 :::
 
@@ -42,8 +44,8 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 ```{ojs}
 //| echo: false
 viewof parquet_path = Inputs.text({
-  label:"Source (iSamples Wide Format)",
-  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet",
+  label:"Source (iSamples Wide Format + H3)",
+  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet",
   placeholder: "URL or file:///path/to/file.parquet",
   width:"100%",
   submit:true
@@ -80,6 +82,34 @@ viewof classifyTrigger = {
 
 // Alias for handler compatibility
 classifyDots = classifyTrigger > 0 ? classifyTrigger : null
+```
+
+```{ojs}
+//| echo: false
+// View mode toggle: clustered (H3 LOD) vs all points
+viewof viewModeToggle = Inputs.radio(["clustered", "all points"], {
+  label: "View Mode:",
+  value: "clustered"
+})
+```
+
+```{ojs}
+//| echo: false
+// Source color scheme for cluster coloring
+CLUSTER_COLORS = ({
+  'SESAR': '#3366CC',
+  'OPENCONTEXT': '#DC3912',
+  'GEOME': '#109618',
+  'SMITHSONIAN': '#FF9900',
+  'default': '#808080'
+})
+
+// H3 resolution based on camera height
+function getH3ResForHeight(height) {
+  if (height > 5000000) return 4;   // Continental view
+  if (height > 500000) return 6;    // Regional view
+  return 8;                          // Local view
+}
 ```
 
 ::: {.callout-tip collapse="true"}
@@ -156,136 +186,244 @@ async function loadData(query, params = [], waiting_id = null, key = "default") 
     }
 }
 
+// Query H3 clusters at a given resolution
+async function queryH3Clusters(h3Res) {
+    const col = `h3_res${h3Res}`;
+    const query = `
+        SELECT
+            ${col} as hex_id,
+            COUNT(*) as n,
+            AVG(latitude) as lat,
+            AVG(longitude) as lon,
+            MODE(source) as dominant_source
+        FROM nodes
+        WHERE otype = 'MaterialSampleRecord'
+          AND ${col} IS NOT NULL
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
+        GROUP BY ${col}
+    `;
+    return await loadData(query, [], "loading_1", "clusters");
+}
+
+// Render clustered points on the globe
+async function renderClusters(clusters) {
+    content.points.removeAll();
+    if (!clusters || clusters.length === 0) return;
+
+    const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.5);
+    const maxCount = Math.max(...clusters.map(c => c.n));
+
+    for (const cluster of clusters) {
+        const source = cluster.dominant_source || 'default';
+        const colorHex = CLUSTER_COLORS[source] || CLUSTER_COLORS.default;
+        const color = Cesium.Color.fromCssColorString(colorHex);
+        // Size proportional to log of count (range: 4-20px)
+        const size = Math.max(4, Math.min(20, 4 + Math.log(Number(cluster.n)) * 2.5));
+
+        content.points.add({
+            id: `cluster_${cluster.hex_id}_n${cluster.n}_${source}`,
+            position: Cesium.Cartesian3.fromDegrees(
+                cluster.lon,
+                cluster.lat,
+                0
+            ),
+            pixelSize: size,
+            color: color,
+            scaleByDistance: scalar,
+        });
+    }
+    content.enableTracking();
+}
+
 locations = {
     // Performance telemetry
     performance.mark('locations-start');
 
-    // Get loading indicator element for progress updates
     const loadingDiv = document.getElementById('loading_1');
     if (loadingDiv) {
         loadingDiv.hidden = false;
-        loadingDiv.innerHTML = 'Loading geocodes...';
+        loadingDiv.innerHTML = 'Loading...';
     }
 
-    // Fast query: just get all distinct geocodes (no classification!)
-    // The Zenodo wide parquet has latitude/longitude as direct columns (like Eric's OpenContext)
-    const query = `
-        SELECT DISTINCT
-            pid,
-            latitude,
-            longitude
-        FROM nodes
-        WHERE otype = 'GeospatialCoordLocation'
-          AND latitude IS NOT NULL
-          AND longitude IS NOT NULL
-    `;
-
-    performance.mark('query-start');
-    const data = await loadData(query, [], "loading_1", "locations");
-    performance.mark('query-end');
-    performance.measure('locations-query', 'query-start', 'query-end');
-    const queryTime = performance.getEntriesByName('locations-query')[0].duration;
-
-    // Handle null data (query failed)
-    if (!data) {
-        console.error('Query failed - data is null');
-        if (loadingDiv) {
-            loadingDiv.innerHTML = 'Query failed - check console for errors';
-            loadingDiv.hidden = false;
-        }
-        return [];
+    // Remove any existing camera change listener to avoid leaks
+    if (content._cameraChangedHandler) {
+        content.viewer.camera.changed.removeEventListener(content._cameraChangedHandler);
+        content._cameraChangedHandler = null;
+    }
+    if (content._cameraChangedDebounceTimer) {
+        clearTimeout(content._cameraChangedDebounceTimer);
+        content._cameraChangedDebounceTimer = null;
     }
 
-    console.log(`Query executed in ${queryTime.toFixed(0)}ms - retrieved ${data.length} locations`);
+    if (viewModeToggle === "clustered") {
+        // Clustered mode: load H3 clusters based on initial zoom level
+        if (loadingDiv) loadingDiv.innerHTML = 'Loading H3 clusters (res4)...';
 
-    // Clear the existing PointPrimitiveCollection
-    content.points.removeAll();
+        performance.mark('query-start');
+        const clusters = await queryH3Clusters(4);
+        performance.mark('query-end');
+        performance.measure('locations-query', 'query-start', 'query-end');
+        const queryTime = performance.getEntriesByName('locations-query')[0].duration;
 
-    // Single color for all points (blue)
-    const defaultColor = Cesium.Color.fromCssColorString('#2E86AB');
-    const defaultSize = 4;
-
-    // Render points in chunks to keep UI responsive
-    const CHUNK_SIZE = 500;
-    const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
-
-    performance.mark('render-start');
-    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-        const chunk = data.slice(i, i + CHUNK_SIZE);
-        const endIdx = Math.min(i + CHUNK_SIZE, data.length);
-
-        // Update progress indicator
-        if (loadingDiv) {
-            const pct = Math.round((endIdx / data.length) * 100);
-            loadingDiv.innerHTML = `Rendering geocodes... ${endIdx.toLocaleString()}/${data.length.toLocaleString()} (${pct}%)`;
+        if (!clusters) {
+            if (loadingDiv) {
+                loadingDiv.innerHTML = 'Cluster query failed - check console';
+                loadingDiv.hidden = false;
+            }
+            return [];
         }
 
-        // Add points for this chunk
-        for (const row of chunk) {
-            content.points.add({
-                id: row.pid,
-                position: Cesium.Cartesian3.fromDegrees(
-                    row.longitude,  //longitude
-                    row.latitude,   //latitude
-                    0               //elevation, m
-                ),
-                pixelSize: defaultSize,
-                color: defaultColor,
-                scaleByDistance: scalar,
-            });
+        console.log(`H3 cluster query (res4) in ${queryTime.toFixed(0)}ms - ${clusters.length} clusters`);
+
+        performance.mark('render-start');
+        await renderClusters(clusters);
+        performance.mark('render-end');
+        performance.measure('locations-render', 'render-start', 'render-end');
+
+        if (loadingDiv) loadingDiv.hidden = true;
+
+        // Set up camera change listener for zoom-adaptive LOD
+        let lastRes = 4;
+        let debounceTimer = null;
+        const cameraChangedHandler = () => {
+            if (viewModeToggle !== "clustered") return;
+            const height = content.viewer.camera.positionCartographic.height;
+            const newRes = getH3ResForHeight(height);
+            if (newRes !== lastRes) {
+                lastRes = newRes;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    const ld = document.getElementById('loading_1');
+                    if (ld) { ld.hidden = false; ld.innerHTML = `Loading H3 clusters (res${newRes})...`; }
+                    const newClusters = await queryH3Clusters(newRes);
+                    if (newClusters) {
+                        await renderClusters(newClusters);
+                        console.log(`Zoom-adaptive: switched to res${newRes}, ${newClusters.length} clusters`);
+                    }
+                    if (ld) ld.hidden = true;
+                }, 300);
+                content._cameraChangedDebounceTimer = debounceTimer;
+            }
+        };
+        content._cameraChangedHandler = cameraChangedHandler;
+        content.viewer.camera.changed.addEventListener(cameraChangedHandler);
+        content.viewer.camera.percentageChanged = 0.1;
+
+        performance.mark('locations-end');
+        performance.measure('locations-total', 'locations-start', 'locations-end');
+        return clusters;
+
+    } else {
+        // All points mode: load every geocode (original behavior)
+        if (loadingDiv) loadingDiv.innerHTML = 'Loading all geocodes...';
+
+        const query = `
+            SELECT DISTINCT
+                pid,
+                latitude,
+                longitude
+            FROM nodes
+            WHERE otype = 'GeospatialCoordLocation'
+              AND latitude IS NOT NULL
+              AND longitude IS NOT NULL
+        `;
+
+        performance.mark('query-start');
+        const data = await loadData(query, [], "loading_1", "locations");
+        performance.mark('query-end');
+        performance.measure('locations-query', 'query-start', 'query-end');
+        const queryTime = performance.getEntriesByName('locations-query')[0].duration;
+
+        if (!data) {
+            if (loadingDiv) {
+                loadingDiv.innerHTML = 'Query failed - check console for errors';
+                loadingDiv.hidden = false;
+            }
+            return [];
         }
 
-        // Yield to browser between chunks to keep UI responsive
-        if (i + CHUNK_SIZE < data.length) {
-            await new Promise(resolve => setTimeout(resolve, 0));
+        console.log(`Query executed in ${queryTime.toFixed(0)}ms - retrieved ${data.length} locations`);
+
+        content.points.removeAll();
+        const defaultColor = Cesium.Color.fromCssColorString('#2E86AB');
+        const defaultSize = 4;
+        const CHUNK_SIZE = 500;
+        const scalar = new Cesium.NearFarScalar(1.5e2, 2, 8.0e6, 0.2);
+
+        performance.mark('render-start');
+        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+            const chunk = data.slice(i, i + CHUNK_SIZE);
+            const endIdx = Math.min(i + CHUNK_SIZE, data.length);
+
+            if (loadingDiv) {
+                const pct = Math.round((endIdx / data.length) * 100);
+                loadingDiv.innerHTML = `Rendering geocodes... ${endIdx.toLocaleString()}/${data.length.toLocaleString()} (${pct}%)`;
+            }
+
+            for (const row of chunk) {
+                content.points.add({
+                    id: row.pid,
+                    position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
+                    pixelSize: defaultSize,
+                    color: defaultColor,
+                    scaleByDistance: scalar,
+                });
+            }
+
+            if (i + CHUNK_SIZE < data.length) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
+        performance.mark('render-end');
+        performance.measure('locations-render', 'render-start', 'render-end');
+        const renderTime = performance.getEntriesByName('locations-render')[0].duration;
+
+        if (loadingDiv) loadingDiv.hidden = true;
+
+        performance.mark('locations-end');
+        performance.measure('locations-total', 'locations-start', 'locations-end');
+        const totalTime = performance.getEntriesByName('locations-total')[0].duration;
+        console.log(`Rendering completed in ${renderTime.toFixed(0)}ms, total: ${totalTime.toFixed(0)}ms`);
+
+        content.enableTracking();
+        return data;
     }
-    performance.mark('render-end');
-    performance.measure('locations-render', 'render-start', 'render-end');
-    const renderTime = performance.getEntriesByName('locations-render')[0].duration;
-
-    // Hide loading indicator
-    if (loadingDiv) {
-        loadingDiv.hidden = true;
-    }
-
-    performance.mark('locations-end');
-    performance.measure('locations-total', 'locations-start', 'locations-end');
-    const totalTime = performance.getEntriesByName('locations-total')[0].duration;
-
-    console.log(`Rendering completed in ${renderTime.toFixed(0)}ms`);
-    console.log(`Total time (query + render): ${totalTime.toFixed(0)}ms`);
-
-    content.enableTracking();
-    return data;
 }
 
 
 function createShowPrimitive(viewer) {
     return function(movement) {
-        // Get the point at the mouse end position
         const selectPoint = viewer.viewer.scene.pick(movement.endPosition);
 
-        // Clear the current selection, if there is one and it is different to the selectPoint
+        // Clear previous selection
         if (viewer.currentSelection !== null) {
-            //console.log(`selected.p ${viewer.currentSelection}`)
             if (Cesium.defined(selectPoint) && selectPoint !== viewer.currentSelection) {
-                console.log(`selected.p 2 ${viewer.currentSelection}`)
-                viewer.currentSelection.primitive.pixelSize = 4;
+                viewer.currentSelection.primitive.pixelSize = viewer.currentSelection._origSize || 4;
                 viewer.currentSelection.primitive.outlineColor = Cesium.Color.TRANSPARENT;
                 viewer.currentSelection.outlineWidth = 0;
                 viewer.currentSelection = null;
             }
         }
 
-        // If selectPoint is valid and no currently selected point
         if (Cesium.defined(selectPoint) && selectPoint.hasOwnProperty("primitive")) {
-            //console.log(`showPrimitiveId ${selectPoint.id}`);
-            //const carto = Cesium.Cartographic.fromCartesian(selectPoint.primitive.position)
             viewer.pointLabel.position = selectPoint.primitive.position;
             viewer.pointLabel.label.show = true;
-            //viewer.pointLabel.label.text = `id:${selectPoint.id}, ${carto}`;
-            viewer.pointLabel.label.text = `${selectPoint.id}`;
+
+            // Parse cluster info from ID (format: cluster_<hexid>_n<count>_<source>)
+            const id = String(selectPoint.id || '');
+            if (id.startsWith('cluster_')) {
+                const parts = id.split('_');
+                const count = parts[2] ? parts[2].replace('n', '') : '?';
+                const source = parts.slice(3).join('_') || '?';
+                const countNum = Number(count);
+                const countLabel = Number.isFinite(countNum) ? countNum.toLocaleString() : count;
+                viewer.pointLabel.label.text = `Cluster: ${countLabel} samples\nSource: ${source}\nCell: ${parts[1]}`;
+            } else {
+                viewer.pointLabel.label.text = `${selectPoint.id}`;
+            }
+
+            selectPoint._origSize = selectPoint.primitive.pixelSize;
             selectPoint.primitive.pixelSize = 20;
             selectPoint.primitive.outlineColor = Cesium.Color.YELLOW;
             selectPoint.primitive.outlineWidth = 3;
@@ -556,7 +694,8 @@ selectedSamplesCombined = {
     }
 }
 
-md`Retrieved ${pointdata.length} locations from ${parquet_path}.`;
+md`Retrieved ${pointdata.length} ${viewModeToggle === "clustered" ? "clusters" : "locations"} from ${parquet_path}.
+${viewModeToggle === "clustered" ? "\n*Clustered view: point size reflects sample count, color reflects dominant source. Zoom in/out to change H3 resolution.*" : ""}`;
 ```
 
 ```{ojs}
