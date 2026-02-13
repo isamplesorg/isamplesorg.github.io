@@ -236,8 +236,9 @@ function updateSamples(samples) {
     for (const s of samples) {
         const color = SOURCE_COLORS[s.source] || '#666';
         const name = SOURCE_NAMES[s.source] || s.source;
-        const desc = s.description
-            ? (s.description.length > 100 ? s.description.slice(0, 100) + '...' : s.description)
+        const placeParts = s.place_name;
+        const desc = Array.isArray(placeParts) && placeParts.length > 0
+            ? placeParts.filter(Boolean).join(' › ')
             : '';
         h += `<div class="sample-row">
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -363,7 +364,7 @@ viewer = {
             const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
             try {
                 const samples = await db.query(`
-                    SELECT pid, label, source, latitude, longitude, description
+                    SELECT pid, label, source, latitude, longitude, place_name
                     FROM read_parquet('${lite_url}')
                     WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
                       AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
