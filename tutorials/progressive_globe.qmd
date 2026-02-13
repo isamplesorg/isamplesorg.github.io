@@ -322,7 +322,7 @@ viewer = {
         }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    // Click handler
+    // Click handler: fly to cluster and drill down
     const clickHandler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
     clickHandler.setInputAction((e) => {
         const picked = v.scene.pick(e.position);
@@ -337,6 +337,20 @@ viewer = {
                     lng: meta.lng,
                     resolution: meta.resolution
                 };
+
+                // Fly to the cluster at an altitude that triggers the next resolution
+                // res4 → fly to 1500km (triggers res6)
+                // res6 → fly to 150km (triggers res8)
+                // res8 → fly to 30km (close detail)
+                const altitudes = { 4: 1500000, 6: 150000, 8: 30000 };
+                const altitude = altitudes[meta.resolution] || 500000;
+
+                v.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(
+                        meta.lng, meta.lat, altitude
+                    ),
+                    duration: 1.5
+                });
             } else {
                 mutable clickedInfo = { type: 'point', pid: meta };
             }
