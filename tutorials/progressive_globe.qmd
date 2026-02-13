@@ -3,14 +3,15 @@ title: "Progressive Globe: Instant H3 → Detail on Demand"
 categories: [parquet, spatial, h3, performance, isamples]
 ---
 
-Explore **6.7 million material samples** from iSamples — the globe loads instantly with H3 hexagonal aggregates, then refines as you zoom.
+Explore **6.7 million material samples** from iSamples — the globe loads instantly with H3 hexagonal aggregates, then refines as you zoom down to individual samples.
 
 ::: {.callout-note collapse="true"}
 ## How It Works
 
 1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
 2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
-3. **Click**: Shows cluster info and queries nearby samples from the full dataset
+3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
+4. **Click**: Cluster info or individual sample card with full metadata
 
 Circle size = log(sample count). Color = dominant data source.
 :::
@@ -77,8 +78,12 @@ Circle size = log(sample count). Color = dominant data source.
     .sample-row:last-child { border-bottom: none; }
     .sample-label { font-weight: 600; font-size: 13px; }
     .sample-desc { font-size: 12px; color: #555; margin-top: 2px; }
+    .sample-meta { font-size: 11px; color: #888; margin-top: 2px; }
     .phase-msg { padding: 6px 10px; border-radius: 4px; font-size: 12px; transition: all 0.3s ease; }
     #clusterSection .empty-state { color: #999; text-align: center; padding: 20px; }
+    .detail-loading { text-align: center; color: #999; padding: 8px; font-size: 12px; }
+    .detail-link { color: #1565c0; text-decoration: none; font-size: 12px; }
+    .detail-link:hover { text-decoration: underline; }
 </style>
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
@@ -105,7 +110,7 @@ Loading H3 global overview...
 </div>
 </div>
 <div id="clusterSection" class="panel-section">
-<div class="empty-state">Click a cluster on the globe</div>
+<div class="empty-state">Click a cluster or sample on the globe</div>
 </div>
 <div id="samplesSection" class="panel-section" style="flex: 1; overflow-y: auto;"></div>
 </div>
@@ -125,6 +130,7 @@ R2_BASE = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev"
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
+lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
 wide_url = `${R2_BASE}/isamples_202601_wide.parquet`
 
 SOURCE_COLORS = ({
@@ -136,7 +142,7 @@ SOURCE_NAMES = ({
     GEOME: 'GEOME', SMITHSONIAN: 'Smithsonian'
 })
 
-// === Helper: update stats via DOM (no reactivity) ===
+// === Helpers: update DOM imperatively (no OJS reactivity) ===
 function updateStats(phase, points, samples, time) {
     const s = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
     s('sPhase', phase);
@@ -157,7 +163,7 @@ function updateClusterCard(info) {
     const el = document.getElementById('clusterSection');
     if (!el) return;
     if (!info) {
-        el.innerHTML = '<div class="empty-state">Click a cluster on the globe</div>';
+        el.innerHTML = '<div class="empty-state">Click a cluster or sample on the globe</div>';
         return;
     }
     const color = SOURCE_COLORS[info.source] || '#666';
@@ -174,6 +180,48 @@ function updateClusterCard(info) {
             <div style="font-size: 12px; color: #666;">
                 ${info.lat.toFixed(4)}, ${info.lng.toFixed(4)}
             </div>
+        </div>`;
+}
+
+function updateSampleCard(sample) {
+    const el = document.getElementById('clusterSection');
+    if (!el) return;
+    const color = SOURCE_COLORS[sample.source] || '#666';
+    const name = SOURCE_NAMES[sample.source] || sample.source;
+    const placeParts = sample.place_name;
+    const placeStr = Array.isArray(placeParts) && placeParts.length > 0
+        ? placeParts.filter(Boolean).join(' › ')
+        : '';
+    el.innerHTML = `<h4>Sample</h4>
+        <div class="cluster-card" style="border-left-color: ${color}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="source-badge" style="background: ${color}">${name}</span>
+            </div>
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">
+                ${sample.label || sample.pid || 'Unnamed'}
+            </div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                ${sample.lat.toFixed(5)}, ${sample.lng.toFixed(5)}
+            </div>
+            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${placeStr}</div>` : ''}
+            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${sample.result_time}</div>` : ''}
+            <div id="sampleDetail" class="detail-loading">Loading full details...</div>
+        </div>`;
+}
+
+function updateSampleDetail(detail) {
+    const el = document.getElementById('sampleDetail');
+    if (!el) return;
+    if (!detail) {
+        el.innerHTML = '<span style="color: #c62828; font-size: 12px;">Detail query failed</span>';
+        return;
+    }
+    const desc = detail.description
+        ? (detail.description.length > 300 ? detail.description.slice(0, 300) + '...' : detail.description)
+        : '';
+    el.innerHTML = `${desc ? `<div style="font-size: 12px; color: #444; margin-top: 6px; line-height: 1.4;">${desc}</div>` : ''}
+        <div style="margin-top: 8px;">
+            <a class="detail-link" href="zenodo_isamples_analysis.html" target="_blank">Open in Analysis Tool →</a>
         </div>`;
 }
 
@@ -237,10 +285,15 @@ viewer = {
     };
     v.scene.postRender.addEventListener(once);
 
+    // Two separate point collections: clusters and individual samples
     v.h3Points = new Cesium.PointPrimitiveCollection();
     v.scene.primitives.add(v.h3Points);
 
-    // Hover tooltip
+    v.samplePoints = new Cesium.PointPrimitiveCollection();
+    v.scene.primitives.add(v.samplePoints);
+    v.samplePoints.show = false; // hidden until point mode
+
+    // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
         label: {
             show: false, showBackground: true, font: "13px monospace",
@@ -257,43 +310,69 @@ viewer = {
             v.pointLabel.position = picked.primitive.position;
             v.pointLabel.label.show = true;
             const meta = picked.id;
-            v.pointLabel.label.text = (typeof meta === 'object' && meta.count)
-                ? `${meta.source}: ${meta.count.toLocaleString()} samples`
-                : String(meta);
+            if (typeof meta === 'object' && meta.type === 'sample') {
+                v.pointLabel.label.text = `${meta.label || meta.pid}`;
+            } else if (typeof meta === 'object' && meta.count) {
+                v.pointLabel.label.text = `${meta.source}: ${meta.count.toLocaleString()} samples`;
+            } else {
+                v.pointLabel.label.text = String(meta);
+            }
         } else {
             v.pointLabel.label.show = false;
         }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    // Click: update side panel via DOM (no OJS mutable → no reactivity cascade)
+    // Click handler — routes to cluster card or sample card
     new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction(async (e) => {
         const picked = v.scene.pick(e.position);
-        if (Cesium.defined(picked) && picked.primitive && picked.id) {
-            const meta = picked.id;
-            if (typeof meta === 'object' && meta.count) {
-                // Update cluster card immediately
-                updateClusterCard(meta);
+        if (!Cesium.defined(picked) || !picked.primitive || !picked.id) return;
+        const meta = picked.id;
 
-                // Show loading state for samples
-                const sampEl = document.getElementById('samplesSection');
-                if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+        if (typeof meta === 'object' && meta.type === 'sample') {
+            // --- Individual sample click ---
+            updateSampleCard(meta);
+            // Clear nearby list
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) sampEl.innerHTML = '';
 
-                // Query nearby samples from full dataset
-                const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
-                try {
-                    const samples = await db.query(`
-                        SELECT pid, label, n as source, latitude, longitude, description
-                        FROM read_parquet('${wide_url}')
-                        WHERE otype = 'MaterialSampleRecord'
-                          AND latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
-                          AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
-                        LIMIT 30
-                    `);
-                    updateSamples(samples);
-                } catch(err) {
-                    console.error("Sample query failed:", err);
-                    if (sampEl) sampEl.innerHTML = '<div style="color: #c62828; padding: 12px;">Query failed — try again.</div>';
+            // Stage 2: lazy-load full description from wide parquet
+            try {
+                const detail = await db.query(`
+                    SELECT description
+                    FROM read_parquet('${wide_url}')
+                    WHERE pid = '${meta.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (detail && detail.length > 0) {
+                    updateSampleDetail(detail[0]);
+                } else {
+                    updateSampleDetail({ description: '' });
                 }
+            } catch(err) {
+                console.error("Detail query failed:", err);
+                updateSampleDetail(null);
+            }
+
+        } else if (typeof meta === 'object' && meta.count) {
+            // --- Cluster click ---
+            updateClusterCard(meta);
+
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+
+            const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
+            try {
+                const samples = await db.query(`
+                    SELECT pid, label, n as source, latitude, longitude, description
+                    FROM read_parquet('${lite_url}')
+                    WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                      AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                    LIMIT 30
+                `);
+                updateSamples(samples);
+            } catch(err) {
+                console.error("Sample query failed:", err);
+                if (sampEl) sampEl.innerHTML = '<div style="color: #c62828; padding: 12px;">Query failed — try again.</div>';
             }
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -349,13 +428,26 @@ phase1 = {
 //| echo: false
 //| output: false
 
-// === Zoom watcher: switch H3 resolution globally ===
+// === Zoom watcher: H3 cluster mode + individual sample point mode ===
 zoomWatcher = {
     if (!phase1) return;
 
+    // --- State ---
+    let mode = 'cluster';  // 'cluster' or 'point'
     let currentRes = 4;
     let loading = false;
+    let requestId = 0;      // stale-request guard
 
+    // Hysteresis thresholds to avoid flicker
+    const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
+    const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
+    const POINT_BUDGET = 5000;
+
+    // Viewport cache: avoid re-querying same area
+    let cachedBounds = null;  // { south, north, west, east }
+    let cachedData = null;    // array of rows
+
+    // --- H3 cluster loading (existing logic) ---
     const loadRes = async (res, url) => {
         if (loading) return;
         loading = true;
@@ -390,23 +482,181 @@ zoomWatcher = {
         const elapsed = performance.getEntriesByName(`r${res}`)[0].duration;
 
         updateStats(`H3 Res${res}`, data.length, total, `${(elapsed/1000).toFixed(1)}s`);
-        updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Maximum detail.'}`, 'done');
+        updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
 
         currentRes = res;
         loading = false;
         console.log(`Res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
     };
 
+    // --- Get camera viewport bounds ---
+    function getViewportBounds() {
+        const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+        if (!rect) return null;
+        return {
+            south: Cesium.Math.toDegrees(rect.south),
+            north: Cesium.Math.toDegrees(rect.north),
+            west: Cesium.Math.toDegrees(rect.west),
+            east: Cesium.Math.toDegrees(rect.east)
+        };
+    }
+
+    // --- Check if viewport is within cached bounds ---
+    function isWithinCache(bounds) {
+        if (!cachedBounds || !bounds) return false;
+        return bounds.south >= cachedBounds.south &&
+               bounds.north <= cachedBounds.north &&
+               bounds.west >= cachedBounds.west &&
+               bounds.east <= cachedBounds.east;
+    }
+
+    // --- Load individual samples for current viewport ---
+    async function loadViewportSamples() {
+        const myReqId = ++requestId;
+        const bounds = getViewportBounds();
+        if (!bounds) return;
+
+        // If viewport is within cached area, just re-render from cache
+        if (isWithinCache(bounds) && cachedData) {
+            renderSamplePoints(cachedData, bounds);
+            return;
+        }
+
+        // Fetch with 30% padding for smooth panning
+        const latPad = (bounds.north - bounds.south) * 0.3;
+        const lngPad = (bounds.east - bounds.west) * 0.3;
+        const padded = {
+            south: bounds.south - latPad,
+            north: bounds.north + latPad,
+            west: bounds.west - lngPad,
+            east: bounds.east + lngPad
+        };
+
+        updatePhaseMsg('Loading individual samples...', 'loading');
+
+        try {
+            performance.mark('sp-s');
+            const data = await db.query(`
+                SELECT pid, label, source, latitude, longitude,
+                       place_name, result_time
+                FROM read_parquet('${lite_url}')
+                WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
+                  AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                LIMIT ${POINT_BUDGET}
+            `);
+            performance.mark('sp-e');
+            performance.measure('sp', 'sp-s', 'sp-e');
+            const elapsed = performance.getEntriesByName('sp').pop().duration;
+
+            // Stale guard: discard if a newer request was issued
+            if (myReqId !== requestId) {
+                console.log(`Discarding stale sample response (req ${myReqId}, current ${requestId})`);
+                return;
+            }
+
+            // Cache the padded bounds + data
+            cachedBounds = padded;
+            cachedData = Array.from(data);
+
+            renderSamplePoints(cachedData, bounds);
+
+            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`);
+            updatePhaseMsg(`${cachedData.length.toLocaleString()} individual samples. Click one for details.`, 'done');
+            console.log(`Point mode: ${cachedData.length} samples in ${elapsed.toFixed(0)}ms`);
+
+        } catch(err) {
+            if (myReqId !== requestId) return;
+            console.error("Viewport sample query failed:", err);
+            updatePhaseMsg('Sample query failed — try again.', 'loading');
+        }
+    }
+
+    // --- Render sample points on globe ---
+    function renderSamplePoints(data, bounds) {
+        viewer.samplePoints.removeAll();
+        const scalar = new Cesium.NearFarScalar(1e2, 8, 2e5, 3);
+
+        for (const row of data) {
+            const color = SOURCE_COLORS[row.source] || '#666';
+            viewer.samplePoints.add({
+                id: {
+                    type: 'sample',
+                    pid: row.pid,
+                    label: row.label,
+                    source: row.source,
+                    lat: row.latitude,
+                    lng: row.longitude,
+                    place_name: row.place_name,
+                    result_time: row.result_time
+                },
+                position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
+                pixelSize: 6,
+                color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
+                scaleByDistance: scalar,
+            });
+        }
+    }
+
+    // --- Mode transitions ---
+    function enterPointMode() {
+        mode = 'point';
+        viewer.h3Points.show = false;
+        viewer.samplePoints.show = true;
+        loadViewportSamples();
+        console.log('Entered point mode');
+    }
+
+    function exitPointMode() {
+        mode = 'cluster';
+        viewer.samplePoints.show = false;
+        viewer.samplePoints.removeAll();
+        viewer.h3Points.show = true;
+        cachedBounds = null;
+        cachedData = null;
+
+        // Restore cluster stats
+        let clusterCount = viewer.h3Points.length;
+        updateStats(`H3 Res${currentRes}`, clusterCount, '—', '—');
+        updatePhaseMsg(`${clusterCount.toLocaleString()} clusters. Zoom closer for individual samples.`, 'done');
+        console.log('Exited point mode');
+    }
+
+    // --- Camera change handler ---
     let timer = null;
     viewer.camera.changed.addEventListener(() => {
         if (timer) clearTimeout(timer);
         timer = setTimeout(async () => {
             const h = viewer.camera.positionCartographic.height;
-            const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
-            if (target !== currentRes) {
-                await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+
+            // Determine target mode with hysteresis
+            const targetMode = h < ENTER_POINT_ALT ? 'point'
+                             : h > EXIT_POINT_ALT ? 'cluster'
+                             : mode;
+
+            if (targetMode === 'point' && mode !== 'point') {
+                // Make sure we're at res8 clusters before transitioning
+                if (currentRes !== 8 && !loading) {
+                    await loadRes(8, h3_res8_url);
+                }
+                enterPointMode();
+            } else if (targetMode === 'cluster' && mode !== 'cluster') {
+                exitPointMode();
+                // Reload appropriate resolution
+                const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                if (target !== currentRes && !loading) {
+                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                }
+            } else if (targetMode === 'point') {
+                // Already in point mode — update viewport samples
+                loadViewportSamples();
+            } else {
+                // Cluster mode — check if resolution should change
+                const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                if (target !== currentRes && !loading) {
+                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                }
             }
-        }, 800);
+        }, 600);
     });
     viewer.camera.percentageChanged = 0.1;
 
@@ -416,16 +666,17 @@ zoomWatcher = {
 
 ## How This Demo Works
 
-Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering:
+Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with seamless drill-down to individual samples:
 
 | Phase | Data | Size | Points |
 |-------|------|------|--------|
 | **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
 | **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
 | **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
-| **Click** | Full dataset | ~280 MB (range req.) | Individual samples |
+| **Zoom deep** | Map lite | 60 MB (range req.) | Up to 5K individual samples |
+| **Click sample** | Full dataset | ~280 MB (range req.) | Full metadata for 1 sample |
 
-**vs. original**: Loading 6.7M coordinates from 280 MB takes 5-10s. This shows data in <1s.
+**4 parquet files, zero backend.** All queries run in your browser via DuckDB-WASM with HTTP range requests — only the bytes you need are transferred.
 
 ## See Also
 
