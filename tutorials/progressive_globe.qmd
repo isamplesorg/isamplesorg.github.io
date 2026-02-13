@@ -84,6 +84,12 @@ Circle size = log(sample count). Color = dominant data source.
     .detail-loading { text-align: center; color: #999; padding: 8px; font-size: 12px; }
     .detail-link { color: #1565c0; text-decoration: none; font-size: 12px; }
     .detail-link:hover { text-decoration: underline; }
+    .share-btn {
+        background: #1565c0; color: white; border: none; padding: 4px 12px;
+        border-radius: 4px; font-size: 12px; cursor: pointer;
+    }
+    .share-btn:hover { background: #0d47a1; }
+    .share-toast { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
 </style>
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
@@ -104,6 +110,10 @@ Circle size = log(sample count). Color = dominant data source.
 <span class="legend-item"><span class="legend-dot" style="background:#109618"></span> GEOME</span>
 <span class="legend-item"><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</span>
 </div>
+</div>
+<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+<button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
+<span id="shareToast" class="share-toast">Link copied!</span>
 </div>
 <div id="phaseMsg" class="phase-msg" style="margin-top: 8px; background: #e3f2fd; color: #1565c0;">
 Loading H3 global overview...
@@ -141,6 +151,48 @@ SOURCE_NAMES = ({
     SESAR: 'SESAR', OPENCONTEXT: 'OpenContext',
     GEOME: 'GEOME', SMITHSONIAN: 'Smithsonian'
 })
+
+// === URL State: encode/decode globe state in hash fragment ===
+function parseNum(val, def, min, max) {
+    if (val == null) return def;
+    const n = parseFloat(val);
+    if (!Number.isFinite(n)) return def;
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+}
+
+function readHash() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    return {
+        v: parseInt(params.get('v')) || 0,
+        lat: parseNum(params.get('lat'), null, -90, 90),
+        lng: parseNum(params.get('lng'), null, -180, 180),
+        alt: parseNum(params.get('alt'), null, 100, 40000000),
+        heading: parseNum(params.get('heading'), 0, 0, 360),
+        pitch: parseNum(params.get('pitch'), -90, -90, 0),
+        mode: params.get('mode') || null,
+        pid: params.get('pid') || null,
+    };
+}
+
+function buildHash(v) {
+    const cam = v.camera;
+    const carto = cam.positionCartographic;
+    const params = new URLSearchParams();
+    params.set('v', '1');
+    params.set('lat', Cesium.Math.toDegrees(carto.latitude).toFixed(4));
+    params.set('lng', Cesium.Math.toDegrees(carto.longitude).toFixed(4));
+    params.set('alt', Math.round(carto.height).toString());
+    const heading = Cesium.Math.toDegrees(cam.heading) % 360;
+    const pitch = Cesium.Math.toDegrees(cam.pitch);
+    if (Math.abs(heading) > 1) params.set('heading', heading.toFixed(1));
+    if (Math.abs(pitch + 90) > 1) params.set('pitch', pitch.toFixed(1));
+    const gs = v._globeState;
+    if (gs.mode === 'point') params.set('mode', 'point');
+    if (gs.selectedPid) params.set('pid', gs.selectedPid);
+    return '#' + params.toString();
+}
 
 // === Helpers: update DOM imperatively (no OJS reactivity) ===
 function updateStats(phase, points, samples, time) {
@@ -280,8 +332,19 @@ viewer = {
     const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
     Cesium.Camera.DEFAULT_VIEW_RECTANGLE = globalRect;
     Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
+    const ih = v._initialHash;
     const once = () => {
-        v.camera.setView({ destination: globalRect });
+        if (ih.lat != null && ih.lng != null) {
+            v.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(ih.lng, ih.lat, ih.alt || 20000000),
+                orientation: {
+                    heading: Cesium.Math.toRadians(ih.heading),
+                    pitch: Cesium.Math.toRadians(ih.pitch)
+                }
+            });
+        } else {
+            v.camera.setView({ destination: globalRect });
+        }
         v.scene.postRender.removeEventListener(once);
     };
     v.scene.postRender.addEventListener(once);
@@ -293,6 +356,12 @@ viewer = {
     v.samplePoints = new Cesium.PointPrimitiveCollection();
     v.scene.primitives.add(v.samplePoints);
     v.samplePoints.show = false; // hidden until point mode
+
+    // URL deep-link state
+    v._globeState = { mode: 'cluster', selectedPid: null };
+    v._initialHash = readHash();
+    v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
+    v._suppressTimer = null;
 
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
@@ -332,6 +401,8 @@ viewer = {
         if (typeof meta === 'object' && meta.type === 'sample') {
             // --- Individual sample click ---
             updateSampleCard(meta);
+            v._globeState.selectedPid = meta.pid;
+            history.pushState(null, '', buildHash(v));
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
@@ -357,6 +428,8 @@ viewer = {
         } else if (typeof meta === 'object' && meta.count) {
             // --- Cluster click ---
             updateClusterCard(meta);
+            v._globeState.selectedPid = null;
+            history.pushState(null, '', buildHash(v));
 
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
@@ -603,19 +676,23 @@ zoomWatcher = {
     }
 
     // --- Mode transitions ---
-    function enterPointMode() {
+    function enterPointMode(pushHistory) {
         mode = 'point';
+        viewer._globeState.mode = 'point';
         viewer.h3Points.show = false;
         viewer.samplePoints.show = true;
+        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         loadViewportSamples();
         console.log('Entered point mode');
     }
 
-    function exitPointMode() {
+    function exitPointMode(pushHistory) {
         mode = 'cluster';
+        viewer._globeState.mode = 'cluster';
         viewer.samplePoints.show = false;
         viewer.samplePoints.removeAll();
         viewer.h3Points.show = true;
+        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         cachedBounds = null;
         cachedData = null;
 
@@ -661,9 +738,118 @@ zoomWatcher = {
                     await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
                 }
             }
+
+            // Update URL hash (replaceState for continuous movement)
+            if (!viewer._suppressHashWrite) {
+                history.replaceState(null, '', buildHash(viewer));
+            }
         }, 600);
     });
     viewer.camera.percentageChanged = 0.1;
+
+    // --- Handle browser back/forward ---
+    window.addEventListener('hashchange', async () => {
+        const state = readHash();
+        if (state.lat == null || state.lng == null) return;
+
+        viewer._suppressHashWrite = true;
+        clearTimeout(viewer._suppressTimer);
+        viewer.camera.cancelFlight();
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(state.lng, state.lat, state.alt || 20000000),
+            orientation: {
+                heading: Cesium.Math.toRadians(state.heading),
+                pitch: Cesium.Math.toRadians(state.pitch)
+            },
+            duration: 1.5,
+        });
+
+        // After flight settles, force mode and clear suppress flag
+        viewer._suppressTimer = setTimeout(() => {
+            viewer._suppressHashWrite = false;
+            const s = readHash();
+            if (s.mode === 'point' && mode !== 'point') enterPointMode(false);
+            else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
+        }, 2000);
+
+        // Handle pid selection
+        if (state.pid) {
+            viewer._globeState.selectedPid = state.pid;
+            try {
+                const sample = await db.query(`
+                    SELECT pid, label, source, latitude, longitude, place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    WHERE pid = '${state.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (sample && sample.length > 0) {
+                    const s = sample[0];
+                    updateSampleCard({
+                        pid: s.pid, label: s.label, source: s.source,
+                        lat: s.latitude, lng: s.longitude,
+                        place_name: s.place_name, result_time: s.result_time
+                    });
+                }
+            } catch(err) {
+                console.error("Hash pid query failed:", err);
+            }
+        } else {
+            viewer._globeState.selectedPid = null;
+            updateClusterCard(null);
+        }
+    });
+
+    // --- Share button ---
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            history.replaceState(null, '', buildHash(viewer));
+            try {
+                await navigator.clipboard.writeText(location.href);
+                const toast = document.getElementById('shareToast');
+                if (toast) {
+                    toast.style.opacity = '1';
+                    setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+                }
+            } catch(err) {
+                prompt('Copy this link:', location.href);
+            }
+        });
+    }
+
+    // --- Deep-link: restore selection from initial hash ---
+    const ih = viewer._initialHash;
+    if (ih.pid) {
+        viewer._globeState.selectedPid = ih.pid;
+        try {
+            const sample = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name, result_time
+                FROM read_parquet('${lite_url}')
+                WHERE pid = '${ih.pid.replace(/'/g, "''")}'
+                LIMIT 1
+            `);
+            if (sample && sample.length > 0) {
+                const s = sample[0];
+                updateSampleCard({
+                    pid: s.pid, label: s.label, source: s.source,
+                    lat: s.latitude, lng: s.longitude,
+                    place_name: s.place_name, result_time: s.result_time
+                });
+                const detail = await db.query(`
+                    SELECT description FROM read_parquet('${wide_url}')
+                    WHERE pid = '${ih.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                else updateSampleDetail({ description: '' });
+            }
+        } catch(err) {
+            console.error("Deep-link pid query failed:", err);
+        }
+    }
+
+    // Enable hash writing now that everything is initialized
+    viewer._suppressHashWrite = false;
 
     return "active";
 }
