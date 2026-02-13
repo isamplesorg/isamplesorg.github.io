@@ -3,16 +3,16 @@ title: "Progressive Globe: Instant H3 → Detail on Demand"
 categories: [parquet, spatial, h3, performance, isamples]
 ---
 
-Explore **6.7 million material samples** from iSamples — the globe loads instantly with H3 hexagonal aggregates, then fills in individual sample points as you zoom in.
+Explore **6.7 million material samples** from iSamples — the globe loads instantly with H3 hexagonal aggregates, then refines as you zoom.
 
-::: {.callout-note}
+::: {.callout-note collapse="true"}
 ## How It Works
 
-1. **Instant** (<1s): Load pre-aggregated H3 res4 summary (580 KB) → colored circles on globe
-2. **On zoom**: Load finer H3 resolutions (res6, res8) for visible area
-3. **On click**: Query individual samples at that location from the full dataset
+1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
+2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
+3. **Click**: Shows cluster info and queries nearby samples from the full dataset
 
-Circle size = log(sample count). Color = dominant source.
+Circle size = log(sample count). Color = dominant data source.
 :::
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
@@ -26,60 +26,103 @@ Circle size = log(sample count). Color = dominant source.
         height: auto;
         z-index: 999;
     }
+    .globe-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    @media (max-width: 900px) {
+        .globe-layout {
+            grid-template-columns: 1fr;
+        }
+    }
     #cesiumContainer {
+        width: 100%;
+        min-height: 500px;
         aspect-ratio: 4/3;
     }
-    .stats-bar {
+    .side-panel {
         display: flex;
-        gap: 24px;
-        padding: 12px 16px;
-        background: #1a1a2e;
-        color: white;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        font-family: monospace;
-        font-size: 14px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 700px;
+        overflow-y: auto;
     }
-    .stats-bar .stat {
-        display: flex;
-        align-items: center;
+    .panel-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 13px;
+    }
+    .panel-section h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+    }
+    .stats-compact {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 6px;
     }
-    .stats-bar .stat-value {
+    .stat-box {
+        background: #1a1a2e;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 4px;
+        text-align: center;
+    }
+    .stat-box .stat-value {
         font-weight: bold;
         font-size: 16px;
+        font-family: monospace;
+        display: block;
     }
-    .stats-bar .stat-label {
+    .stat-box .stat-label {
         color: #aaa;
-        font-size: 12px;
+        font-size: 11px;
     }
     .legend {
         display: flex;
-        gap: 16px;
-        padding: 8px 16px;
-        background: #f8f9fa;
-        border-radius: 4px;
-        margin-bottom: 8px;
-        font-size: 13px;
+        gap: 10px;
         flex-wrap: wrap;
+        font-size: 12px;
     }
     .legend-item {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
     }
     .legend-dot {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
     }
-    .phase-indicator {
-        padding: 8px 16px;
+    .source-badge {
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+        white-space: nowrap;
+    }
+    .cluster-card {
+        border-left: 4px solid #ccc;
+        padding: 10px 12px;
+        background: white;
+        border-radius: 0 6px 6px 0;
+    }
+    .sample-row {
+        padding: 6px 0;
+        border-bottom: 1px solid #eee;
+        line-height: 1.4;
+    }
+    .sample-row:last-child { border-bottom: none; }
+    .sample-label { font-weight: 600; font-size: 13px; }
+    .sample-desc { font-size: 12px; color: #555; margin-top: 2px; }
+    .phase-msg {
+        padding: 6px 10px;
         border-radius: 4px;
-        font-size: 13px;
-        margin-bottom: 4px;
+        font-size: 12px;
         transition: all 0.3s ease;
     }
 </style>
@@ -91,28 +134,29 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 ```{ojs}
 //| echo: false
-
-// === Data URLs ===
 R2_BASE = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev"
-
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
 wide_url = `${R2_BASE}/isamples_202601_wide.parquet`
 
-// Source colors
 SOURCE_COLORS = ({
     SESAR: '#3366CC',
     OPENCONTEXT: '#DC3912',
     GEOME: '#109618',
     SMITHSONIAN: '#FF9900'
 })
+
+SOURCE_NAMES = ({
+    SESAR: 'SESAR',
+    OPENCONTEXT: 'OpenContext',
+    GEOME: 'GEOME',
+    SMITHSONIAN: 'Smithsonian'
+})
 ```
 
 ```{ojs}
 //| echo: false
-
-// === DuckDB setup ===
 db = {
     const instance = await DuckDBClient.of();
     return instance;
@@ -121,76 +165,123 @@ db = {
 
 ```{ojs}
 //| echo: false
-// Render legend and stats bar from OJS so they're in the DOM before phase1 runs
-legend_html = html`<div class="legend">
-    <strong>Source:</strong>
-    <span class="legend-item"><span class="legend-dot" style="background:#3366CC"></span> SESAR</span>
-    <span class="legend-item"><span class="legend-dot" style="background:#DC3912"></span> OpenContext</span>
-    <span class="legend-item"><span class="legend-dot" style="background:#109618"></span> GEOME</span>
-    <span class="legend-item"><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</span>
-</div>`
-```
-
-```{ojs}
-//| echo: false
-statsBar = html`<div class="stats-bar">
-    <span class="stat"><span class="stat-label">Phase:</span> <span id="statPhase" class="stat-value">Loading...</span></span>
-    <span class="stat"><span class="stat-label">Points:</span> <span id="statPoints" class="stat-value">0</span></span>
-    <span class="stat"><span class="stat-label">Samples:</span> <span id="statSamples" class="stat-value">0</span></span>
-    <span class="stat"><span class="stat-label">Time:</span> <span id="statTime" class="stat-value">-</span></span>
-</div>`
-```
-
-```{ojs}
-//| echo: false
-phaseIndicatorEl = html`<div id="phaseIndicator" class="phase-indicator" style="background: #e3f2fd; color: #1565c0;">
-    Phase 1: Loading H3 global overview (580 KB)...
-</div>`
-```
-
-::: {.panel-tabset}
-
-## Globe
-
-<div id="cesiumContainer"></div>
-
-## Details
-
-<div id="loading_detail" hidden>Loading sample details...</div>
-
-```{ojs}
-//| echo: false
-mutable clickedPointId = "unset"
 mutable clickedInfo = null
+mutable globeStatus = ({ phase: "Loading...", points: 0, samples: 0, time: "-", resolution: 4 })
+```
+
+<!-- ==================== MAIN LAYOUT ==================== -->
+
+```{ojs}
+//| echo: false
+// Side panel: stats + legend + cluster info + samples
+sidePanel = {
+    const status = globeStatus;
+    const info = clickedInfo;
+
+    // Stats section
+    const statsHtml = html`<div class="panel-section">
+        <div class="stats-compact">
+            <div class="stat-box">
+                <span class="stat-value">${status.phase}</span>
+                <span class="stat-label">Resolution</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">${status.points.toLocaleString()}</span>
+                <span class="stat-label">Clusters</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">${status.samples.toLocaleString()}</span>
+                <span class="stat-label">Samples</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">${status.time}</span>
+                <span class="stat-label">Load Time</span>
+            </div>
+        </div>
+        <div style="margin-top: 8px;">
+            <div class="legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#3366CC"></span> SESAR</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#DC3912"></span> OpenContext</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#109618"></span> GEOME</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</span>
+            </div>
+        </div>
+        <div id="phaseMsg" class="phase-msg" style="margin-top: 8px; background: #e8f5e9; color: #2e7d32;">
+            Zoom in to see finer detail.
+        </div>
+    </div>`;
+
+    // Cluster info section
+    let clusterHtml;
+    if (info && info.type === 'cluster') {
+        clusterHtml = html`<div class="panel-section">
+            <h4>Selected Cluster</h4>
+            <div class="cluster-card" style="border-left-color: ${SOURCE_COLORS[info.source] || '#ccc'}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span class="source-badge" style="background: ${SOURCE_COLORS[info.source] || '#666'}">
+                        ${SOURCE_NAMES[info.source] || info.source}
+                    </span>
+                    <span style="font-size: 11px; color: #999;">H3 res${info.resolution}</span>
+                </div>
+                <div style="font-size: 22px; font-weight: bold; margin-bottom: 4px;">
+                    ${info.count.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: #666;">samples</span>
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                    ${info.lat.toFixed(4)}°, ${info.lng.toFixed(4)}°
+                </div>
+            </div>
+        </div>`;
+    } else {
+        clusterHtml = html`<div class="panel-section" style="color: #999; text-align: center; padding: 20px;">
+            Click a cluster on the globe
+        </div>`;
+    }
+
+    return html`<div class="side-panel">
+        ${statsHtml}
+        ${clusterHtml}
+        <div id="samplesContainer" class="panel-section" style="flex: 1; overflow-y: auto;"></div>
+    </div>`;
+}
 ```
 
 ```{ojs}
 //| echo: false
-// Show clicked cluster/point info
-html`${
-    clickedInfo && clickedInfo.type === 'cluster' ?
-        html`<div style="padding: 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${SOURCE_COLORS[clickedInfo.source] || '#666'};">
-            <h4 style="margin: 0 0 8px 0;">H3 Cluster (Resolution ${clickedInfo.resolution})</h4>
-            <table style="width: 100%; font-size: 0.9em;">
-                <tr><td style="padding: 4px; color: #666;">Samples</td><td style="padding: 4px;"><strong>${clickedInfo.count?.toLocaleString()}</strong></td></tr>
-                <tr><td style="padding: 4px; color: #666;">Dominant Source</td><td style="padding: 4px;"><strong>${clickedInfo.source}</strong></td></tr>
-                <tr><td style="padding: 4px; color: #666;">Center</td><td style="padding: 4px;">${clickedInfo.lat?.toFixed(4)}°, ${clickedInfo.lng?.toFixed(4)}°</td></tr>
-            </table>
-        </div>`
-    : clickedInfo && clickedInfo.type === 'point' ?
-        html`<div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
-            <h4 style="margin: 0 0 8px 0;">Sample Point</h4>
-            <p style="font-size: 0.85em; color: #666;">${clickedInfo.pid}</p>
-        </div>`
-    : html`<div style="padding: 20px; background: #f8f9fa; border-radius: 4px; color: #6c757d;">
-        Click a point on the globe to see details.
-    </div>`
-}`
+// Build the globe + side panel layout
+layout = {
+    // Need sidePanel to exist first
+    void sidePanel;
+
+    return html`<div class="globe-layout">
+        <div id="cesiumContainer"></div>
+        <div id="sidePanelMount"></div>
+    </div>`;
+}
 ```
 
 ```{ojs}
 //| echo: false
-// Query samples at clicked cluster location
+//| output: false
+// Mount the side panel into the layout after both are rendered
+mountPanel = {
+    void layout;
+    void sidePanel;
+
+    // Wait a tick for DOM
+    await new Promise(r => setTimeout(r, 50));
+
+    const mount = document.getElementById('sidePanelMount');
+    if (mount && sidePanel) {
+        mount.innerHTML = '';
+        mount.appendChild(sidePanel);
+    }
+    return true;
+}
+```
+
+```{ojs}
+//| echo: false
+// Query samples when a cluster is clicked
 samplesAtCluster = {
     if (!clickedInfo || clickedInfo.type !== 'cluster') return [];
 
@@ -204,7 +295,7 @@ samplesAtCluster = {
         WHERE otype = 'MaterialSampleRecord'
           AND latitude BETWEEN ${lat - delta} AND ${lat + delta}
           AND longitude BETWEEN ${lng - delta} AND ${lng + delta}
-        LIMIT 50
+        LIMIT 30
     `;
     try {
         return await db.query(q);
@@ -217,46 +308,44 @@ samplesAtCluster = {
 
 ```{ojs}
 //| echo: false
-html`${
-    samplesAtCluster && samplesAtCluster.length > 0 ?
-        html`<div style="margin-top: 12px;">
-            <h4>Nearby Samples (${samplesAtCluster.length})</h4>
-            <div style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
-                    <thead style="position: sticky; top: 0; background: #f8f9fa;">
-                        <tr style="border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 8px; text-align: left;">Label</th>
-                            <th style="padding: 8px; text-align: left;">Source</th>
-                            <th style="padding: 8px; text-align: left;">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${samplesAtCluster.map((s, i) => html`
-                            <tr style="border-bottom: 1px solid #eee; ${i % 2 === 0 ? 'background: #f8f9fa;' : ''}">
-                                <td style="padding: 8px;"><strong>${s.label || s.pid}</strong></td>
-                                <td style="padding: 8px;">
-                                    <span style="background: ${SOURCE_COLORS[s.source] || '#666'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">
-                                        ${s.source}
-                                    </span>
-                                </td>
-                                <td style="padding: 8px; max-width: 300px; font-size: 0.85em; color: #555;">
-                                    ${s.description ? (s.description.length > 120 ? s.description.slice(0, 120) + '...' : s.description) : '-'}
-                                </td>
-                            </tr>
-                        `)}
-                    </tbody>
-                </table>
-            </div>
-        </div>`
-    : clickedInfo && clickedInfo.type === 'cluster' ?
-        html`<div style="margin-top: 12px; padding: 12px; background: #fff3cd; border-radius: 4px; color: #856404;">
-            Loading nearby samples from full dataset...
-        </div>`
-    : html``
-}`
-```
+//| output: false
+// Render sample list into the side panel's container
+renderSamples = {
+    void mountPanel;
+    const samples = samplesAtCluster;
+    const info = clickedInfo;
+    const container = document.getElementById('samplesContainer');
+    if (!container) return;
 
-:::
+    if (!info || info.type !== 'cluster') {
+        container.innerHTML = '';
+        return;
+    }
+
+    if (!samples || samples.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+        return;
+    }
+
+    let html = `<h4>Nearby Samples (${samples.length})</h4>`;
+    for (const s of samples) {
+        const color = SOURCE_COLORS[s.source] || '#666';
+        const name = SOURCE_NAMES[s.source] || s.source;
+        const desc = s.description
+            ? (s.description.length > 100 ? s.description.slice(0, 100) + '...' : s.description)
+            : '';
+        html += `<div class="sample-row">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="sample-label">${s.label || s.pid}</span>
+                <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
+            </div>
+            ${desc ? `<div class="sample-desc">${desc}</div>` : ''}
+        </div>`;
+    }
+
+    container.innerHTML = html;
+}
+```
 
 ```{ojs}
 //| echo: false
@@ -264,6 +353,10 @@ html`${
 
 // === Cesium Viewer ===
 viewer = {
+    // Wait for layout to render
+    void layout;
+    await new Promise(r => setTimeout(r, 100));
+
     const v = new Cesium.Viewer("cesiumContainer", {
         timeline: false,
         animation: false,
@@ -272,7 +365,6 @@ viewer = {
         terrain: Cesium.Terrain.fromWorldTerrain()
     });
 
-    // Global view
     const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
     Cesium.Camera.DEFAULT_VIEW_RECTANGLE = globalRect;
     Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
@@ -283,12 +375,8 @@ viewer = {
     };
     v.scene.postRender.addEventListener(once);
 
-    // Point collections for different phases
     v.h3Points = new Cesium.PointPrimitiveCollection();
     v.scene.primitives.add(v.h3Points);
-
-    v.detailPoints = new Cesium.PointPrimitiveCollection();
-    v.scene.primitives.add(v.detailPoints);
 
     // Label for hover
     v.pointLabel = v.entities.add({
@@ -304,7 +392,7 @@ viewer = {
         }
     });
 
-    // Hover handler
+    // Hover: show tooltip
     const hoverHandler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
     hoverHandler.setInputAction((movement) => {
         const picked = v.scene.pick(movement.endPosition);
@@ -322,7 +410,7 @@ viewer = {
         }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    // Click handler: fly to cluster and drill down
+    // Click: info only (no camera movement)
     const clickHandler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
     clickHandler.setInputAction((e) => {
         const picked = v.scene.pick(e.position);
@@ -337,22 +425,6 @@ viewer = {
                     lng: meta.lng,
                     resolution: meta.resolution
                 };
-
-                // Fly to the cluster at an altitude that triggers the next resolution
-                // res4 → fly to 1500km (triggers res6)
-                // res6 → fly to 150km (triggers res8)
-                // res8 → fly to 30km (close detail)
-                const altitudes = { 4: 1500000, 6: 150000, 8: 30000 };
-                const altitude = altitudes[meta.resolution] || 500000;
-
-                v.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(
-                        meta.lng, meta.lat, altitude
-                    ),
-                    duration: 1.5
-                });
-            } else {
-                mutable clickedInfo = { type: 'point', pid: meta };
             }
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -365,25 +437,11 @@ viewer = {
 //| echo: false
 //| output: false
 
-// === PHASE 1: Load H3 res4 aggregates (instant) ===
+// === PHASE 1: Load H3 res4 aggregates globally ===
 phase1 = {
-    // Ensure OJS-rendered DOM elements are available
-    void statsBar;
-    void phaseIndicatorEl;
-
+    void mountPanel;
     performance.mark('phase1-start');
 
-    const updateStats = (phase, points, samples, time) => {
-        const el = (id) => document.getElementById(id);
-        if (el('statPhase')) el('statPhase').textContent = phase;
-        if (el('statPoints')) el('statPoints').textContent = points.toLocaleString();
-        if (el('statSamples')) el('statSamples').textContent = samples.toLocaleString();
-        if (el('statTime')) el('statTime').textContent = time;
-    };
-
-    const indicator = document.getElementById('phaseIndicator');
-
-    // Query pre-aggregated H3 res4 data
     const data = await db.query(`
         SELECT h3_cell, sample_count, center_lat, center_lng,
                dominant_source, source_count, resolution
@@ -391,9 +449,6 @@ phase1 = {
         ORDER BY sample_count DESC
     `);
 
-    performance.mark('phase1-query-done');
-
-    // Render as scaled colored circles
     const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.5);
     let totalSamples = 0;
 
@@ -401,8 +456,6 @@ phase1 = {
         const count = row.sample_count;
         totalSamples += count;
         const color = SOURCE_COLORS[row.dominant_source] || '#666666';
-
-        // Circle size: 3px base + log scale, capped at 20
         const size = Math.min(3 + Math.log10(count) * 4, 20);
 
         viewer.h3Points.add({
@@ -413,11 +466,7 @@ phase1 = {
                 lng: row.center_lng,
                 resolution: 4
             },
-            position: Cesium.Cartesian3.fromDegrees(
-                row.center_lng,
-                row.center_lat,
-                0
-            ),
+            position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
             pixelSize: size,
             color: Cesium.Color.fromCssColorString(color).withAlpha(0.8),
             scaleByDistance: scalar,
@@ -428,16 +477,22 @@ phase1 = {
     performance.measure('phase1-total', 'phase1-start', 'phase1-end');
     const elapsed = performance.getEntriesByName('phase1-total')[0].duration;
 
-    updateStats('H3 Global', data.length, totalSamples, `${(elapsed/1000).toFixed(1)}s`);
+    mutable globeStatus = {
+        phase: "H3 Res4",
+        points: data.length,
+        samples: totalSamples,
+        time: `${(elapsed/1000).toFixed(1)}s`,
+        resolution: 4
+    };
 
-    if (indicator) {
-        indicator.style.background = '#e8f5e9';
-        indicator.style.color = '#2e7d32';
-        indicator.innerHTML = `Phase 1 complete: ${data.length.toLocaleString()} H3 clusters covering ${totalSamples.toLocaleString()} samples in ${(elapsed/1000).toFixed(1)}s. <strong>Zoom in to see finer detail.</strong>`;
+    const msg = document.getElementById('phaseMsg');
+    if (msg) {
+        msg.style.background = '#e8f5e9';
+        msg.style.color = '#2e7d32';
+        msg.textContent = `${data.length.toLocaleString()} clusters, ${totalSamples.toLocaleString()} samples. Zoom in for finer detail.`;
     }
 
-    console.log(`Phase 1: ${data.length} H3 res4 clusters, ${totalSamples.toLocaleString()} samples in ${elapsed.toFixed(0)}ms`);
-
+    console.log(`Phase 1: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
     return { count: data.length, samples: totalSamples, elapsed };
 }
 ```
@@ -446,13 +501,9 @@ phase1 = {
 //| echo: false
 //| output: false
 
-// === PHASE 2: Zoom-triggered detail loading ===
-// Monitor camera height and load finer resolution when zoomed in
+// === Zoom watcher: switch resolution globally (no viewport filtering) ===
 zoomWatcher = {
-    // Wait for phase 1 to complete and DOM to be ready
     if (!phase1) return;
-    void statsBar;
-    void phaseIndicatorEl;
 
     let currentResolution = 4;
     let loadingRes = false;
@@ -461,43 +512,23 @@ zoomWatcher = {
         if (loadingRes) return;
         loadingRes = true;
 
-        const indicator = document.getElementById('phaseIndicator');
-        if (indicator) {
-            indicator.style.background = '#e3f2fd';
-            indicator.style.color = '#1565c0';
-            indicator.innerHTML = `Loading H3 resolution ${res} detail...`;
+        const msg = document.getElementById('phaseMsg');
+        if (msg) {
+            msg.style.background = '#e3f2fd';
+            msg.style.color = '#1565c0';
+            msg.textContent = `Loading H3 res${res}...`;
         }
 
         performance.mark(`res${res}-start`);
 
-        // Get camera bounding box
-        const rect = viewer.camera.computeViewRectangle();
-        let data;
+        // Load ALL data globally — files are small enough (max 2.5 MB)
+        const data = await db.query(`
+            SELECT h3_cell, sample_count, center_lat, center_lng,
+                   dominant_source, source_count, resolution
+            FROM read_parquet('${url}')
+            ORDER BY sample_count DESC
+        `);
 
-        if (rect) {
-            const west = Cesium.Math.toDegrees(rect.west);
-            const south = Cesium.Math.toDegrees(rect.south);
-            const east = Cesium.Math.toDegrees(rect.east);
-            const north = Cesium.Math.toDegrees(rect.north);
-
-            data = await db.query(`
-                SELECT h3_cell, sample_count, center_lat, center_lng,
-                       dominant_source, source_count, resolution
-                FROM read_parquet('${url}')
-                WHERE center_lat BETWEEN ${south} AND ${north}
-                  AND center_lng BETWEEN ${west} AND ${east}
-                ORDER BY sample_count DESC
-            `);
-        } else {
-            data = await db.query(`
-                SELECT h3_cell, sample_count, center_lat, center_lng,
-                       dominant_source, source_count, resolution
-                FROM read_parquet('${url}')
-                ORDER BY sample_count DESC
-            `);
-        }
-
-        // Clear old points and add new ones
         viewer.h3Points.removeAll();
 
         const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
@@ -517,11 +548,7 @@ zoomWatcher = {
                     lng: row.center_lng,
                     resolution: res
                 },
-                position: Cesium.Cartesian3.fromDegrees(
-                    row.center_lng,
-                    row.center_lat,
-                    0
-                ),
+                position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
                 pixelSize: size,
                 color: Cesium.Color.fromCssColorString(color).withAlpha(0.85),
                 scaleByDistance: scalar,
@@ -532,94 +559,60 @@ zoomWatcher = {
         performance.measure(`res${res}-total`, `res${res}-start`, `res${res}-end`);
         const elapsed = performance.getEntriesByName(`res${res}-total`)[0].duration;
 
-        const el = (id) => document.getElementById(id);
-        if (el('statPhase')) el('statPhase').textContent = `H3 Res${res}`;
-        if (el('statPoints')) el('statPoints').textContent = data.length.toLocaleString();
-        if (el('statSamples')) el('statSamples').textContent = totalSamples.toLocaleString();
-        if (el('statTime')) el('statTime').textContent = `${(elapsed/1000).toFixed(1)}s`;
+        mutable globeStatus = {
+            phase: `H3 Res${res}`,
+            points: data.length,
+            samples: totalSamples,
+            time: `${(elapsed/1000).toFixed(1)}s`,
+            resolution: res
+        };
 
-        if (indicator) {
-            indicator.style.background = '#e8f5e9';
-            indicator.style.color = '#2e7d32';
-            indicator.innerHTML = `Showing ${data.length.toLocaleString()} H3 res${res} clusters (${totalSamples.toLocaleString()} samples) in viewport. Loaded in ${(elapsed/1000).toFixed(1)}s.`;
+        if (msg) {
+            msg.style.background = '#e8f5e9';
+            msg.style.color = '#2e7d32';
+            msg.textContent = `${data.length.toLocaleString()} clusters, ${totalSamples.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Maximum detail.'}`;
         }
 
         currentResolution = res;
         loadingRes = false;
-
-        console.log(`Loaded res${res}: ${data.length} clusters, ${totalSamples.toLocaleString()} samples in ${elapsed.toFixed(0)}ms`);
+        console.log(`Loaded res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
     };
 
-    // Monitor camera movement
     let debounceTimer = null;
 
     viewer.camera.changed.addEventListener(() => {
         if (debounceTimer) clearTimeout(debounceTimer);
-
         debounceTimer = setTimeout(async () => {
             const height = viewer.camera.positionCartographic.height;
-
-            // Height thresholds for resolution switching
-            // > 3,000 km: res4 (continental)
-            // 300 km - 3,000 km: res6 (city-level)
-            // < 300 km: res8 (neighborhood)
-
             let targetRes;
-            if (height > 3000000) {
-                targetRes = 4;
-            } else if (height > 300000) {
-                targetRes = 6;
-            } else {
-                targetRes = 8;
-            }
+            if (height > 3000000) targetRes = 4;
+            else if (height > 300000) targetRes = 6;
+            else targetRes = 8;
 
             if (targetRes !== currentResolution) {
                 const urls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
                 await loadResolution(targetRes, urls[targetRes]);
             }
-        }, 800);  // Debounce: wait 800ms after camera stops
+        }, 800);
     });
 
-    // Lower the change threshold so it fires more often
     viewer.camera.percentageChanged = 0.1;
-
-    return "Zoom watcher active";
+    return "active";
 }
 ```
 
 ## How This Demo Works
 
-This demo uses **pre-aggregated H3 hexagonal indices** to achieve near-instant globe rendering:
+Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering:
 
-| Phase | Data Source | Size | What You See |
-|-------|-----------|------|-------------|
-| **1. Instant** | H3 res4 summary | 580 KB | 38K colored circles (continental scale) |
-| **2. Zoom in** | H3 res6 summary | 1.6 MB | 112K circles (city scale) |
-| **3. Zoom more** | H3 res8 summary | 2.5 MB | 176K circles (neighborhood scale) |
-| **4. Click** | Full wide parquet | ~280 MB (range request) | Individual sample details |
+| Phase | Data | Size | Points |
+|-------|------|------|--------|
+| **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
+| **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
+| **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
+| **Click** | Full dataset | ~280 MB (range req.) | Individual samples |
 
-**vs. the original approach**: Loading all 6.7M sample coordinates from the 280 MB parquet takes 5-10 seconds. This progressive approach shows meaningful data in under 1 second.
-
-### Data Pipeline
-
-```
-zenodo_wide.parquet (280 MB, 20M rows)
-    ↓ pqg add-h3 (add H3 columns at res 4/6/8)
-zenodo_wide_h3.parquet (292 MB)
-    ↓ DuckDB GROUP BY h3_resN
-h3_summary_res4.parquet (580 KB, 38K rows)
-h3_summary_res6.parquet (1.6 MB, 112K rows)
-h3_summary_res8.parquet (2.5 MB, 176K rows)
-```
-
-### Source Distribution
-
-The color of each circle shows which data source dominates that area:
-
-- **SESAR** (blue): Geological/earth science samples — globally distributed
-- **OpenContext** (red): Archaeological samples — concentrated in Mediterranean, Middle East
-- **GEOME** (green): Genomic/biological samples — oceanic and tropical regions
-- **Smithsonian** (orange): Museum specimens — clustered at collection sites
+**vs. original**: Loading 6.7M coordinates from 280 MB takes 5-10s. This shows data in <1s.
 
 ## See Also
 
