@@ -119,24 +119,34 @@ db = {
 }
 ```
 
-<div class="legend">
+```{ojs}
+//| echo: false
+// Render legend and stats bar from OJS so they're in the DOM before phase1 runs
+legend_html = html`<div class="legend">
     <strong>Source:</strong>
     <span class="legend-item"><span class="legend-dot" style="background:#3366CC"></span> SESAR</span>
     <span class="legend-item"><span class="legend-dot" style="background:#DC3912"></span> OpenContext</span>
     <span class="legend-item"><span class="legend-dot" style="background:#109618"></span> GEOME</span>
     <span class="legend-item"><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</span>
-</div>
+</div>`
+```
 
-<div id="statsBar" class="stats-bar">
+```{ojs}
+//| echo: false
+statsBar = html`<div class="stats-bar">
     <span class="stat"><span class="stat-label">Phase:</span> <span id="statPhase" class="stat-value">Loading...</span></span>
     <span class="stat"><span class="stat-label">Points:</span> <span id="statPoints" class="stat-value">0</span></span>
     <span class="stat"><span class="stat-label">Samples:</span> <span id="statSamples" class="stat-value">0</span></span>
     <span class="stat"><span class="stat-label">Time:</span> <span id="statTime" class="stat-value">-</span></span>
-</div>
+</div>`
+```
 
-<div id="phaseIndicator" class="phase-indicator" style="background: #e3f2fd; color: #1565c0;">
+```{ojs}
+//| echo: false
+phaseIndicatorEl = html`<div id="phaseIndicator" class="phase-indicator" style="background: #e3f2fd; color: #1565c0;">
     Phase 1: Loading H3 global overview (580 KB)...
-</div>
+</div>`
+```
 
 ::: {.panel-tabset}
 
@@ -343,13 +353,18 @@ viewer = {
 
 // === PHASE 1: Load H3 res4 aggregates (instant) ===
 phase1 = {
+    // Ensure OJS-rendered DOM elements are available
+    void statsBar;
+    void phaseIndicatorEl;
+
     performance.mark('phase1-start');
 
     const updateStats = (phase, points, samples, time) => {
-        document.getElementById('statPhase').textContent = phase;
-        document.getElementById('statPoints').textContent = points.toLocaleString();
-        document.getElementById('statSamples').textContent = samples.toLocaleString();
-        document.getElementById('statTime').textContent = time;
+        const el = (id) => document.getElementById(id);
+        if (el('statPhase')) el('statPhase').textContent = phase;
+        if (el('statPoints')) el('statPoints').textContent = points.toLocaleString();
+        if (el('statSamples')) el('statSamples').textContent = samples.toLocaleString();
+        if (el('statTime')) el('statTime').textContent = time;
     };
 
     const indicator = document.getElementById('phaseIndicator');
@@ -420,8 +435,10 @@ phase1 = {
 // === PHASE 2: Zoom-triggered detail loading ===
 // Monitor camera height and load finer resolution when zoomed in
 zoomWatcher = {
-    // Wait for phase 1 to complete
+    // Wait for phase 1 to complete and DOM to be ready
     if (!phase1) return;
+    void statsBar;
+    void phaseIndicatorEl;
 
     let currentResolution = 4;
     let loadingRes = false;
@@ -501,10 +518,11 @@ zoomWatcher = {
         performance.measure(`res${res}-total`, `res${res}-start`, `res${res}-end`);
         const elapsed = performance.getEntriesByName(`res${res}-total`)[0].duration;
 
-        document.getElementById('statPhase').textContent = `H3 Res${res}`;
-        document.getElementById('statPoints').textContent = data.length.toLocaleString();
-        document.getElementById('statSamples').textContent = totalSamples.toLocaleString();
-        document.getElementById('statTime').textContent = `${(elapsed/1000).toFixed(1)}s`;
+        const el = (id) => document.getElementById(id);
+        if (el('statPhase')) el('statPhase').textContent = `H3 Res${res}`;
+        if (el('statPoints')) el('statPoints').textContent = data.length.toLocaleString();
+        if (el('statSamples')) el('statSamples').textContent = totalSamples.toLocaleString();
+        if (el('statTime')) el('statTime').textContent = `${(elapsed/1000).toFixed(1)}s`;
 
         if (indicator) {
             indicator.style.background = '#e8f5e9';
