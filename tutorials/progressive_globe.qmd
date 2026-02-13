@@ -329,6 +329,12 @@ viewer = {
         terrain: Cesium.Terrain.fromWorldTerrain()
     });
 
+    // URL deep-link state (must be set before globalRect/once block reads it)
+    v._globeState = { mode: 'cluster', selectedPid: null };
+    v._initialHash = readHash();
+    v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
+    v._suppressTimer = null;
+
     const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
     Cesium.Camera.DEFAULT_VIEW_RECTANGLE = globalRect;
     Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
@@ -356,12 +362,6 @@ viewer = {
     v.samplePoints = new Cesium.PointPrimitiveCollection();
     v.scene.primitives.add(v.samplePoints);
     v.samplePoints.show = false; // hidden until point mode
-
-    // URL deep-link state
-    v._globeState = { mode: 'cluster', selectedPid: null };
-    v._initialHash = readHash();
-    v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
-    v._suppressTimer = null;
 
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
