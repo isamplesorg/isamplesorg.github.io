@@ -99,8 +99,8 @@ Circle size = log(sample count). Color = dominant data source.
 <div class="panel-section">
 <div class="stats-compact">
 <div class="stat-box"><span id="sPhase" class="val">Loading...</span><span class="lbl">Resolution</span></div>
-<div class="stat-box"><span id="sPoints" class="val">0</span><span id="sPointsLbl" class="lbl">Clusters</span></div>
-<div class="stat-box"><span id="sSamples" class="val">0</span><span class="lbl">Samples</span></div>
+<div class="stat-box"><span id="sPoints" class="val">0</span><span id="sPointsLbl" class="lbl">Clusters Loaded</span></div>
+<div class="stat-box"><span id="sSamples" class="val">0</span><span id="sSamplesLbl" class="lbl">Samples Loaded</span></div>
 <div class="stat-box"><span id="sTime" class="val">-</span><span class="lbl">Load Time</span></div>
 </div>
 <div style="margin-top: 8px;">
@@ -195,13 +195,14 @@ function buildHash(v) {
 }
 
 // === Helpers: update DOM imperatively (no OJS reactivity) ===
-function updateStats(phase, points, samples, time, pointsLabel) {
+function updateStats(phase, points, samples, time, pointsLabel, samplesLabel) {
     const s = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
     s('sPhase', phase);
     s('sPoints', typeof points === 'string' ? points : points.toLocaleString());
     s('sSamples', typeof samples === 'string' ? samples : samples.toLocaleString());
     if (time != null) s('sTime', time);
     if (pointsLabel) s('sPointsLbl', pointsLabel);
+    if (samplesLabel) s('sSamplesLbl', samplesLabel);
 }
 
 function updatePhaseMsg(text, type) {
@@ -494,7 +495,7 @@ phase1 = {
     performance.measure('p1', 'p1-start', 'p1-end');
     const elapsed = performance.getEntriesByName('p1').pop().duration;
 
-    updateStats('H3 Res4', data.length, totalSamples, `${(elapsed/1000).toFixed(1)}s`, 'Global Clusters');
+    updateStats('H3 Res4', data.length, totalSamples, `${(elapsed/1000).toFixed(1)}s`, 'Clusters Loaded', 'Samples Loaded');
     updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${totalSamples.toLocaleString()} samples. Zoom in for finer detail.`, 'done');
     console.log(`Phase 1: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
 
@@ -567,7 +568,7 @@ zoomWatcher = {
             // Show viewport count immediately
             const bounds = getViewportBounds();
             const inView = countInViewport(bounds);
-            updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'In View / Total');
+            updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
             updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
 
             currentRes = res;
@@ -667,7 +668,7 @@ zoomWatcher = {
 
             renderSamplePoints(cachedData, bounds);
 
-            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`, 'In View');
+            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`, 'Samples in View', 'Samples in View');
             updatePhaseMsg(`${cachedData.length.toLocaleString()} individual samples. Click one for details.`, 'done');
             console.log(`Point mode: ${cachedData.length} samples in ${elapsed.toFixed(0)}ms`);
 
@@ -730,9 +731,9 @@ zoomWatcher = {
         const inView = countInViewport(bounds);
         const total = viewer._clusterTotal;
         if (total) {
-            updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), '—', 'In View / Total');
+            updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), '—', 'Clusters in View / Loaded', 'Samples in View');
         } else {
-            updateStats(`H3 Res${currentRes}`, viewer.h3Points.length, '—', '—', 'Global Clusters');
+            updateStats(`H3 Res${currentRes}`, viewer.h3Points.length, '—', '—', 'Clusters Loaded', 'Samples Loaded');
         }
         updatePhaseMsg(`${inView.clusters.toLocaleString()} clusters in view. Zoom closer for individual samples.`, 'done');
         console.log('Exited point mode');
@@ -780,7 +781,7 @@ zoomWatcher = {
                 const inView = countInViewport(bounds);
                 const total = viewer._clusterTotal;
                 if (total) {
-                    updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'In View / Total');
+                    updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
                 }
             }
 
