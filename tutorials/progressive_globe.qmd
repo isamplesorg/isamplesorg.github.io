@@ -69,9 +69,11 @@ Circle size = log(sample count). Color = dominant data source.
     }
     .stat-box .val { font-weight: bold; font-size: 16px; font-family: monospace; display: block; }
     .stat-box .lbl { color: #aaa; font-size: 11px; }
-    .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; }
-    .legend-item { display: flex; align-items: center; gap: 3px; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
+    .legend-item.disabled { opacity: 0.3; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .legend-item input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
     .source-badge { color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; white-space: nowrap; }
     .cluster-card { border-left: 4px solid #ccc; padding: 10px 12px; background: white; border-radius: 0 6px 6px 0; }
     .sample-row { padding: 6px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
@@ -104,11 +106,11 @@ Circle size = log(sample count). Color = dominant data source.
 <div class="stat-box"><span id="sTime" class="val">-</span><span class="lbl">Load Time</span></div>
 </div>
 <div style="margin-top: 8px;">
-<div class="legend">
-<span class="legend-item"><span class="legend-dot" style="background:#3366CC"></span> SESAR</span>
-<span class="legend-item"><span class="legend-dot" style="background:#DC3912"></span> OpenContext</span>
-<span class="legend-item"><span class="legend-dot" style="background:#109618"></span> GEOME</span>
-<span class="legend-item"><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</span>
+<div class="legend" id="sourceFilter">
+<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR</label>
+<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext</label>
+<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME</label>
+<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</label>
 </div>
 </div>
 <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
@@ -159,6 +161,19 @@ function sourceUrl(pid) {
     // ARK pids (OpenContext, GEOME, Smithsonian) → n2t.net/ark:/...
     // IGSN pids (SESAR) → n2t.net/IGSN:...
     return `https://n2t.net/${pid}`;
+}
+
+// === Source Filter: get active sources and build SQL clause ===
+function getActiveSources() {
+    const checks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
+    return Array.from(checks).filter(c => c.checked).map(c => c.value);
+}
+
+function sourceFilterSQL(col) {
+    const active = getActiveSources();
+    if (active.length === 0 || active.length === 4) return '';  // all or none = no filter
+    const list = active.map(s => `'${s}'`).join(',');
+    return ` AND ${col} IN (${list})`;
 }
 
 // === URL State: encode/decode globe state in hash fragment ===
@@ -452,6 +467,7 @@ viewer = {
                     FROM read_parquet('${lite_url}')
                     WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
                       AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                      ${sourceFilterSQL('source')}
                     LIMIT 30
                 `);
                 updateSamples(samples);
@@ -478,6 +494,7 @@ phase1 = {
         SELECT h3_cell, sample_count, center_lat, center_lng,
                dominant_source, source_count
         FROM read_parquet('${h3_res4_url}')
+        WHERE 1=1${sourceFilterSQL('dominant_source')}
     `);
 
     const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.5);
@@ -548,6 +565,7 @@ zoomWatcher = {
                 SELECT h3_cell, sample_count, center_lat, center_lng,
                        dominant_source, source_count
                 FROM read_parquet('${url}')
+                WHERE 1=1${sourceFilterSQL('dominant_source')}
             `);
 
             viewer.h3Points.removeAll();
@@ -659,6 +677,7 @@ zoomWatcher = {
                 FROM read_parquet('${lite_url}')
                 WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
                   AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                  ${sourceFilterSQL('source')}
                 LIMIT ${POINT_BUDGET}
             `);
             performance.mark('sp-e');
@@ -747,6 +766,23 @@ zoomWatcher = {
         updatePhaseMsg(`${inView.clusters.toLocaleString()} clusters in view. Zoom closer for individual samples.`, 'done');
         console.log('Exited point mode');
     }
+
+    // --- Source filter change handler ---
+    const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
+    document.getElementById('sourceFilter').addEventListener('change', async () => {
+        // Toggle visual state on labels
+        document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
+            const cb = li.querySelector('input');
+            li.classList.toggle('disabled', !cb.checked);
+        });
+        if (mode === 'cluster') {
+            loading = false;  // reset guard so loadRes can fire
+            await loadRes(currentRes, resUrls[currentRes]);
+        } else {
+            cachedBounds = null;  // force re-query
+            loadViewportSamples();
+        }
+    });
 
     // --- Camera change handler ---
     let timer = null;
