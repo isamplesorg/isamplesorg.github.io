@@ -152,6 +152,15 @@ SOURCE_NAMES = ({
     GEOME: 'GEOME', SMITHSONIAN: 'Smithsonian'
 })
 
+// === Source URL: resolve pid to original repository ===
+function sourceUrl(pid) {
+    if (!pid) return null;
+    // All sources resolve via n2t.net:
+    // ARK pids (OpenContext, GEOME, Smithsonian) → n2t.net/ark:/...
+    // IGSN pids (SESAR) → n2t.net/IGSN:...
+    return `https://n2t.net/${pid}`;
+}
+
 // === URL State: encode/decode globe state in hash fragment ===
 function parseNum(val, def, min, max) {
     if (val == null) return def;
@@ -246,6 +255,7 @@ function updateSampleCard(sample) {
     const placeStr = Array.isArray(placeParts) && placeParts.length > 0
         ? placeParts.filter(Boolean).join(' › ')
         : '';
+    const srcUrl = sourceUrl(sample.pid);
     el.innerHTML = `<h4>Sample</h4>
         <div class="cluster-card" style="border-left-color: ${color}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -259,6 +269,7 @@ function updateSampleCard(sample) {
             </div>
             ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${placeStr}</div>` : ''}
             ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${sample.result_time}</div>` : ''}
+            ${srcUrl ? `<div style="margin-top: 4px;"><a class="detail-link" href="${srcUrl}" target="_blank" rel="noopener noreferrer">View at ${name} →</a></div>` : ''}
             <div id="sampleDetail" class="detail-loading">Loading full details...</div>
         </div>`;
 }
@@ -273,10 +284,7 @@ function updateSampleDetail(detail) {
     const desc = detail.description
         ? (detail.description.length > 300 ? detail.description.slice(0, 300) + '...' : detail.description)
         : '';
-    el.innerHTML = `${desc ? `<div style="font-size: 12px; color: #444; margin-top: 6px; line-height: 1.4;">${desc}</div>` : ''}
-        <div style="margin-top: 8px;">
-            <a class="detail-link" href="zenodo_isamples_analysis.html" target="_blank" rel="noopener noreferrer">Open in Analysis Tool →</a>
-        </div>`;
+    el.innerHTML = `${desc ? `<div style="font-size: 12px; color: #444; margin-top: 6px; line-height: 1.4;">${desc}</div>` : ''}`;
 }
 
 function updateSamples(samples) {
@@ -294,9 +302,10 @@ function updateSamples(samples) {
         const desc = Array.isArray(placeParts) && placeParts.length > 0
             ? placeParts.filter(Boolean).join(' › ')
             : '';
+        const sUrl = sourceUrl(s.pid);
         h += `<div class="sample-row">
             <div style="display: flex; align-items: center; gap: 6px;">
-                <span class="sample-label">${s.label || s.pid}</span>
+                ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
                 <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
             </div>
             ${desc ? `<div class="sample-desc">${desc}</div>` : ''}
