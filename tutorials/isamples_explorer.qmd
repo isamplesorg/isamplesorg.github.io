@@ -337,15 +337,20 @@ async function runQuery(sql) {
 
 ```{ojs}
 //| code-fold: true
+mutable facetSummariesError = null
+```
+
+```{ojs}
+//| code-fold: true
 // Tier 1: Load pre-computed facet summaries (2KB, instant)
 facetSummaries = {
-  facetSummariesError = null;
+  mutable facetSummariesError = null;
   try {
     const rows = await runQuery(`SELECT * FROM read_parquet('${facet_summaries_url}')`);
     return rows;
   } catch (e) {
     console.error("Facet summaries load error:", e);
-    facetSummariesError = e;
+    mutable facetSummariesError = e;
     return [];
   }
 }
