@@ -171,7 +171,8 @@ function getActiveSources() {
 
 function sourceFilterSQL(col) {
     const active = getActiveSources();
-    if (active.length === 0 || active.length === 4) return '';  // all or none = no filter
+    if (active.length === 0) return ' AND 1=0';  // nothing checked = show nothing
+    if (active.length === 4) return '';           // all checked = no filter
     const list = active.map(s => `'${s}'`).join(',');
     return ` AND ${col} IN (${list})`;
 }
@@ -554,8 +555,9 @@ zoomWatcher = {
     let cachedData = null;    // array of rows
 
     // --- H3 cluster loading (existing logic) ---
+    let loadResGen = 0;  // generation counter to discard stale results
     const loadRes = async (res, url) => {
-        if (loading) return;
+        const gen = ++loadResGen;  // claim a generation
         loading = true;
         updatePhaseMsg(`Loading H3 res${res}...`, 'loading');
 
@@ -568,6 +570,7 @@ zoomWatcher = {
                 WHERE 1=1${sourceFilterSQL('dominant_source')}
             `);
 
+            if (gen !== loadResGen) return;  // stale — a newer call superseded this one
             viewer.h3Points.removeAll();
             const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
             let total = 0;
@@ -776,11 +779,11 @@ zoomWatcher = {
             li.classList.toggle('disabled', !cb.checked);
         });
         if (mode === 'cluster') {
-            loading = false;  // reset guard so loadRes can fire
+            loading = false;  // allow loadRes to run (gen counter discards stale results)
             await loadRes(currentRes, resUrls[currentRes]);
         } else {
             cachedBounds = null;  // force re-query
-            loadViewportSamples();
+            await loadViewportSamples();
         }
     });
 
