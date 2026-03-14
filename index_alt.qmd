@@ -1,47 +1,26 @@
 ---
-title: "Internet of Samples: iSamples"
+title: "Explore the Internet of Samples: iSamples"
 number-sections: false
 toc: false
 ---
 
-# Explore the Internet of Samples
+[![](assets/isamples_planet.jpg){group="my-group"}](/tutorials/progressive_globe.html "interact with iSamples data (still a bit slow to load)")
 
-::: {layout-ncol=4}
+::: {layout-ncol=4 layout-valign="center"}
 
-![](assets/IGSN_10.58052_DIA0000YL.png){group="my-group"}
+[![](assets/IGSN_10.58052_DIA0000YL.png){width="7%"
+group="my-group"}](https://doi.org/10.58052/DIA0000YL "Diamond, collected 2019-06-11, Brazil")
 
-![](assets/IGSN_10.58052_IEGIL000C.png){group="my-group"}
+[![](assets/IGSN_10.58052_IEGIL000C.png){width="7%" group="my-group"}](https://doi.org/10.58052/IEGIL000C "Fossil coral, from 10000 BCE, Cayman Islands")
 
-![](assets/ark_65665_337856f1a655e4ad78b1ef10a16dfb6e3.png){group="my-group"}
+[![](assets/ark_65665_337856f1a655e4ad78b1ef10a16dfb6e3.png){width="10%" group="my-group"}](https://n2t.net/ark:65665/337856f1a655e4ad78b1ef10a16dfb6e3 "Paracirrhites arcatus, collected 2006-03-10, French Polynesia")
 
-![](assets/ark_28722_r2p24_vdm_19600211.png){group="my-group"}
-
-![](assets/europe_africa.png){group="my-group"}
-
-{{< video https://www.youtube.com/embed/JzNadmklzNs >}}
+[![](assets/ark_28722_r2p24_vdm_19600211.png){width="10%"
+group="my-group"}](https://n2t.net/ark:28722/r2p24/vdm_19600211 "Red-figure askoi, produced late-4th to early-3rd century BCE, Murlo, Italy")
 
 :::
 
-video link: {{< video https://youtu.be/JzNadmklzNs >}}
-https://youtu.be/JzNadmklzNs
-
-ark_65665_337856f1a655e4ad78b1ef10a16dfb6e3.png
-ark_28722_r2p24_vdm_19600211.png
-IGSN_10.58052_DIA0000YL.png
-IGSN_10.58052_IEGIL000C.png
-
 The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.
 
-# Current Data Access: Geoparquet-Based Approach
+[![](assets/moorea_cover.jpg){width="100%" group="my-group"}](https://youtu.be/JzNadmklzNs "iSamples data visualization")
 
-**Note**: iSamples Central is currently unavailable. The project now uses **geoparquet files** for efficient, browser-based data access and analysis:
-
-📊 &nbsp;&nbsp; **[Interactive Tutorials](/tutorials/)** - Modern browser-based analysis with DuckDB-WASM
-<br/>
-🗺️ &nbsp;&nbsp; **Comprehensive Coverage** - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian
-<br/>
-🚀 &nbsp;&nbsp; **High Performance** - Fast, efficient data access with minimal memory usage
-<br/>
-🌐 &nbsp;&nbsp; **Universal Access** - Works in any modern browser without software installation
-
-subtitle: "Toward an Interdisciplinary Cyberinfrastructure for Material Samples [![](https://img.shields.io/badge/NSF-2004839-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839)"
