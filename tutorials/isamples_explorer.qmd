@@ -1,0 +1,737 @@
+---
+title: "iSamples Interactive Explorer"
+categories: [parquet, spatial, interactive]
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 3
+---
+
+Search and explore **6.7 million physical samples** from scientific collections worldwide.
+
+::: {.callout-note}
+### Serverless Architecture
+This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts (source, material, context, specimen type), while the full ~280 MB Parquet file is only queried when drilling into records. All powered by DuckDB-WASM in your browser -- no server required!
+:::
+
+## Setup
+
+```{ojs}
+//| code-fold: true
+// Imports - use dynamic import to avoid CORS issues
+duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm")
+```
+
+```{ojs}
+//| code-fold: true
+// Data source configuration
+parquet_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+
+// Pre-computed facet summaries (2KB - loads instantly)
+facet_summaries_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet"
+
+// Source color scheme (consistent with iSamples conventions)
+SOURCE_COLORS = ({
+  'SESAR': '#3366CC',       // Blue
+  'OPENCONTEXT': '#DC3912', // Red
+  'GEOME': '#109618',       // Green
+  'SMITHSONIAN': '#FF9900', // Orange
+  'default': '#808080'      // Gray
+})
+
+// Cesium colors
+function getCesiumColor(source) {
+  const colors = {
+    'SESAR': Cesium.Color.fromCssColorString('#3366CC'),
+    'OPENCONTEXT': Cesium.Color.fromCssColorString('#DC3912'),
+    'GEOME': Cesium.Color.fromCssColorString('#109618'),
+    'SMITHSONIAN': Cesium.Color.fromCssColorString('#FF9900'),
+  };
+  return colors[source] || Cesium.Color.GRAY;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Parse URL params for bookmarkable searches
+initialParams = {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: params.get("q") || "",
+    sources: params.get("sources")?.split(",").filter(s => s) || [],
+    view: ["list", "table", "globe"].includes(params.get("view")) ? params.get("view") : "globe"
+  };
+}
+```
+
+## Search & Filters
+
+```{ojs}
+//| code-fold: false
+// Search input
+viewof searchInput = Inputs.text({
+  placeholder: "Search samples (e.g., pottery, basalt, Cyprus...)",
+  value: initialParams.q,
+  submit: "Search"
+})
+```
+
+<div class="grid" style="grid-template-columns: 1fr 3fr; gap: 20px;">
+<div class="card" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px;">
+
+### Filters
+
+```{ojs}
+facetSummariesWarning
+```
+
+**Source**
+
+```{ojs}
+//| code-fold: true
+// Source checkboxes with counts - uses pre-computed summaries for instant load
+viewof sourceCheckboxes = {
+  // Use pre-computed facet summaries (instant) instead of scanning full parquet
+  const counts = facetsByType.source;
+  const options = counts.map(r => r.value);
+
+  return Inputs.checkbox(options, {
+    value: initialParams.sources.filter(s => options.includes(s)),
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const color = SOURCE_COLORS[x] || SOURCE_COLORS.default;
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
+        ${x} <span style="color: #888;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Material**
+
+```{ojs}
+//| code-fold: true
+// Material filter - loaded from pre-computed summaries
+viewof materialCheckboxes = {
+  const counts = facetsByType.material;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Sampled Feature**
+
+```{ojs}
+//| code-fold: true
+// Context filter - loaded from pre-computed summaries
+viewof contextCheckboxes = {
+  const counts = facetsByType.context;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+**Specimen Type**
+
+```{ojs}
+//| code-fold: true
+// Object type filter - loaded from pre-computed summaries
+viewof objectTypeCheckboxes = {
+  const counts = facetsByType.object_type;
+  const options = counts.map(r => r.value);
+  return Inputs.checkbox(options, {
+    value: [],
+    format: (x) => {
+      const r = counts.find(s => s.value === x);
+      const count = r ? Number(r.count).toLocaleString() : "0";
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
+        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+      </span>`;
+    }
+  });
+}
+```
+
+```{ojs}
+//| code-fold: true
+html`<a href="?" style="font-size: 13px;">Clear All Filters</a>`
+```
+
+**Max Samples**
+
+```{ojs}
+//| code-fold: false
+viewof maxSamples = Inputs.range([1000, 100000], {
+  value: 25000,
+  step: 1000
+})
+```
+
+</div>
+<div>
+
+### Results
+
+```{ojs}
+//| code-fold: true
+// Update URL without reloading
+{
+  const params = new URLSearchParams();
+  if (searchInput) params.set("q", searchInput);
+  if (sourceCheckboxes?.length) params.set("sources", sourceCheckboxes.join(","));
+  if (materialCheckboxes?.length) params.set("material", materialCheckboxes.join(","));
+  if (contextCheckboxes?.length) params.set("context", contextCheckboxes.join(","));
+  if (objectTypeCheckboxes?.length) params.set("object_type", objectTypeCheckboxes.join(","));
+  if (viewMode !== "globe") params.set("view", viewMode);
+
+  const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+  if (window.location.search !== `?${params.toString()}`) {
+    history.replaceState(null, "", newUrl);
+  }
+}
+```
+
+```{ojs}
+//| code-fold: false
+// View mode selector
+viewof viewMode = Inputs.radio(["globe", "list", "table"], {
+  value: initialParams.view,
+  format: (x) => x === "globe" ? "🌍 Globe" : x === "list" ? "📋 List" : "📊 Table"
+})
+```
+
+<div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px;">
+Loading data...
+</div>
+
+```{ojs}
+//| code-fold: true
+// Show result count
+html`<div style="margin-bottom: 16px;">
+  <strong>Showing ${sampleData.length.toLocaleString()} of ${Number(totalCount).toLocaleString()} matching samples</strong>
+</div>`
+```
+
+```{ojs}
+//| code-fold: true
+// Render results based on view mode
+{
+  if (viewMode === "globe") {
+    // Globe is rendered in its own section below
+    return html`<div style="color: #666; font-style: italic;">See globe view below</div>`;
+  } else if (viewMode === "table") {
+    return Inputs.table(sampleData, {
+      columns: ['source', 'label', 'latitude', 'longitude'],
+      header: {
+        source: 'Source',
+        label: 'Label',
+        latitude: 'Lat',
+        longitude: 'Lon'
+      },
+      format: {
+        source: (x) => html`<span style="color: ${SOURCE_COLORS[x] || '#808080'}; font-weight: 600;">${x}</span>`,
+        latitude: (x) => x?.toFixed(4),
+        longitude: (x) => x?.toFixed(4)
+      },
+      rows: 20
+    });
+  } else {
+    // List view
+    if (sampleData.length === 0) {
+      return html`<div style="color: #888; padding: 20px; text-align: center;">No results found</div>`;
+    }
+
+    const items = sampleData.map(r => {
+      const color = SOURCE_COLORS[r.source] || SOURCE_COLORS.default;
+      const desc = r.description || "";
+      const description = desc.length > 150 ? desc.slice(0, 150) + "..." : (desc || "<em>No description</em>");
+
+      return html`<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+            ${r.source}
+          </span>
+        </div>
+        <div style="font-weight: 600; margin-bottom: 4px;">${r.label || "Unlabeled"}</div>
+        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${description}</div>
+        <div style="font-size: 12px; color: #888;">
+          📍 ${r.latitude?.toFixed(4)}, ${r.longitude?.toFixed(4)}
+        </div>
+      </div>`;
+    });
+
+    return html`<div style="max-height: 500px; overflow-y: auto;">${items}</div>`;
+  }
+}
+```
+
+</div>
+</div>
+
+## Database & Queries
+
+```{ojs}
+//| code-fold: true
+// Initialize DuckDB-WASM
+db = {
+  const bundle = await duckdbModule.selectBundle(duckdbModule.getJsDelivrBundles());
+
+  const worker_url = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+  );
+  const worker = new Worker(worker_url);
+  const logger = new duckdbModule.ConsoleLogger(duckdbModule.LogLevel.WARNING);
+
+  const instance = new duckdbModule.AsyncDuckDB(logger, worker);
+  await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  URL.revokeObjectURL(worker_url);
+
+  // Create view for convenience
+  const conn = await instance.connect();
+  await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  await conn.close();
+
+  return instance;
+}
+
+// Helper function to run queries
+async function runQuery(sql) {
+  const conn = await db.connect();
+  try {
+    const result = await conn.query(sql);
+    return result.toArray().map(row => {
+      const obj = row.toJSON();
+      // Convert BigInt to Number
+      for (const key in obj) {
+        if (typeof obj[key] === 'bigint') obj[key] = Number(obj[key]);
+      }
+      return obj;
+    });
+  } finally {
+    await conn.close();
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+mutable facetSummariesError = null
+```
+
+```{ojs}
+//| code-fold: true
+// Tier 1: Load pre-computed facet summaries (2KB, instant)
+facetSummaries = {
+  mutable facetSummariesError = null;
+  try {
+    const rows = await runQuery(`SELECT * FROM read_parquet('${facet_summaries_url}')`);
+    return rows;
+  } catch (e) {
+    console.error("Facet summaries load error:", e);
+    mutable facetSummariesError = e;
+    return [];
+  }
+}
+
+```
+
+```{ojs}
+//| code-fold: true
+facetSummariesWarning = {
+  if (!facetSummariesError) return null;
+  return html`<div style="margin: 6px 0 10px; padding: 8px 10px; border: 1px solid #f0b429; background: #fff7e6; border-radius: 6px; color: #7a4b00; font-size: 12px;">
+    Facet summaries failed to load. Filter counts may be missing. Try refreshing.
+  </div>`;
+}
+
+// Extract facet counts by type from pre-computed summaries
+facetsByType = {
+  const grouped = { source: [], material: [], context: [], object_type: [] };
+  for (const row of facetSummaries) {
+    const ft = row.facet_type;
+    if (grouped[ft]) {
+      grouped[ft].push({ value: row.facet_value, count: Number(row.count), scheme: row.scheme });
+    }
+  }
+  // Sort each by count descending
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a, b) => b.count - a.count);
+  }
+  return grouped;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
+whereClause = {
+  const conditions = [
+    "otype = 'MaterialSampleRecord'",
+    "latitude IS NOT NULL"
+  ];
+
+  // Text search
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    conditions.push(`(
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`);
+  }
+
+  // Source filter
+  const sources = Array.from(sourceCheckboxes || []);
+  if (sources.length > 0) {
+    const sourceList = sources.map(s => `'${s}'`).join(", ");
+    conditions.push(`n IN (${sourceList})`);
+  }
+
+  // Material filter
+  const materials = Array.from(materialCheckboxes || []);
+  if (materials.length > 0) {
+    const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_material_category IN (${matList})`);
+  }
+
+  // Context (sampled feature) filter
+  const contexts = Array.from(contextCheckboxes || []);
+  if (contexts.length > 0) {
+    const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_context_category IN (${ctxList})`);
+  }
+
+  // Object type (specimen type) filter
+  const objectTypes = Array.from(objectTypeCheckboxes || []);
+  if (objectTypes.length > 0) {
+    const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
+    conditions.push(`has_specimen_category IN (${otList})`);
+  }
+
+  return conditions.join(" AND ");
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Source counts now come from pre-computed facet summaries (Tier 1)
+// No longer scans the full parquet file on every page load
+sourceCounts = facetsByType.source
+```
+
+```{ojs}
+//| code-fold: true
+// Get total count matching current filters
+totalCount = {
+  const query = `SELECT COUNT(*) as count FROM samples WHERE ${whereClause}`;
+  try {
+    const rows = await runQuery(query);
+    return rows[0]?.count || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Load sample data
+sampleData = {
+  const statusDiv = document.getElementById('loading_status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Loading samples...';
+  }
+
+  try {
+    const query = `
+      SELECT
+        row_id,
+        pid,
+        label,
+        COALESCE(description, '') as description,
+        latitude,
+        longitude,
+        n as source,
+        place_name
+      FROM samples
+      WHERE ${whereClause}
+      ORDER BY RANDOM()
+      LIMIT ${maxSamples}
+    `;
+
+    const data = await runQuery(query);
+
+    if (statusDiv) {
+      statusDiv.textContent = `Loaded ${data.length.toLocaleString()} samples`;
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
+    }
+
+    return data;
+  } catch (error) {
+    if (statusDiv) {
+      statusDiv.textContent = `Error: ${error.message}`;
+      statusDiv.style.background = '#ffebee';
+    }
+    return [];
+  }
+}
+```
+
+## Globe View
+
+```{ojs}
+//| code-fold: true
+mutable clickedPointId = null
+mutable clickedPointIndex = null
+```
+
+<div id="cesiumContainer" style="width: 100%; aspect-ratio: 16/9; display: ${viewMode === 'globe' ? 'block' : 'none'};"></div>
+
+<div style="display: ${viewMode === 'globe' ? 'flex' : 'none'}; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
+</div>
+
+```{ojs}
+//| code-fold: true
+// Cesium viewer setup
+viewer = {
+  // Wait for Cesium to be available
+  await new Promise(resolve => {
+    if (typeof Cesium !== 'undefined') resolve();
+    else {
+      const check = setInterval(() => {
+        if (typeof Cesium !== 'undefined') {
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+    }
+  });
+
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
+
+  const container = document.getElementById('cesiumContainer');
+
+  const v = new Cesium.Viewer(container, {
+    timeline: false,
+    animation: false,
+    baseLayerPicker: false,
+    fullscreenElement: container,
+    terrain: Cesium.Terrain.fromWorldTerrain()
+  });
+
+  // Point collection for efficient rendering
+  v.pointCollection = new Cesium.PointPrimitiveCollection();
+  v.scene.primitives.add(v.pointCollection);
+
+  // Click handler
+  const handler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
+  handler.setInputAction((e) => {
+    const picked = v.scene.pick(e.position);
+    if (Cesium.defined(picked) && picked.primitive && picked.id !== undefined) {
+      mutable clickedPointId = picked.id.pid;
+      mutable clickedPointIndex = picked.id.index;
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  return v;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Render points on globe
+renderPoints = {
+  if (!viewer || sampleData.length === 0) return null;
+
+  const statusDiv = document.getElementById('loading_status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Rendering points...';
+  }
+
+  // Clear existing points
+  viewer.pointCollection.removeAll();
+
+  const scalar = new Cesium.NearFarScalar(1.5e2, 3, 8.0e6, 0.5);
+  const CHUNK_SIZE = 500;
+
+  for (let i = 0; i < sampleData.length; i += CHUNK_SIZE) {
+    const chunk = sampleData.slice(i, i + CHUNK_SIZE);
+
+    for (let j = 0; j < chunk.length; j++) {
+      const row = chunk[j];
+      viewer.pointCollection.add({
+        id: { pid: row.pid, index: i + j, row: row },
+        position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
+        pixelSize: 5,
+        color: getCesiumColor(row.source),
+        scaleByDistance: scalar,
+      });
+    }
+
+    // Update progress
+    if (statusDiv && i % 5000 === 0) {
+      const pct = Math.round((i / sampleData.length) * 100);
+      statusDiv.textContent = `Rendering points... ${pct}%`;
+    }
+
+    // Yield to browser
+    if (i + CHUNK_SIZE < sampleData.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  if (statusDiv) {
+    statusDiv.textContent = `Rendered ${sampleData.length.toLocaleString()} points`;
+    setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
+  }
+
+  return sampleData.length;
+}
+```
+
+## Sample Card
+
+```{ojs}
+//| code-fold: true
+// Get selected sample data
+selectedSample = {
+  if (clickedPointIndex === null || clickedPointIndex < 0) return null;
+  if (clickedPointIndex >= sampleData.length) return null;
+  return sampleData[clickedPointIndex];
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Render sample card
+sampleCard = {
+  if (!selectedSample) {
+    return html`<div style="padding: 20px; color: #666; text-align: center; background: #f9f9f9; border-radius: 8px;">
+      Click a point on the globe to see details
+    </div>`;
+  }
+
+  const s = selectedSample;
+  const sourceColor = SOURCE_COLORS[s.source] || SOURCE_COLORS.default;
+
+  const label = s.label || 'No label';
+  const description = s.description || '';
+  const truncDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
+
+  let placeStr = '';
+  if (s.place_name) {
+    if (Array.isArray(s.place_name)) {
+      placeStr = s.place_name.filter(p => p).join(' > ');
+    } else {
+      placeStr = String(s.place_name);
+    }
+  }
+
+  const placeHtml = placeStr ? `<div style="margin-bottom: 4px;"><strong>Place:</strong> ${placeStr.substring(0, 100)}</div>` : '';
+
+  const pidShort = s.pid ? (s.pid.length > 50 ? s.pid.substring(0, 50) + '...' : s.pid) : '';
+
+  return html`
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                border: 1px solid #ddd; border-radius: 8px; padding: 16px;
+                max-width: 500px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="background: ${sourceColor}; color: white; padding: 4px 8px;
+                    border-radius: 4px; font-size: 12px; font-weight: 600;">${s.source}</span>
+      </div>
+      <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${label}</h3>
+      <p style="margin: 0 0 12px 0; font-size: 13px; color: #666; line-height: 1.4;">
+        ${truncDesc || '<em>No description</em>'}
+      </p>
+      <div style="font-size: 12px; color: #888;">
+        <div style="margin-bottom: 4px;"><strong>Location:</strong> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
+        ${placeHtml}
+        <div><strong>ID:</strong> <code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${pidShort}</code></div>
+      </div>
+    </div>
+  `;
+}
+```
+
+---
+
+## Debug Info
+
+<details>
+<summary>Current State & Query</summary>
+
+```{ojs}
+//| code-fold: true
+html`<pre style="font-size: 12px; background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
+State:
+  search: "${searchInput || ''}"
+  sources: ${JSON.stringify(Array.from(sourceCheckboxes || []))}
+  view: "${viewMode}"
+  maxSamples: ${maxSamples}
+
+WHERE clause:
+${whereClause}
+
+Total matching: ${Number(totalCount).toLocaleString()}
+Loaded: ${sampleData.length.toLocaleString()}
+</pre>`
+```
+
+</details>
+
+---
+
+<style>
+.card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+form[name="checkbox"] label {
+  display: block;
+  margin: 4px 0;
+}
+
+#cesiumContainer {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cesium-viewer-bottom {
+  display: none !important;
+}
+</style>
+
+<!-- Cesium resources -->
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">

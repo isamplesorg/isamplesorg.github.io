@@ -1,0 +1,1073 @@
+---
+title: "Narrow vs Wide vs H3 Schema Performance Comparison"
+categories: [parquet, performance, benchmarking, h3]
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 3
+---
+
+This page benchmarks the performance difference between **narrow**, **wide**, and **wide + H3** parquet schema formats when accessing data "over the wire" via HTTP range requests in DuckDB-WASM.
+
+## Introduction
+
+### What are Narrow vs Wide Schemas?
+
+The iSamples property graph data can be serialized in three different parquet formats:
+
+| Format | Description | File Size | Row Count | Sources |
+|--------|-------------|-----------|-----------|---------|
+| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~850 MB | ~106M rows | All 4 sources |
+| **Wide** | Stores relationships as `p__*` columns on entity rows | ~278 MB | ~20M rows | All 4 sources |
+| **Wide + H3** | Wide format + pre-computed H3 spatial indices (`h3_res4/6/8`) | ~292 MB | ~20M rows | All 4 sources |
+
+All three formats represent the **same underlying data** (SESAR, OpenContext, GEOME, Smithsonian) with identical semantics. The wide format eliminates edge rows; the H3 variant adds pre-computed hexagonal spatial indices for accelerated geospatial queries.
+
+A **facet summaries** file (2KB) provides pre-aggregated counts for instant facet lookups.
+
+**Data source**: Cloudflare R2 (updated January 2026)
+
+### Why Performance Matters
+
+When using DuckDB-WASM in the browser:
+
+- Data is fetched via **HTTP range requests** (206 Partial Content)
+- Only the columns and row groups needed for a query are downloaded
+- Smaller files with fewer rows = fewer bytes to transfer, faster queries
+
+**Expected speedup**: Wide format should be **2-3x faster** based on local benchmarks.
+
+## Methodology
+
+::: {.callout-note}
+### Benchmarking Approach
+
+- **Cold run**: First query (includes metadata fetch, JIT compilation) - reported separately
+- **Warm runs**: Runs 2-3 (metadata cached, JIT warmed up)
+- **Warm median**: Median of warm runs only (excludes cold run for fair comparison)
+- **Sequential execution**: Benchmarks run one after another, not concurrently
+- **Network variability**: Results will vary based on your network connection and hardware
+
+Results are shown in real-time as benchmarks complete. Data loading only begins when you click the button.
+:::
+
+## Setup
+
+```{ojs}
+//| output: false
+// Import DuckDB for browser-based SQL analysis (pinned version for reproducibility)
+import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@0.7.1/+esm"
+```
+
+```{ojs}
+//| echo: false
+// Define parquet URLs - iSamples full dataset on Cloudflare R2 (all sources)
+// Updated 2026-01-14: Using Zenodo narrow/wide files on Cloudflare R2
+narrowUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_narrow.parquet"
+wideUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+wideH3Url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet"
+summariesUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet"
+```
+
+### Environment Info
+
+```{ojs}
+//| echo: false
+envInfo = {
+    const ua = navigator.userAgent;
+    const browser = ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : 'Unknown';
+    const connection = navigator.connection || {};
+
+    return {
+        browser: browser,
+        userAgent: ua.substring(0, 80) + '...',
+        downlink: connection.downlink ? `${connection.downlink} Mbps` : 'N/A',
+        effectiveType: connection.effectiveType || 'N/A',
+        rtt: connection.rtt ? `${connection.rtt} ms` : 'N/A'
+    };
+}
+
+html`<div style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 12px; font-family: monospace;">
+<strong>Environment:</strong><br>
+Browser: ${envInfo.browser}<br>
+Connection: ${envInfo.effectiveType} (${envInfo.downlink}, RTT: ${envInfo.rtt})<br>
+<em>Note: Results will vary by network/hardware</em>
+</div>`
+```
+
+### Run Benchmarks
+
+```{ojs}
+//| echo: false
+viewof runBenchmarks = Inputs.button("Run All Benchmarks", {
+    style: "padding: 12px 24px; background: #2E86AB; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;"
+})
+```
+
+<div id="loading_init" style="padding: 10px; background: #fff3cd; border-radius: 4px; display: none;">
+<strong>Initializing...</strong> Loading databases and preparing benchmarks. This may take a moment as parquet metadata is fetched over HTTP.
+</div>
+
+<div id="error_display" style="padding: 10px; background: #f8d7da; border-radius: 4px; color: #721c24; display: none;">
+</div>
+
+```{ojs}
+//| echo: false
+// Initialize databases only when button is clicked (lazy loading)
+// Returns { narrow, wide, wideH3 } or null if not yet clicked
+initDatabases = {
+    if (runBenchmarks < 1) return null;
+
+    const loadingDiv = document.getElementById('loading_init');
+    const errorDiv = document.getElementById('error_display');
+
+    if (loadingDiv) loadingDiv.style.display = 'block';
+    if (errorDiv) errorDiv.style.display = 'none';
+
+    try {
+        const narrowDb = await DuckDBClient.of();
+        await narrowDb.query(`CREATE VIEW narrow AS SELECT * FROM read_parquet('${narrowUrl}')`);
+
+        const wideDb = await DuckDBClient.of();
+        await wideDb.query(`CREATE VIEW wide AS SELECT * FROM read_parquet('${wideUrl}')`);
+
+        const wideH3Db = await DuckDBClient.of();
+        await wideH3Db.query(`CREATE VIEW wide_h3 AS SELECT * FROM read_parquet('${wideH3Url}')`);
+
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        return { narrow: narrowDb, wide: wideDb, wideH3: wideH3Db };
+    } catch (e) {
+        const errorMsg = `Failed to initialize databases: ${e.message}. This may be due to network issues or CORS restrictions.`;
+        if (errorDiv) {
+            errorDiv.textContent = errorMsg;
+            errorDiv.style.display = 'block';
+        }
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        return { error: errorMsg };
+    }
+}
+
+dbNarrow = initDatabases && !initDatabases.error ? initDatabases.narrow : null
+dbWide = initDatabases && !initDatabases.error ? initDatabases.wide : null
+dbWideH3 = initDatabases && !initDatabases.error ? initDatabases.wideH3 : null
+```
+
+## Data Validity Check
+
+Before benchmarking, let's confirm both schemas represent the same underlying data.
+
+<div id="loading_validity" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Checking data validity...
+</div>
+
+```{ojs}
+validityCheck = {
+    // Only run when button clicked AND databases are initialized
+    if (runBenchmarks < 1 || !dbNarrow || !dbWide || !dbWideH3) return null;
+
+    const loadingDiv = document.getElementById('loading_validity');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    try {
+        // Count rows in narrow
+        const narrowCount = await dbNarrow.query(`SELECT COUNT(*) as cnt FROM narrow`);
+        const narrowTotal = narrowCount[0].cnt;
+
+        // Count rows in wide
+        const wideCount = await dbWide.query(`SELECT COUNT(*) as cnt FROM wide`);
+        const wideTotal = wideCount[0].cnt;
+
+        // Count rows in wide+H3
+        const wideH3Count = await dbWideH3.query(`SELECT COUNT(*) as cnt FROM wide_h3`);
+        const wideH3Total = wideH3Count[0].cnt;
+
+        // Count entity types in narrow (excluding edges)
+        const narrowEntities = await dbNarrow.query(`
+            SELECT COUNT(*) as cnt FROM narrow
+            WHERE otype != '_edge_'
+        `);
+        const narrowEntityCount = narrowEntities[0].cnt;
+
+        // Count samples in all three
+        const narrowSamples = await dbNarrow.query(`
+            SELECT COUNT(*) as cnt FROM narrow
+            WHERE otype = 'MaterialSampleRecord'
+        `);
+
+        const wideSamples = await dbWide.query(`
+            SELECT COUNT(*) as cnt FROM wide
+            WHERE otype = 'MaterialSampleRecord'
+        `);
+
+        const wideH3Samples = await dbWideH3.query(`
+            SELECT COUNT(*) as cnt FROM wide_h3
+            WHERE otype = 'MaterialSampleRecord'
+        `);
+
+        return {
+            narrowTotal: narrowTotal,
+            wideTotal: wideTotal,
+            wideH3Total: wideH3Total,
+            narrowEntities: narrowEntityCount,
+            narrowSamples: narrowSamples[0].cnt,
+            wideSamples: wideSamples[0].cnt,
+            wideH3Samples: wideH3Samples[0].cnt,
+            sampleMatch: narrowSamples[0].cnt === wideSamples[0].cnt
+                && wideSamples[0].cnt === wideH3Samples[0].cnt
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Validity check failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+validityCheck ? (validityCheck.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Data Validity Results</h4>
+<p style="margin: 0;"><strong>Validity check failed:</strong> ${validityCheck.error}</p>
+</div>
+` : html`
+<div style="background: ${validityCheck.sampleMatch ? '#d4edda' : '#f8d7da'}; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Data Validity Results</h4>
+<table style="width: 100%; border-collapse: collapse;">
+<tr><td><strong>Narrow total rows:</strong></td><td>${validityCheck.narrowTotal.toLocaleString()}</td></tr>
+<tr><td><strong>Wide total rows:</strong></td><td>${validityCheck.wideTotal.toLocaleString()}</td></tr>
+<tr><td><strong>Wide+H3 total rows:</strong></td><td>${validityCheck.wideH3Total.toLocaleString()}</td></tr>
+<tr><td><strong>Narrow entities (non-edge):</strong></td><td>${validityCheck.narrowEntities.toLocaleString()}</td></tr>
+<tr><td><strong>Narrow samples:</strong></td><td>${validityCheck.narrowSamples.toLocaleString()}</td></tr>
+<tr><td><strong>Wide samples:</strong></td><td>${validityCheck.wideSamples.toLocaleString()}</td></tr>
+<tr><td><strong>Wide+H3 samples:</strong></td><td>${validityCheck.wideH3Samples.toLocaleString()}</td></tr>
+<tr><td><strong>Sample count match (all 3):</strong></td><td>${validityCheck.sampleMatch ? '✅ Yes' : '❌ No'}</td></tr>
+</table>
+<p><em>The wide schema has ~79% fewer rows because edge rows are eliminated. The H3 variant adds 3 spatial index columns (h3_res4/6/8).</em></p>
+</div>
+`) : html`<p><em>Click "Run All Benchmarks" to check data validity</em></p>`
+```
+
+## Benchmark 1: Entity Count Query
+
+This benchmark tests a simple `COUNT(*) GROUP BY otype` query, which requires scanning row metadata.
+
+<div id="loading_b1" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Running Benchmark 1...
+</div>
+
+```{ojs}
+benchmark1 = {
+    // Wait for validity check to complete first (sequential execution)
+    if (runBenchmarks < 1 || !validityCheck || validityCheck.error) return null;
+
+    const loadingDiv = document.getElementById('loading_b1');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    const query = `SELECT otype, COUNT(*) as cnt FROM {table} GROUP BY otype ORDER BY cnt DESC`;
+    const runs = 3;
+
+    try {
+        // Narrow benchmark
+        const narrowTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbNarrow.query(query.replace('{table}', 'narrow'));
+            narrowTimes.push(performance.now() - start);
+        }
+
+        // Wide benchmark
+        const wideTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(query.replace('{table}', 'wide'));
+            wideTimes.push(performance.now() - start);
+        }
+
+        // Calculate medians (excluding cold run for warm median)
+        const median = arr => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            if (sorted.length === 2) return (sorted[0] + sorted[1]) / 2;
+            return sorted[Math.floor(sorted.length / 2)];
+        };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1); // exclude first (cold) run
+            return median(warm);
+        };
+
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
+
+        return {
+            name: "Entity Count (GROUP BY otype)",
+            narrowCold: narrowTimes[0],
+            narrowMedian: narrowMedian,
+            narrowAll: narrowTimes,
+            wideCold: wideTimes[0],
+            wideMedian: wideMedian,
+            wideAll: wideTimes,
+            speedup: narrowMedian / wideMedian
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 1 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+benchmark1 ? (benchmark1.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Benchmark 1 Error</h4>
+<p style="margin: 0;"><strong>Benchmark 1 failed:</strong> ${benchmark1.error}</p>
+</div>
+` : html`
+<div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">${benchmark1.name}</h4>
+<table style="width: 100%; border-collapse: collapse; text-align: right;">
+<thead>
+<tr style="border-bottom: 2px solid #ccc;">
+<th style="text-align: left;">Schema</th>
+<th>Cold (1st run)</th>
+<th>Warm (median)</th>
+<th>All runs</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left;"><strong>Narrow</strong></td>
+<td>${benchmark1.narrowCold.toFixed(0)} ms</td>
+<td>${benchmark1.narrowMedian.toFixed(0)} ms</td>
+<td>${benchmark1.narrowAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+<tr><td style="text-align: left;"><strong>Wide</strong></td>
+<td>${benchmark1.wideCold.toFixed(0)} ms</td>
+<td>${benchmark1.wideMedian.toFixed(0)} ms</td>
+<td>${benchmark1.wideAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom: 0;"><strong>Speedup: ${benchmark1.speedup.toFixed(2)}x</strong> (wide is ${benchmark1.speedup > 1 ? 'faster' : 'slower'})</p>
+</div>
+`) : html`<p><em>Waiting for benchmark...</em></p>`
+```
+
+## Benchmark 2: Sample Count by Site
+
+This benchmark counts samples per sampling site, requiring a join between samples and sites.
+
+**Query complexity:**
+- Narrow: Requires joining through edge rows
+- Wide: Direct join via `p__*` columns
+
+<div id="loading_b2" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Running Benchmark 2...
+</div>
+
+```{ojs}
+benchmark2 = {
+    // Wait for benchmark1 to complete first (sequential execution)
+    if (runBenchmarks < 1 || !benchmark1 || benchmark1.error) return null;
+
+    const loadingDiv = document.getElementById('loading_b2');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    // Narrow query: traverse edges to get from sample -> event -> site
+    const narrowQuery = `
+        WITH sample_events AS (
+            SELECT
+                e.o[1] as event_id,
+                s.row_id as sample_id
+            FROM narrow s
+            JOIN narrow e ON s.row_id = e.s AND e.p = 'produced_by'
+            WHERE s.otype = 'MaterialSampleRecord'
+        ),
+        event_sites AS (
+            SELECT
+                se.sample_id,
+                e2.o[1] as site_id
+            FROM sample_events se
+            JOIN narrow e2 ON se.event_id = e2.s AND e2.p = 'sampling_site'
+        )
+        SELECT
+            site.label,
+            COUNT(*) as sample_count
+        FROM event_sites es
+        JOIN narrow site ON es.site_id = site.row_id
+        GROUP BY site.label
+        ORDER BY sample_count DESC
+        LIMIT 10
+    `;
+
+    // Wide query: direct column access
+    const wideQuery = `
+        WITH sample_sites AS (
+            SELECT
+                s.row_id as sample_id,
+                e.p__sampling_site[1] as site_id
+            FROM wide s
+            JOIN wide e ON s.p__produced_by[1] = e.row_id
+            WHERE s.otype = 'MaterialSampleRecord'
+              AND e.otype = 'SamplingEvent'
+        )
+        SELECT
+            site.label,
+            COUNT(*) as sample_count
+        FROM sample_sites ss
+        JOIN wide site ON ss.site_id = site.row_id
+        WHERE site.otype = 'SamplingSite'
+        GROUP BY site.label
+        ORDER BY sample_count DESC
+        LIMIT 10
+    `;
+
+    const runs = 3;
+
+    try {
+        // Narrow benchmark
+        const narrowTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbNarrow.query(narrowQuery);
+            narrowTimes.push(performance.now() - start);
+        }
+
+        // Wide benchmark
+        const wideTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(wideQuery);
+            wideTimes.push(performance.now() - start);
+        }
+
+        const median = arr => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            if (sorted.length === 2) return (sorted[0] + sorted[1]) / 2;
+            return sorted[Math.floor(sorted.length / 2)];
+        };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1);
+            return median(warm);
+        };
+
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
+
+        return {
+            name: "Sample Count by Site (multi-join)",
+            narrowCold: narrowTimes[0],
+            narrowMedian: narrowMedian,
+            narrowAll: narrowTimes,
+            wideCold: wideTimes[0],
+            wideMedian: wideMedian,
+            wideAll: wideTimes,
+            speedup: narrowMedian / wideMedian
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 2 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+benchmark2 ? (benchmark2.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Benchmark 2 Error</h4>
+<p style="margin: 0;"><strong>Benchmark 2 failed:</strong> ${benchmark2.error}</p>
+</div>
+` : html`
+<div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">${benchmark2.name}</h4>
+<table style="width: 100%; border-collapse: collapse; text-align: right;">
+<thead>
+<tr style="border-bottom: 2px solid #ccc;">
+<th style="text-align: left;">Schema</th>
+<th>Cold (1st run)</th>
+<th>Warm (median)</th>
+<th>All runs</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left;"><strong>Narrow</strong></td>
+<td>${benchmark2.narrowCold.toFixed(0)} ms</td>
+<td>${benchmark2.narrowMedian.toFixed(0)} ms</td>
+<td>${benchmark2.narrowAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+<tr><td style="text-align: left;"><strong>Wide</strong></td>
+<td>${benchmark2.wideCold.toFixed(0)} ms</td>
+<td>${benchmark2.wideMedian.toFixed(0)} ms</td>
+<td>${benchmark2.wideAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom: 0;"><strong>Speedup: ${benchmark2.speedup.toFixed(2)}x</strong> (wide is ${benchmark2.speedup > 1 ? 'faster' : 'slower'})</p>
+</div>
+`) : html`<p><em>Waiting for benchmark...</em></p>`
+```
+
+## Benchmark 3: Material Type Distribution
+
+This benchmark aggregates sample counts by material category.
+
+<div id="loading_b3" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Running Benchmark 3...
+</div>
+
+```{ojs}
+benchmark3 = {
+    // Wait for benchmark2 to complete first (sequential execution)
+    if (runBenchmarks < 1 || !benchmark2 || benchmark2.error) return null;
+
+    const loadingDiv = document.getElementById('loading_b3');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    // Narrow query: join through edges to material concepts
+    const narrowQuery = `
+        SELECT
+            c.label as material,
+            COUNT(*) as sample_count
+        FROM narrow s
+        JOIN narrow e ON s.row_id = e.s AND e.p = 'has_material_category'
+        JOIN narrow c ON e.o[1] = c.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+        GROUP BY c.label
+        ORDER BY sample_count DESC
+        LIMIT 10
+    `;
+
+    // Wide query: direct column access to material category
+    const wideQuery = `
+        SELECT
+            c.label as material,
+            COUNT(*) as sample_count
+        FROM wide s
+        JOIN wide c ON s.p__has_material_category[1] = c.row_id
+        WHERE s.otype = 'MaterialSampleRecord'
+          AND c.otype = 'IdentifiedConcept'
+        GROUP BY c.label
+        ORDER BY sample_count DESC
+        LIMIT 10
+    `;
+
+    const runs = 3;
+
+    try {
+        // Narrow benchmark
+        const narrowTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbNarrow.query(narrowQuery);
+            narrowTimes.push(performance.now() - start);
+        }
+
+        // Wide benchmark
+        const wideTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(wideQuery);
+            wideTimes.push(performance.now() - start);
+        }
+
+        const median = arr => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            if (sorted.length === 2) return (sorted[0] + sorted[1]) / 2;
+            return sorted[Math.floor(sorted.length / 2)];
+        };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            const warm = arr.slice(1);
+            return median(warm);
+        };
+
+        const narrowMedian = warmMedian(narrowTimes);
+        const wideMedian = warmMedian(wideTimes);
+
+        return {
+            name: "Material Type Distribution",
+            narrowCold: narrowTimes[0],
+            narrowMedian: narrowMedian,
+            narrowAll: narrowTimes,
+            wideCold: wideTimes[0],
+            wideMedian: wideMedian,
+            wideAll: wideTimes,
+            speedup: narrowMedian / wideMedian
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 3 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+benchmark3 ? (benchmark3.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Benchmark 3 Error</h4>
+<p style="margin: 0;"><strong>Benchmark 3 failed:</strong> ${benchmark3.error}</p>
+</div>
+` : html`
+<div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">${benchmark3.name}</h4>
+<table style="width: 100%; border-collapse: collapse; text-align: right;">
+<thead>
+<tr style="border-bottom: 2px solid #ccc;">
+<th style="text-align: left;">Schema</th>
+<th>Cold (1st run)</th>
+<th>Warm (median)</th>
+<th>All runs</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left;"><strong>Narrow</strong></td>
+<td>${benchmark3.narrowCold.toFixed(0)} ms</td>
+<td>${benchmark3.narrowMedian.toFixed(0)} ms</td>
+<td>${benchmark3.narrowAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+<tr><td style="text-align: left;"><strong>Wide</strong></td>
+<td>${benchmark3.wideCold.toFixed(0)} ms</td>
+<td>${benchmark3.wideMedian.toFixed(0)} ms</td>
+<td>${benchmark3.wideAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom: 0;"><strong>Speedup: ${benchmark3.speedup.toFixed(2)}x</strong> (wide is ${benchmark3.speedup > 1 ? 'faster' : 'slower'})</p>
+</div>
+`) : html`<p><em>Waiting for benchmark...</em></p>`
+```
+
+## Benchmark 4: Geospatial Bounding Box Query
+
+This benchmark counts samples within the western United States (lat 32-49, lon -125 to -104), comparing lat/lon filtering on wide format versus H3-cell-based filtering on the H3-indexed file.
+
+<div id="loading_b4" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Running Benchmark 4...
+</div>
+
+```{ojs}
+benchmark4 = {
+    if (runBenchmarks < 1 || !benchmark3 || benchmark3.error) return null;
+
+    const loadingDiv = document.getElementById('loading_b4');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    // Wide: baseline lat/lon bounding box
+    const wideQuery = `
+        SELECT COUNT(*) as cnt FROM wide
+        WHERE otype = 'MaterialSampleRecord'
+          AND latitude BETWEEN 32 AND 49
+          AND longitude BETWEEN -125 AND -104
+    `;
+
+    // Wide+H3: H3-accelerated — first identify cells in the bbox, then filter by cells
+    const h3Query = `
+        WITH cells AS (
+            SELECT DISTINCT h3_res4 FROM wide_h3
+            WHERE latitude BETWEEN 32 AND 49
+              AND longitude BETWEEN -125 AND -104
+              AND otype = 'MaterialSampleRecord'
+        )
+        SELECT COUNT(*) as cnt FROM wide_h3
+        WHERE h3_res4 IN (SELECT h3_res4 FROM cells)
+          AND otype = 'MaterialSampleRecord'
+    `;
+
+    const runs = 3;
+
+    try {
+        const wideTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(wideQuery);
+            wideTimes.push(performance.now() - start);
+        }
+
+        const h3Times = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWideH3.query(h3Query);
+            h3Times.push(performance.now() - start);
+        }
+
+        const median = arr => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            if (sorted.length === 2) return (sorted[0] + sorted[1]) / 2;
+            return sorted[Math.floor(sorted.length / 2)];
+        };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            return median(arr.slice(1));
+        };
+
+        const wideMedian = warmMedian(wideTimes);
+        const h3Median = warmMedian(h3Times);
+
+        return {
+            name: "Geospatial BBox (Western US)",
+            wideCold: wideTimes[0],
+            wideMedian: wideMedian,
+            wideAll: wideTimes,
+            h3Cold: h3Times[0],
+            h3Median: h3Median,
+            h3All: h3Times,
+            speedup: wideMedian / h3Median
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 4 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+benchmark4 ? (benchmark4.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Benchmark 4 Error</h4>
+<p style="margin: 0;"><strong>Benchmark 4 failed:</strong> ${benchmark4.error}</p>
+</div>
+` : html`
+<div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">${benchmark4.name}</h4>
+<table style="width: 100%; border-collapse: collapse; text-align: right;">
+<thead>
+<tr style="border-bottom: 2px solid #ccc;">
+<th style="text-align: left;">Schema</th>
+<th>Cold (1st run)</th>
+<th>Warm (median)</th>
+<th>All runs</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left;"><strong>Wide (lat/lon)</strong></td>
+<td>${benchmark4.wideCold.toFixed(0)} ms</td>
+<td>${benchmark4.wideMedian.toFixed(0)} ms</td>
+<td>${benchmark4.wideAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+<tr><td style="text-align: left;"><strong>Wide+H3 (cell filter)</strong></td>
+<td>${benchmark4.h3Cold.toFixed(0)} ms</td>
+<td>${benchmark4.h3Median.toFixed(0)} ms</td>
+<td>${benchmark4.h3All.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom: 0;"><strong>Speedup: ${benchmark4.speedup.toFixed(2)}x</strong> (H3 is ${benchmark4.speedup > 1 ? 'faster' : 'slower'})</p>
+</div>
+`) : html`<p><em>Waiting for benchmark...</em></p>`
+```
+
+## Benchmark 5: Facet Aggregation — Full Scan vs Pre-computed Summary
+
+This benchmark compares full-scan source aggregation on the wide file versus a pre-computed 2KB facet summary file.
+
+<div id="loading_b5" hidden style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+Running Benchmark 5...
+</div>
+
+```{ojs}
+benchmark5 = {
+    if (runBenchmarks < 1 || !benchmark4 || benchmark4.error) return null;
+
+    const loadingDiv = document.getElementById('loading_b5');
+    const errorDiv = document.getElementById('error_display');
+    if (loadingDiv) loadingDiv.hidden = false;
+
+    // Full scan: aggregate source counts from full wide file
+    const fullScanQuery = `
+        SELECT n, COUNT(*) as cnt FROM wide
+        WHERE otype = 'MaterialSampleRecord'
+        GROUP BY n
+    `;
+
+    // Pre-computed: read from 2KB summary file
+    const summaryQuery = `
+        SELECT facet_value, count FROM read_parquet('${summariesUrl}')
+        WHERE facet_type = 'source'
+    `;
+
+    const runs = 3;
+
+    try {
+        const fullScanTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(fullScanQuery);
+            fullScanTimes.push(performance.now() - start);
+        }
+
+        const summaryTimes = [];
+        for (let i = 0; i < runs; i++) {
+            const start = performance.now();
+            await dbWide.query(summaryQuery);
+            summaryTimes.push(performance.now() - start);
+        }
+
+        const median = arr => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            if (sorted.length === 2) return (sorted[0] + sorted[1]) / 2;
+            return sorted[Math.floor(sorted.length / 2)];
+        };
+        const warmMedian = arr => {
+            if (arr.length <= 1) return arr[0] || 0;
+            return median(arr.slice(1));
+        };
+
+        const fullScanMedian = warmMedian(fullScanTimes);
+        const summaryMedian = warmMedian(summaryTimes);
+
+        return {
+            name: "Facet Aggregation (full scan vs summary)",
+            fullScanCold: fullScanTimes[0],
+            fullScanMedian: fullScanMedian,
+            fullScanAll: fullScanTimes,
+            summaryCold: summaryTimes[0],
+            summaryMedian: summaryMedian,
+            summaryAll: summaryTimes,
+            speedup: fullScanMedian / summaryMedian
+        };
+    } catch (e) {
+        if (errorDiv) {
+            errorDiv.textContent = `Benchmark 5 failed: ${e.message}`;
+            errorDiv.style.display = 'block';
+        }
+        return { error: e.message };
+    } finally {
+        if (loadingDiv) loadingDiv.hidden = true;
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+benchmark5 ? (benchmark5.error ? html`
+<div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">Benchmark 5 Error</h4>
+<p style="margin: 0;"><strong>Benchmark 5 failed:</strong> ${benchmark5.error}</p>
+</div>
+` : html`
+<div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+<h4 style="margin-top: 0;">${benchmark5.name}</h4>
+<table style="width: 100%; border-collapse: collapse; text-align: right;">
+<thead>
+<tr style="border-bottom: 2px solid #ccc;">
+<th style="text-align: left;">Approach</th>
+<th>Cold (1st run)</th>
+<th>Warm (median)</th>
+<th>All runs</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left;"><strong>Full scan (280MB)</strong></td>
+<td>${benchmark5.fullScanCold.toFixed(0)} ms</td>
+<td>${benchmark5.fullScanMedian.toFixed(0)} ms</td>
+<td>${benchmark5.fullScanAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+<tr><td style="text-align: left;"><strong>Pre-computed (2KB)</strong></td>
+<td>${benchmark5.summaryCold.toFixed(0)} ms</td>
+<td>${benchmark5.summaryMedian.toFixed(0)} ms</td>
+<td>${benchmark5.summaryAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom: 0;"><strong>Speedup: ${benchmark5.speedup.toFixed(2)}x</strong> (pre-computed is ${benchmark5.speedup > 1 ? 'faster' : 'slower'})</p>
+</div>
+`) : html`<p><em>Waiting for benchmark...</em></p>`
+```
+
+## Results Summary
+
+```{ojs}
+//| echo: false
+allResults = {
+    if (!benchmark1 || !benchmark2 || !benchmark3 || !benchmark4 || !benchmark5) return null;
+
+    // Schema comparison benchmarks (narrow vs wide)
+    const schemaResults = [benchmark1, benchmark2, benchmark3];
+    const schemaSuccessful = schemaResults.filter(r => r && !r.error);
+    const avgSchemaSpeedup = schemaSuccessful.length
+        ? schemaSuccessful.reduce((sum, r) => sum + r.speedup, 0) / schemaSuccessful.length
+        : null;
+
+    return {
+        schemaBenchmarks: schemaResults,
+        geoBenchmark: benchmark4,
+        facetBenchmark: benchmark5,
+        avgSchemaSpeedup: avgSchemaSpeedup
+    };
+}
+
+allResults ? html`
+<div style="background: #d4edda; padding: 20px; border-radius: 5px; margin: 20px 0;">
+<h3 style="margin-top: 0;">Summary Results</h3>
+
+<h4>Schema Comparison (Narrow vs Wide)</h4>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+<thead>
+<tr style="border-bottom: 2px solid #155724; background: #c3e6cb;">
+<th style="text-align: left; padding: 8px;">Benchmark</th>
+<th style="padding: 8px;">Narrow (ms)</th>
+<th style="padding: 8px;">Wide (ms)</th>
+<th style="padding: 8px;">Speedup</th>
+</tr>
+</thead>
+<tbody>
+${allResults.schemaBenchmarks.map(b => {
+    const hasError = !b || b.error;
+    return html`
+<tr style="border-bottom: 1px solid #155724;">
+<td style="padding: 8px;">${b?.name || 'Benchmark'}</td>
+<td style="padding: 8px; text-align: center;">${hasError ? 'N/A' : b.narrowMedian.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center;">${hasError ? 'N/A' : b.wideMedian.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center; font-weight: bold;">${hasError ? `Error: ${b?.error || 'Unavailable'}` : `${b.speedup.toFixed(2)}x`}</td>
+</tr>
+`;
+})}
+<tr style="background: #c3e6cb; font-weight: bold;">
+<td style="padding: 8px;">Average</td>
+<td style="padding: 8px; text-align: center;">-</td>
+<td style="padding: 8px; text-align: center;">-</td>
+<td style="padding: 8px; text-align: center;">${allResults.avgSchemaSpeedup != null ? `${allResults.avgSchemaSpeedup.toFixed(2)}x` : 'N/A'}</td>
+</tr>
+</tbody>
+</table>
+
+<h4>Geospatial Query (Wide vs Wide+H3)</h4>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+<thead>
+<tr style="border-bottom: 2px solid #155724; background: #c3e6cb;">
+<th style="text-align: left; padding: 8px;">Approach</th>
+<th style="padding: 8px;">Warm (ms)</th>
+<th style="padding: 8px;">Speedup</th>
+</tr>
+</thead>
+<tbody>
+${allResults.geoBenchmark && !allResults.geoBenchmark.error ? html`
+<tr style="border-bottom: 1px solid #155724;">
+<td style="padding: 8px;">Wide (lat/lon bbox)</td>
+<td style="padding: 8px; text-align: center;">${allResults.geoBenchmark.wideMedian.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center;">baseline</td>
+</tr>
+<tr style="border-bottom: 1px solid #155724;">
+<td style="padding: 8px;">Wide+H3 (cell filter)</td>
+<td style="padding: 8px; text-align: center;">${allResults.geoBenchmark.h3Median.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center; font-weight: bold;">${allResults.geoBenchmark.speedup.toFixed(2)}x</td>
+</tr>
+` : html`<tr><td colspan="3" style="padding: 8px;">Error: ${allResults.geoBenchmark?.error || 'N/A'}</td></tr>`}
+</tbody>
+</table>
+
+<h4>Facet Aggregation (Full Scan vs Pre-computed Summary)</h4>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+<thead>
+<tr style="border-bottom: 2px solid #155724; background: #c3e6cb;">
+<th style="text-align: left; padding: 8px;">Approach</th>
+<th style="padding: 8px;">Warm (ms)</th>
+<th style="padding: 8px;">Speedup</th>
+</tr>
+</thead>
+<tbody>
+${allResults.facetBenchmark && !allResults.facetBenchmark.error ? html`
+<tr style="border-bottom: 1px solid #155724;">
+<td style="padding: 8px;">Full scan (280MB wide)</td>
+<td style="padding: 8px; text-align: center;">${allResults.facetBenchmark.fullScanMedian.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center;">baseline</td>
+</tr>
+<tr style="border-bottom: 1px solid #155724;">
+<td style="padding: 8px;">Pre-computed summary (2KB)</td>
+<td style="padding: 8px; text-align: center;">${allResults.facetBenchmark.summaryMedian.toFixed(0)}</td>
+<td style="padding: 8px; text-align: center; font-weight: bold;">${allResults.facetBenchmark.speedup.toFixed(2)}x</td>
+</tr>
+` : html`<tr><td colspan="3" style="padding: 8px;">Error: ${allResults.facetBenchmark?.error || 'N/A'}</td></tr>`}
+</tbody>
+</table>
+
+<h4>Key Findings</h4>
+<ul>
+<li><strong>Schema speedup:</strong> ${allResults.avgSchemaSpeedup != null ? `Average ${allResults.avgSchemaSpeedup.toFixed(1)}x faster with wide format` : 'N/A'}</li>
+<li><strong>File sizes:</strong> Narrow ~850MB, Wide ~278MB, Wide+H3 ~292MB</li>
+<li><strong>Geospatial:</strong> H3 cell-based filtering ${allResults.geoBenchmark && !allResults.geoBenchmark.error ? `is ${allResults.geoBenchmark.speedup.toFixed(1)}x vs lat/lon bbox` : 'N/A'}</li>
+<li><strong>Facet summary:</strong> Pre-computed 2KB file ${allResults.facetBenchmark && !allResults.facetBenchmark.error ? `is ${allResults.facetBenchmark.speedup.toFixed(0)}x faster than full scan` : 'N/A'}</li>
+</ul>
+
+<h4>Recommendation</h4>
+<p>For browser-based analysis with DuckDB-WASM:</p>
+<ul>
+<li><strong>Wide+H3 format</strong> for geospatial queries with spatial filtering</li>
+<li><strong>Pre-computed summaries</strong> for instant facet counts on page load</li>
+<li><strong>Wide format</strong> as the general-purpose analytical format</li>
+</ul>
+</div>
+` : html`
+<div style="background: #f0f0f0; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+<p><em>Click "Run All Benchmarks" above to see results</em></p>
+</div>
+`
+```
+
+## Technical Notes
+
+### Pitfalls and Considerations
+
+| Consideration | How We Address It |
+|---------------|-------------------|
+| **Browser caching** | First run is "cold" (metadata not cached), subsequent runs are "warm" |
+| **Network variability** | We run 3 iterations and report the warm-run median (exclude cold run) |
+| **JIT compilation** | First run includes JIT overhead; warm runs are more representative |
+| **Memory limits** | 691 MB narrow file may stress browser memory; wide format is safer |
+
+### Schema Differences
+
+**Narrow schema** stores relationships as edge rows:
+```sql
+-- Edge row example
+{otype: '_edge_', s: 123, p: 'produced_by', o: [456]}
+```
+
+**Wide schema** stores relationships as columns:
+```sql
+-- Entity row with relationship columns
+{otype: 'MaterialSampleRecord', p__produced_by: [456], p__has_material_category: [789]}
+```
+
+**Wide+H3 schema** adds pre-computed spatial indices:
+```sql
+-- Same as wide, plus H3 hexagonal index columns
+{..., h3_res4: 595536348953485311, h3_res6: 604265133842685951, h3_res8: 613003918731886591}
+```
+
+The wide format eliminates ~9M edge rows (60% file size reduction). The H3 variant adds ~14MB for spatial index columns that enable cell-based geospatial filtering.
+
+**Facet summaries** (2KB) pre-compute common aggregations:
+```sql
+{facet_type: 'source', facet_value: 'SESAR', scheme: null, count: 4600000}
+```
+
+## See Also
+
+- [Interactive Explorer](isamples_explorer.qmd) - Search and filter samples
+- [3D Globe Visualization](parquet_cesium_isamples_wide.qmd) - Cesium-based visualization of all data
+- [Deep-Dive Analysis](zenodo_isamples_analysis.qmd) - Comprehensive DuckDB-WASM tutorial

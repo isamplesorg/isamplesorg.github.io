@@ -37,10 +37,10 @@ The iSamples taxonomies are used to characterize three fundamental concepts pert
 
 Three taxonomies are currently defined :
 
-[Material Sample (specimen) Type Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/specimentype.html)
+[Material Sample (specimen) Type Vocabulary](generated/vocabularies/material_sample_object_type.html)
 
-[Materials Vocabulary](https://isamplesorg.github.io/metadata/vocabularies/materialtype.html)
+[Materials Vocabulary](generated/vocabularies/material_type.html)
 
-[Sampled Feature (context) Type vocabulary](https://isamplesorg.github.io/metadata/vocabularies/sampledfeature.html)
+[Sampled Feature (context) Type vocabulary](generated/vocabularies/sampled_feature_type.html)
 
 

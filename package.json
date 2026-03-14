@@ -1,0 +1,24 @@
+{
+  "name": "isamplesorg-website",
+  "version": "1.0.0",
+  "description": "iSamples website testing infrastructure",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report tests/playwright-report",
+    "test:install": "playwright install chromium"
+  },
+  "keywords": [
+    "isamples",
+    "testing",
+    "playwright"
+  ],
+  "author": "iSamples Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
