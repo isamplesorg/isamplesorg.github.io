@@ -67,16 +67,16 @@ website:
 
   page-footer: 
     left: >
-      © Copyright 2020, iSamples Project. This material is based upon work
-      supported by the National Science Foundation under Grant Numbers
+      © Copyright 2020-2026, iSamples Project. Based on work
+      under National Science Foundation (NSF) Grant Numbers
       [2004839](https://nsf.gov/awardsearch/showAward?AWD_ID=2004839),
       [2004562](https://nsf.gov/awardsearch/showAward?AWD_ID=2004562),
       [2004642](https://nsf.gov/awardsearch/showAward?AWD_ID=2004642), and
       [2004815](https://nsf.gov/awardsearch/showAward?AWD_ID=2004815).
     right: >
-      Any opinions, findings, and conclusions or recommendations expressed in
-      this material are those of the author(s) and do not necessarily reflect
-      the views of the [National Science Foundation](https://nsf.gov/).
+      Opinions, findings, and conclusions or recommendations expressed in
+      this material are those of the authors and do not necessarily reflect
+      the views of the [NSF](https://nsf.gov/).
   
 format:
   html:
