@@ -169,9 +169,16 @@ db = {
   
   if (working_parquet_url) {
     try {
-      // Try to create view of the remote parquet file
-      await conn.query(`CREATE VIEW isamples_data AS SELECT * FROM read_parquet('${working_parquet_url}')`);
-      
+      // Create view with aliased column names to match downstream queries.
+      // The Jan 2026 wide parquet uses different names than the original schema.
+      await conn.query(`CREATE VIEW isamples_data AS SELECT *,
+        latitude AS sample_location_latitude,
+        longitude AS sample_location_longitude,
+        n AS source_collection,
+        pid AS sample_identifier,
+        CAST(NULL AS VARCHAR) AS has_material_category
+        FROM read_parquet('${working_parquet_url}')`);
+
       // Test the connection with a simple query to catch rate limiting
       await conn.query(`SELECT count(*) FROM isamples_data LIMIT 1`);
       console.log("✅ Successfully connected to remote Parquet file");
