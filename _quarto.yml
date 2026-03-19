@@ -3,8 +3,24 @@ project:
   output-dir: docs
 
 website:
-  title: "iSamples"  
+  title: "iSamples"
   favicon: assets/isamplesfavicon.ico
+  navbar:
+    logo: assets/isampleslogopetal.png
+    left:
+      - href: index.qmd
+        text: Home
+      - href: tutorials/progressive_globe.qmd
+        text: Interactive Explorer
+      - href: tutorials/index.qmd
+        text: Tutorials
+      - href: about.qmd
+        text: About
+    right:
+      - icon: github
+        href: https://github.com/isamplesorg
+      - icon: slack
+        href: https://isamples.slack.com/
   sidebar:
     style: "docked"
     search: true
@@ -17,38 +33,11 @@ website:
       - icon: twitter
         href: https://twitter.com/isamplesorg
     contents:
-      - href: index_alt.qmd
-        text: Alt Home Page
-        aria-label: "Goals of the iSamples project"
-      - href: about.qmd
-        text: Goals
-        aria-label: "Goals of the iSamples project"
-      - href: people.qmd
-        text: People
-        aria-label: "People of the iSamples project"
-      - section: "Information Architecture"
-        contents:
-          - design/index.qmd
-          - design/requirements.md
-          - text: Metadata Model
-            href: "https://isamplesorg.github.io/metadata/"
-          - models/index.qmd
-      - section: "Outputs"
-        contents:
-        - text: 2020 SPNHC conference talk (video)
-          href: https://youtu.be/eRUw5NMksFo?t=105
-        - text: iSamples metadata model talk (slides, PDF)
-          href: assets/2022-11_iSamplesMetadata.pdf
-        - text: Publications
-          href: pubs.qmd
-        - text: Zenodo community
-          href: https://zenodo.org/communities/isamples
-        - icon: github
-          text: Github repositories
-          href: "https://github.com/isamplesorg/"
+      - href: index.qmd
+        text: Home
       - text: "Interactive Explorer"
-        href: tutorials/isamples_explorer.qmd
-        aria-label: "Search and explore 6.7M samples"
+        href: tutorials/progressive_globe.qmd
+        aria-label: "Explore 6.7M samples on an interactive globe"
       - section: "Tutorials"
         contents:
         - text: "Overview"
@@ -59,8 +48,38 @@ website:
           href: tutorials/parquet_cesium_isamples_wide.qmd
         - text: "Progressive Globe (H3 + Samples)"
           href: tutorials/progressive_globe.qmd
+        - text: "Interactive Explorer"
+          href: tutorials/isamples_explorer.qmd
         - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
+      - section: "About"
+        contents:
+        - href: about.qmd
+          text: Goals
+        - href: people.qmd
+          text: People
+      - section: "Information Architecture"
+        contents:
+          - design/index.qmd
+          - design/requirements.md
+          - text: Metadata Model
+            href: "https://isamplesorg.github.io/metadata/"
+          - models/index.qmd
+      - section: "Published Research"
+        contents:
+        - text: Publications
+          href: pubs.qmd
+        - text: 2020 SPNHC conference talk (video)
+          href: https://youtu.be/eRUw5NMksFo?t=105
+        - text: iSamples metadata model talk (slides, PDF)
+          href: assets/2022-11_iSamplesMetadata.pdf
+      - section: "Resources"
+        contents:
+        - text: Zenodo community
+          href: https://zenodo.org/communities/isamples
+        - icon: github
+          text: Github repositories
+          href: "https://github.com/isamplesorg/"
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io
   repo-actions: [edit, issue]
