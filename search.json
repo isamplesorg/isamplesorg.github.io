@@ -302,7 +302,6 @@
     "text": "Open the Interactive Explorer — a 3D globe loads with clustered sample data\nZoom in — clusters break into finer detail as you zoom (resolution 4 → 6 → 8 → individual samples)\nFilter by source — use the checkboxes to show/hide data from SESAR, OpenContext, GEOME, or Smithsonian\nClick a cluster — see sample count and nearby samples with links to source records\nClick an individual sample — view metadata and follow the “View at source” link to the original repository\nShare your view — copy the URL to share your exact position, zoom level, and selected sample",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -314,7 +313,6 @@
     "text": "Open the Interactive Explorer — a 3D globe loads with clustered sample data\nZoom in — clusters break into finer detail as you zoom (resolution 4 → 6 → 8 → individual samples)\nFilter by source — use the checkboxes to show/hide data from SESAR, OpenContext, GEOME, or Smithsonian\nClick a cluster — see sample count and nearby samples with links to source records\nClick an individual sample — view metadata and follow the “View at source” link to the original repository\nShare your view — copy the URL to share your exact position, zoom level, and selected sample",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -326,7 +324,6 @@
     "text": "What’s in the Data?\n\n\n\nSource\nSamples\nFocus\n\n\n\n\nSESAR\n4.6M\nEarth science — rocks, minerals, sediments, soils\n\n\nOpenContext\n1M\nArchaeology — artifacts, excavation materials\n\n\nGEOME\n605K\nBiology — genomic and tissue specimens\n\n\nSmithsonian\n322K\nNatural history — museum collections",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -338,7 +335,6 @@
     "text": "No Installation Required\nEverything runs in your browser using:\n\nDuckDB-WASM — a fast analytical database running client-side\nHTTP range requests — only the data you need is downloaded (typically &lt; 1 MB to start)\nCesium — 3D globe visualization\n\nWorks in Chrome, Firefox, Edge, Safari, and Brave. No plugins, no downloads, no accounts.",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -350,7 +346,6 @@
     "text": "For Developers\nAll code is visible and foldable on tutorial pages. Want to build your own analysis?\n\nTutorials — step-by-step guides from basic exploration to advanced analysis\nDeep-Dive Analysis — statistical exploration with Observable Plot\nGitHub — all source code and data pipelines\nZenodo — archived datasets for reproducible research",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -362,7 +357,6 @@
     "text": "Data Files\nAll data is hosted on Cloudflare R2 with HTTP range request support:\n\n\n\n\n\n\n\n\nFile\nSize\nDescription\n\n\n\n\nWide format (H3-indexed)\n~292 MB\n20M rows, all entity types with H3 spatial indices\n\n\nH3 summary (res4)\n~70 KB\nPre-aggregated cluster counts for instant globe load\n\n\nH3 summary (res6)\n~200 KB\nMid-zoom cluster detail\n\n\nH3 summary (res8)\n~600 KB\nFine-zoom cluster detail\n\n\nSamples lite\n~150 MB\nIndividual sample points with coordinates\n\n\nFacet summaries\n2 KB\nPre-computed filter counts (source, material, context, specimen type)",
     "crumbs": [
       "Home",
-      "About",
       "How to Use"
     ]
   },
@@ -1430,7 +1424,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1442,7 +1436,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1454,7 +1448,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1466,7 +1460,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1478,7 +1472,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1490,7 +1484,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1502,7 +1496,7 @@
     "crumbs": [
       "Home",
       "Tutorials",
-      "Interactive Explorer"
+      "Search Explorer"
     ]
   },
   {
@@ -1715,7 +1709,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```mrpavndg assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```mrpavndg assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```htopyoqc assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```htopyoqc assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "models/generated/extensions/earthenv_sampled_feature_role.html",
