@@ -40,13 +40,13 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-a7526be2a1d88bf1207dbb3f5eb48fc5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-17036d4dc503a054b08c9a8cd30d1ed9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
-  "location": "sidebar",
+  "location": "navbar",
   "copy-button": false,
   "collapse-after": 3,
-  "panel-placement": "start",
-  "type": "textbox",
+  "panel-placement": "end",
+  "type": "overlay",
   "limit": 50,
   "keyboard-shortcut": [
     "f",
@@ -73,214 +73,79 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="nav-sidebar docked quarto-light">
+<body class="nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
-  <nav class="quarto-secondary-nav">
-    <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
-        <i class="bi bi-layout-text-sidebar-reverse"></i>
-      </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Internet of Samples: iSamples</li></ol></nav>
-        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-        </a>
-      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
-        <i class="bi bi-search"></i>
-      </button>
-    </div>
-  </nav>
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/progressive_globe.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/index.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
-      <a href="./index.html" class="sidebar-logo-link">
-      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
-      <img src="./assets/isampleslogopetal.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
-      </a>
-      <div class="sidebar-tools-main tools-wide">
-    <a href="https://github.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
-    <a href="https://isamples.slack.com/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-slack"></i></a>
-    <a href="https://twitter.com/isamplesorg" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
-</div>
-      </div>
-        <div class="mt-2 flex-shrink-0 align-items-center">
-        <div class="sidebar-search">
-        <div id="quarto-search" class="" title="Search"></div>
-        </div>
-        </div>
-    <div class="sidebar-menu-container"> 
-    <ul class="list-unstyled mt-1">
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./index_alt.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Alt Home Page</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./about.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Goals</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./people.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">People</span></a>
-  </div>
-</li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
- <span class="menu-text">Information Architecture</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
-      </div>
-      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./design/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Overview</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./design/requirements.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Requirements</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="https://isamplesorg.github.io/metadata/" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Metadata Model</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./models/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">iSamples Vocabularies</span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Outputs</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
-      </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="https://youtu.be/eRUw5NMksFo?t=105" class="sidebar-item-text sidebar-link">
- <span class="menu-text">2020 SPNHC conference talk (video)</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./assets/2022-11_iSamplesMetadata.pdf" class="sidebar-item-text sidebar-link">
- <span class="menu-text">iSamples metadata model talk (slides, PDF)</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./pubs.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Publications</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="https://zenodo.org/communities/isamples" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Zenodo community</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="https://github.com/isamplesorg/" class="sidebar-item-text sidebar-link"><i class="bi bi-github" role="img">
-</i> 
- <span class="menu-text">Github repositories</span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/isamples_explorer.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Interactive Explorer</span></a>
-  </div>
-</li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
- <span class="menu-text">Tutorials</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
-      </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Overview</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/zenodo_isamples_analysis.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Deep-Dive Analysis</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/parquet_cesium_isamples_wide.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">3D Globe Visualization</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/progressive_globe.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Progressive Globe (H3 + Samples)</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Technical: Narrow vs Wide</span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-    </ul>
-    </div>
-</nav>
-<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#current-data-access-geoparquet-based-approach" id="toc-current-data-access-geoparquet-based-approach" class="nav-link active" data-scroll-target="#current-data-access-geoparquet-based-approach">Current Data Access: Geoparquet-Based Approach</a></li>
-  </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
-    </div>
+    
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content page-columns page-full column-body" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Internet of Samples: iSamples</h1>
-<p class="subtitle lead">Toward an Interdisciplinary Cyberinfrastructure for Material Samples <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839"><img src="https://img.shields.io/badge/NSF-2004839-blue.svg" class="img-fluid"></a></p>
+<p class="subtitle lead">Toward an Interdisciplinary Cyberinfrastructure for Material Samples</p>
 </div>
 
 
 
-<div class="quarto-title-meta">
+<div class="quarto-title-meta column-body">
 
     
   
@@ -292,11 +157,111 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the National Science Foundation to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.</p>
-<section id="current-data-access-geoparquet-based-approach" class="level1">
-<h1>Current Data Access: Geoparquet-Based Approach</h1>
-<p><strong>Note</strong>: iSamples Central is currently unavailable. The project now uses <strong>geoparquet files</strong> for efficient, browser-based data access and analysis:</p>
-<p>📊 &nbsp;&nbsp; <strong><a href="./tutorials/">Interactive Tutorials</a></strong> - Modern browser-based analysis with DuckDB-WASM <br> 🗺️ &nbsp;&nbsp; <strong>Comprehensive Coverage</strong> - Complete datasets from SESAR, OpenContext, GEOME, and Smithsonian <br> 🚀 &nbsp;&nbsp; <strong>High Performance</strong> - Fast, efficient data access with minimal memory usage <br> 🌐 &nbsp;&nbsp; <strong>Universal Access</strong> - Works in any modern browser without software installation</p>
+<div class="page-columns page-full">
+<div class="quarto-figure quarto-figure-center page-columns page-full">
+<figure class="figure page-columns page-full">
+<p class="page-columns page-full"><a href="./tutorials/progressive_globe.html" title="Explore the interactive globe" class="page-columns page-full"><img src="assets/isamples_planet.jpg" class="img-fluid figure-img column-page" style="width:100.0%" alt="Globe showing iSamples data points from 4 scientific repositories"></a></p>
+<figcaption>Explore 6.7 million samples on an interactive globe</figcaption>
+</figure>
+</div>
+</div>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><strong>6.7 million</strong> physical samples | <strong>4</strong> repositories (SESAR, OpenContext, GEOME, Smithsonian) | <strong>90+</strong> countries | <strong>Zero installation</strong> — runs in your browser</p>
+</div>
+</div>
+</div>
+<section id="showcase-real-samples-from-the-collection" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="showcase-real-samples-from-the-collection">Showcase: Real Samples from the Collection</h2>
+<div class="quarto-layout-panel" data-layout-ncol="4">
+<div class="quarto-layout-row quarto-layout-valign-center">
+<div class="quarto-layout-cell" style="flex-basis: 25.0%;justify-content: center;">
+<p><a href="https://doi.org/10.58052/DIA0000YL" title="Diamond, collected 2019-06-11, Brazil"><img src="assets/IGSN_10.58052_DIA0000YL.png" class="img-fluid" data-group="showcase" alt="Diamond sample"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 25.0%;justify-content: center;">
+<p><a href="https://doi.org/10.58052/IEGIL000C" title="Fossil coral, from 10000 BCE, Cayman Islands"><img src="assets/IGSN_10.58052_IEGIL000C.png" class="img-fluid" data-group="showcase" alt="Fossil coral sample"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 25.0%;justify-content: center;">
+<p><a href="https://n2t.net/ark:65665/337856f1a655e4ad78b1ef10a16dfb6e3" title="Paracirrhites arcatus, collected 2006-03-10, French Polynesia"><img src="assets/ark_65665_337856f1a655e4ad78b1ef10a16dfb6e3.png" class="img-fluid" data-group="showcase" alt="Fish specimen"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 25.0%;justify-content: center;">
+<p><a href="https://n2t.net/ark:28722/r2p24/vdm_19600211" title="Red-figure askoi, late-4th to early-3rd century BCE, Murlo, Italy"><img src="assets/ark_28722_r2p24_vdm_19600211.png" class="img-fluid" data-group="showcase" alt="Red-figure askoi"></a></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>What is iSamples?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The Internet of Samples (iSamples) is a multi-disciplinary and multi-institutional project funded by the <strong>National Science Foundation</strong> to design, develop, and promote service infrastructure to uniquely, consistently, and conveniently identify material samples, record metadata about them, and persistently link them to other samples and derived digital content, including images, data, and publications.</p>
+<p>iSamples integrates data from four major scientific repositories:</p>
+<ul>
+<li><strong><a href="https://www.geosamples.org/">SESAR</a></strong> — Earth science samples (rocks, minerals, sediments, soils)</li>
+<li><strong><a href="https://opencontext.org/">OpenContext</a></strong> — Archaeological and cultural heritage materials</li>
+<li><strong><a href="https://geome-db.org/">GEOME</a></strong> — Genomic and biological specimens</li>
+<li><strong><a href="https://collections.nmnh.si.edu/">Smithsonian</a></strong> — Natural history museum collections</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>How can I access it?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The project uses <strong>geoparquet files + DuckDB-WASM</strong> for efficient, browser-based data access and analysis — no server required.</p>
+<ul>
+<li><strong>iSamples Full Dataset</strong>: ~280 MB wide format, 6.7M samples</li>
+<li><strong>Available via</strong>: Cloudflare R2 with HTTP range requests</li>
+<li><strong>Interactive tools</strong>: <a href="./tutorials/progressive_globe.html">Progressive Globe</a> for visual exploration, <a href="./tutorials/isamples_explorer.html">Interactive Explorer</a> for search and filtering</li>
+</ul>
+<p>All analysis happens in your browser. Only the data you need is downloaded — typically less than 1 MB for initial exploration.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Why browser-based?
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Universal access</strong> — No installation, works in any modern browser</li>
+<li><strong>Fast analysis</strong> — 5-10x faster than downloading full datasets</li>
+<li><strong>Memory efficient</strong> — Analyze 300MB datasets using less than 100MB browser memory</li>
+<li><strong>Minimal transfer</strong> — Only download the columns and rows you need</li>
+<li><strong>Reproducible</strong> — Share a URL and anyone can see exactly what you see</li>
+</ul>
+</div>
+</div>
+</div>
+<hr>
+<p><a href="https://youtu.be/JzNadmklzNs" title="Watch the iSamples data visualization video"><img src="assets/moorea_cover.jpg" class="img-fluid" style="width:100.0%" data-group="showcase" alt="iSamples data visualization from Moorea"></a></p>
 
 
 </section>
@@ -703,7 +668,7 @@ ul.task-list li input[type="checkbox"] {
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
