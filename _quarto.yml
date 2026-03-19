@@ -26,20 +26,13 @@ website:
   sidebar:
     style: "docked"
     search: true
-    logo: assets/isampleslogopetal.png
-    tools:
-      - icon: github
-        href: https://github.com/isamplesorg
-      - icon: slack
-        href: https://isamples.slack.com/
-      - icon: twitter
-        href: https://twitter.com/isamplesorg
     contents:
       - href: index.qmd
         text: Home
-      - text: "Interactive Explorer"
-        href: tutorials/progressive_globe.qmd
-        aria-label: "Explore 6.7M samples on an interactive globe"
+      - href: tutorials/progressive_globe.qmd
+        text: Interactive Explorer
+      - href: how-to-use.qmd
+        text: How to Use
       - section: "Tutorials"
         contents:
         - text: "Overview"
@@ -48,9 +41,7 @@ website:
           href: tutorials/zenodo_isamples_analysis.qmd
         - text: "3D Globe Visualization"
           href: tutorials/parquet_cesium_isamples_wide.qmd
-        - text: "Progressive Globe (H3 + Samples)"
-          href: tutorials/progressive_globe.qmd
-        - text: "Interactive Explorer"
+        - text: "Search Explorer"
           href: tutorials/isamples_explorer.qmd
         - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
@@ -58,8 +49,6 @@ website:
         contents:
         - href: about.qmd
           text: About iSamples
-        - href: how-to-use.qmd
-          text: How to Use
         - href: people.qmd
           text: Contributors
       - section: "Information Architecture"
