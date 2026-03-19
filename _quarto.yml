@@ -3,8 +3,24 @@ project:
   output-dir: docs
 
 website:
-  title: "iSamples"  
+  title: "iSamples"
   favicon: assets/isamplesfavicon.ico
+  navbar:
+    logo: assets/isampleslogopetal.png
+    left:
+      - href: index.qmd
+        text: Home
+      - href: tutorials/progressive_globe.qmd
+        text: Interactive Explorer
+      - href: tutorials/index.qmd
+        text: Tutorials
+      - href: about.qmd
+        text: About
+    right:
+      - icon: github
+        href: https://github.com/isamplesorg
+      - icon: slack
+        href: https://isamples.slack.com/
   sidebar:
     style: "docked"
     search: true

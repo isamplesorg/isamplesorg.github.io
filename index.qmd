@@ -3,6 +3,8 @@ title: "Internet of Samples: iSamples"
 subtitle: "Toward an Interdisciplinary Cyberinfrastructure for Material Samples"
 number-sections: false
 toc: false
+sidebar: false
+page-layout: full
 ---
 
 ::: {.column-page}
