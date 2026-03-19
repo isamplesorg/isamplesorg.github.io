@@ -14,8 +14,6 @@ website:
         text: Interactive Explorer
       - href: how-to-use.qmd
         text: How to Use
-      - href: tutorials/index.qmd
-        text: Tutorials
       - href: about.qmd
         text: About
     right:
@@ -31,12 +29,10 @@ website:
         text: Home
       - href: tutorials/progressive_globe.qmd
         text: Interactive Explorer
-      - href: how-to-use.qmd
-        text: How to Use
-      - section: "Tutorials"
+      - section: "How to Use"
         contents:
-        - text: "Overview"
-          href: tutorials/index.qmd
+        - href: how-to-use.qmd
+          text: Getting Started
         - text: "Deep-Dive Analysis"
           href: tutorials/zenodo_isamples_analysis.qmd
         - text: "3D Globe Visualization"
