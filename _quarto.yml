@@ -12,6 +12,8 @@ website:
         text: Home
       - href: tutorials/progressive_globe.qmd
         text: Interactive Explorer
+      - href: how-to-use.qmd
+        text: How to Use
       - href: tutorials/index.qmd
         text: Tutorials
       - href: about.qmd
@@ -55,9 +57,11 @@ website:
       - section: "About"
         contents:
         - href: about.qmd
-          text: Goals
+          text: About iSamples
+        - href: how-to-use.qmd
+          text: How to Use
         - href: people.qmd
-          text: People
+          text: Contributors
       - section: "Information Architecture"
         contents:
           - design/index.qmd

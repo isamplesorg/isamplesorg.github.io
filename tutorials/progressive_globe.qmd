@@ -1,9 +1,9 @@
 ---
-title: "Progressive Globe: Instant H3 → Detail on Demand"
+title: "Interactive Explorer"
+subtitle: "Search and explore 6.7 million material samples"
 categories: [parquet, spatial, h3, performance, isamples]
+sidebar: false
 ---
-
-Explore **6.7 million material samples** from iSamples — the globe loads instantly with H3 hexagonal aggregates, then refines as you zoom down to individual samples.
 
 ::: {.callout-note collapse="true"}
 ## How It Works
@@ -92,9 +92,49 @@ Circle size = log(sample count). Color = dominant data source.
     }
     .share-btn:hover { background: #0d47a1; }
     .share-toast { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
+    .search-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .search-bar input {
+        flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
+        font-size: 14px; outline: none;
+    }
+    .search-bar input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
+    .search-bar button {
+        background: #1565c0; color: white; border: none; padding: 8px 16px;
+        border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap;
+    }
+    .search-bar button:hover { background: #0d47a1; }
+    .search-results { font-size: 12px; color: #666; padding: 4px 0; }
+    .filter-section { border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; }
+    .filter-header {
+        font-size: 12px; font-weight: 600; color: #555; cursor: pointer;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 4px 0; user-select: none;
+    }
+    .filter-header:hover { color: #1565c0; }
+    .filter-body { padding: 4px 0; }
+    .filter-body label { display: block; font-size: 12px; padding: 2px 0; cursor: pointer; }
+    .filter-body label:hover { color: #1565c0; }
 </style>
 
+::: {.callout-note collapse="true"}
+## How It Works
+
+1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
+2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
+3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
+4. **Click**: Cluster info or individual sample card with full metadata
+5. **Search**: Find samples by name — results fly to the location on the globe
+
+Circle size = log(sample count). Color = dominant data source.
+:::
+
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
+<div class="search-bar">
+<input type="text" id="sampleSearch" placeholder="Search samples (e.g., basalt, pottery, coral...)" />
+<button id="searchBtn">Search</button>
+</div>
+<div id="searchResults" class="search-results"></div>
+
 <div class="globe-layout">
 <div id="cesiumContainer"></div>
 <div class="side-panel">
@@ -910,6 +950,85 @@ zoomWatcher = {
             }
         });
     }
+
+    // --- Search handler ---
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('sampleSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    async function doSearch() {
+        const term = searchInput.value.trim();
+        if (!term || term.length < 2) {
+            searchResults.textContent = 'Type at least 2 characters';
+            return;
+        }
+        searchResults.textContent = 'Searching...';
+        try {
+            const escaped = term.replace(/'/g, "''");
+            const results = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name
+                FROM read_parquet('${lite_url}')
+                WHERE label ILIKE '%${escaped}%'
+                ${sourceFilterSQL('source')}
+                LIMIT 50
+            `);
+            if (results.length === 0) {
+                searchResults.textContent = `No results for "${term}"`;
+                return;
+            }
+            searchResults.textContent = `${results.length}${results.length === 50 ? '+' : ''} results for "${term}"`;
+
+            // Show results in the samples panel
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) {
+                let h = `<h4>Search: "${term}" (${results.length})</h4>`;
+                for (const s of results) {
+                    const color = SOURCE_COLORS[s.source] || '#666';
+                    const name = SOURCE_NAMES[s.source] || s.source;
+                    const sUrl = sourceUrl(s.pid);
+                    h += `<div class="sample-row" style="cursor: pointer;" data-lat="${s.latitude}" data-lng="${s.longitude}" data-pid="${s.pid}">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
+                            <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
+                        </div>
+                    </div>`;
+                }
+                sampEl.innerHTML = h;
+
+                // Click search result → fly to it
+                sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
+                    row.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'A') return; // let links work
+                        const lat = parseFloat(row.dataset.lat);
+                        const lng = parseFloat(row.dataset.lng);
+                        const pid = row.dataset.pid;
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            viewer.camera.flyTo({
+                                destination: Cesium.Cartesian3.fromDegrees(lng, lat, 50000),
+                                duration: 1.5
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Fly to the first result
+            if (results[0].latitude && results[0].longitude) {
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
+                    duration: 1.5
+                });
+            }
+        } catch(err) {
+            console.error("Search failed:", err);
+            searchResults.textContent = `Search error: ${err.message}`;
+        }
+    }
+
+    if (searchBtn) searchBtn.addEventListener('click', doSearch);
+    if (searchInput) searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+    });
 
     // --- Deep-link: restore selection from initial hash ---
     const ih = viewer._initialHash;
