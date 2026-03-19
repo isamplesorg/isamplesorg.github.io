@@ -1,0 +1,55 @@
+---
+title: "How to Use iSamples"
+subtitle: "Get started exploring 6.7 million scientific samples"
+number-sections: false
+---
+
+## Quick Start {.unnumbered}
+
+1. **Open the [Interactive Explorer](/tutorials/progressive_globe.html)** — a 3D globe loads with clustered sample data
+2. **Zoom in** — clusters break into finer detail as you zoom (resolution 4 → 6 → 8 → individual samples)
+3. **Filter by source** — use the checkboxes to show/hide data from SESAR, OpenContext, GEOME, or Smithsonian
+4. **Click a cluster** — see sample count and nearby samples with links to source records
+5. **Click an individual sample** — view metadata and follow the "View at source" link to the original repository
+6. **Share your view** — copy the URL to share your exact position, zoom level, and selected sample
+
+## What's in the Data? {.unnumbered}
+
+| Source | Samples | Focus |
+|--------|---------|-------|
+| **SESAR** | 4.6M | Earth science — rocks, minerals, sediments, soils |
+| **OpenContext** | 1M | Archaeology — artifacts, excavation materials |
+| **GEOME** | 605K | Biology — genomic and tissue specimens |
+| **Smithsonian** | 322K | Natural history — museum collections |
+
+## No Installation Required {.unnumbered}
+
+Everything runs in your browser using:
+
+- **DuckDB-WASM** — a fast analytical database running client-side
+- **HTTP range requests** — only the data you need is downloaded (typically < 1 MB to start)
+- **Cesium** — 3D globe visualization
+
+Works in Chrome, Firefox, Edge, Safari, and Brave. No plugins, no downloads, no accounts.
+
+## For Developers {.unnumbered}
+
+All code is visible and foldable on tutorial pages. Want to build your own analysis?
+
+- **[Tutorials](/tutorials/)** — step-by-step guides from basic exploration to advanced analysis
+- **[Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html)** — statistical exploration with Observable Plot
+- **[GitHub](https://github.com/isamplesorg/)** — all source code and data pipelines
+- **[Zenodo](https://zenodo.org/communities/isamples)** — archived datasets for reproducible research
+
+## Data Files {.unnumbered}
+
+All data is hosted on Cloudflare R2 with HTTP range request support:
+
+| File | Size | Description |
+|------|------|-------------|
+| Wide format (H3-indexed) | ~292 MB | 20M rows, all entity types with H3 spatial indices |
+| H3 summary (res4) | ~70 KB | Pre-aggregated cluster counts for instant globe load |
+| H3 summary (res6) | ~200 KB | Mid-zoom cluster detail |
+| H3 summary (res8) | ~600 KB | Fine-zoom cluster detail |
+| Samples lite | ~150 MB | Individual sample points with coordinates |
+| Facet summaries | 2 KB | Pre-computed filter counts (source, material, context, specimen type) |
