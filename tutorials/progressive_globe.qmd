@@ -153,6 +153,25 @@ Circle size = log(sample count). Color = dominant data source.
 <label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</label>
 </div>
 </div>
+<div class="filter-section" id="materialFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Material <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="materialFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
+<div class="filter-section" id="contextFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Sampled Feature <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="contextFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
+<div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
+Material/feature filters apply at sample zoom level
+</div>
 <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
 <button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
 <span id="shareToast" class="share-toast">Link copied!</span>
@@ -184,6 +203,8 @@ h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
 lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
 wide_url = `${R2_BASE}/isamples_202601_wide.parquet`
+facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
+facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
 
 SOURCE_COLORS = ({
     SESAR: '#3366CC', OPENCONTEXT: '#DC3912',
@@ -215,6 +236,42 @@ function sourceFilterSQL(col) {
     if (active.length === 4) return '';           // all checked = no filter
     const list = active.map(s => `'${s}'`).join(',');
     return ` AND ${col} IN (${list})`;
+}
+
+// === Material/Context Filters ===
+function getCheckedValues(containerId) {
+    const checks = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
+    return Array.from(checks).filter(c => c.checked).map(c => c.value);
+}
+
+function hasFacetFilters() {
+    const mat = getCheckedValues('materialFilterBody');
+    const ctx = getCheckedValues('contextFilterBody');
+    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
+    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
+    // Active if some (but not all) are checked, or if none are checked
+    return (mat.length > 0 && mat.length < matTotal) || (ctx.length > 0 && ctx.length < ctxTotal);
+}
+
+function facetFilterSQL() {
+    let sql = '';
+    const mat = getCheckedValues('materialFilterBody');
+    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
+    if (mat.length > 0 && mat.length < matTotal) {
+        const list = mat.map(s => `'${s}'`).join(',');
+        sql += ` AND f.material IN (${list})`;
+    } else if (mat.length === 0 && matTotal > 0) {
+        sql += ' AND 1=0';
+    }
+    const ctx = getCheckedValues('contextFilterBody');
+    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
+    if (ctx.length > 0 && ctx.length < ctxTotal) {
+        const list = ctx.map(s => `'${s}'`).join(',');
+        sql += ` AND f.context IN (${list})`;
+    } else if (ctx.length === 0 && ctxTotal > 0) {
+        sql += ' AND 1=0';
+    }
+    return sql;
 }
 
 // === URL State: encode/decode globe state in hash fragment ===
@@ -503,14 +560,31 @@ viewer = {
 
             const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
             try {
-                const samples = await db.query(`
-                    SELECT pid, label, source, latitude, longitude, place_name
-                    FROM read_parquet('${lite_url}')
-                    WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
-                      AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
-                      ${sourceFilterSQL('source')}
-                    LIMIT 30
-                `);
+                const facetActive = hasFacetFilters();
+                const facetSQL = facetActive ? facetFilterSQL() : '';
+                let nearbyQuery;
+                if (facetActive) {
+                    nearbyQuery = `
+                        SELECT l.pid, l.label, l.source, l.latitude, l.longitude, l.place_name
+                        FROM read_parquet('${lite_url}') l
+                        JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                        WHERE l.latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                          AND l.longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                          ${sourceFilterSQL('l.source')}
+                          ${facetSQL}
+                        LIMIT 30
+                    `;
+                } else {
+                    nearbyQuery = `
+                        SELECT pid, label, source, latitude, longitude, place_name
+                        FROM read_parquet('${lite_url}')
+                        WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                          AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                          ${sourceFilterSQL('source')}
+                        LIMIT 30
+                    `;
+                }
+                const samples = await db.query(nearbyQuery);
                 updateSamples(samples);
             } catch(err) {
                 console.error("Sample query failed:", err);
@@ -574,9 +648,57 @@ phase1 = {
 //| echo: false
 //| output: false
 
+// === Load facet summaries and populate filter checkboxes ===
+facetFilters = {
+    if (!phase1) return;
+    try {
+        const summaries = await db.query(`
+            SELECT facet_type, facet_value, count
+            FROM read_parquet('${facet_summaries_url}')
+            ORDER BY facet_type, count DESC
+        `);
+
+        const grouped = { material: [], context: [] };
+        for (const row of summaries) {
+            if (grouped[row.facet_type]) {
+                // Extract short label from URI
+                const shortLabel = row.facet_value.split('/').pop() || row.facet_value;
+                grouped[row.facet_type].push({ value: shortLabel, fullUri: row.facet_value, count: row.count });
+            }
+        }
+
+        // Populate material checkboxes
+        const matBody = document.getElementById('materialFilterBody');
+        if (matBody && grouped.material.length > 0) {
+            matBody.innerHTML = grouped.material.map(m =>
+                `<label><input type="checkbox" value="${m.value}" checked> ${m.value} <span style="color:#999">(${Number(m.count).toLocaleString()})</span></label>`
+            ).join('');
+        }
+
+        // Populate context checkboxes
+        const ctxBody = document.getElementById('contextFilterBody');
+        if (ctxBody && grouped.context.length > 0) {
+            ctxBody.innerHTML = grouped.context.map(c =>
+                `<label><input type="checkbox" value="${c.value}" checked> ${c.value} <span style="color:#999">(${Number(c.count).toLocaleString()})</span></label>`
+            ).join('');
+        }
+
+        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts`);
+    } catch(err) {
+        console.warn("Facet summaries failed to load:", err);
+    }
+    return "loaded";
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
 // === Zoom watcher: H3 cluster mode + individual sample point mode ===
 zoomWatcher = {
     if (!phase1) return;
+    if (!facetFilters) return;  // wait for facet checkboxes
 
     // --- State ---
     let mode = 'cluster';  // 'cluster' or 'point'
@@ -714,15 +836,33 @@ zoomWatcher = {
 
         try {
             performance.mark('sp-s');
-            const data = await db.query(`
-                SELECT pid, label, source, latitude, longitude,
-                       place_name, result_time
-                FROM read_parquet('${lite_url}')
-                WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
-                  AND longitude BETWEEN ${padded.west} AND ${padded.east}
-                  ${sourceFilterSQL('source')}
-                LIMIT ${POINT_BUDGET}
-            `);
+            const facetActive = hasFacetFilters();
+            const facetSQL = facetActive ? facetFilterSQL() : '';
+            let query;
+            if (facetActive) {
+                query = `
+                    SELECT l.pid, l.label, l.source, l.latitude, l.longitude,
+                           l.place_name, l.result_time, f.material, f.context
+                    FROM read_parquet('${lite_url}') l
+                    JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                    WHERE l.latitude BETWEEN ${padded.south} AND ${padded.north}
+                      AND l.longitude BETWEEN ${padded.west} AND ${padded.east}
+                      ${sourceFilterSQL('l.source')}
+                      ${facetSQL}
+                    LIMIT ${POINT_BUDGET}
+                `;
+            } else {
+                query = `
+                    SELECT pid, label, source, latitude, longitude,
+                           place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
+                      AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                      ${sourceFilterSQL('source')}
+                    LIMIT ${POINT_BUDGET}
+                `;
+            }
+            const data = await db.query(query);
             performance.mark('sp-e');
             performance.measure('sp', 'sp-s', 'sp-e');
             const elapsed = performance.getEntriesByName('sp').pop().duration;
@@ -826,6 +966,19 @@ zoomWatcher = {
             await loadViewportSamples();
         }
     });
+
+    // --- Material/Context filter change handler ---
+    const facetNote = document.getElementById('facetNote');
+    function handleFacetFilterChange() {
+        const active = hasFacetFilters();
+        if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
+        if (mode === 'point') {
+            cachedBounds = null;
+            loadViewportSamples();
+        }
+    }
+    document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
+    document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
 
     // --- Camera change handler ---
     let timer = null;
