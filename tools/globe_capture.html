@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+  html, body, #cesiumContainer {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+</style>
+</head>
+<body>
+<div id="cesiumContainer"></div>
+<script type="module">
+import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+
+// Ion token from progressive_globe.qmd
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
+
+let viewer;
+try {
+  viewer = new Cesium.Viewer("cesiumContainer", {
+    timeline: false,
+    animation: false,
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    infoBox: false,
+    selectionIndicator: false,
+    fullscreenButton: false,
+    requestRenderMode: false
+  });
+
+  // Remove credits / logo for clean capture
+  try {
+    viewer.cesiumWidget.creditContainer.style.display = "none";
+  } catch(e) {
+    try { viewer._cesiumWidget._creditContainer.style.display = "none"; } catch(e2) {}
+  }
+
+  // Expose viewer globally for Playwright
+  window._viewer = viewer;
+  console.log("Viewer created successfully");
+} catch(e) {
+  console.error("Viewer creation failed:", e);
+  window._viewerError = e.message;
+}
+
+// Set initial camera: equator-centered, matching progressive_globe default view
+const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
+viewer.camera.setView({ destination: globalRect });
+
+// Load H3 cluster data from R2
+const R2 = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev";
+
+async function loadData() {
+  const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+  const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+  const worker_url = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}");`], { type: "text/javascript" })
+  );
+  const worker = new Worker(worker_url);
+  const logger = new duckdb.ConsoleLogger();
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  const conn = await db.connect();
+
+  // Load res4 data for zoomed-out view
+  const res4 = await conn.query(`
+    SELECT h3_cell, dominant_source, sample_count, center_lat, center_lng
+    FROM read_parquet('${R2}/isamples_202601_h3_summary_res4.parquet')
+  `);
+
+  const data = res4.toArray().map(r => ({
+    h3: r.h3_cell,
+    source: r.dominant_source,
+    count: Number(r.sample_count),
+    lat: Number(r.center_lat),
+    lon: Number(r.center_lng)
+  }));
+
+  // Color by source
+  const sourceColors = {
+    SESAR: Cesium.Color.fromCssColorString("#2196F3"),
+    OPENCONTEXT: Cesium.Color.fromCssColorString("#FF9800"),
+    GEOME: Cesium.Color.fromCssColorString("#4CAF50"),
+    SMITHSONIAN: Cesium.Color.fromCssColorString("#E91E63")
+  };
+
+  const points = new Cesium.PointPrimitiveCollection();
+  viewer.scene.primitives.add(points);
+
+  const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.5);
+
+  for (const d of data) {
+    const sz = Math.min(2 + Math.log2(d.count + 1) * 1.2, 14);
+    points.add({
+      position: Cesium.Cartesian3.fromDegrees(d.lon, d.lat),
+      pixelSize: sz,
+      color: sourceColors[d.source] || Cesium.Color.WHITE,
+      scaleByDistance: scalar
+    });
+  }
+
+  console.log(`Loaded ${data.length} clusters`);
+  window._dataLoaded = true;
+}
+
+loadData().catch(e => {
+  console.error("Data load failed:", e);
+  window._dataLoaded = true; // proceed anyway with just the globe
+});
+</script>
+</body>
+</html>
