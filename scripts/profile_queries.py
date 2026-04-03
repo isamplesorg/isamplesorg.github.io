@@ -17,7 +17,7 @@ from typing import Optional
 import duckdb
 
 # Data sources
-REMOTE_URL = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+REMOTE_URL = "https://data.isamples.org/isamples_202601_wide.parquet"
 LOCAL_PATH = "/tmp/isamples_202601_wide.parquet"
 
 # Sample geocode PIDs for point selection tests (will be populated from data)

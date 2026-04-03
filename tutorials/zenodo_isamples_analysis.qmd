@@ -28,14 +28,14 @@ This tutorial demonstrates how to efficiently analyze large geospatial datasets 
 ## Dataset Information
 
 **Primary dataset** (Jan 2026, H3-indexed):
-- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet`
+- **URL**: `https://data.isamples.org/isamples_202601_wide_h3.parquet`
 - **Size**: ~292 MB wide format with H3 indices, 6.7M MaterialSampleRecords (20M total rows)
 - **H3 columns**: Pre-computed `h3_res4`, `h3_res6`, `h3_res8` (BIGINT) for spatial grouping
 - **Sources**: SESAR (4.6M), OpenContext (1M), GEOME (605K), Smithsonian (322K)
 - **Hosting**: Cloudflare R2 with HTTP range request support
 
 **Facet summaries** (2KB, instant):
-- **URL**: `https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet`
+- **URL**: `https://data.isamples.org/isamples_202601_facet_summaries.parquet`
 - **Schema**: `facet_type`, `facet_value`, `scheme`, `count`
 
 **Note**: *Data was originally archived on Zenodo and is now served from Cloudflare R2 for better performance and reliability.*
@@ -88,10 +88,10 @@ topojson = require("topojson-client@3")
 // Dataset URLs - try multiple options for CORS compatibility
 // Primary: Cloudflare R2 (Jan 2026 wide format with H3 indices)
 parquet_urls = [
-  'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet',
+  'https://data.isamples.org/isamples_202601_wide_h3.parquet',
 
   // Fallback: original wide format without H3
-  'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet',
+  'https://data.isamples.org/isamples_202601_wide.parquet',
 
   // Fallback: older versions
   'https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet',
@@ -99,7 +99,7 @@ parquet_urls = [
 ]
 
 // Pre-computed facet summaries (2KB - loads instantly)
-facet_summaries_url = 'https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet'
+facet_summaries_url = 'https://data.isamples.org/isamples_202601_facet_summaries.parquet'
 
 // Test CORS and find working URL - with rate limiting protection
 working_parquet_url = {
