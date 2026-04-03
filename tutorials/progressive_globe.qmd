@@ -197,7 +197,7 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //| output: false
 
 // === Constants ===
-R2_BASE = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev"
+R2_BASE = "https://data.isamples.org"
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`

@@ -64,10 +64,10 @@ import { DuckDBClient } from "https://cdn.jsdelivr.net/npm/@observablehq/duckdb@
 //| echo: false
 // Define parquet URLs - iSamples full dataset on Cloudflare R2 (all sources)
 // Updated 2026-01-14: Using Zenodo narrow/wide files on Cloudflare R2
-narrowUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202512_narrow.parquet"
-wideUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
-wideH3Url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet"
-summariesUrl = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet"
+narrowUrl = "https://data.isamples.org/isamples_202512_narrow.parquet"
+wideUrl = "https://data.isamples.org/isamples_202601_wide.parquet"
+wideH3Url = "https://data.isamples.org/isamples_202601_wide_h3.parquet"
+summariesUrl = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
 ```
 
 ### Environment Info

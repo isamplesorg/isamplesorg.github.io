@@ -57,7 +57,7 @@ const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
 viewer.camera.setView({ destination: globalRect });
 
 // Load H3 cluster data from R2
-const R2 = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev";
+const R2 = "https://data.isamples.org";
 
 async function loadData() {
   const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();

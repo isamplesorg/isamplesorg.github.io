@@ -45,7 +45,7 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //| echo: false
 viewof parquet_path = Inputs.text({
   label:"Source (iSamples Wide Format + H3)",
-  value:"https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide_h3.parquet",
+  value:"https://data.isamples.org/isamples_202601_wide_h3.parquet",
   placeholder: "URL or file:///path/to/file.parquet",
   width:"100%",
   submit:true
@@ -123,7 +123,7 @@ Download the file locally, then serve it:
 
 ```bash
 # Download the wide parquet file (~242MB)
-curl -O https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet
+curl -O https://data.isamples.org/isamples_202601_wide.parquet
 
 # Serve it locally
 python3 -m http.server 8000

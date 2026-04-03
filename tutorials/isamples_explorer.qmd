@@ -26,10 +26,10 @@ duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+
 ```{ojs}
 //| code-fold: true
 // Data source configuration
-parquet_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_wide.parquet"
+parquet_url = "https://data.isamples.org/isamples_202601_wide.parquet"
 
 // Pre-computed facet summaries (2KB - loads instantly)
-facet_summaries_url = "https://pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/isamples_202601_facet_summaries.parquet"
+facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
 
 // Source color scheme (consistent with iSamples conventions)
 SOURCE_COLORS = ({
