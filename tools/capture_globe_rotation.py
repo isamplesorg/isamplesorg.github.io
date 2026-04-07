@@ -93,7 +93,7 @@ async def capture_globe(num_frames=120, duration_sec=15, output_path="/tmp/isamp
                 () => {{
                     window._viewer.scene.camera.rotate(
                         Cesium.Cartesian3.UNIT_Z,
-                        -{rotation_per_frame}
+                        {rotation_per_frame}
                     );
                 }}
             """)
