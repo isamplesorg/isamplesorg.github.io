@@ -1,22 +1,31 @@
 ---
 title: "Overview"
 subtitle: "iSamples use cases, requirements, architecture, and data models"
----    
+number-sections: false
+---
 
-Physical samples are represented by a digital record.
+## Core Principles {.unnumbered}
 
-Each digital record is addressable by at least one identifier that is unique to the record.
+The iSamples architecture is built on a set of fundamental principles about how physical samples are represented digitally:
 
-A collection of digital records can be represented by a list of the record identifiers.
+- Physical samples are represented by a **digital record**
+- Each digital record is addressable by at least one **identifier** that is unique to the record
+- A collection of digital records can be represented by a **list of the record identifiers**
+- A list of all physical sample digital record identifiers (**global record list**) can be constructed from the collection lists
+- Digital records may be presented in different **serializations** (media type)
+- Digital records of a serialization may present different **views** of the same information (profile)
 
-A list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.
+## iSamples Contributions {.unnumbered}
 
-Digital records may be presented in different serializations (media type).
+iSamples has defined:
 
-Digital records of a serialization may present different views of the same information (profile).
+- A **metadata profile** applicable to all physical samples — see the [Metadata Model](https://isamplesorg.github.io/metadata/)
+- A set of **controlled vocabularies** for interoperable sample description — see [Vocabularies](../models/index.qmd)
+- A **programmatic interface** for sample discovery and access
+- A **browser-based data analysis** approach using geoparquet + DuckDB-WASM — see the [Interactive Explorer](/tutorials/progressive_globe.html)
 
-iSamples has defined a profile applicable to all physical samples.
+## Further Reading {.unnumbered}
 
-iSamples has defined a programmatic interface
-
-PlantUML diagram removed for testing [SMR 2024-01-04]
+- [Requirements](requirements.html) — 18 use cases and requirements
+- [Metadata Model](https://isamplesorg.github.io/metadata/) — schema and data model documentation
+- [Vocabularies](../models/index.qmd) — SKOS taxonomies for sample classification
