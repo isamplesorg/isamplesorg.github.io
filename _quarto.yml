@@ -32,7 +32,7 @@ website:
       - section: "How to Use"
         contents:
         - href: how-to-use.qmd
-          text: Getting Started
+          text: Overview
         - text: "Deep-Dive Analysis"
           href: tutorials/zenodo_isamples_analysis.qmd
         - text: "3D Globe Visualization"
@@ -44,30 +44,28 @@ website:
       - section: "About"
         contents:
         - href: about.qmd
-          text: About iSamples
-        - href: people.qmd
-          text: Contributors
-      - section: "Information Architecture"
+          text: Objectives
+        - text: "PIs and Contributors"
+          href: "about.qmd#team"
+        - text: "Photo Gallery"
+          href: "about.qmd#photo-gallery"
+        - text: "Background & History"
+          href: "about.qmd#background-history"
+      - section: "Architecture and Vocabularies"
         contents:
           - design/index.qmd
           - design/requirements.md
           - text: Metadata Model
             href: "https://isamplesorg.github.io/metadata/"
           - models/index.qmd
-      - section: "Published Research"
+      - section: "Research & Resources"
         contents:
-        - text: Publications
+        - text: Publications & Conferences
           href: pubs.qmd
-        - text: 2020 SPNHC conference talk (video)
-          href: https://youtu.be/eRUw5NMksFo?t=105
-        - text: iSamples metadata model talk (slides, PDF)
-          href: assets/2022-11_iSamplesMetadata.pdf
-      - section: "Resources"
-        contents:
-        - text: Zenodo community
+        - text: Zenodo Community
           href: https://zenodo.org/communities/isamples
         - icon: github
-          text: Github repositories
+          text: Github Repositories
           href: "https://github.com/isamplesorg/"
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io
