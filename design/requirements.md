@@ -8,6 +8,9 @@ format:
 number-sections: false
 ---
 
+Click any requirement to expand its full description.
+
+::: {.callout-note collapse="true"}
 ## 01 Mint Identifiers
 
 Mint identifiers and manage record.
@@ -28,8 +31,9 @@ Components
 - iSB
 
 - [Original Source](https://docs.google.com/document/d/16397FFbd0NjzW93TTD95ZqYkrwEpsC5DzBJnE7xnLPA/edit#heading=h.wm0ue5lp5goi)
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 02 Awareness of how specimens are being used
 
 Provide metrics that indicate usage of a specimen. 
@@ -52,8 +56,9 @@ Components
 
 - iSB
 - iSC
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 03 Availability of all information related to a sample
 
 A sample has related content. All relations (transitive) need to be discoverable in the view of a sample. There are different types of relations. For example an image may be associated with a sample through a relationship that is different to the relationship between a sample and derived products. In an RDF view, the type of relation is the predicate of the association between a sample (subject) and the related item (object). Relationships occur within a context and there may be multiple contexts associated with any content.
@@ -71,8 +76,9 @@ Components
 - iSC
 - iSB
 - Metadata model
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 04 Define relationships between things such as samples and derived products
 
 Guidelines and mechanisms to support the creation of relationships between things such as samples, images of samples, components of other projects (e.g. Field Notes project of Smithsonian), derived products, annotations.
@@ -97,8 +103,9 @@ Components
 - iSC
 - iSB
 - Portal
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 05 Support sample management (loans, duplicates, subsamples)
 
 Guidelines and mechanisms to support tracking of samples on loan or moved to a new institution. Allow for duplicate samples in different organizations, as is common in botany. For samples that can be sub-samples, track the subsamples and the status (i.e. amount remaining) of the parent sample.
@@ -121,8 +128,9 @@ Components
 - iSC
 - iSB
 - Portal
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 06 All metadata for all samples should be searchable and retrievable
 
 Searchable should be against metadata properties. Can also be against relationship types. It may be feasible to search properties of related content up to n steps removed (n=0..?)
@@ -144,8 +152,9 @@ Components
 - Metadata model
 - iSC (collated metadata)
 - iSB (expose metadata, retrieve subsets)
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 07 Services support content negotiation, alternate renderings
 
 Different renderings of the same content are needed for different purposes. A human should see a different rendering of metadata than a piece of software. Note that the rendering may be performed client side using a programmatic expression of the metadata. For example, a web UI may consume the same JSON to render in HTML that is also used by software.
@@ -161,9 +170,10 @@ Actors
 Components
 
 - Any component exposing content
+:::
 
-
-## 08 Recognize that any entity may have multiple identifiers, some of which may not be globally unique.
+::: {.callout-note collapse="true"}
+## 08 Recognize that any entity may have multiple identifiers
 
 There are many examples of different types of identifiers attached to content. Some identifiers may be well formed (globally unique and resolvable) others may be more context specific. Context specific identifiers should include sufficient information to determine the context.
 
@@ -190,10 +200,10 @@ Components
 - Metadata model
 - iSC
 - iSB
+:::
 
-
-## 09 Content must be programmatically accessible and transferable to different systems
-  
+::: {.callout-note collapse="true"}
+## 09 Content must be programmatically accessible and transferable
 
 All content should be accessible through API and should exhibit no loss of information in the transfer to another system.
 
@@ -201,51 +211,47 @@ Note that it is expected that collections of content will be large (>> 10E6 item
 
 The web publishing pattern (i.e. robots.txt -> sitemap -> schema.org) should be available for all resources appropriate for broad discovery.
 
-See also [Services support content negotiation, alternate renderings](https://docs.google.com/document/d/16397FFbd0NjzW93TTD95ZqYkrwEpsC5DzBJnE7xnLPA/edit#heading=h.xsuxu7mw1taf)
-
 Derived from:
 
 - O6, R04, R05, R06, R08, R10, R12, R17, G1, G9, G11
-  
+
 Actors
 
 - Research-consumer
-  
+
 Components
 
 - Any components exposing APIs
-  
+:::
 
-## 10 User Interfaces for discovery and display of information should be efficient and practical for research use and expose relationships between items as appropriate.
-  
+::: {.callout-note collapse="true"}
+## 10 User Interfaces for discovery and display
+
+User Interfaces for discovery and display of information should be efficient and practical for research use and expose relationships between items as appropriate.
 
 At the global scale, low resolution maps, timescales and general discovery mechanisms are useful. As specificity increases, opportunities for expressing relationships between content as a means of assisting discovery and interpretation can follow.
 
-See also: 
-
-- [Availability of all information related to a sample](https://docs.google.com/document/d/16397FFbd0NjzW93TTD95ZqYkrwEpsC5DzBJnE7xnLPA/edit#heading=h.ggvgwq1kyba4)
-  
-- [All metadata for all samples should be searchable and retrievable](https://docs.google.com/document/d/16397FFbd0NjzW93TTD95ZqYkrwEpsC5DzBJnE7xnLPA/edit#heading=h.7lzhf0qirmsj)
-  
 Derived from:
 
 - O14, R01, R06, R08, G5. G6
-  
+
 Actors
 
 - Research-consumer
 - Curator
-  
+
 Components
 
 - iSC
 - iSB
-  
+:::
 
-## 11 The diversity of metadata standards in use should be supported whilst also encouraging consistency in use and possibly reducing the diversity as appropriate with no loss of meaning.
-  
+::: {.callout-note collapse="true"}
+## 11 Support diverse metadata standards
 
-There are many metadata formats in use, and this will continue. Creation of new metadata formats should be discouraged by facilitating concept matching to existing metadata elements. 
+The diversity of metadata standards in use should be supported whilst also encouraging consistency in use and possibly reducing the diversity as appropriate with no loss of meaning.
+
+There are many metadata formats in use, and this will continue. Creation of new metadata formats should be discouraged by facilitating concept matching to existing metadata elements. 
 
 Mixed authority metadata formats should be supported. E.g. a metadata document may contain concepts defined in Dublin Core, ISO-19115, and the Observation Data Model
 
@@ -258,7 +264,7 @@ Recognize that there are natural levels of aggregation for metadata describing d
 Derived from:
 
 - O16, R02, R03, R16, G4, G2, G5, G6, G10, G11
-  
+
 Actors
 
 - Research-contributor
@@ -267,33 +273,32 @@ Actors
 Components
 
 - iSB  
+:::
 
-
+::: {.callout-note collapse="true"}
 ## 12 Ingest and deliver meta/data in multiple open formats
-  
 
-Portals  may choose what formats they will allow for data upload and ingest and what format they want to use to deliver data. iSB shouldmust support the use of common open formats such as CSV, JSON, possibly XML and XLSX. 
+Portals may choose what formats they will allow for data upload and ingest and what format they want to use to deliver data. iSB should support the use of common open formats such as CSV, JSON, possibly XML and XLSX. 
 
 iSC will receive data only from iSB instances and project personnel, so it can limit the number of input formats. Metadata delivered as a result of searching the iSC index should be delivered in one or a few open formats.
 
 Note that translation between serialization formats may result in loss of information. Support of multiple serializations can significantly increase implementation overhead.
 
-Derived from:
-
 Actors:
 
 - Research-contributor  
 - Curator
-  
+
 Components
 
 - iSB
 - iSC
 - Portal
-  
+:::
 
+::: {.callout-note collapse="true"}
 ## 13 Support creation of identifiers early in a project
-  
+
 Early association of an identifier with content improves efficiency of data handling. Ideally, identifiers should be reliably mintable with no knowledge except for an initial state.
 
 Derived from:
@@ -308,12 +313,12 @@ Actors:
 Components
 
 - iSB
-    
+:::
 
-## 14 Web interfaces should be flexible and loosely coupled through standard APIs to encourage diverse adoption
-  
+::: {.callout-note collapse="true"}
+## 14 Web interfaces should be flexible and loosely coupled
 
-Portal web interfaces can serve a variety of audiences. In some cases (e.g. iSC) the interface will serve a very broad, diverse community. Other instances may be very specific (e.g. iSB or web UI serving the needs of a specific project). 
+Portal web interfaces can serve a variety of audiences. In some cases (e.g. iSC) the interface will serve a very broad, diverse community. Other instances may be very specific (e.g. iSB or web UI serving the needs of a specific project). 
 
 UIs should leverage standard APIs as far as possible, and underlying infrastructure should similarly express APIs using standard mechanisms.
 
@@ -322,7 +327,6 @@ REST, GraphQL are common API standards that should be leveraged. Other more spec
 Derived from:
 
 - R05, R09, R08, R06, R10, R12
-
 
 Actors
 
@@ -333,10 +337,12 @@ Actors
 Components
 
 - All
-  
+:::
 
-## 15 All content sources should be assumed to be dynamic and attached components should facilitate efficient synchronization of subscribed content.
-  
+::: {.callout-note collapse="true"}
+## 15 Dynamic content synchronization
+
+All content sources should be assumed to be dynamic and attached components should facilitate efficient synchronization of subscribed content.
 
 With the transition to geoparquet-based data access, content synchronization now occurs through periodic updates of parquet files rather than real-time API synchronization. This approach provides better performance and reliability for analytical workloads.
 
@@ -355,10 +361,10 @@ Components
 
 - iSC  
 - iSB
-  
+:::
 
-## 16 Data and metadata to be stored by iSamples in a box.
-  
+::: {.callout-note collapse="true"}
+## 16 Data and metadata storage
 
 SESAR would like to utilize iSB as a data repository.
 
@@ -378,10 +384,10 @@ Actors
 Components
 
 - iSB
+:::
 
-
-## 17 Content may not all be publicly accessible.
-  
+::: {.callout-note collapse="true"}
+## 17 Content may not all be publicly accessible
 
 There may be content (metadata, data, related content) with information that should not be publicly accessible (e.g. artifact location). This implies that the system should either reject access controlled content or implement access control at all levels.
 
@@ -389,7 +395,7 @@ Implementation of access control all or nothing. It must be integrated at all le
 
 Leverage existing user management infrastructure as far as possible. ORCID for user identification, oauth + JWT for access
 
-Group management should be delegated to another system if possible. TODO: suggestions for infrastructure? Enable arbitrary group creation, management. Roles.
+Group management should be delegated to another system if possible.
 
 Derived from:
 
@@ -402,10 +408,10 @@ Actors
 Components
 
 - All
-  
+:::
 
-## 18 Validation rules can assist with production of higher quality content. 
-  
+::: {.callout-note collapse="true"}
+## 18 Validation rules can assist with production of higher quality content
 
 Just like a spell checker, validation rules can assist with production of higher quality content. Validation rules should be sharable and reusable. Content entry / editing systems should leverage validation mechanisms for immediate user feedback and/or guidance.
 
@@ -414,13 +420,14 @@ Note that validation is context dependent, and the validity rules may change ove
 Derived from:
 
 - G4, G8
-  
+
 Actors
 
 - Research-contributor
 - Curator
-  
+
 Components
 
 - Portal
 - iSB
+:::
