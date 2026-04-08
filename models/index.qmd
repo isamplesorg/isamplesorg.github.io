@@ -21,26 +21,33 @@ listing:
 number-sections: false
 ---
 
-see [description of model](https://isamplesorg.github.io/metadata/) at https://isamplesorg.github.io/metadata/
+See the [iSamples Metadata Model](https://isamplesorg.github.io/metadata/) for the full schema documentation.
 
-## Taxonomies
+::: {.callout-tip}
+### Vocabulary Source of Truth
+The authoritative versions of iSamples vocabularies are maintained as RDF/SKOS files in the [iSamples GitHub repositories](https://github.com/isamplesorg/). Vocabulary terms are also registered with the [Australian Research Data Commons (ARDC) Research Vocabularies](https://vocabs.ardc.edu.au/).
+:::
 
-One of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type.  Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader). In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
+## Taxonomies {.unnumbered}
 
-The iSamples core taxonomies are controlled vocabularies with terms related by [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader) and [`SKOS:narrower`](https://www.w3.org/2009/08/skos-reference/skos.html#narrower). In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
+One of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using [`SKOS:broader`](https://www.w3.org/2009/08/skos-reference/skos.html#broader). In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using `SKOS:broader` and `SKOS:narrower`.
 
 The iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:
 
-1. The "iSamples Materials vocabulary" is a taxonomy of terms used to categorize the composition of a physical sample, that is "What material is the sample composed of?"
-2. The "Sampled Feature Type Vocabulary" is a taxonomy of terms used to indicate what the sample is representative of.
-3. The "iSamples Specimen Type Vocabulary" is a taxonomy of broad categories that classify what type of spcimen the physical sample record represents.
+1. The **Materials Vocabulary** categorizes the composition of a physical sample ("What material is the sample composed of?")
+2. The **Sampled Feature Type Vocabulary** indicates what the sample is representative of
+3. The **Specimen Type Vocabulary** classifies what type of specimen the physical sample record represents
 
-Three taxonomies are currently defined :
+::: {.callout-note collapse="true"}
+## Core Vocabularies
 
-[Material Sample (specimen) Type Vocabulary](generated/vocabularies/material_sample_object_type.html)
+- [Material Sample (specimen) Type Vocabulary](generated/vocabularies/material_sample_object_type.html)
+- [Materials Vocabulary](generated/vocabularies/material_type.html)
+- [Sampled Feature (context) Type vocabulary](generated/vocabularies/sampled_feature_type.html)
+:::
 
-[Materials Vocabulary](generated/vocabularies/material_type.html)
+## Related Pages {.unnumbered}
 
-[Sampled Feature (context) Type vocabulary](generated/vocabularies/sampled_feature_type.html)
-
-
+- [Architecture Overview](../design/index.qmd) — system principles and architecture
+- [Requirements](../design/requirements.html) — 18 use cases and requirements
+- [Metadata Model](https://isamplesorg.github.io/metadata/) — schema and data model documentation

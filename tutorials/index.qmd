@@ -1,30 +1,52 @@
 ---
 title: "Tutorials"
+subtitle: "Learn to explore 6.7 million physical samples from scientific collections worldwide using modern browser-based tools."
+number-sections: false
 ---
 
-Learn to explore **6.7 million physical samples** from scientific collections worldwide using modern browser-based tools.
-
-## Start Here
+## Start Here {.unnumbered}
 
 | Tutorial | What You'll Learn |
 |----------|-------------------|
-| [**Interactive Explorer**](isamples_explorer.qmd) | Search and filter samples with faceted search, view on 3D globe |
-| [**Deep-Dive Analysis**](zenodo_isamples_analysis.qmd) | Comprehensive DuckDB-WASM analysis with Observable JS |
-| [**3D Globe Visualization**](parquet_cesium_isamples_wide.qmd) | Cesium-based visualization of all iSamples data |
-| [**Technical: Narrow vs Wide**](narrow_vs_wide_performance.qmd) | Schema comparison and performance benchmarks |
+| [**Interactive Explorer**](isamples_explorer.qmd) | Search and filter samples with faceted search, view results on a 3D globe |
+| [**Deep-Dive Analysis**](zenodo_isamples_analysis.qmd) | Comprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics |
+| [**3D Globe Visualization**](parquet_cesium_isamples_wide.qmd) | Cesium-based progressive visualization with H3 spatial clustering |
+| [**Technical: Narrow vs Wide**](narrow_vs_wide_performance.qmd) | Schema comparison and performance benchmarks for the PQG data formats |
 
-## Data Sources
+## What's in the Data? {.unnumbered}
 
-All tutorials use **geoparquet files** - no server required:
+| Source | Samples | Focus |
+|--------|---------|-------|
+| **SESAR** | 4.6M | Earth science — rocks, minerals, sediments, soils |
+| **OpenContext** | 1M | Archaeology — artifacts, excavation materials |
+| **GEOME** | 605K | Biology — genomic and tissue specimens |
+| **Smithsonian** | 322K | Natural history — museum collections |
 
-- **iSamples Full Dataset**: ~280 MB wide format, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian
-- **Available via**: Cloudflare R2 with HTTP range requests
+## Data Files {.unnumbered}
 
-## Why Browser-Based?
+All data is hosted on [`data.isamples.org`](https://data.isamples.org) with HTTP range request support — DuckDB-WASM only downloads the bytes it needs.
+
+| File | Size | Description |
+|------|------|-------------|
+| [Wide format](https://data.isamples.org/isamples_202601_wide.parquet) | 278 MB | One row per entity, all sources — primary file for tutorials |
+| [Wide + H3](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 292 MB | Wide format with H3 spatial indices for globe visualizations |
+| [Facet summaries](https://data.isamples.org/isamples_202601_facet_summaries.parquet) | 2 KB | Pre-computed filter counts — loads instantly |
+| [H3 clusters (res4)](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | 0.6 MB | Zoomed-out globe view |
+
+## Why Browser-Based? {.unnumbered}
 
 Our approach using **geoparquet + DuckDB-WASM** provides:
 
-- ✅ **Universal access** - No installation, works in any browser
-- ✅ **Fast analysis** - 5-10x faster than downloading full datasets
-- ✅ **Memory efficient** - Analyze 300MB using <100MB browser memory
-- ✅ **Minimal transfer** - Only download the columns/rows you need
+- **Universal access** — No installation, works in Chrome, Firefox, Edge, Safari, and Brave
+- **Fast analysis** — 5-10x faster than downloading full datasets
+- **Memory efficient** — Analyze 300MB datasets using <100MB browser memory
+- **Minimal transfer** — HTTP range requests download only the columns and rows you need (typically <1 MB to start)
+- **Reproducible** — All code is visible and foldable on tutorial pages
+
+## For Developers {.unnumbered}
+
+All tutorial source code is on [GitHub](https://github.com/isamplesorg/isamplesorg.github.io/tree/main/tutorials). Want to build your own analysis? Fork the repo, modify a `.qmd` file, and run `quarto preview`.
+
+- [GitHub repositories](https://github.com/isamplesorg/) — all source code and data pipelines
+- [Zenodo community](https://zenodo.org/communities/isamples) — archived datasets for reproducible research
+- [Query architecture](https://github.com/isamplesorg/isamplesorg.github.io/issues/82) — how the Explorer queries work under the hood
