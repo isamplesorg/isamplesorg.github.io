@@ -105,9 +105,11 @@ class TestPublicationsPage:
         page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
         assert page.get_by_text("Presentations").count() > 0
 
-    def test_has_spnhc_talk_link(self, page):
+    def test_has_spnhc_talk_embed(self, page):
         page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
-        assert page.locator("a[href*='youtu']").count() > 0
+        # Quarto {{< video >}} renders as iframe, not <a> link
+        youtube = page.locator("iframe[src*='youtube']")
+        assert youtube.count() > 0
 
 
 class TestDataEndpoint:
