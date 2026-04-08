@@ -10,8 +10,15 @@ number-sections: false
 
 ## Presentations {.unnumbered}
 
-- [2020 SPNHC conference talk (video)](https://youtu.be/eRUw5NMksFo?t=105)
-- [iSamples metadata model talk (slides, PDF)](assets/2022-11_iSamplesMetadata.pdf)
+### 2020 SPNHC Conference Talk {.unnumbered}
+
+{{< video https://youtu.be/eRUw5NMksFo?t=105 >}}
+
+### iSamples Metadata Model Talk {.unnumbered}
+
+<embed src="assets/2022-11_iSamplesMetadata.pdf" type="application/pdf" width="100%" height="600px">
+
+[Download slides (PDF)](assets/2022-11_iSamplesMetadata.pdf)
 
 ## Publications {.unnumbered}
 
