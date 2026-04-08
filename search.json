@@ -486,28 +486,42 @@
     "href": "tutorials/index.html",
     "title": "Tutorials",
     "section": "",
-    "text": "Learn to explore 6.7 million physical samples from scientific collections worldwide using modern browser-based tools."
+    "text": "Tutorial\nWhat You’ll Learn\n\n\n\n\nInteractive Explorer\nSearch and filter samples with faceted search, view results on a 3D globe\n\n\nDeep-Dive Analysis\nComprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics\n\n\n3D Globe Visualization\nCesium-based progressive visualization with H3 spatial clustering\n\n\nTechnical: Narrow vs Wide\nSchema comparison and performance benchmarks for the PQG data formats"
   },
   {
     "objectID": "tutorials/index.html#start-here",
     "href": "tutorials/index.html#start-here",
     "title": "Tutorials",
-    "section": "1 Start Here",
-    "text": "1 Start Here\n\n\n\nTutorial\nWhat You’ll Learn\n\n\n\n\nInteractive Explorer\nSearch and filter samples with faceted search, view on 3D globe\n\n\nDeep-Dive Analysis\nComprehensive DuckDB-WASM analysis with Observable JS\n\n\n3D Globe Visualization\nCesium-based visualization of all iSamples data\n\n\nTechnical: Narrow vs Wide\nSchema comparison and performance benchmarks"
+    "section": "",
+    "text": "Tutorial\nWhat You’ll Learn\n\n\n\n\nInteractive Explorer\nSearch and filter samples with faceted search, view results on a 3D globe\n\n\nDeep-Dive Analysis\nComprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics\n\n\n3D Globe Visualization\nCesium-based progressive visualization with H3 spatial clustering\n\n\nTechnical: Narrow vs Wide\nSchema comparison and performance benchmarks for the PQG data formats"
   },
   {
-    "objectID": "tutorials/index.html#data-sources",
-    "href": "tutorials/index.html#data-sources",
+    "objectID": "tutorials/index.html#whats-in-the-data",
+    "href": "tutorials/index.html#whats-in-the-data",
     "title": "Tutorials",
-    "section": "2 Data Sources",
-    "text": "2 Data Sources\nAll tutorials use geoparquet files - no server required:\n\niSamples Full Dataset: ~280 MB wide format, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian\nAvailable via: Cloudflare R2 with HTTP range requests"
+    "section": "What’s in the Data?",
+    "text": "What’s in the Data?\n\n\n\nSource\nSamples\nFocus\n\n\n\n\nSESAR\n4.6M\nEarth science — rocks, minerals, sediments, soils\n\n\nOpenContext\n1M\nArchaeology — artifacts, excavation materials\n\n\nGEOME\n605K\nBiology — genomic and tissue specimens\n\n\nSmithsonian\n322K\nNatural history — museum collections"
+  },
+  {
+    "objectID": "tutorials/index.html#data-files",
+    "href": "tutorials/index.html#data-files",
+    "title": "Tutorials",
+    "section": "Data Files",
+    "text": "Data Files\nAll data is hosted on data.isamples.org with HTTP range request support — DuckDB-WASM only downloads the bytes it needs.\n\n\n\nFile\nSize\nDescription\n\n\n\n\nWide format\n278 MB\nOne row per entity, all sources — primary file for tutorials\n\n\nWide + H3\n292 MB\nWide format with H3 spatial indices for globe visualizations\n\n\nFacet summaries\n2 KB\nPre-computed filter counts — loads instantly\n\n\nH3 clusters (res4)\n0.6 MB\nZoomed-out globe view"
   },
   {
     "objectID": "tutorials/index.html#why-browser-based",
     "href": "tutorials/index.html#why-browser-based",
     "title": "Tutorials",
-    "section": "3 Why Browser-Based?",
-    "text": "3 Why Browser-Based?\nOur approach using geoparquet + DuckDB-WASM provides:\n\n✅ Universal access - No installation, works in any browser\n✅ Fast analysis - 5-10x faster than downloading full datasets\n✅ Memory efficient - Analyze 300MB using &lt;100MB browser memory\n✅ Minimal transfer - Only download the columns/rows you need"
+    "section": "Why Browser-Based?",
+    "text": "Why Browser-Based?\nOur approach using geoparquet + DuckDB-WASM provides:\n\nUniversal access — No installation, works in Chrome, Firefox, Edge, Safari, and Brave\nFast analysis — 5-10x faster than downloading full datasets\nMemory efficient — Analyze 300MB datasets using &lt;100MB browser memory\nMinimal transfer — HTTP range requests download only the columns and rows you need (typically &lt;1 MB to start)\nReproducible — All code is visible and foldable on tutorial pages"
+  },
+  {
+    "objectID": "tutorials/index.html#for-developers",
+    "href": "tutorials/index.html#for-developers",
+    "title": "Tutorials",
+    "section": "For Developers",
+    "text": "For Developers\nAll tutorial source code is on GitHub. Want to build your own analysis? Fork the repo, modify a .qmd file, and run quarto preview.\n\nGitHub repositories — all source code and data pipelines\nZenodo community — archived datasets for reproducible research\nQuery architecture — how the Explorer queries work under the hood"
   },
   {
     "objectID": "tutorials/parquet_cesium_isamples_wide.html",
@@ -1487,7 +1501,7 @@
     "href": "models/index.html",
     "title": "iSamples Vocabularies",
     "section": "",
-    "text": "see description of model at https://isamplesorg.github.io/metadata/",
+    "text": "See the iSamples Metadata Model for the full schema documentation.",
     "crumbs": [
       "Home",
       "Architecture and Vocabularies",
@@ -1499,7 +1513,19 @@
     "href": "models/index.html#taxonomies",
     "title": "iSamples Vocabularies",
     "section": "Taxonomies",
-    "text": "Taxonomies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThe iSamples core taxonomies are controlled vocabularies with terms related by SKOS:broader and SKOS:narrower. In order to be domain agnostic, the core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThe iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:\n\nThe “iSamples Materials vocabulary” is a taxonomy of terms used to categorize the composition of a physical sample, that is “What material is the sample composed of?”\nThe “Sampled Feature Type Vocabulary” is a taxonomy of terms used to indicate what the sample is representative of.\nThe “iSamples Specimen Type Vocabulary” is a taxonomy of broad categories that classify what type of spcimen the physical sample record represents.\n\nThree taxonomies are currently defined :\nMaterial Sample (specimen) Type Vocabulary\nMaterials Vocabulary\nSampled Feature (context) Type vocabulary",
+    "text": "Taxonomies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThe iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:\n\nThe Materials Vocabulary categorizes the composition of a physical sample (“What material is the sample composed of?”)\nThe Sampled Feature Type Vocabulary indicates what the sample is representative of\nThe Specimen Type Vocabulary classifies what type of specimen the physical sample record represents\n\n\n\n\n\n\n\nNoteCore Vocabularies\n\n\n\n\n\n\nMaterial Sample (specimen) Type Vocabulary\nMaterials Vocabulary\nSampled Feature (context) Type vocabulary",
+    "crumbs": [
+      "Home",
+      "Architecture and Vocabularies",
+      "iSamples Vocabularies"
+    ]
+  },
+  {
+    "objectID": "models/index.html#related-pages",
+    "href": "models/index.html#related-pages",
+    "title": "iSamples Vocabularies",
+    "section": "Related Pages",
+    "text": "Related Pages\n\nArchitecture Overview — system principles and architecture\nRequirements — 18 use cases and requirements\nMetadata Model — schema and data model documentation",
     "crumbs": [
       "Home",
       "Architecture and Vocabularies",
@@ -1525,7 +1551,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```xtfstoth assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```xtfstoth assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```besxahao assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```besxahao assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "people.html",

@@ -318,9 +318,11 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#start-here" id="toc-start-here" class="nav-link active" data-scroll-target="#start-here"><span class="header-section-number">1</span> Start Here</a></li>
-  <li><a href="#data-sources" id="toc-data-sources" class="nav-link" data-scroll-target="#data-sources"><span class="header-section-number">2</span> Data Sources</a></li>
-  <li><a href="#why-browser-based" id="toc-why-browser-based" class="nav-link" data-scroll-target="#why-browser-based"><span class="header-section-number">3</span> Why Browser-Based?</a></li>
+  <li><a href="#start-here" id="toc-start-here" class="nav-link active" data-scroll-target="#start-here">Start Here</a></li>
+  <li><a href="#whats-in-the-data" id="toc-whats-in-the-data" class="nav-link" data-scroll-target="#whats-in-the-data">What’s in the Data?</a></li>
+  <li><a href="#data-files" id="toc-data-files" class="nav-link" data-scroll-target="#data-files">Data Files</a></li>
+  <li><a href="#why-browser-based" id="toc-why-browser-based" class="nav-link" data-scroll-target="#why-browser-based">Why Browser-Based?</a></li>
+  <li><a href="#for-developers" id="toc-for-developers" class="nav-link" data-scroll-target="#for-developers">For Developers</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -330,6 +332,7 @@ ul.task-list li input[type="checkbox"] {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Tutorials</h1>
+<p class="subtitle lead">Learn to explore 6.7 million physical samples from scientific collections worldwide using modern browser-based tools.</p>
 </div>
 
 
@@ -346,9 +349,8 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Learn to explore <strong>6.7 million physical samples</strong> from scientific collections worldwide using modern browser-based tools.</p>
-<section id="start-here" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="start-here"><span class="header-section-number">1</span> Start Here</h2>
+<section id="start-here" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="start-here">Start Here</h2>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -359,39 +361,110 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><a href="../tutorials/isamples_explorer.html"><strong>Interactive Explorer</strong></a></td>
-<td>Search and filter samples with faceted search, view on 3D globe</td>
+<td>Search and filter samples with faceted search, view results on a 3D globe</td>
 </tr>
 <tr class="even">
 <td><a href="../tutorials/zenodo_isamples_analysis.html"><strong>Deep-Dive Analysis</strong></a></td>
-<td>Comprehensive DuckDB-WASM analysis with Observable JS</td>
+<td>Comprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics</td>
 </tr>
 <tr class="odd">
 <td><a href="../tutorials/parquet_cesium_isamples_wide.html"><strong>3D Globe Visualization</strong></a></td>
-<td>Cesium-based visualization of all iSamples data</td>
+<td>Cesium-based progressive visualization with H3 spatial clustering</td>
 </tr>
 <tr class="even">
 <td><a href="../tutorials/narrow_vs_wide_performance.html"><strong>Technical: Narrow vs Wide</strong></a></td>
-<td>Schema comparison and performance benchmarks</td>
+<td>Schema comparison and performance benchmarks for the PQG data formats</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="data-sources" class="level2" data-number="2">
-<h2 data-number="2" data-anchor-id="data-sources"><span class="header-section-number">2</span> Data Sources</h2>
-<p>All tutorials use <strong>geoparquet files</strong> - no server required:</p>
-<ul>
-<li><strong>iSamples Full Dataset</strong>: ~280 MB wide format, 6.7M samples from SESAR, OpenContext, GEOME, Smithsonian</li>
-<li><strong>Available via</strong>: Cloudflare R2 with HTTP range requests</li>
-</ul>
+<section id="whats-in-the-data" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="whats-in-the-data">What’s in the Data?</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Samples</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>SESAR</strong></td>
+<td>4.6M</td>
+<td>Earth science — rocks, minerals, sediments, soils</td>
+</tr>
+<tr class="even">
+<td><strong>OpenContext</strong></td>
+<td>1M</td>
+<td>Archaeology — artifacts, excavation materials</td>
+</tr>
+<tr class="odd">
+<td><strong>GEOME</strong></td>
+<td>605K</td>
+<td>Biology — genomic and tissue specimens</td>
+</tr>
+<tr class="even">
+<td><strong>Smithsonian</strong></td>
+<td>322K</td>
+<td>Natural history — museum collections</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="why-browser-based" class="level2" data-number="3">
-<h2 data-number="3" data-anchor-id="why-browser-based"><span class="header-section-number">3</span> Why Browser-Based?</h2>
+<section id="data-files" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="data-files">Data Files</h2>
+<p>All data is hosted on <a href="https://data.isamples.org"><code>data.isamples.org</code></a> with HTTP range request support — DuckDB-WASM only downloads the bytes it needs.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_wide.parquet">Wide format</a></td>
+<td>278 MB</td>
+<td>One row per entity, all sources — primary file for tutorials</td>
+</tr>
+<tr class="even">
+<td><a href="https://data.isamples.org/isamples_202601_wide_h3.parquet">Wide + H3</a></td>
+<td>292 MB</td>
+<td>Wide format with H3 spatial indices for globe visualizations</td>
+</tr>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">Facet summaries</a></td>
+<td>2 KB</td>
+<td>Pre-computed filter counts — loads instantly</td>
+</tr>
+<tr class="even">
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">H3 clusters (res4)</a></td>
+<td>0.6 MB</td>
+<td>Zoomed-out globe view</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="why-browser-based" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="why-browser-based">Why Browser-Based?</h2>
 <p>Our approach using <strong>geoparquet + DuckDB-WASM</strong> provides:</p>
 <ul>
-<li>✅ <strong>Universal access</strong> - No installation, works in any browser</li>
-<li>✅ <strong>Fast analysis</strong> - 5-10x faster than downloading full datasets</li>
-<li>✅ <strong>Memory efficient</strong> - Analyze 300MB using &lt;100MB browser memory</li>
-<li>✅ <strong>Minimal transfer</strong> - Only download the columns/rows you need</li>
+<li><strong>Universal access</strong> — No installation, works in Chrome, Firefox, Edge, Safari, and Brave</li>
+<li><strong>Fast analysis</strong> — 5-10x faster than downloading full datasets</li>
+<li><strong>Memory efficient</strong> — Analyze 300MB datasets using &lt;100MB browser memory</li>
+<li><strong>Minimal transfer</strong> — HTTP range requests download only the columns and rows you need (typically &lt;1 MB to start)</li>
+<li><strong>Reproducible</strong> — All code is visible and foldable on tutorial pages</li>
+</ul>
+</section>
+<section id="for-developers" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="for-developers">For Developers</h2>
+<p>All tutorial source code is on <a href="https://github.com/isamplesorg/isamplesorg.github.io/tree/main/tutorials">GitHub</a>. Want to build your own analysis? Fork the repo, modify a <code>.qmd</code> file, and run <code>quarto preview</code>.</p>
+<ul>
+<li><a href="https://github.com/isamplesorg/">GitHub repositories</a> — all source code and data pipelines</li>
+<li><a href="https://zenodo.org/communities/isamples">Zenodo community</a> — archived datasets for reproducible research</li>
+<li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/82">Query architecture</a> — how the Explorer queries work under the hood</li>
 </ul>
 
 
