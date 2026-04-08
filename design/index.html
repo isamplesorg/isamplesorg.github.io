@@ -313,8 +313,16 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#core-principles" id="toc-core-principles" class="nav-link active" data-scroll-target="#core-principles">Core Principles</a></li>
+  <li><a href="#isamples-contributions" id="toc-isamples-contributions" class="nav-link" data-scroll-target="#isamples-contributions">iSamples Contributions</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/design/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -339,17 +347,38 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Physical samples are represented by a digital record.</p>
-<p>Each digital record is addressable by at least one identifier that is unique to the record.</p>
-<p>A collection of digital records can be represented by a list of the record identifiers.</p>
-<p>A list of all physical sample digital record identifiers (global record list) can be constructed from the collection lists.</p>
-<p>Digital records may be presented in different serializations (media type).</p>
-<p>Digital records of a serialization may present different views of the same information (profile).</p>
-<p>iSamples has defined a profile applicable to all physical samples.</p>
-<p>iSamples has defined a programmatic interface</p>
-<p>PlantUML diagram removed for testing [SMR 2024-01-04]</p>
+<section id="core-principles" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="core-principles">Core Principles</h2>
+<p>The iSamples architecture is built on a set of fundamental principles about how physical samples are represented digitally:</p>
+<ul>
+<li>Physical samples are represented by a <strong>digital record</strong></li>
+<li>Each digital record is addressable by at least one <strong>identifier</strong> that is unique to the record</li>
+<li>A collection of digital records can be represented by a <strong>list of the record identifiers</strong></li>
+<li>A list of all physical sample digital record identifiers (<strong>global record list</strong>) can be constructed from the collection lists</li>
+<li>Digital records may be presented in different <strong>serializations</strong> (media type)</li>
+<li>Digital records of a serialization may present different <strong>views</strong> of the same information (profile)</li>
+</ul>
+</section>
+<section id="isamples-contributions" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="isamples-contributions">iSamples Contributions</h2>
+<p>iSamples has defined:</p>
+<ul>
+<li>A <strong>metadata profile</strong> applicable to all physical samples — see the <a href="https://isamplesorg.github.io/metadata/">Metadata Model</a></li>
+<li>A set of <strong>controlled vocabularies</strong> for interoperable sample description — see <a href="../models/index.html">Vocabularies</a></li>
+<li>A <strong>programmatic interface</strong> for sample discovery and access</li>
+<li>A <strong>browser-based data analysis</strong> approach using geoparquet + DuckDB-WASM — see the <a href="../tutorials/progressive_globe.html">Interactive Explorer</a></li>
+</ul>
+</section>
+<section id="further-reading" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="requirements.html">Requirements</a> — 18 use cases and requirements</li>
+<li><a href="https://isamplesorg.github.io/metadata/">Metadata Model</a> — schema and data model documentation</li>
+<li><a href="../models/index.html">Vocabularies</a> — SKOS taxonomies for sample classification</li>
+</ul>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -753,7 +782,7 @@ ul.task-list li input[type="checkbox"] {
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/design/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/design/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
