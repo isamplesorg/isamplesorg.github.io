@@ -1,6 +1,6 @@
 ---
-title: "Publications & Conferences"
-subtitle: Publications, presentations, and other project outcomes
+title: "Research & Resources"
+subtitle: Publications, presentations, datasets, and source code
 bibliography: isamples-outcomes.bib
 csl: cite-full-inline.csl
 nocite: |
@@ -24,3 +24,21 @@ number-sections: false
 
 ::: {#refs}
 :::
+
+## Zenodo Community {.unnumbered}
+
+The [iSamples Zenodo Community](https://zenodo.org/communities/isamples) archives datasets for reproducible research, including the geoparquet files powering this site's tutorials and Interactive Explorer.
+
+- [iSamples Combined Dataset](https://zenodo.org/communities/isamples) — 6.7M samples from SESAR, OpenContext, GEOME, and Smithsonian
+- All data files are also served from [`data.isamples.org`](https://data.isamples.org) with HTTP range request support
+
+## GitHub Repositories {.unnumbered}
+
+All iSamples source code is available on [GitHub](https://github.com/isamplesorg/):
+
+| Repository | Description |
+|------------|-------------|
+| [isamplesorg.github.io](https://github.com/isamplesorg/isamplesorg.github.io) | This website — Quarto, Observable JS, DuckDB-WASM |
+| [metadata](https://github.com/isamplesorg/metadata) | iSamples metadata model and schema documentation |
+| [isamples_inabox](https://github.com/isamplesorg/isamples_inabox) | iSamples-in-a-Box server infrastructure |
+| [iSamples vocabularies](https://github.com/isamplesorg/metadata/tree/develop/vocabulary) | SKOS vocabulary RDF files |

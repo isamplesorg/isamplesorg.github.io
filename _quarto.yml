@@ -63,10 +63,9 @@ website:
         - text: Publications & Conferences
           href: pubs.qmd
         - text: Zenodo Community
-          href: https://zenodo.org/communities/isamples
-        - icon: github
-          text: Github Repositories
-          href: "https://github.com/isamplesorg/"
+          href: "pubs.qmd#zenodo-community"
+        - text: Github Repositories
+          href: "pubs.qmd#github-repositories"
 
   repo-url: https://github.com/isamplesorg/isamplesorg.github.io
   repo-actions: [edit, issue]
