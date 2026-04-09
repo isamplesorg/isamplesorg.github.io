@@ -12,7 +12,7 @@ Search and explore **6.7 million physical samples** from scientific collections 
 
 ::: {.callout-note}
 ### Serverless Architecture
-This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts (source, material, context, specimen type), while the full ~280 MB Parquet file is only queried when drilling into records. All powered by DuckDB-WASM in your browser -- no server required!
+This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts, while the full ~280 MB Parquet file is queried on demand. **Cross-filtering** keeps counts accurate — selecting a source updates material/context/specimen counts to reflect only that source's samples. All powered by DuckDB-WASM in your browser — no server required!
 :::
 
 ## Setup
@@ -92,7 +92,6 @@ facetSummariesWarning
 //| code-fold: true
 // Source checkboxes with counts - uses pre-computed summaries for instant load
 viewof sourceCheckboxes = {
-  // Use pre-computed facet summaries (instant) instead of scanning full parquet
   const counts = facetsByType.source;
   const options = counts.map(r => r.value);
 
@@ -104,7 +103,7 @@ viewof sourceCheckboxes = {
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
-        ${x} <span style="color: #888;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="source" data-value="${x}" style="color: #888;">(${count})</span>
       </span>`;
     }
   });
@@ -125,7 +124,7 @@ viewof materialCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="material" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -146,7 +145,7 @@ viewof contextCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="context" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -167,7 +166,7 @@ viewof objectTypeCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="object_type" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -366,7 +365,7 @@ facetSummariesWarning = {
   </div>`;
 }
 
-// Extract facet counts by type from pre-computed summaries
+// Extract facet counts by type from pre-computed summaries (baseline)
 facetsByType = {
   const grouped = { source: [], material: [], context: [], object_type: [] };
   for (const row of facetSummaries) {
@@ -380,6 +379,155 @@ facetsByType = {
     grouped[key].sort((a, b) => b.count - a.count);
   }
   return grouped;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Cross-filter: build WHERE clause excluding one facet dimension
+// This lets each facet show counts reflecting all OTHER active filters
+function buildWhereClause(excludeFacet) {
+  const conditions = [
+    "otype = 'MaterialSampleRecord'",
+    "latitude IS NOT NULL"
+  ];
+
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    conditions.push(`(
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`);
+  }
+
+  if (excludeFacet !== 'source') {
+    const sources = Array.from(sourceCheckboxes || []);
+    if (sources.length > 0) {
+      const sourceList = sources.map(s => `'${s}'`).join(", ");
+      conditions.push(`n IN (${sourceList})`);
+    }
+  }
+
+  if (excludeFacet !== 'material') {
+    const materials = Array.from(materialCheckboxes || []);
+    if (materials.length > 0) {
+      const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`has_material_category IN (${matList})`);
+    }
+  }
+
+  if (excludeFacet !== 'context') {
+    const contexts = Array.from(contextCheckboxes || []);
+    if (contexts.length > 0) {
+      const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`has_context_category IN (${ctxList})`);
+    }
+  }
+
+  if (excludeFacet !== 'object_type') {
+    const objectTypes = Array.from(objectTypeCheckboxes || []);
+    if (objectTypes.length > 0) {
+      const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`has_specimen_category IN (${otList})`);
+    }
+  }
+
+  return conditions.join(" AND ");
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Detect whether any filter is active (triggers cross-filter queries)
+hasActiveFilters = {
+  const hasSearch = searchInput?.trim()?.length > 0;
+  const hasSources = (sourceCheckboxes || []).length > 0;
+  const hasMaterials = (materialCheckboxes || []).length > 0;
+  const hasContexts = (contextCheckboxes || []).length > 0;
+  const hasObjectTypes = (objectTypeCheckboxes || []).length > 0;
+  return hasSearch || hasSources || hasMaterials || hasContexts || hasObjectTypes;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Cross-filtered facet counts: recompute when filters are active
+// Each facet uses a WHERE clause with all filters EXCEPT its own dimension,
+// so you see how many items exist for each value given other active filters
+crossFilteredFacets = {
+  if (!hasActiveFilters) return null;  // Use pre-computed summaries when no filters
+
+  const facetConfig = [
+    { key: 'source',      column: 'n',                     exclude: 'source' },
+    { key: 'material',    column: 'has_material_category',  exclude: 'material' },
+    { key: 'context',     column: 'has_context_category',   exclude: 'context' },
+    { key: 'object_type', column: 'has_specimen_category',  exclude: 'object_type' },
+  ];
+
+  const results = {};
+
+  // Run all 4 facet queries in parallel
+  const queries = facetConfig.map(async ({ key, column, exclude }) => {
+    const where = buildWhereClause(exclude);
+    const sql = `
+      SELECT ${column} AS value, COUNT(*) AS count
+      FROM samples
+      WHERE ${where} AND ${column} IS NOT NULL
+      GROUP BY ${column}
+      ORDER BY count DESC
+    `;
+    try {
+      const rows = await runQuery(sql);
+      results[key] = rows.map(r => ({ value: r.value, count: r.count }));
+    } catch (e) {
+      console.warn(`Cross-filter query failed for ${key}:`, e);
+      results[key] = null;  // Fall back to pre-computed
+    }
+  });
+
+  await Promise.all(queries);
+  return results;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Merge cross-filtered counts with baseline facets
+// Baseline provides the full list of values; cross-filter overrides counts
+function getDisplayCounts(facetKey) {
+  const baseline = facetsByType[facetKey] || [];
+  if (!crossFilteredFacets || !crossFilteredFacets[facetKey]) return baseline;
+
+  const filtered = crossFilteredFacets[facetKey];
+  const countMap = new Map(filtered.map(r => [r.value, r.count]));
+
+  return baseline.map(item => ({
+    ...item,
+    count: countMap.has(item.value) ? countMap.get(item.value) : 0,
+  }));
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Update facet count labels in-place when cross-filtered counts arrive
+// This avoids re-rendering checkboxes (which would reset user selections)
+{
+  if (!crossFilteredFacets) return;  // No active filters — keep pre-computed counts
+
+  for (const [facetKey, rows] of Object.entries(crossFilteredFacets)) {
+    if (!rows) continue;
+    const countMap = new Map(rows.map(r => [r.value, r.count]));
+
+    document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+      const value = el.getAttribute('data-value');
+      const count = countMap.get(value) ?? 0;
+      el.textContent = `(${Number(count).toLocaleString()})`;
+      // Dim zero-count items
+      el.style.opacity = count === 0 ? '0.4' : '1';
+    });
+  }
 }
 ```
 
