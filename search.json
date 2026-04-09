@@ -18,7 +18,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```nbrcpnwy assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```nbrcpnwy assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```taqgdimk assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```taqgdimk assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "models/generated/extensions/opencontext_material_extension.html",
@@ -516,7 +516,7 @@
   {
     "objectID": "pubs.html",
     "href": "pubs.html",
-    "title": "Publications & Conferences",
+    "title": "Research & Resources",
     "section": "",
     "text": "Download slides (PDF)",
     "crumbs": [
@@ -528,7 +528,7 @@
   {
     "objectID": "pubs.html#presentations",
     "href": "pubs.html#presentations",
-    "title": "Publications & Conferences",
+    "title": "Research & Resources",
     "section": "",
     "text": "Download slides (PDF)",
     "crumbs": [
@@ -540,9 +540,33 @@
   {
     "objectID": "pubs.html#publications",
     "href": "pubs.html#publications",
-    "title": "Publications & Conferences",
+    "title": "Research & Resources",
     "section": "Publications",
     "text": "Publications\n\n\n1. Davies N, Deck J, Kansa EC, Kansa SW, Kunze J, Meyer C, Orrell T, Ramdeen S, Snyder R, Vieglais D, Walls RL, Lehnert K (2021) Internet of Samples (iSamples): Toward an interdisciplinary cyberinfrastructure for material samples. GigaScience, 10(5)https://doi.org/10.1093/gigascience/giab028",
+    "crumbs": [
+      "Home",
+      "Research & Resources",
+      "Publications & Conferences"
+    ]
+  },
+  {
+    "objectID": "pubs.html#zenodo-community",
+    "href": "pubs.html#zenodo-community",
+    "title": "Research & Resources",
+    "section": "Zenodo Community",
+    "text": "Zenodo Community\nThe iSamples Zenodo Community archives datasets for reproducible research, including the geoparquet files powering this site’s tutorials and Interactive Explorer.\n\niSamples Combined Dataset — 6.7M samples from SESAR, OpenContext, GEOME, and Smithsonian\nAll data files are also served from data.isamples.org with HTTP range request support",
+    "crumbs": [
+      "Home",
+      "Research & Resources",
+      "Publications & Conferences"
+    ]
+  },
+  {
+    "objectID": "pubs.html#github-repositories",
+    "href": "pubs.html#github-repositories",
+    "title": "Research & Resources",
+    "section": "GitHub Repositories",
+    "text": "GitHub Repositories\nAll iSamples source code is available on GitHub:\n\n\n\nRepository\nDescription\n\n\n\n\nisamplesorg.github.io\nThis website — Quarto, Observable JS, DuckDB-WASM\n\n\nmetadata\niSamples metadata model and schema documentation\n\n\nisamples_inabox\niSamples-in-a-Box server infrastructure\n\n\niSamples vocabularies\nSKOS vocabulary RDF files",
     "crumbs": [
       "Home",
       "Research & Resources",
