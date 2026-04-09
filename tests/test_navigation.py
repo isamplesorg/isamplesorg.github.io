@@ -114,7 +114,7 @@ class TestSidebarResearchResources:
 
 
 class TestNavbar:
-    """Top navbar should have the 4 main items."""
+    """Top navbar should have all 6 main items matching wireframe."""
 
     def test_navbar_has_home(self, page):
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -135,3 +135,13 @@ class TestNavbar:
         page.goto(SITE_URL, wait_until="domcontentloaded")
         navbar = page.locator(".navbar")
         assert navbar.get_by_text("About", exact=True).count() > 0
+
+    def test_navbar_has_architecture_and_vocabularies(self, page):
+        page.goto(SITE_URL, wait_until="domcontentloaded")
+        navbar = page.locator(".navbar")
+        assert navbar.get_by_text("Architecture").count() > 0
+
+    def test_navbar_has_research_and_resources(self, page):
+        page.goto(SITE_URL, wait_until="domcontentloaded")
+        navbar = page.locator(".navbar")
+        assert navbar.get_by_text("Research").count() > 0

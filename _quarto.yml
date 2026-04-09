@@ -12,10 +12,46 @@ website:
         text: Home
       - href: tutorials/progressive_globe.qmd
         text: Interactive Explorer
-      - href: how-to-use.qmd
-        text: How to Use
-      - href: about.qmd
-        text: About
+      - text: How to Use
+        menu:
+          - text: Overview
+            href: how-to-use.qmd
+          - text: Deep-Dive Analysis
+            href: tutorials/zenodo_isamples_analysis.qmd
+          - text: 3D Globe Visualization
+            href: tutorials/parquet_cesium_isamples_wide.qmd
+          - text: Search Explorer
+            href: tutorials/isamples_explorer.qmd
+          - text: "Technical: Narrow vs Wide"
+            href: tutorials/narrow_vs_wide_performance.qmd
+      - text: About
+        menu:
+          - text: Objectives
+            href: about.qmd
+          - text: PIs and Contributors
+            href: "about.qmd#team"
+          - text: Photo Gallery
+            href: "about.qmd#photo-gallery"
+          - text: "Background & History"
+            href: "about.qmd#background-history"
+      - text: "Architecture & Vocabularies"
+        menu:
+          - text: Overview
+            href: design/index.qmd
+          - text: Requirements
+            href: design/requirements.md
+          - text: Metadata Model
+            href: "https://isamplesorg.github.io/metadata/"
+          - text: Vocabularies
+            href: models/index.qmd
+      - text: "Research & Resources"
+        menu:
+          - text: "Publications & Conferences"
+            href: pubs.qmd
+          - text: Zenodo Community
+            href: "pubs.qmd#zenodo-community"
+          - text: Github Repositories
+            href: "pubs.qmd#github-repositories"
     right:
       - icon: github
         href: https://github.com/isamplesorg
