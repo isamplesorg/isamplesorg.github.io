@@ -71,7 +71,7 @@ initialParams = {
 //| code-fold: false
 // Search input
 viewof searchInput = Inputs.text({
-  placeholder: "Search samples (e.g., pottery, basalt, Cyprus...)",
+  placeholder: "Search samples — multiple words narrow results (e.g., pottery Cyprus)",
   value: initialParams.q,
   submit: "Search"
 })
@@ -392,14 +392,17 @@ whereClause = {
     "latitude IS NOT NULL"
   ];
 
-  // Text search
+  // Multi-term text search: each word must match at least one text field
   if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    conditions.push(`(
-      label ILIKE '%${term}%'
-      OR description ILIKE '%${term}%'
-      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-    )`);
+    const terms = searchInput.trim().split(/\s+/).filter(t => t.length > 0);
+    for (const raw of terms) {
+      const term = raw.replace(/'/g, "''");
+      conditions.push(`(
+        label ILIKE '%${term}%'
+        OR description ILIKE '%${term}%'
+        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+      )`);
+    }
   }
 
   // Source filter
@@ -466,6 +469,30 @@ sampleData = {
   }
 
   try {
+    // When searching, rank results by relevance (fields matched);
+    // otherwise random sample for exploration
+    const hasSearch = searchInput?.trim()?.length > 0;
+    const terms = hasSearch
+      ? searchInput.trim().split(/\s+/).filter(t => t.length > 0)
+      : [];
+
+    // Build a relevance score: +3 for label match, +2 for place, +1 for description
+    // per term — higher scores float to top
+    let scoreExpr = "0";
+    if (terms.length > 0) {
+      const termScores = terms.map(raw => {
+        const t = raw.replace(/'/g, "''");
+        return `(CASE WHEN label ILIKE '%${t}%' THEN 3 ELSE 0 END
+               + CASE WHEN CAST(place_name AS VARCHAR) ILIKE '%${t}%' THEN 2 ELSE 0 END
+               + CASE WHEN description ILIKE '%${t}%' THEN 1 ELSE 0 END)`;
+      });
+      scoreExpr = termScores.join(" + ");
+    }
+
+    const orderClause = hasSearch
+      ? `ORDER BY (${scoreExpr}) DESC, label`
+      : "ORDER BY RANDOM()";
+
     const query = `
       SELECT
         row_id,
@@ -478,7 +505,7 @@ sampleData = {
         place_name
       FROM samples
       WHERE ${whereClause}
-      ORDER BY RANDOM()
+      ${orderClause}
       LIMIT ${maxSamples}
     `;
 

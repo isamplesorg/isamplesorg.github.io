@@ -12,6 +12,7 @@ models/generated/extensions/*.md
 
 # Large data files
 *.parquet
+*.duckdb
 
 # Node / Playwright
 node_modules/
