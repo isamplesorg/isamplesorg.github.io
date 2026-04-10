@@ -397,6 +397,16 @@ facetsByType = {
 function buildCrossFilterWhere(excludeFacet) {
   const conditions = [];
 
+  // Text search participates in cross-filtering
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    conditions.push(`(
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`);
+  }
+
   if (excludeFacet !== 'source') {
     const sources = Array.from(sourceCheckboxes || []);
     if (sources.length > 0) {
@@ -463,10 +473,15 @@ crossFilteredFacets = {
   const activeFilterCount = [activeSources, activeMaterials, activeContexts, activeObjectTypes]
     .filter(a => a.length > 0).length;
 
-  // Try pre-computed cache for single-filter (no text search)
-  if (activeFilterCount === 1 && !hasSearch) {
+  // Try pre-computed cache: exactly one facet active, exactly one value, no text search
+  const singleValueFacet = (
+    !hasSearch && activeFilterCount === 1 &&
+    [activeSources, activeMaterials, activeContexts, activeObjectTypes]
+      .every(a => a.length <= 1)
+  );
+
+  if (singleValueFacet) {
     try {
-      // Build filter conditions for the cache lookup
       const conditions = ["filter_source IS NULL", "filter_material IS NULL",
                           "filter_context IS NULL", "filter_object_type IS NULL"];
       if (activeSources.length === 1)
@@ -552,10 +567,23 @@ function getDisplayCounts(facetKey) {
 
 ```{ojs}
 //| code-fold: true
-// Update facet count labels in-place when cross-filtered counts arrive
+// Update facet count labels in-place when cross-filtered counts change
 // This avoids re-rendering checkboxes (which would reset user selections)
 {
-  if (!crossFilteredFacets) return;  // No active filters — keep pre-computed counts
+  if (!crossFilteredFacets) {
+    // No active filters — restore baseline counts and remove dimming
+    for (const facetKey of ['source', 'material', 'context', 'object_type']) {
+      const baseline = facetsByType[facetKey] || [];
+      const countMap = new Map(baseline.map(r => [r.value, r.count]));
+      document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+        const value = el.getAttribute('data-value');
+        const count = countMap.get(value) ?? 0;
+        el.textContent = `(${Number(count).toLocaleString()})`;
+        el.style.opacity = '1';
+      });
+    }
+    return;
+  }
 
   for (const [facetKey, rows] of Object.entries(crossFilteredFacets)) {
     if (!rows) continue;
@@ -565,7 +593,6 @@ function getDisplayCounts(facetKey) {
       const value = el.getAttribute('data-value');
       const count = countMap.get(value) ?? 0;
       el.textContent = `(${Number(count).toLocaleString()})`;
-      // Dim zero-count items
       el.style.opacity = count === 0 ? '0.4' : '1';
     });
   }
