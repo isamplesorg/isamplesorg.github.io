@@ -31,6 +31,12 @@ parquet_url = "https://data.isamples.org/isamples_202601_wide.parquet"
 // Pre-computed facet summaries (2KB - loads instantly)
 facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
 
+// Pre-computed cross-filter cache (6KB - instant single-filter lookups)
+cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter.parquet"
+
+// Slim facets file for on-the-fly multi-filter queries (0.3MB - URI strings, not BIGINT FKs)
+sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
+
 // Source color scheme (consistent with iSamples conventions)
 SOURCE_COLORS = ({
   'SESAR': '#3366CC',       // Blue
@@ -307,9 +313,11 @@ db = {
   await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
   URL.revokeObjectURL(worker_url);
 
-  // Create view for convenience
+  // Create views for convenience
   const conn = await instance.connect();
   await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  // Slim facets view with correct URI-string columns for cross-filtering
+  await conn.query(`CREATE VIEW sample_facets AS SELECT * FROM read_parquet('${sample_facets_url}')`);
   await conn.close();
 
   return instance;
@@ -385,27 +393,15 @@ facetsByType = {
 ```{ojs}
 //| code-fold: true
 // Cross-filter: build WHERE clause excluding one facet dimension
-// This lets each facet show counts reflecting all OTHER active filters
-function buildWhereClause(excludeFacet) {
-  const conditions = [
-    "otype = 'MaterialSampleRecord'",
-    "latitude IS NOT NULL"
-  ];
-
-  if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    conditions.push(`(
-      label ILIKE '%${term}%'
-      OR description ILIKE '%${term}%'
-      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-    )`);
-  }
+// Queries the sample_facets view (URI strings, correct column names)
+function buildCrossFilterWhere(excludeFacet) {
+  const conditions = [];
 
   if (excludeFacet !== 'source') {
     const sources = Array.from(sourceCheckboxes || []);
     if (sources.length > 0) {
       const sourceList = sources.map(s => `'${s}'`).join(", ");
-      conditions.push(`n IN (${sourceList})`);
+      conditions.push(`source IN (${sourceList})`);
     }
   }
 
@@ -413,7 +409,7 @@ function buildWhereClause(excludeFacet) {
     const materials = Array.from(materialCheckboxes || []);
     if (materials.length > 0) {
       const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`has_material_category IN (${matList})`);
+      conditions.push(`material IN (${matList})`);
     }
   }
 
@@ -421,7 +417,7 @@ function buildWhereClause(excludeFacet) {
     const contexts = Array.from(contextCheckboxes || []);
     if (contexts.length > 0) {
       const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`has_context_category IN (${ctxList})`);
+      conditions.push(`context IN (${ctxList})`);
     }
   }
 
@@ -429,11 +425,11 @@ function buildWhereClause(excludeFacet) {
     const objectTypes = Array.from(objectTypeCheckboxes || []);
     if (objectTypes.length > 0) {
       const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`has_specimen_category IN (${otList})`);
+      conditions.push(`object_type IN (${otList})`);
     }
   }
 
-  return conditions.join(" AND ");
+  return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
 }
 ```
 
@@ -452,28 +448,73 @@ hasActiveFilters = {
 
 ```{ojs}
 //| code-fold: true
-// Cross-filtered facet counts: recompute when filters are active
-// Each facet uses a WHERE clause with all filters EXCEPT its own dimension,
-// so you see how many items exist for each value given other active filters
+// Cross-filtered facet counts: use pre-computed cache for single-filter,
+// fall back to on-the-fly queries against sample_facets for multi-filter
 crossFilteredFacets = {
   if (!hasActiveFilters) return null;  // Use pre-computed summaries when no filters
 
+  // Count how many facets have active filters
+  const activeSources = Array.from(sourceCheckboxes || []);
+  const activeMaterials = Array.from(materialCheckboxes || []);
+  const activeContexts = Array.from(contextCheckboxes || []);
+  const activeObjectTypes = Array.from(objectTypeCheckboxes || []);
+  const hasSearch = searchInput?.trim()?.length > 0;
+
+  const activeFilterCount = [activeSources, activeMaterials, activeContexts, activeObjectTypes]
+    .filter(a => a.length > 0).length;
+
+  // Try pre-computed cache for single-filter (no text search)
+  if (activeFilterCount === 1 && !hasSearch) {
+    try {
+      // Build filter conditions for the cache lookup
+      const conditions = ["filter_source IS NULL", "filter_material IS NULL",
+                          "filter_context IS NULL", "filter_object_type IS NULL"];
+      if (activeSources.length === 1)
+        conditions[0] = `filter_source = '${activeSources[0]}'`;
+      else if (activeMaterials.length === 1)
+        conditions[1] = `filter_material = '${activeMaterials[0].replace(/'/g, "''")}'`;
+      else if (activeContexts.length === 1)
+        conditions[2] = `filter_context = '${activeContexts[0].replace(/'/g, "''")}'`;
+      else if (activeObjectTypes.length === 1)
+        conditions[3] = `filter_object_type = '${activeObjectTypes[0].replace(/'/g, "''")}'`;
+
+      const sql = `
+        SELECT facet_type, facet_value AS value, count
+        FROM read_parquet('${cross_filter_url}')
+        WHERE ${conditions.join(" AND ")}
+      `;
+      const rows = await runQuery(sql);
+
+      if (rows.length > 0) {
+        const results = { source: [], material: [], context: [], object_type: [] };
+        for (const r of rows) {
+          if (results[r.facet_type]) {
+            results[r.facet_type].push({ value: r.value, count: Number(r.count) });
+          }
+        }
+        return results;
+      }
+    } catch (e) {
+      console.warn("Pre-computed cache miss, falling back to on-the-fly:", e);
+    }
+  }
+
+  // Fallback: on-the-fly queries against the slim sample_facets view
   const facetConfig = [
-    { key: 'source',      column: 'n',                     exclude: 'source' },
-    { key: 'material',    column: 'has_material_category',  exclude: 'material' },
-    { key: 'context',     column: 'has_context_category',   exclude: 'context' },
-    { key: 'object_type', column: 'has_specimen_category',  exclude: 'object_type' },
+    { key: 'source',      column: 'source',      exclude: 'source' },
+    { key: 'material',    column: 'material',     exclude: 'material' },
+    { key: 'context',     column: 'context',      exclude: 'context' },
+    { key: 'object_type', column: 'object_type',  exclude: 'object_type' },
   ];
 
   const results = {};
 
-  // Run all 4 facet queries in parallel
   const queries = facetConfig.map(async ({ key, column, exclude }) => {
-    const where = buildWhereClause(exclude);
+    const where = buildCrossFilterWhere(exclude);
     const sql = `
       SELECT ${column} AS value, COUNT(*) AS count
-      FROM samples
-      WHERE ${where} AND ${column} IS NOT NULL
+      FROM sample_facets
+      WHERE ${where} AND ${column} IS NOT NULL AND ${column} != ''
       GROUP BY ${column}
       ORDER BY count DESC
     `;
@@ -482,7 +523,7 @@ crossFilteredFacets = {
       results[key] = rows.map(r => ({ value: r.value, count: r.count }));
     } catch (e) {
       console.warn(`Cross-filter query failed for ${key}:`, e);
-      results[key] = null;  // Fall back to pre-computed
+      results[key] = null;
     }
   });
 
@@ -534,13 +575,16 @@ function getDisplayCounts(facetKey) {
 ```{ojs}
 //| code-fold: true
 // Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
+// Source filter uses the wide parquet's `n` column directly.
+// Material/context/object_type filters use the sample_facets view (URI strings)
+// via a subquery, since the wide parquet stores these as BIGINT foreign keys.
 whereClause = {
   const conditions = [
     "otype = 'MaterialSampleRecord'",
     "latitude IS NOT NULL"
   ];
 
-  // Text search
+  // Text search (against wide parquet — has label, description, place_name)
   if (searchInput?.trim()) {
     const term = searchInput.trim().replace(/'/g, "''");
     conditions.push(`(
@@ -550,32 +594,33 @@ whereClause = {
     )`);
   }
 
-  // Source filter
+  // Source filter (n column exists in wide parquet)
   const sources = Array.from(sourceCheckboxes || []);
   if (sources.length > 0) {
     const sourceList = sources.map(s => `'${s}'`).join(", ");
     conditions.push(`n IN (${sourceList})`);
   }
 
-  // Material filter
+  // Facet filters: build a subquery against sample_facets to get matching PIDs
+  const facetConditions = [];
   const materials = Array.from(materialCheckboxes || []);
   if (materials.length > 0) {
     const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_material_category IN (${matList})`);
+    facetConditions.push(`material IN (${matList})`);
   }
-
-  // Context (sampled feature) filter
   const contexts = Array.from(contextCheckboxes || []);
   if (contexts.length > 0) {
     const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_context_category IN (${ctxList})`);
+    facetConditions.push(`context IN (${ctxList})`);
   }
-
-  // Object type (specimen type) filter
   const objectTypes = Array.from(objectTypeCheckboxes || []);
   if (objectTypes.length > 0) {
     const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_specimen_category IN (${otList})`);
+    facetConditions.push(`object_type IN (${otList})`);
+  }
+
+  if (facetConditions.length > 0) {
+    conditions.push(`pid IN (SELECT pid FROM sample_facets WHERE ${facetConditions.join(" AND ")})`);
   }
 
   return conditions.join(" AND ");
