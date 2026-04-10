@@ -34,7 +34,7 @@ facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries
 // Pre-computed cross-filter cache (6KB - instant single-filter lookups)
 cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter.parquet"
 
-// Slim facets file for on-the-fly multi-filter queries (0.3MB - URI strings, not BIGINT FKs)
+// Facets file for on-the-fly multi-filter queries (63MB - URI strings, not BIGINT FKs)
 sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
 
 // Source color scheme (consistent with iSamples conventions)
@@ -485,7 +485,7 @@ crossFilteredFacets = {
       const conditions = ["filter_source IS NULL", "filter_material IS NULL",
                           "filter_context IS NULL", "filter_object_type IS NULL"];
       if (activeSources.length === 1)
-        conditions[0] = `filter_source = '${activeSources[0]}'`;
+        conditions[0] = `filter_source = '${activeSources[0].replace(/'/g, "''")}'`;
       else if (activeMaterials.length === 1)
         conditions[1] = `filter_material = '${activeMaterials[0].replace(/'/g, "''")}'`;
       else if (activeContexts.length === 1)
@@ -544,24 +544,6 @@ crossFilteredFacets = {
 
   await Promise.all(queries);
   return results;
-}
-```
-
-```{ojs}
-//| code-fold: true
-// Merge cross-filtered counts with baseline facets
-// Baseline provides the full list of values; cross-filter overrides counts
-function getDisplayCounts(facetKey) {
-  const baseline = facetsByType[facetKey] || [];
-  if (!crossFilteredFacets || !crossFilteredFacets[facetKey]) return baseline;
-
-  const filtered = crossFilteredFacets[facetKey];
-  const countMap = new Map(filtered.map(r => [r.value, r.count]));
-
-  return baseline.map(item => ({
-    ...item,
-    count: countMap.has(item.value) ? countMap.get(item.value) : 0,
-  }));
 }
 ```
 
