@@ -9,7 +9,7 @@ page-layout: full
 
 ::: {.column-page}
 
-[![Explore 6.7 million samples on an interactive globe](assets/isamples_globe.webp){fig-alt="Animated rotating globe showing iSamples data points from 4 scientific repositories" width="100%"}](/tutorials/progressive_globe.html "Explore the interactive globe")
+[![Explore 6.7 million samples on an interactive globe](assets/isamples_globe.webp){fig-alt="Animated rotating globe showing iSamples data points from 4 scientific repositories" width="100%" .nolightbox}](/tutorials/progressive_globe.html "Explore the interactive globe")
 
 :::
 
