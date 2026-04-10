@@ -58,15 +58,11 @@ website:
       - icon: slack
         href: https://isamples.slack.com/
   sidebar:
-    style: "docked"
-    search: true
-    contents:
-      - href: index.qmd
-        text: Home
-      - href: tutorials/progressive_globe.qmd
-        text: Interactive Explorer
-      - section: "How to Use"
-        contents:
+    - id: how-to-use
+      title: "How to Use"
+      style: "docked"
+      search: true
+      contents:
         - href: how-to-use.qmd
           text: Overview
         - text: "Deep-Dive Analysis"
@@ -77,8 +73,11 @@ website:
           href: tutorials/isamples_explorer.qmd
         - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
-      - section: "About"
-        contents:
+    - id: about
+      title: "About"
+      style: "docked"
+      search: true
+      contents:
         - href: about.qmd
           text: Objectives
         - text: "PIs and Contributors"
@@ -87,18 +86,24 @@ website:
           href: "about.qmd#photo-gallery"
         - text: "Background & History"
           href: "about.qmd#background-history"
-      - section: "Architecture & Vocabularies"
-        contents:
-          - href: design/index.qmd
-            text: Overview
-          - href: design/requirements.md
-            text: Requirements
-          - text: Schema
-            href: "https://isamplesorg.github.io/metadata/"
-          - href: models/index.qmd
-            text: Vocabularies
-      - section: "Research & Resources"
-        contents:
+    - id: architecture
+      title: "Architecture & Vocabularies"
+      style: "docked"
+      search: true
+      contents:
+        - href: design/index.qmd
+          text: Overview
+        - href: design/requirements.md
+          text: Requirements
+        - text: Schema
+          href: "https://isamplesorg.github.io/metadata/"
+        - href: models/index.qmd
+          text: Vocabularies
+    - id: research
+      title: "Research & Resources"
+      style: "docked"
+      search: true
+      contents:
         - text: Publications & Conferences
           href: pubs.qmd
         - text: Zenodo Community
