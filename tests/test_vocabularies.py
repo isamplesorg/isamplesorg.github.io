@@ -6,11 +6,11 @@ Feature: Vocabularies Page
 
   Wireframe ref: Figma frame [130:1300] Architecture & Vocabularies
 """
-import pytest
 from conftest import SITE_URL
 
 
 VOCAB_URL = f"{SITE_URL}/models/index.html"
+MATERIAL_TYPE_URL = f"{SITE_URL}/models/generated/vocabularies/material_type.html"
 
 
 class TestVocabularyIndex:
@@ -41,17 +41,16 @@ class TestVocabularyIndex:
 class TestVocabularyDetail:
     """Scenario: Individual vocabulary pages show concept hierarchy."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — vocabulary detail page")
     def test_material_type_has_hierarchy(self, page):
-        """Given I navigate to a vocabulary detail page, Then I see a concept tree."""
-        page.goto(f"{SITE_URL}/models/materialType.html", wait_until="domcontentloaded")
-        # SKOS concepts should render as nested lists or tree
-        concepts = page.locator("li a, .concept-label")
+        """Given I navigate to a vocabulary detail page, Then I see concept sections."""
+        page.goto(MATERIAL_TYPE_URL, wait_until="domcontentloaded")
+        # Vocabulary pages render concepts as numbered sections (h2, h3, h4)
+        concepts = page.locator("section[id] h2, section[id] h3, section[id] h4")
         assert concepts.count() >= 5
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — vocabulary definitions")
     def test_concepts_have_definitions(self, page):
-        """And each concept should have a definition or description."""
-        page.goto(f"{SITE_URL}/models/materialType.html", wait_until="domcontentloaded")
-        definitions = page.locator("dd, .concept-definition, blockquote")
+        """And each concept should have a definition."""
+        page.goto(MATERIAL_TYPE_URL, wait_until="domcontentloaded")
+        # Definitions rendered as <p><strong>Definition: </strong>...</p>
+        definitions = page.locator("p:has(strong:has-text('Definition'))")
         assert definitions.count() >= 3

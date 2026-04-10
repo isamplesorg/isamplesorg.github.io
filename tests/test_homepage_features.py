@@ -6,24 +6,22 @@ Feature: Homepage
 
   Wireframe ref: Figma frame [33:425] Home
 """
-import pytest
 from conftest import SITE_URL
 
 
 class TestHomepageShowcase:
     """Scenario: Showcase gallery displays real sample images."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — showcase gallery")
     def test_showcase_has_four_images(self, page):
         """Given I am on the homepage, Then I should see 4 showcase images."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
-        images = page.locator(".quarto-figure img, .lightbox img")
+        images = page.locator(".quarto-layout-cell img[data-group='showcase']")
         assert images.count() >= 4
 
     def test_showcase_images_have_alt_text(self, page):
         """And each showcase image should have alt text."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
-        images = page.locator(".quarto-figure img, .lightbox img")
+        images = page.locator(".quarto-layout-cell img[data-group='showcase']")
         for i in range(images.count()):
             alt = images.nth(i).get_attribute("alt")
             assert alt and len(alt) > 0, f"Image {i} missing alt text"
