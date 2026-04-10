@@ -52,9 +52,16 @@ try {
   window._viewerError = e.message;
 }
 
-// Set initial camera: equator-centered, matching progressive_globe default view
-const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
-viewer.camera.setView({ destination: globalRect });
+// Set initial camera: slightly elevated view to center the globe visually
+// Using setView with explicit position for better framing control
+viewer.camera.setView({
+  destination: Cesium.Cartesian3.fromDegrees(10, 20, 22000000),
+  orientation: {
+    heading: 0,
+    pitch: Cesium.Math.toRadians(-90),
+    roll: 0
+  }
+});
 
 // Load H3 cluster data from R2
 const R2 = "https://data.isamples.org";
