@@ -8,37 +8,45 @@ import pytest
 from conftest import SITE_URL
 
 
-class TestSidebarSections:
-    """Sidebar should show the wireframe's section names."""
+class TestPerSectionSidebars:
+    """Each section should show ONLY its own sidebar items (per-section sidebars)."""
 
-    def test_sidebar_shows_architecture_and_vocabularies(self, page):
+    def test_how_to_use_sidebar_only_shows_own_items(self, page):
+        page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Overview", exact=True).count() > 0
+        # Should NOT show items from other sections
+        assert sidebar.get_by_text("Objectives", exact=True).count() == 0
+        assert sidebar.get_by_text("Vocabularies", exact=True).count() == 0
+
+    def test_about_sidebar_only_shows_own_items(self, page):
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Architecture & Vocabularies").count() > 0
+        assert sidebar.get_by_text("Objectives", exact=True).count() > 0
+        # Should NOT show items from other sections
+        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
+        assert sidebar.get_by_text("Vocabularies", exact=True).count() == 0
+
+    def test_architecture_sidebar_only_shows_own_items(self, page):
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Vocabularies", exact=True).count() > 0
+        # Should NOT show items from other sections
+        assert sidebar.get_by_text("Objectives", exact=True).count() == 0
+        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
+
+    def test_research_sidebar_only_shows_own_items(self, page):
+        page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Publications & Conferences").count() > 0
+        # Should NOT show items from other sections
+        assert sidebar.get_by_text("Objectives", exact=True).count() == 0
+        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
 
     def test_sidebar_does_not_show_old_information_architecture(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Information Architecture").count() == 0
-
-    def test_sidebar_shows_research_and_resources(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
-        sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Research & Resources").count() > 0
-
-    def test_sidebar_does_not_show_separate_published_research(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
-        sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Published Research", exact=True).count() == 0
-
-    def test_sidebar_does_not_show_separate_resources(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
-        sidebar = page.locator(".sidebar-navigation")
-        # "Resources" alone shouldn't appear as a section header
-        # (it's OK inside "Research & Resources")
-        sections = sidebar.locator(".sidebar-section .sidebar-section-header")
-        texts = [s.text_content().strip() for s in sections.all()]
-        assert "Resources" not in texts
 
 
 class TestSidebarHowToUse:
@@ -122,17 +130,17 @@ class TestSidebarResearchResources:
     """Research & Resources should have 3 items matching wireframe."""
 
     def test_has_publications_and_conferences(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
+        page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Publications & Conferences").count() > 0
 
     def test_has_zenodo_community(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
+        page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Zenodo Community").count() > 0
 
     def test_has_github_repositories(self, page):
-        page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
+        page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Github Repositories").count() > 0
 
