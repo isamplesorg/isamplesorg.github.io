@@ -529,7 +529,7 @@ crossFilteredFacets = {
     const sql = `
       SELECT ${column} AS value, COUNT(*) AS count
       FROM sample_facets
-      WHERE ${where} AND ${column} IS NOT NULL AND ${column} != ''
+      WHERE ${where} AND ${column} IS NOT NULL
       GROUP BY ${column}
       ORDER BY count DESC
     `;
