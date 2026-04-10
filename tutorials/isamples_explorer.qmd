@@ -12,7 +12,7 @@ Search and explore **6.7 million physical samples** from scientific collections 
 
 ::: {.callout-note}
 ### Serverless Architecture
-This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts (source, material, context, specimen type), while the full ~280 MB Parquet file is only queried when drilling into records. All powered by DuckDB-WASM in your browser -- no server required!
+This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts, while the full ~280 MB Parquet file is queried on demand. **Cross-filtering** keeps counts accurate — selecting a source updates material/context/specimen counts to reflect only that source's samples. All powered by DuckDB-WASM in your browser — no server required!
 :::
 
 ## Setup
@@ -30,6 +30,12 @@ parquet_url = "https://data.isamples.org/isamples_202601_wide.parquet"
 
 // Pre-computed facet summaries (2KB - loads instantly)
 facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
+
+// Pre-computed cross-filter cache (6KB - instant single-filter lookups)
+cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter.parquet"
+
+// Facets file for on-the-fly multi-filter queries (63MB - URI strings, not BIGINT FKs)
+sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
 
 // Source color scheme (consistent with iSamples conventions)
 SOURCE_COLORS = ({
@@ -92,7 +98,6 @@ facetSummariesWarning
 //| code-fold: true
 // Source checkboxes with counts - uses pre-computed summaries for instant load
 viewof sourceCheckboxes = {
-  // Use pre-computed facet summaries (instant) instead of scanning full parquet
   const counts = facetsByType.source;
   const options = counts.map(r => r.value);
 
@@ -104,7 +109,7 @@ viewof sourceCheckboxes = {
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
-        ${x} <span style="color: #888;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="source" data-value="${x}" style="color: #888;">(${count})</span>
       </span>`;
     }
   });
@@ -125,7 +130,7 @@ viewof materialCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="material" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -146,7 +151,7 @@ viewof contextCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="context" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -167,7 +172,7 @@ viewof objectTypeCheckboxes = {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
       return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span style="color: #888; font-size: 11px;">(${count})</span>
+        ${x} <span class="facet-count" data-facet="object_type" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -308,9 +313,11 @@ db = {
   await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
   URL.revokeObjectURL(worker_url);
 
-  // Create view for convenience
+  // Create views for convenience
   const conn = await instance.connect();
   await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  // Slim facets view with correct URI-string columns for cross-filtering
+  await conn.query(`CREATE VIEW sample_facets AS SELECT * FROM read_parquet('${sample_facets_url}')`);
   await conn.close();
 
   return instance;
@@ -366,7 +373,7 @@ facetSummariesWarning = {
   </div>`;
 }
 
-// Extract facet counts by type from pre-computed summaries
+// Extract facet counts by type from pre-computed summaries (baseline)
 facetsByType = {
   const grouped = { source: [], material: [], context: [], object_type: [] };
   for (const row of facetSummaries) {
@@ -385,14 +392,12 @@ facetsByType = {
 
 ```{ojs}
 //| code-fold: true
-// Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
-whereClause = {
-  const conditions = [
-    "otype = 'MaterialSampleRecord'",
-    "latitude IS NOT NULL"
-  ];
+// Cross-filter: build WHERE clause excluding one facet dimension
+// Queries the sample_facets view (URI strings, correct column names)
+function buildCrossFilterWhere(excludeFacet) {
+  const conditions = [];
 
-  // Text search
+  // Text search participates in cross-filtering
   if (searchInput?.trim()) {
     const term = searchInput.trim().replace(/'/g, "''");
     conditions.push(`(
@@ -402,32 +407,229 @@ whereClause = {
     )`);
   }
 
-  // Source filter
+  if (excludeFacet !== 'source') {
+    const sources = Array.from(sourceCheckboxes || []);
+    if (sources.length > 0) {
+      const sourceList = sources.map(s => `'${s}'`).join(", ");
+      conditions.push(`source IN (${sourceList})`);
+    }
+  }
+
+  if (excludeFacet !== 'material') {
+    const materials = Array.from(materialCheckboxes || []);
+    if (materials.length > 0) {
+      const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`material IN (${matList})`);
+    }
+  }
+
+  if (excludeFacet !== 'context') {
+    const contexts = Array.from(contextCheckboxes || []);
+    if (contexts.length > 0) {
+      const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`context IN (${ctxList})`);
+    }
+  }
+
+  if (excludeFacet !== 'object_type') {
+    const objectTypes = Array.from(objectTypeCheckboxes || []);
+    if (objectTypes.length > 0) {
+      const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
+      conditions.push(`object_type IN (${otList})`);
+    }
+  }
+
+  return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Detect whether any filter is active (triggers cross-filter queries)
+hasActiveFilters = {
+  const hasSearch = searchInput?.trim()?.length > 0;
+  const hasSources = (sourceCheckboxes || []).length > 0;
+  const hasMaterials = (materialCheckboxes || []).length > 0;
+  const hasContexts = (contextCheckboxes || []).length > 0;
+  const hasObjectTypes = (objectTypeCheckboxes || []).length > 0;
+  return hasSearch || hasSources || hasMaterials || hasContexts || hasObjectTypes;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Cross-filtered facet counts: use pre-computed cache for single-filter,
+// fall back to on-the-fly queries against sample_facets for multi-filter
+crossFilteredFacets = {
+  if (!hasActiveFilters) return null;  // Use pre-computed summaries when no filters
+
+  // Count how many facets have active filters
+  const activeSources = Array.from(sourceCheckboxes || []);
+  const activeMaterials = Array.from(materialCheckboxes || []);
+  const activeContexts = Array.from(contextCheckboxes || []);
+  const activeObjectTypes = Array.from(objectTypeCheckboxes || []);
+  const hasSearch = searchInput?.trim()?.length > 0;
+
+  const activeFilterCount = [activeSources, activeMaterials, activeContexts, activeObjectTypes]
+    .filter(a => a.length > 0).length;
+
+  // Try pre-computed cache: exactly one facet active, exactly one value, no text search
+  const singleValueFacet = (
+    !hasSearch && activeFilterCount === 1 &&
+    [activeSources, activeMaterials, activeContexts, activeObjectTypes]
+      .every(a => a.length <= 1)
+  );
+
+  if (singleValueFacet) {
+    try {
+      const conditions = ["filter_source IS NULL", "filter_material IS NULL",
+                          "filter_context IS NULL", "filter_object_type IS NULL"];
+      if (activeSources.length === 1)
+        conditions[0] = `filter_source = '${activeSources[0].replace(/'/g, "''")}'`;
+      else if (activeMaterials.length === 1)
+        conditions[1] = `filter_material = '${activeMaterials[0].replace(/'/g, "''")}'`;
+      else if (activeContexts.length === 1)
+        conditions[2] = `filter_context = '${activeContexts[0].replace(/'/g, "''")}'`;
+      else if (activeObjectTypes.length === 1)
+        conditions[3] = `filter_object_type = '${activeObjectTypes[0].replace(/'/g, "''")}'`;
+
+      const sql = `
+        SELECT facet_type, facet_value AS value, count
+        FROM read_parquet('${cross_filter_url}')
+        WHERE ${conditions.join(" AND ")}
+      `;
+      const rows = await runQuery(sql);
+
+      if (rows.length > 0) {
+        const results = { source: [], material: [], context: [], object_type: [] };
+        for (const r of rows) {
+          if (results[r.facet_type]) {
+            results[r.facet_type].push({ value: r.value, count: Number(r.count) });
+          }
+        }
+        return results;
+      }
+    } catch (e) {
+      console.warn("Pre-computed cache miss, falling back to on-the-fly:", e);
+    }
+  }
+
+  // Fallback: on-the-fly queries against the slim sample_facets view
+  const facetConfig = [
+    { key: 'source',      column: 'source',      exclude: 'source' },
+    { key: 'material',    column: 'material',     exclude: 'material' },
+    { key: 'context',     column: 'context',      exclude: 'context' },
+    { key: 'object_type', column: 'object_type',  exclude: 'object_type' },
+  ];
+
+  const results = {};
+
+  const queries = facetConfig.map(async ({ key, column, exclude }) => {
+    const where = buildCrossFilterWhere(exclude);
+    const sql = `
+      SELECT ${column} AS value, COUNT(*) AS count
+      FROM sample_facets
+      WHERE ${where} AND ${column} IS NOT NULL
+      GROUP BY ${column}
+      ORDER BY count DESC
+    `;
+    try {
+      const rows = await runQuery(sql);
+      results[key] = rows.map(r => ({ value: r.value, count: r.count }));
+    } catch (e) {
+      console.warn(`Cross-filter query failed for ${key}:`, e);
+      results[key] = null;
+    }
+  });
+
+  await Promise.all(queries);
+  return results;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Update facet count labels in-place when cross-filtered counts change
+// This avoids re-rendering checkboxes (which would reset user selections)
+{
+  if (!crossFilteredFacets) {
+    // No active filters — restore baseline counts and remove dimming
+    for (const facetKey of ['source', 'material', 'context', 'object_type']) {
+      const baseline = facetsByType[facetKey] || [];
+      const countMap = new Map(baseline.map(r => [r.value, r.count]));
+      document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+        const value = el.getAttribute('data-value');
+        const count = countMap.get(value) ?? 0;
+        el.textContent = `(${Number(count).toLocaleString()})`;
+        el.style.opacity = '1';
+      });
+    }
+    return;
+  }
+
+  for (const [facetKey, rows] of Object.entries(crossFilteredFacets)) {
+    if (!rows) continue;
+    const countMap = new Map(rows.map(r => [r.value, r.count]));
+
+    document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+      const value = el.getAttribute('data-value');
+      const count = countMap.get(value) ?? 0;
+      el.textContent = `(${Number(count).toLocaleString()})`;
+      el.style.opacity = count === 0 ? '0.4' : '1';
+    });
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
+// Source filter uses the wide parquet's `n` column directly.
+// Material/context/object_type filters use the sample_facets view (URI strings)
+// via a subquery, since the wide parquet stores these as BIGINT foreign keys.
+whereClause = {
+  const conditions = [
+    "otype = 'MaterialSampleRecord'",
+    "latitude IS NOT NULL"
+  ];
+
+  // Text search (against wide parquet — has label, description, place_name)
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    conditions.push(`(
+      label ILIKE '%${term}%'
+      OR description ILIKE '%${term}%'
+      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+    )`);
+  }
+
+  // Source filter (n column exists in wide parquet)
   const sources = Array.from(sourceCheckboxes || []);
   if (sources.length > 0) {
     const sourceList = sources.map(s => `'${s}'`).join(", ");
     conditions.push(`n IN (${sourceList})`);
   }
 
-  // Material filter
+  // Facet filters: build a subquery against sample_facets to get matching PIDs
+  const facetConditions = [];
   const materials = Array.from(materialCheckboxes || []);
   if (materials.length > 0) {
     const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_material_category IN (${matList})`);
+    facetConditions.push(`material IN (${matList})`);
   }
-
-  // Context (sampled feature) filter
   const contexts = Array.from(contextCheckboxes || []);
   if (contexts.length > 0) {
     const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_context_category IN (${ctxList})`);
+    facetConditions.push(`context IN (${ctxList})`);
   }
-
-  // Object type (specimen type) filter
   const objectTypes = Array.from(objectTypeCheckboxes || []);
   if (objectTypes.length > 0) {
     const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
-    conditions.push(`has_specimen_category IN (${otList})`);
+    facetConditions.push(`object_type IN (${otList})`);
+  }
+
+  if (facetConditions.length > 0) {
+    conditions.push(`pid IN (SELECT pid FROM sample_facets WHERE ${facetConditions.join(" AND ")})`);
   }
 
   return conditions.join(" AND ");
