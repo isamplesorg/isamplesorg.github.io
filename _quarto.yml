@@ -134,6 +134,7 @@ format:
     number-sections: true
     anchor-sections: false
     number-depth: 8
+    lightbox: true
     theme: cosmo
     css: styles.css
 
