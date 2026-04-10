@@ -14,7 +14,7 @@ class TestSidebarSections:
     def test_sidebar_shows_architecture_and_vocabularies(self, page):
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Architecture and Vocabularies").count() > 0
+        assert sidebar.get_by_text("Architecture & Vocabularies").count() > 0
 
     def test_sidebar_does_not_show_old_information_architecture(self, page):
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
@@ -92,6 +92,30 @@ class TestSidebarAbout:
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Background & History").count() > 0
+
+
+class TestSidebarArchitectureVocabularies:
+    """Architecture & Vocabularies should have 4 items matching wireframe."""
+
+    def test_has_overview(self, page):
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Overview", exact=True).count() > 0
+
+    def test_has_requirements(self, page):
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Requirements", exact=True).count() > 0
+
+    def test_has_schema(self, page):
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Schema", exact=True).count() > 0
+
+    def test_has_vocabularies(self, page):
+        page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
+        sidebar = page.locator(".sidebar-navigation")
+        assert sidebar.get_by_text("Vocabularies", exact=True).count() > 0
 
 
 class TestSidebarResearchResources:

@@ -87,13 +87,16 @@ website:
           href: "about.qmd#photo-gallery"
         - text: "Background & History"
           href: "about.qmd#background-history"
-      - section: "Architecture and Vocabularies"
+      - section: "Architecture & Vocabularies"
         contents:
-          - design/index.qmd
-          - design/requirements.md
-          - text: Metadata Model
+          - href: design/index.qmd
+            text: Overview
+          - href: design/requirements.md
+            text: Requirements
+          - text: Schema
             href: "https://isamplesorg.github.io/metadata/"
-          - models/index.qmd
+          - href: models/index.qmd
+            text: Vocabularies
       - section: "Research & Resources"
         contents:
         - text: Publications & Conferences
