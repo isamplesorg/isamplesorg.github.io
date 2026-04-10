@@ -18,7 +18,7 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```lorwdbbw assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```lorwdbbw assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```yrpvqncn assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```yrpvqncn assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   },
   {
     "objectID": "models/generated/extensions/opencontext_material_extension.html",
@@ -1553,11 +1553,21 @@
     ]
   },
   {
-    "objectID": "models/index.html#taxonomies",
-    "href": "models/index.html#taxonomies",
+    "objectID": "models/index.html#core-vocabularies",
+    "href": "models/index.html#core-vocabularies",
     "title": "iSamples Vocabularies",
-    "section": "Taxonomies",
-    "text": "Taxonomies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\nThe iSamples taxonomies are used to characterize three fundamental concepts pertaining to physical samples:\n\nThe Materials Vocabulary categorizes the composition of a physical sample (“What material is the sample composed of?”)\nThe Sampled Feature Type Vocabulary indicates what the sample is representative of\nThe Specimen Type Vocabulary classifies what type of specimen the physical sample record represents\n\n\n\n\n\n\n\nNoteCore Vocabularies\n\n\n\n\n\n\nMaterial Sample (specimen) Type Vocabulary\nMaterials Vocabulary\nSampled Feature (context) Type vocabulary",
+    "section": "Core Vocabularies",
+    "text": "Core Vocabularies\nOne of the foundations for interoperability of iSamples material sample descriptions is the definition of vocabularies for the categorization of sample type. There are three core vocabularies for different aspects of sample type: material sample type, material type, and sampled feature type. Each vocabulary is maintained as an RDF file using the SKOS vocabulary, with hierarchical relationships using SKOS:broader. In order to be domain agnostic, these core taxonomies cover a small set of top level terms. The taxonomies may be extended as necessary to support more specialized domains by relating additional terms using SKOS:broader and SKOS:narrower.\n\n\n\nVocabulary\nDescription\n\n\n\n\nSpecimen Type\nClassifies what type of specimen the physical sample record represents\n\n\nMaterial Type\nCategorizes the composition of a physical sample\n\n\nSampled Feature Type\nIndicates what the sample is representative of",
+    "crumbs": [
+      "Vocabularies"
+    ]
+  },
+  {
+    "objectID": "models/index.html#extension-vocabularies",
+    "href": "models/index.html#extension-vocabularies",
+    "title": "iSamples Vocabularies",
+    "section": "Extension Vocabularies",
+    "text": "Extension Vocabularies\nThe core vocabularies can be extended for specialized domains. Extension vocabularies add narrower terms beneath the core concepts using SKOS:broader and SKOS:narrower. Domain-specific extensions are maintained in the following repositories:\n\nEarth Science extensions\nBiology extensions\nAnthropology/Archaeology extensions",
     "crumbs": [
       "Vocabularies"
     ]

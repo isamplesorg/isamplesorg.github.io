@@ -43,6 +43,9 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-84244d6014897f94eda7509784684fcb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -335,7 +338,7 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>Current data access</strong>: The project now uses <strong>geoparquet files + DuckDB-WASM</strong> for efficient, browser-based data access and analysis. See the <a href="./tutorials/progressive_globe.html">Interactive Explorer</a> for a live demo.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/iSamplesArchitecture.png" class="img-fluid figure-img"></p>
+<p><a href="assets/iSamplesArchitecture.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="iSamples Architecture"><img src="assets/iSamplesArchitecture.png" class="img-fluid figure-img" alt="iSamples Architecture"></a></p>
 <figcaption>iSamples Architecture</figcaption>
 </figure>
 </div>
@@ -410,7 +413,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/RCN_workshop_NYU.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/RCN_workshop_NYU.jpg" class="lightbox" data-gallery="gallery" title="RCN Workshop, NYU"><img src="assets/RCN_workshop_NYU.jpg" class="img-fluid figure-img" alt="RCN Workshop, NYU"></a></p>
 <figcaption>RCN Workshop, NYU</figcaption>
 </figure>
 </div>
@@ -418,7 +421,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/workshop_Tucson.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/workshop_Tucson.jpg" class="lightbox" data-gallery="gallery" title="Workshop, Tucson"><img src="assets/workshop_Tucson.jpg" class="img-fluid figure-img" alt="Workshop, Tucson"></a></p>
 <figcaption>Workshop, Tucson</figcaption>
 </figure>
 </div>
@@ -426,7 +429,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/workshop_SI.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/workshop_SI.jpg" class="lightbox" data-gallery="gallery" title="Workshop, Smithsonian"><img src="assets/workshop_SI.jpg" class="img-fluid figure-img" alt="Workshop, Smithsonian"></a></p>
 <figcaption>Workshop, Smithsonian</figcaption>
 </figure>
 </div>
@@ -436,7 +439,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/outside_SI_MSC.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/outside_SI_MSC.jpg" class="lightbox" data-gallery="gallery" title="Outside Smithsonian MSC"><img src="assets/outside_SI_MSC.jpg" class="img-fluid figure-img" alt="Outside Smithsonian MSC"></a></p>
 <figcaption>Outside Smithsonian MSC</figcaption>
 </figure>
 </div>
@@ -444,7 +447,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/tour_SI_MSC.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/tour_SI_MSC.jpg" class="lightbox" data-gallery="gallery" title="Tour, Smithsonian MSC"><img src="assets/tour_SI_MSC.jpg" class="img-fluid figure-img" alt="Tour, Smithsonian MSC"></a></p>
 <figcaption>Tour, Smithsonian MSC</figcaption>
 </figure>
 </div>
@@ -452,7 +455,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="assets/workshop_Moorea.jpg" class="img-fluid figure-img" data-group="gallery"></p>
+<p><a href="assets/workshop_Moorea.jpg" class="lightbox" data-gallery="gallery" title="Workshop, Moorea"><img src="assets/workshop_Moorea.jpg" class="img-fluid figure-img" alt="Workshop, Moorea"></a></p>
 <figcaption>Workshop, Moorea</figcaption>
 </figure>
 </div>
@@ -884,6 +887,38 @@ ul.task-list li input[type="checkbox"] {
 </div>
   </div>
 </footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 
