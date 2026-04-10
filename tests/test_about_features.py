@@ -7,14 +7,12 @@ Feature: About Page
 
   Wireframe ref: Figma frame [33:919] About
 """
-import pytest
 from conftest import SITE_URL
 
 
 class TestAboutAnchors:
     """Scenario: Section anchors scroll to correct content."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — about anchors")
     def test_team_anchor_scrolls_to_team(self, page):
         """Given I navigate to about.html#team, Then the Team section is visible."""
         page.goto(f"{SITE_URL}/about.html#team", wait_until="domcontentloaded")
@@ -22,7 +20,6 @@ class TestAboutAnchors:
         assert heading.count() > 0
         assert heading.first.is_visible()
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — about anchors")
     def test_photo_gallery_anchor(self, page):
         """Given I navigate to about.html#photo-gallery, Then the Photo Gallery is visible."""
         page.goto(f"{SITE_URL}/about.html#photo-gallery", wait_until="domcontentloaded")
@@ -30,7 +27,6 @@ class TestAboutAnchors:
         assert heading.count() > 0
         assert heading.first.is_visible()
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — about anchors")
     def test_background_anchor(self, page):
         """Given I navigate to about.html#background-history, Then Background section is visible."""
         page.goto(f"{SITE_URL}/about.html#background-history", wait_until="domcontentloaded")
@@ -41,7 +37,6 @@ class TestAboutAnchors:
 class TestAboutPILinks:
     """Scenario: PI names link to ORCID profiles."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — PI ORCID links")
     def test_pi_names_have_orcid_links(self, page):
         """Given I am on the about page, Then each PI name links to an ORCID profile."""
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")
@@ -52,7 +47,6 @@ class TestAboutPILinks:
 class TestAboutGallery:
     """Scenario: Photo gallery displays workshop and facility images."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — gallery images")
     def test_gallery_has_images(self, page):
         """Given I am on the about page, Then the photo gallery has at least 6 images."""
         page.goto(f"{SITE_URL}/about.html#photo-gallery", wait_until="domcontentloaded")
@@ -66,7 +60,6 @@ class TestAboutGallery:
 class TestAboutContributors:
     """Scenario: Contributors section lists project participants."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — contributors list")
     def test_contributors_section_expandable(self, page):
         """Given I am on the about page, Then I can expand the Contributors section."""
         page.goto(f"{SITE_URL}/about.html", wait_until="domcontentloaded")

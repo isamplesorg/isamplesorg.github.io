@@ -6,14 +6,12 @@ Feature: Responsive Layout
 
   Wireframe ref: Figma frame [33:425] (implied responsive behavior)
 """
-import pytest
 from conftest import SITE_URL
 
 
 class TestMobileNavigation:
     """Scenario: Navbar collapses to hamburger menu on small screens."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — mobile nav")
     def test_hamburger_visible_on_mobile(self, page):
         """Given I am on a 375px-wide screen, Then I see a hamburger menu button."""
         page.set_viewport_size({"width": 375, "height": 812})
@@ -22,7 +20,6 @@ class TestMobileNavigation:
         assert toggle.count() > 0
         assert toggle.first.is_visible()
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — mobile nav")
     def test_sidebar_hidden_on_mobile(self, page):
         """And the sidebar is not visible on mobile."""
         page.set_viewport_size({"width": 375, "height": 812})
@@ -35,7 +32,6 @@ class TestMobileNavigation:
 class TestTabletLayout:
     """Scenario: Content is readable at tablet width."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — tablet layout")
     def test_no_horizontal_scroll_at_768(self, page):
         """Given I am on a 768px-wide screen, Then there is no horizontal scrollbar."""
         page.set_viewport_size({"width": 768, "height": 1024})
@@ -50,7 +46,6 @@ class TestTabletLayout:
 class TestDesktopLayout:
     """Scenario: Full navigation visible on desktop."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — desktop layout")
     def test_navbar_expanded_on_desktop(self, page):
         """Given I am on a 1280px-wide screen, Then the navbar items are visible."""
         page.set_viewport_size({"width": 1280, "height": 900})
@@ -58,7 +53,6 @@ class TestDesktopLayout:
         navbar = page.locator(".navbar")
         assert navbar.get_by_text("About").first.is_visible()
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — desktop layout")
     def test_sidebar_visible_on_desktop(self, page):
         """And the sidebar is visible on inner pages."""
         page.set_viewport_size({"width": 1280, "height": 900})

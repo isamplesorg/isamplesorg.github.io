@@ -6,28 +6,24 @@ Feature: Footer and External Links
 
   Wireframe ref: Figma frame [33:425] (footer visible on all frames)
 """
-import pytest
 from conftest import SITE_URL
 
 
 class TestFooterContent:
     """Scenario: Footer displays NSF funding acknowledgement."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — footer content")
     def test_footer_has_nsf_grant_numbers(self, page):
         """Given I am on any page, Then I see NSF grant numbers in the footer."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         footer = page.locator("footer, .page-footer")
         assert footer.get_by_text("2004839").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — footer content")
     def test_footer_has_copyright(self, page):
         """And the footer contains a copyright notice."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         footer = page.locator("footer, .page-footer")
         assert footer.get_by_text("Copyright").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — footer disclaimer")
     def test_footer_has_disclaimer(self, page):
         """And the footer includes the NSF disclaimer."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -38,7 +34,6 @@ class TestFooterContent:
 class TestExternalLinks:
     """Scenario: Navbar external links point to correct destinations."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — external links")
     def test_github_icon_links_to_isamplesorg(self, page):
         """Given I am on any page, Then the GitHub icon links to isamplesorg."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -47,7 +42,6 @@ class TestExternalLinks:
         href = gh_link.get_attribute("href")
         assert "github.com/isamplesorg" in href
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — external links")
     def test_slack_icon_links_to_workspace(self, page):
         """And the Slack icon links to the iSamples workspace."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -58,7 +52,6 @@ class TestExternalLinks:
 class TestMetadataModelLink:
     """Scenario: Metadata Model external link opens correctly."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P1 — metadata model link")
     def test_metadata_model_link_exists(self, page):
         """Given I navigate to Architecture, Then Metadata Model links to external site."""
         page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")

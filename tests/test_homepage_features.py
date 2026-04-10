@@ -20,7 +20,6 @@ class TestHomepageShowcase:
         images = page.locator(".quarto-figure img, .lightbox img")
         assert images.count() >= 4
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — showcase alt text")
     def test_showcase_images_have_alt_text(self, page):
         """And each showcase image should have alt text."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -33,19 +32,16 @@ class TestHomepageShowcase:
 class TestHomepageCallouts:
     """Scenario: Collapsible callouts explain the project."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — homepage callouts")
     def test_has_what_is_isamples_callout(self, page):
         """Given I am on the homepage, Then I should see a 'What is iSamples?' callout."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         assert page.get_by_text("What is iSamples").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — homepage callouts")
     def test_has_how_can_i_access_callout(self, page):
         """And I should see a 'How can I access it?' callout."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         assert page.get_by_text("How can I access").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — homepage callouts")
     def test_has_why_browser_based_callout(self, page):
         """And I should see a 'Why browser-based?' callout."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
@@ -55,13 +51,11 @@ class TestHomepageCallouts:
 class TestHomepageHero:
     """Scenario: Hero section draws visitors in."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — hero stats")
     def test_hero_shows_sample_count(self, page):
         """Given I am on the homepage, Then I should see '6.7 million' in the stats."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         assert page.get_by_text("6.7 million").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — hero stats")
     def test_hero_shows_repository_count(self, page):
         """And I should see '4 repositories'."""
         page.goto(SITE_URL, wait_until="domcontentloaded")

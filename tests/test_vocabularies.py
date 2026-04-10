@@ -16,25 +16,21 @@ VOCAB_URL = f"{SITE_URL}/models/index.html"
 class TestVocabularyIndex:
     """Scenario: Vocabulary index lists all SKOS vocabularies."""
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — vocabulary index page")
     def test_has_material_type_vocab(self, page):
         """Given I am on the vocabularies page, Then I see Material Type."""
         page.goto(VOCAB_URL, wait_until="domcontentloaded")
         assert page.get_by_text("Material Type").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — vocabulary index page")
     def test_has_specimen_type_vocab(self, page):
         """Given I am on the vocabularies page, Then I see Specimen Type."""
         page.goto(VOCAB_URL, wait_until="domcontentloaded")
         assert page.get_by_text("Specimen Type").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — vocabulary index page")
     def test_has_sampled_feature_vocab(self, page):
         """Given I am on the vocabularies page, Then I see Sampled Feature."""
         page.goto(VOCAB_URL, wait_until="domcontentloaded")
         assert page.get_by_text("Sampled Feature").count() > 0
 
-    @pytest.mark.xfail(reason="Not yet tested: #104 P0 — vocabulary readability")
     def test_vocabulary_links_resolve(self, page):
         """And each vocabulary name links to its detail page."""
         page.goto(VOCAB_URL, wait_until="domcontentloaded")
