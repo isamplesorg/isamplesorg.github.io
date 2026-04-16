@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mapping Source Records – iSamples</title>
+<title>3D Globe Visualization (moved) – iSamples</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -70,6 +70,8 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<meta http-equiv="refresh" content="0; url=/tutorials/progressive_globe.html">
+<link rel="canonical" href="https://isamples.org/tutorials/progressive_globe.html">
 
 
 <link rel="stylesheet" href="../styles.css">
@@ -215,23 +217,15 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#mapping-from-sources-to-core" id="toc-mapping-from-sources-to-core" class="nav-link active" data-scroll-target="#mapping-from-sources-to-core"><span class="header-section-number">1</span> Mapping from sources to core</a></li>
-  <li><a href="#geome" id="toc-geome" class="nav-link" data-scroll-target="#geome"><span class="header-section-number">2</span> GEOME</a></li>
-  </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/mapping_sources.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Mapping Source Records</h1>
-<p class="subtitle lead">Mapping source sample records to the iSamples core model</p>
+<h1 class="title">3D Globe Visualization (moved)</h1>
 </div>
 
 
@@ -248,98 +242,11 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="mapping-from-sources-to-core" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="mapping-from-sources-to-core"><span class="header-section-number">1</span> Mapping from sources to core</h2>
-<p>In general the process is :</p>
-<p>Remove plantuml diagram… [smr 2024-01-04]</p>
-</section>
-<section id="geome" class="level2" data-number="2">
-<h2 data-number="2" data-anchor-id="geome"><span class="header-section-number">2</span> GEOME</h2>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>s</th>
-<th>p</th>
-<th>o</th>
-<th>Label</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>event</td>
-<td>GEOME</td>
-</tr>
-<tr class="even">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>sample</td>
-<td>GEOME</td>
-</tr>
-<tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>tissue</td>
-<td>GEOME</td>
-</tr>
-<tr class="even">
-<td>IGSN</td>
-<td>has_record</td>
-<td>_id</td>
-<td>sample</td>
-<td>SESAR</td>
-</tr>
-<tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>SMITHSONIAN</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>```ueuqywxn assets/geome_mapping.drawio.svg</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>align: left</td>
-</tr>
-</tbody>
-</table>
-<p>Source record representation.</p>
-<pre><code>
-```{figure} assets/geome_mapping_1.drawio.svg
----
-align: left
----
-Mapping to individual core records and relation records. </code></pre>
-<p>Relations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>```ueuqywxn assets/geome_mapping_2.drawio.svg</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>align: left</td>
-</tr>
-</tbody>
-</table>
-<p>Mapping to individual core records and including relations in the records. ```</p>
-<p>Relations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers.</p>
+<p>This page has moved. The <strong>3D Globe Visualization</strong> has been superseded by the <a href="../tutorials/progressive_globe.html"><strong>Interactive Explorer</strong></a>, which subsumes its functionality with zoom-adaptive H3 clustering and sample-level drilldown.</p>
+<p>If your browser does not redirect automatically, open <a href="../tutorials/progressive_globe.html">/tutorials/progressive_globe.html</a>.</p>
+<p>The original page is archived for historical reference at <a href="../tutorials/archive/parquet_cesium_isamples_wide.html">/tutorials/archive/parquet_cesium_isamples_wide.html</a>.</p>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -743,7 +650,7 @@ Mapping to individual core records and relation records. </code></pre>
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/mapping_sources.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/parquet_cesium_isamples_wide.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
