@@ -36,8 +36,9 @@ Works in Chrome, Firefox, Edge, Safari, and Brave. No plugins, no downloads, no 
 
 All code is visible and foldable on tutorial pages. Want to build your own analysis?
 
-- **[Tutorials](/tutorials/)** — step-by-step guides from basic exploration to advanced analysis
+- **[Search Explorer](/tutorials/isamples_explorer.html)** — faceted search across all 6.7M samples with cross-filtering
 - **[Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html)** — statistical exploration with Observable Plot
+- **[Tutorials index](/tutorials/)** — step-by-step guides from basic exploration to advanced analysis
 - **[GitHub](https://github.com/isamplesorg/)** — all source code and data pipelines
 - **[Zenodo](https://zenodo.org/communities/isamples)** — archived datasets for reproducible research
 
