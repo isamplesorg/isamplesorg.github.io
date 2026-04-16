@@ -38,7 +38,7 @@ cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter
 sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
 
 // Source color scheme — imported from canonical palette (issue #113)
-_palette = await import('../assets/js/source-palette.js')
+_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 
 // Cesium colors
