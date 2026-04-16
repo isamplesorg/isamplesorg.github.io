@@ -1,6 +1,8 @@
 project:
   type: website
   output-dir: docs
+  resources:
+    - assets/js/source-palette.js
 
 website:
   title: "iSamples"

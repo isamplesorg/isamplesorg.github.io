@@ -206,14 +206,10 @@ wide_url = `${R2_BASE}/isamples_202601_wide.parquet`
 facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
 
-SOURCE_COLORS = ({
-    SESAR: '#3366CC', OPENCONTEXT: '#DC3912',
-    GEOME: '#109618', SMITHSONIAN: '#FF9900'
-})
-SOURCE_NAMES = ({
-    SESAR: 'SESAR', OPENCONTEXT: 'OpenContext',
-    GEOME: 'GEOME', SMITHSONIAN: 'Smithsonian'
-})
+// Canonical palette — see issue #113
+_palette = await import('../assets/js/source-palette.js')
+SOURCE_COLORS = _palette.SOURCE_COLORS
+SOURCE_NAMES = _palette.SOURCE_NAMES
 
 // === Source URL: resolve pid to original repository ===
 function sourceUrl(pid) {

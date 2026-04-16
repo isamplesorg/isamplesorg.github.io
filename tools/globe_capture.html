@@ -17,6 +17,7 @@
 <div id="cesiumContainer"></div>
 <script type="module">
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+import { SOURCE_COLORS } from '../assets/js/source-palette.js';
 
 // Ion token from progressive_globe.qmd
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
@@ -92,13 +93,10 @@ async function loadData() {
     lon: Number(r.center_lng)
   }));
 
-  // Color by source
-  const sourceColors = {
-    SESAR: Cesium.Color.fromCssColorString("#2196F3"),
-    OPENCONTEXT: Cesium.Color.fromCssColorString("#FF9800"),
-    GEOME: Cesium.Color.fromCssColorString("#4CAF50"),
-    SMITHSONIAN: Cesium.Color.fromCssColorString("#E91E63")
-  };
+  // Color by source (canonical palette — see issue #113)
+  const sourceColors = Object.fromEntries(
+    Object.entries(SOURCE_COLORS).map(([k, hex]) => [k, Cesium.Color.fromCssColorString(hex)])
+  );
 
   const points = new Cesium.PointPrimitiveCollection();
   viewer.scene.primitives.add(points);

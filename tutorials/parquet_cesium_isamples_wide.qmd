@@ -95,14 +95,9 @@ viewof viewModeToggle = Inputs.radio(["clustered", "all points"], {
 
 ```{ojs}
 //| echo: false
-// Source color scheme for cluster coloring
-CLUSTER_COLORS = ({
-  'SESAR': '#3366CC',
-  'OPENCONTEXT': '#DC3912',
-  'GEOME': '#109618',
-  'SMITHSONIAN': '#FF9900',
-  'default': '#808080'
-})
+// Source color scheme — imported from canonical palette (issue #113)
+_palette = await import('../assets/js/source-palette.js')
+CLUSTER_COLORS = _palette.SOURCE_COLORS
 
 // H3 resolution based on camera height
 function getH3ResForHeight(height) {
