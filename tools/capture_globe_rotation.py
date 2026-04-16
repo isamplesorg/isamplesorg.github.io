@@ -9,8 +9,8 @@ Prerequisites:
     brew install webp ffmpeg   # for img2webp and ffmpeg
 
 Usage:
-    # 1. Serve this directory locally:
-    python -m http.server 8765 --directory tools/
+    # 1. Serve the repo root locally (so /assets/js/source-palette.js resolves):
+    python -m http.server 8765
 
     # 2. Run the capture:
     python tools/capture_globe_rotation.py
@@ -35,7 +35,7 @@ import math
 
 async def capture_globe(num_frames=120, duration_sec=15, output_path="/tmp/isamples_globe.webp",
                         width=800, height=500, quality=40,
-                        url="http://localhost:8765/globe_capture.html"):
+                        url="http://localhost:8765/tools/globe_capture.html"):
     from playwright.async_api import async_playwright
 
     frame_dir = tempfile.mkdtemp(prefix="globe_frames_")
@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--width", type=int, default=800, help="Width in pixels (default: 800)")
     parser.add_argument("--height", type=int, default=500, help="Height in pixels (default: 500)")
     parser.add_argument("--quality", type=int, default=40, help="WebP quality 0-100 (default: 40)")
-    parser.add_argument("--url", default="http://localhost:8765/globe_capture.html", help="Page URL")
+    parser.add_argument("--url", default="http://localhost:8765/tools/globe_capture.html", help="Page URL")
     args = parser.parse_args()
 
     asyncio.run(capture_globe(

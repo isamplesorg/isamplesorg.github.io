@@ -37,24 +37,14 @@ cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter
 // Facets file for on-the-fly multi-filter queries (63MB - URI strings, not BIGINT FKs)
 sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
 
-// Source color scheme (consistent with iSamples conventions)
-SOURCE_COLORS = ({
-  'SESAR': '#3366CC',       // Blue
-  'OPENCONTEXT': '#DC3912', // Red
-  'GEOME': '#109618',       // Green
-  'SMITHSONIAN': '#FF9900', // Orange
-  'default': '#808080'      // Gray
-})
+// Source color scheme — imported from canonical palette (issue #113)
+_palette = await import('../assets/js/source-palette.js')
+SOURCE_COLORS = _palette.SOURCE_COLORS
 
 // Cesium colors
 function getCesiumColor(source) {
-  const colors = {
-    'SESAR': Cesium.Color.fromCssColorString('#3366CC'),
-    'OPENCONTEXT': Cesium.Color.fromCssColorString('#DC3912'),
-    'GEOME': Cesium.Color.fromCssColorString('#109618'),
-    'SMITHSONIAN': Cesium.Color.fromCssColorString('#FF9900'),
-  };
-  return colors[source] || Cesium.Color.GRAY;
+  const hex = SOURCE_COLORS[source];
+  return hex ? Cesium.Color.fromCssColorString(hex) : Cesium.Color.GRAY;
 }
 ```
 
