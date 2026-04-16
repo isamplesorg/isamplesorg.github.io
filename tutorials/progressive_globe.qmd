@@ -207,7 +207,7 @@ facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
 
 // Canonical palette — see issue #113
-_palette = await import('../assets/js/source-palette.js')
+_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 SOURCE_NAMES = _palette.SOURCE_NAMES
 
