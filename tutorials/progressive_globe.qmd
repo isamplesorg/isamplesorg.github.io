@@ -1233,6 +1233,5 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 
 ## See Also
 
-- [Cesium Globe (All Points)](/tutorials/parquet_cesium_isamples_wide.html) — Full point-level rendering
-- [Interactive Explorer](/tutorials/isamples_explorer.html) — Search and filter with facets
+- [Search Explorer](/tutorials/isamples_explorer.html) — Faceted search and filter across all samples
 - [Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html) — DuckDB-WASM SQL tutorial

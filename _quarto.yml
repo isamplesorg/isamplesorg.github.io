@@ -18,14 +18,10 @@ website:
         menu:
           - text: Overview
             href: how-to-use.qmd
-          - text: Deep-Dive Analysis
-            href: tutorials/zenodo_isamples_analysis.qmd
-          - text: 3D Globe Visualization
-            href: tutorials/parquet_cesium_isamples_wide.qmd
           - text: Search Explorer
             href: tutorials/isamples_explorer.qmd
-          - text: "Technical: Narrow vs Wide"
-            href: tutorials/narrow_vs_wide_performance.qmd
+          - text: Deep-Dive Analysis
+            href: tutorials/zenodo_isamples_analysis.qmd
       - text: About
         menu:
           - text: Objectives
@@ -43,9 +39,11 @@ website:
           - text: Requirements
             href: design/requirements.md
           - text: Metadata Model
-            href: "https://isamplesorg.github.io/metadata/"
+            href: "https://isamples.org/metadata/"
           - text: Vocabularies
             href: models/index.qmd
+          - text: "Technical: Narrow vs Wide"
+            href: tutorials/narrow_vs_wide_performance.qmd
       - text: "Research & Resources"
         menu:
           - text: "Publications & Conferences"
@@ -67,14 +65,10 @@ website:
       contents:
         - href: how-to-use.qmd
           text: Overview
-        - text: "Deep-Dive Analysis"
-          href: tutorials/zenodo_isamples_analysis.qmd
-        - text: "3D Globe Visualization"
-          href: tutorials/parquet_cesium_isamples_wide.qmd
         - text: "Search Explorer"
           href: tutorials/isamples_explorer.qmd
-        - text: "Technical: Narrow vs Wide"
-          href: tutorials/narrow_vs_wide_performance.qmd
+        - text: "Deep-Dive Analysis"
+          href: tutorials/zenodo_isamples_analysis.qmd
     - id: about
       title: "About"
       style: "docked"
@@ -98,9 +92,11 @@ website:
         - href: design/requirements.md
           text: Requirements
         - text: Schema
-          href: "https://isamplesorg.github.io/metadata/"
+          href: "https://isamples.org/metadata/"
         - href: models/index.qmd
           text: Vocabularies
+        - text: "Technical: Narrow vs Wide"
+          href: tutorials/narrow_vs_wide_performance.qmd
     - id: research
       title: "Research & Resources"
       style: "docked"
