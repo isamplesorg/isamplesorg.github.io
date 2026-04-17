@@ -23,6 +23,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -267,7 +302,15 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#whats-in-the-data" id="toc-whats-in-the-data" class="nav-link" data-scroll-target="#whats-in-the-data">What’s in the Data?</a></li>
   <li><a href="#no-installation-required" id="toc-no-installation-required" class="nav-link" data-scroll-target="#no-installation-required">No Installation Required</a></li>
   <li><a href="#for-developers" id="toc-for-developers" class="nav-link" data-scroll-target="#for-developers">For Developers</a></li>
-  <li><a href="#data-files" id="toc-data-files" class="nav-link" data-scroll-target="#data-files">Data Files</a></li>
+  <li><a href="#data-catalog" id="toc-data-catalog" class="nav-link" data-scroll-target="#data-catalog">Data Catalog</a>
+  <ul>
+  <li><a href="#primary-datasets" id="toc-primary-datasets" class="nav-link" data-scroll-target="#primary-datasets">Primary datasets</a></li>
+  <li><a href="#pre-aggregated-helpers" id="toc-pre-aggregated-helpers" class="nav-link" data-scroll-target="#pre-aggregated-helpers">Pre-aggregated helpers</a></li>
+  <li><a href="#geospatial-aggregates-h3" id="toc-geospatial-aggregates-h3" class="nav-link" data-scroll-target="#geospatial-aggregates-h3">Geospatial aggregates (H3)</a></li>
+  <li><a href="#individual-sample-points-lite" id="toc-individual-sample-points-lite" class="nav-link" data-scroll-target="#individual-sample-points-lite">Individual sample points (lite)</a></li>
+  <li><a href="#which-tutorial-uses-which-file" id="toc-which-tutorial-uses-which-file" class="nav-link" data-scroll-target="#which-tutorial-uses-which-file">Which tutorial uses which file</a></li>
+  <li><a href="#quick-query-recipes" id="toc-quick-query-recipes" class="nav-link" data-scroll-target="#quick-query-recipes">Quick query recipes</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/how-to-use.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -360,57 +403,211 @@ ul.task-list li input[type="checkbox"] {
 <li><strong><a href="https://zenodo.org/communities/isamples">Zenodo</a></strong> — archived datasets for reproducible research</li>
 </ul>
 </section>
-<section id="data-files" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="data-files">Data Files</h2>
-<p>All data is hosted on Cloudflare R2 with HTTP range request support:</p>
+<section id="data-catalog" class="level2 unnumbered">
+<h2 class="unnumbered" data-anchor-id="data-catalog">Data Catalog</h2>
+<p>All files are served from <a href="https://data.isamples.org/"><code>data.isamples.org</code></a> backed by Cloudflare R2. A Cloudflare Worker in front of the bucket sets <code>Cache-Control: public, max-age=31536000, immutable</code> on filename-versioned parquets (so browsers and the Cloudflare edge cache aggressively) and exposes CORS headers required by DuckDB-WASM’s HTTP range requests.</p>
+<p>File naming convention: <code>isamples_&lt;YYYYMM&gt;_&lt;variant&gt;.parquet</code>. The month in the filename is the data-generation snapshot — content at a given URL never changes.</p>
+<section id="primary-datasets" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="primary-datasets">Primary datasets</h3>
+<p>The two main files carrying the sample records themselves:</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 24%">
-<col style="width: 24%">
-<col style="width: 52%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>File</th>
-<th>Size</th>
-<th>Description</th>
+<th style="text-align: right;">Size</th>
+<th>Shape</th>
+<th style="text-align: right;">Rows</th>
+<th>Use when you need…</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Wide format (H3-indexed)</td>
-<td>~292 MB</td>
-<td>20M rows, all entity types with H3 spatial indices</td>
+<td><a href="https://data.isamples.org/isamples_202601_wide.parquet"><code>isamples_202601_wide.parquet</code></a></td>
+<td style="text-align: right;">278 MB</td>
+<td>Wide (one row per entity, nested relationships in <code>p__*</code> array columns)</td>
+<td style="text-align: right;">20 M</td>
+<td>General entity queries, UI filtering, description text</td>
 </tr>
 <tr class="even">
-<td>H3 summary (res4)</td>
-<td>~70 KB</td>
-<td>Pre-aggregated cluster counts for instant globe load</td>
+<td><a href="https://data.isamples.org/isamples_202601_wide_h3.parquet"><code>isamples_202601_wide_h3.parquet</code></a></td>
+<td style="text-align: right;">292 MB</td>
+<td>Wide + H3 BIGINT indices (<code>h3_res4</code>, <code>h3_res6</code>, <code>h3_res8</code>)</td>
+<td style="text-align: right;">20 M</td>
+<td>Geospatial queries with H3 clustering at arbitrary zoom</td>
 </tr>
 <tr class="odd">
-<td>H3 summary (res6)</td>
-<td>~200 KB</td>
-<td>Mid-zoom cluster detail</td>
-</tr>
-<tr class="even">
-<td>H3 summary (res8)</td>
-<td>~600 KB</td>
-<td>Fine-zoom cluster detail</td>
-</tr>
-<tr class="odd">
-<td>Samples lite</td>
-<td>~150 MB</td>
-<td>Individual sample points with coordinates</td>
-</tr>
-<tr class="even">
-<td>Facet summaries</td>
-<td>2 KB</td>
-<td>Pre-computed filter counts (source, material, context, specimen type)</td>
+<td><a href="https://data.isamples.org/isamples_202512_narrow.parquet"><code>isamples_202512_narrow.parquet</code></a></td>
+<td style="text-align: right;">820 MB</td>
+<td>Narrow (graph: nodes + explicit <code>_edge_</code> rows, s/p/o/n fields)</td>
+<td style="text-align: right;">106 M</td>
+<td>Graph traversals, relationship-centric analysis, PQG work</td>
 </tr>
 </tbody>
 </table>
+<p>All three represent the same underlying data (SESAR + OpenContext + GEOME + Smithsonian) with identical semantics — they differ only in serialization strategy. See the <a href="./tutorials/narrow_vs_wide_performance.html">Technical: Narrow vs Wide tutorial</a> for a performance comparison.</p>
+</section>
+<section id="pre-aggregated-helpers" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="pre-aggregated-helpers">Pre-aggregated helpers</h3>
+<p>Small lookup tables computed ahead of time so a page can render facets and counts instantly, without touching the 278 MB primary file:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th style="text-align: right;">Size</th>
+<th>Contents</th>
+<th>Use when…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_facet_summaries.parquet"><code>isamples_202601_facet_summaries.parquet</code></a></td>
+<td style="text-align: right;">2 KB</td>
+<td><code>(facet_type, facet_value, count)</code> for source, material, context, object_type</td>
+<td>You want instant initial facet counts with no filters applied</td>
+</tr>
+<tr class="even">
+<td><a href="https://data.isamples.org/isamples_202601_facet_cross_filter.parquet"><code>isamples_202601_facet_cross_filter.parquet</code></a></td>
+<td style="text-align: right;">6 KB</td>
+<td>Pre-computed counts for single-facet selections</td>
+<td>You want instant cross-filtered counts for a single active filter</td>
+</tr>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"><code>isamples_202601_sample_facets_v2.parquet</code></a></td>
+<td style="text-align: right;">63 MB</td>
+<td><code>(pid, material, context, object_type)</code> facet URIs per sample</td>
+<td>You need to filter on <em>combinations</em> of facets at query time</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="geospatial-aggregates-h3" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="geospatial-aggregates-h3">Geospatial aggregates (H3)</h3>
+<p>Hexagonal H3 cells pre-aggregated at three resolutions for zoom-adaptive globe rendering. Each row: <code>h3_cell, center_lat, center_lng, sample_count, dominant_source, source_count</code>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Cells</th>
+<th>Typical altitude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet"><code>isamples_202601_h3_summary_res4.parquet</code></a></td>
+<td style="text-align: right;">580 KB</td>
+<td style="text-align: right;">~38 K</td>
+<td>Continental (world view)</td>
+</tr>
+<tr class="even">
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res6.parquet"><code>isamples_202601_h3_summary_res6.parquet</code></a></td>
+<td style="text-align: right;">1.6 MB</td>
+<td style="text-align: right;">~112 K</td>
+<td>Regional (country / state)</td>
+</tr>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res8.parquet"><code>isamples_202601_h3_summary_res8.parquet</code></a></td>
+<td style="text-align: right;">2.4 MB</td>
+<td style="text-align: right;">~176 K</td>
+<td>Neighborhood</td>
+</tr>
+</tbody>
+</table>
+<p>CSV twins exist alongside each parquet (3× larger) for human inspection — browsers use the parquet versions.</p>
+</section>
+<section id="individual-sample-points-lite" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="individual-sample-points-lite">Individual sample points (lite)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th style="text-align: right;">Size</th>
+<th>Contents</th>
+<th>Use when…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://data.isamples.org/isamples_202601_samples_map_lite.parquet"><code>isamples_202601_samples_map_lite.parquet</code></a></td>
+<td style="text-align: right;">60 MB</td>
+<td><code>pid, label, source, latitude, longitude, place_name, result_time, h3_res8, h3_res8_hex</code> — no description</td>
+<td>Point-level rendering below ~120 km altitude</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="which-tutorial-uses-which-file" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="which-tutorial-uses-which-file">Which tutorial uses which file</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">Interactive Explorer</th>
+<th style="text-align: center;">Search Explorer</th>
+<th style="text-align: center;">Deep-Dive Analysis</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>wide.parquet</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td><code>wide_h3.parquet</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">●</td>
+</tr>
+<tr class="odd">
+<td><code>facet_summaries.parquet</code></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;">●</td>
+</tr>
+<tr class="even">
+<td><code>facet_cross_filter.parquet</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td><code>sample_facets_v2.parquet</code></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td><code>h3_summary_res4/6/8.parquet</code></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td><code>samples_map_lite.parquet</code></td>
+<td style="text-align: center;">●</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="quick-query-recipes" class="level3 unnumbered">
+<h3 class="unnumbered" data-anchor-id="quick-query-recipes">Quick query recipes</h3>
+<p>From Python:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> duckdb</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>con <span class="op">=</span> duckdb.<span class="ex">connect</span>()</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT source, COUNT(*) AS n</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM read_parquet('https://data.isamples.org/isamples_202601_wide.parquet')</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE otype = 'MaterialSampleRecord'</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">    GROUP BY 1 ORDER BY 2 DESC</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>From the browser via DuckDB-WASM — see the <a href="./tutorials/">tutorials</a> for complete examples with HTTP range requests.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
