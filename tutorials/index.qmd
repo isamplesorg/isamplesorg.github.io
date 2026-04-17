@@ -28,7 +28,7 @@ All data is hosted on [`data.isamples.org`](https://data.isamples.org) with HTTP
 
 | File | Size | Description |
 |------|------|-------------|
-| [Wide format](https://data.isamples.org/isamples_202601_wide.parquet) | 278 MB | One row per entity, all sources — primary file for tutorials |
+| [Wide format](https://data.isamples.org/current/wide.parquet) | 292 MB | One row per entity, all sources — primary file for tutorials. Stable alias redirects to the current dated build (`isamples_YYYYMM_wide.parquet`). |
 | [Wide + H3](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 292 MB | Wide format with H3 spatial indices for globe visualizations |
 | [Facet summaries](https://data.isamples.org/isamples_202601_facet_summaries.parquet) | 2 KB | Pre-computed filter counts — loads instantly |
 | [H3 clusters (res4)](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | 0.6 MB | Zoomed-out globe view |

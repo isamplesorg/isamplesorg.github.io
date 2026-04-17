@@ -60,9 +60,19 @@ The two main files carrying the sample records themselves:
 
 | File | Size | Shape | Rows | Use when you need… |
 |---|---:|---|---:|---|
-| [`isamples_202601_wide.parquet`](https://data.isamples.org/isamples_202601_wide.parquet) | 278 MB | Wide (one row per entity, nested relationships in `p__*` array columns) | 20 M | General entity queries, UI filtering, description text |
+| [`current/wide.parquet`](https://data.isamples.org/current/wide.parquet) ∗ | 292 MB | Wide (one row per entity, nested relationships in `p__*` array columns) | 20 M | General entity queries, UI filtering, description text |
 | [`isamples_202601_wide_h3.parquet`](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 292 MB | Wide + H3 BIGINT indices (`h3_res4`, `h3_res6`, `h3_res8`) | 20 M | Geospatial queries with H3 clustering at arbitrary zoom |
 | [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 820 MB | Narrow (graph: nodes + explicit `_edge_` rows, s/p/o/n fields) | 106 M | Graph traversals, relationship-centric analysis, PQG work |
+
+∗ `/current/wide.parquet` is a stable alias that HTTP 302-redirects to the
+latest dated file (currently
+[`isamples_202604_wide.parquet`](https://data.isamples.org/isamples_202604_wide.parquet),
+enriched with ~47 K OpenContext thumbnails). The dated filename is
+immutable; the alias rotates atomically when we rebuild. Use the alias for
+interactive work, the dated URL when you want a pinned, reproducible
+reference. The original
+[`isamples_202601_wide.parquet`](https://data.isamples.org/isamples_202601_wide.parquet)
+(278 MB, no thumbnails) is kept available for historical pinning.
 
 All three represent the same underlying data (SESAR + OpenContext + GEOME
 + Smithsonian) with identical semantics — they differ only in serialization
@@ -123,7 +133,7 @@ import duckdb
 con = duckdb.connect()
 con.sql("""
     SELECT source, COUNT(*) AS n
-    FROM read_parquet('https://data.isamples.org/isamples_202601_wide.parquet')
+    FROM read_parquet('https://data.isamples.org/current/wide.parquet')
     WHERE otype = 'MaterialSampleRecord'
     GROUP BY 1 ORDER BY 2 DESC
 """).df()
