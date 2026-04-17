@@ -77,8 +77,15 @@ duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+
 
 ```{ojs}
 //| code-fold: true
+// Version gate. Append ?v=2 to the URL to opt into the lite-backed
+// rewrite (samples_map_lite.parquet instead of wide.parquet, lazy
+// description fetch on click, no ORDER BY RANDOM(), lazy Cesium mount).
+explorerVersion = new URLSearchParams(location.search).get('v') === '2' ? 'v2' : 'v1'
+
 // Data source configuration
-parquet_url = "https://data.isamples.org/isamples_202601_wide.parquet"
+wide_url = "https://data.isamples.org/isamples_202601_wide.parquet"
+lite_url = "https://data.isamples.org/isamples_202601_samples_map_lite.parquet"
+parquet_url = explorerVersion === 'v2' ? lite_url : wide_url
 
 // Pre-computed facet summaries (2KB - loads instantly)
 facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
@@ -356,9 +363,19 @@ db = {
   await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
   URL.revokeObjectURL(worker_url);
 
-  // Create views for convenience
+  // Create views for convenience. v1 reads the full wide parquet directly;
+  // v2 reads the 60 MB lite file (no description, no row_id, source is
+  // already named 'source' not 'n').
   const conn = await instance.connect();
-  await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  if (explorerVersion === 'v2') {
+    await conn.query(`
+      CREATE VIEW samples AS
+      SELECT pid, label, source, latitude, longitude, place_name
+      FROM read_parquet('${parquet_url}')
+    `);
+  } else {
+    await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
+  }
   // Slim facets view with correct URI-string columns for cross-filtering
   await conn.query(`CREATE VIEW sample_facets AS SELECT * FROM read_parquet('${sample_facets_url}')`);
   await conn.close();
@@ -636,26 +653,38 @@ crossFilteredFacets = {
 // Material/context/object_type filters use the sample_facets view (URI strings)
 // via a subquery, since the wide parquet stores these as BIGINT foreign keys.
 whereClause = {
-  const conditions = [
-    "otype = 'MaterialSampleRecord'",
-    "latitude IS NOT NULL"
-  ];
+  const conditions = ["latitude IS NOT NULL"];
 
-  // Text search (against wide parquet — has label, description, place_name)
-  if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    conditions.push(`(
-      label ILIKE '%${term}%'
-      OR description ILIKE '%${term}%'
-      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-    )`);
+  // v1 reads the multi-entity-type wide parquet, so filter to sample records.
+  // v2 reads lite which is already samples-only.
+  if (explorerVersion !== 'v2') {
+    conditions.unshift("otype = 'MaterialSampleRecord'");
   }
 
-  // Source filter (n column exists in wide parquet)
+  // Text search. v1 can search description (column exists in wide);
+  // v2 can't (description is not in lite — lazy-fetched on sample click).
+  if (searchInput?.trim()) {
+    const term = searchInput.trim().replace(/'/g, "''");
+    if (explorerVersion === 'v2') {
+      conditions.push(`(
+        label ILIKE '%${term}%'
+        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+      )`);
+    } else {
+      conditions.push(`(
+        label ILIKE '%${term}%'
+        OR description ILIKE '%${term}%'
+        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+      )`);
+    }
+  }
+
+  // Source filter. v1 uses the wide parquet's `n` column; v2 uses `source`.
   const sources = Array.from(sourceCheckboxes || []);
   if (sources.length > 0) {
     const sourceList = sources.map(s => `'${s}'`).join(", ");
-    conditions.push(`n IN (${sourceList})`);
+    const col = explorerVersion === 'v2' ? 'source' : 'n';
+    conditions.push(`${col} IN (${sourceList})`);
   }
 
   // Facet filters: build a subquery against sample_facets to get matching PIDs
@@ -720,7 +749,24 @@ sampleData = {
 
   performance.mark('explorer-samples-start');
   try {
-    const query = `
+    // v2: read from lite (60 MB), no description (fetched lazily on click),
+    //     no row_id, no ORDER BY RANDOM(). LIMIT returns whatever rows the
+    //     scan encounters first — biased toward row order but ~20x faster
+    //     than RANDOM() on a columnar file.
+    // v1: original query against the 278 MB wide file.
+    const query = explorerVersion === 'v2' ? `
+      SELECT
+        pid,
+        label,
+        '' AS description,
+        latitude,
+        longitude,
+        source,
+        place_name
+      FROM samples
+      WHERE ${whereClause}
+      LIMIT ${maxSamples}
+    ` : `
       SELECT
         row_id,
         pid,
@@ -778,6 +824,14 @@ mutable clickedPointIndex = null
 //| code-fold: true
 // Cesium viewer setup
 viewer = {
+  // v2: defer Cesium construction until the user actually switches to
+  // globe view. The cell re-evaluates when viewMode changes (reactive
+  // dependency below), so toggling into globe will mount on demand.
+  // v1 mounts eagerly to preserve original behavior.
+  if (explorerVersion === 'v2' && viewMode !== 'globe') {
+    return null;
+  }
+
   // Wait for Cesium to be available
   await new Promise(resolve => {
     if (typeof Cesium !== 'undefined') resolve();
@@ -888,6 +942,28 @@ selectedSample = {
 
 ```{ojs}
 //| code-fold: true
+// v2: lazy description fetch — only hit the 278 MB wide parquet when a sample
+// is actually clicked, rather than pulling description for every row eagerly.
+lazyDescription = {
+  if (explorerVersion !== 'v2') return null;
+  if (!selectedSample?.pid) return null;
+  const pid = selectedSample.pid.replace(/'/g, "''");
+  try {
+    const rows = await runQuery(`
+      SELECT description FROM read_parquet('${wide_url}')
+      WHERE pid = '${pid}' AND otype = 'MaterialSampleRecord'
+      LIMIT 1
+    `);
+    return rows[0]?.description || '';
+  } catch (e) {
+    console.warn('Lazy description fetch failed:', e);
+    return '';
+  }
+}
+```
+
+```{ojs}
+//| code-fold: true
 // Render sample card
 sampleCard = {
   if (!selectedSample) {
@@ -900,7 +976,9 @@ sampleCard = {
   const sourceColor = SOURCE_COLORS[s.source] || SOURCE_COLORS.default;
 
   const label = s.label || 'No label';
-  const description = s.description || '';
+  // v2: prefer the lazily-fetched description (from wide parquet on click);
+  // v1: the description is already in sampleData.
+  const description = (s.description || lazyDescription || '').trim();
   const truncDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
 
   let placeStr = '';
