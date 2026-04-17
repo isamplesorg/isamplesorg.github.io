@@ -55,10 +55,12 @@ wrangler deploy
 
 This publishes the Worker and installs the route `data.isamples.org/*`.
 
-> ⚠️ If another Worker is already bound to `data.isamples.org/*` (e.g. a
-> legacy proxy from the original setup), `wrangler deploy` will **replace**
-> it. Check `wrangler deployments list` or the Cloudflare dashboard
-> (Workers → Routes) before deploying if you want to be cautious.
+> The Worker is named `isamples-data` in `wrangler.toml` to match the
+> pre-existing Worker that owned `data.isamples.org/*` before this repo
+> existed. `wrangler deploy` atomically replaces the existing Worker at
+> that name. If you rename, also unassign the old Worker from the route
+> first (Cloudflare dashboard → Workers → Routes) or the deploy will
+> fail with "already assigned to another worker."
 
 ## Verifying
 
