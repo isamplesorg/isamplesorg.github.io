@@ -3,6 +3,13 @@ title: "Interactive Explorer"
 subtitle: "Search and explore 6.7 million material samples"
 categories: [parquet, spatial, h3, performance, isamples]
 sidebar: false
+format:
+  html:
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://data.isamples.org" crossorigin>
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
 ---
 
 ::: {.callout-note collapse="true"}
