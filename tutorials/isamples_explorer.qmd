@@ -11,6 +11,53 @@ format:
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_cross_filter.parquet">
+        <script>
+        // Opt-in perf panel (?perf=1). Plain script — independent of the
+        // OJS reactive graph, which was unreliable at firing this cell.
+        (function() {
+          if (new URLSearchParams(location.search).get('perf') !== '1') return;
+          const mark = (n) => { const e = performance.getEntriesByName(n, 'mark').pop(); return e ? e.startTime : null; };
+          const meas = (n) => { const e = performance.getEntriesByName(n, 'measure').pop(); return e ? e.duration : null; };
+          const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? (ms/1000).toFixed(2)+' s' : Math.round(ms)+' ms';
+          function render() {
+            const paints = performance.getEntriesByType('paint');
+            const fp  = paints.find(e => e.name === 'first-paint')?.startTime;
+            const fcp = paints.find(e => e.name === 'first-contentful-paint')?.startTime;
+            const rows = [
+              ['first-paint (browser)',  fp],
+              ['first-contentful-paint', fcp],
+              ['DuckDB init + views',    meas('explorer_db')],
+              ['facet summaries query',  meas('explorer_facets')],
+              ['count query',            meas('explorer_count')],
+              ['sample data query',      meas('explorer_samples')],
+              ['nav → DuckDB ready',     mark('explorer-db-end')],
+              ['nav → facets ready',     mark('explorer-facets-end')],
+              ['nav → count ready',      mark('explorer-count-end')],
+              ['nav → samples ready',    mark('explorer-samples-end')],
+            ].filter(([,v]) => v != null);
+            const prior = document.getElementById('perfPanel');
+            if (prior) prior.remove();
+            const version = new URLSearchParams(location.search).get('v') === '2' ? 'v2' : 'v1';
+            const panel = document.createElement('div');
+            panel.id = 'perfPanel';
+            panel.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:9999;background:rgba(0,0,0,0.82);color:#e8f5e9;padding:10px 12px;border-radius:6px;font:11px/1.4 ui-monospace,SFMono-Regular,monospace;max-width:340px;box-shadow:0 2px 12px rgba(0,0,0,0.3);';
+            panel.innerHTML = '<div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><span>⏱ Explorer perf (' + version + ')</span><button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button></div><table style="border-collapse:collapse;width:100%;">' + rows.map(([l,v])=>'<tr><td style="padding:1px 8px 1px 0;color:#bbb;">'+l+'</td><td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">'+fmt(v)+'</td></tr>').join('') + '</table>';
+            document.body.appendChild(panel);
+            panel.querySelector('#perfClose').onclick = () => panel.remove();
+            console.table(Object.fromEntries(rows.map(([k,v])=>[k, fmt(v)])));
+          }
+          // Poll for the last-expected mark; re-render as each new mark arrives.
+          let done = false;
+          const id = setInterval(() => {
+            const haveAll = mark('explorer-samples-end') != null && mark('explorer-count-end') != null;
+            const haveSome = mark('explorer-db-end') != null;
+            if (haveSome) render();
+            if (haveAll && !done) { done = true; setTimeout(() => clearInterval(id), 500); }
+          }, 500);
+          // Safety: stop polling after 2 minutes regardless
+          setTimeout(() => clearInterval(id), 120000);
+        })();
+        </script>
 ---
 
 Search and explore **6.7 million physical samples** from scientific collections worldwide.
@@ -919,83 +966,10 @@ Loaded: ${sampleData.length.toLocaleString()}
 
 ---
 
-```{ojs}
-//| echo: false
-//| output: false
-
-// === Performance timing panel (opt-in: append ?perf=1 to URL) ===
-// Ported from progressive_globe.qmd. Reads performance.mark/measure entries
-// and renders a small fixed panel. Ship with perf=1 to measure baseline,
-// then v2=1 to compare.
-perfPanel = {
-  // Depend on sampleData so the panel appears after initial data loads
-  if (sampleData == null) return;
-
-  const params = new URLSearchParams(location.search);
-  if (params.get('perf') !== '1') return;
-
-  await new Promise(r => setTimeout(r, 100));
-
-  const mark = (name) => {
-    const e = performance.getEntriesByName(name, 'mark').pop();
-    return e ? e.startTime : null;
-  };
-  const measure = (name) => {
-    const e = performance.getEntriesByName(name, 'measure').pop();
-    return e ? e.duration : null;
-  };
-
-  const paintEntries = performance.getEntriesByType('paint');
-  const fcp = paintEntries.find(e => e.name === 'first-contentful-paint')?.startTime;
-  const fp = paintEntries.find(e => e.name === 'first-paint')?.startTime;
-
-  const rows = [
-    ['first-paint (browser)',         fp],
-    ['first-contentful-paint',        fcp],
-    ['DuckDB init + views',           measure('explorer_db')],
-    ['facet summaries query',         measure('explorer_facets')],
-    ['count query',                   measure('explorer_count')],
-    ['sample data query',             measure('explorer_samples')],
-    ['nav → DuckDB ready',            mark('explorer-db-end')],
-    ['nav → facets ready',            mark('explorer-facets-end')],
-    ['nav → count ready',             mark('explorer-count-end')],
-    ['nav → samples ready',           mark('explorer-samples-end')],
-  ].filter(([, v]) => v != null);
-
-  console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));
-
-  const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? `${(ms/1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`;
-  // Remove any prior panel (page re-renders on filter change)
-  const prior = document.getElementById('perfPanel');
-  if (prior) prior.remove();
-
-  const version = params.get('v') === '2' ? 'v2' : 'v1';
-  const panel = document.createElement('div');
-  panel.id = 'perfPanel';
-  panel.style.cssText = `
-    position: fixed; bottom: 12px; right: 12px; z-index: 9999;
-    background: rgba(0,0,0,0.82); color: #e8f5e9; padding: 10px 12px;
-    border-radius: 6px; font: 11px/1.4 ui-monospace, SFMono-Regular, monospace;
-    max-width: 340px; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-  `;
-  panel.innerHTML = `
-    <div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-      <span>⏱ Explorer perf (${version})</span>
-      <button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button>
-    </div>
-    <table style="border-collapse:collapse;width:100%;">
-      ${rows.map(([label, v]) => `
-        <tr><td style="padding:1px 8px 1px 0;color:#bbb;">${label}</td>
-            <td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">${fmt(v)}</td></tr>
-      `).join('')}
-    </table>
-  `;
-  document.body.appendChild(panel);
-  panel.querySelector('#perfClose').onclick = () => panel.remove();
-
-  return "shown";
-}
-```
+<!-- Perf timing panel is implemented as a plain <script> in the header
+     (see include-in-header in the YAML frontmatter above). Using a plain
+     script rather than an OJS cell because OJS was inconsistently evaluating
+     the cell on this page. -->
 
 ---
 
