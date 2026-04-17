@@ -430,7 +430,10 @@ function updateSamples(samples) {
 
 // === DuckDB ===
 db = {
+    performance.mark('duckdb-init-start');
     const instance = await DuckDBClient.of();
+    performance.mark('duckdb-init-end');
+    performance.measure('duckdb_init', 'duckdb-init-start', 'duckdb-init-end');
     return instance;
 }
 ```
@@ -441,6 +444,7 @@ db = {
 
 // === Cesium Viewer (created once, never re-created) ===
 viewer = {
+    performance.mark('viewer-init-start');
     const v = new Cesium.Viewer("cesiumContainer", {
         timeline: false,
         animation: false,
@@ -588,6 +592,17 @@ viewer = {
             }
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Timing: viewer ready (mount complete, pre-first-render)
+    performance.mark('viewer-init-end');
+    performance.measure('viewer_init', 'viewer-init-start', 'viewer-init-end');
+
+    // Timing: first Cesium frame painted (globe visible, may be pre-cluster)
+    const firstGlobeFrame = () => {
+        performance.mark('first-globe-frame');
+        v.scene.postRender.removeEventListener(firstGlobeFrame);
+    };
+    v.scene.postRender.addEventListener(firstGlobeFrame);
 
     return v;
 }
@@ -1214,6 +1229,83 @@ zoomWatcher = {
     viewer._suppressHashWrite = false;
 
     return "active";
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Performance timing panel (opt-in: append ?perf=1 to URL) ===
+// v0: reads performance.mark/measure entries and renders a small fixed panel.
+// Reports navigation→duckdb_init, navigation→viewer_init, phase 1 res4 load,
+// and navigation→first paint. Also dumps to console.table for CI / Playwright.
+perfPanel = {
+    if (!phase1) return;  // wait for phase 1 to have run
+
+    const params = new URLSearchParams(location.search);
+    const isOn = params.get('perf') === '1';
+    if (!isOn) return;
+
+    // Give first-paint a tick to fire, then collect
+    await new Promise(r => setTimeout(r, 100));
+
+    const origin = performance.timeOrigin;
+    const mark = (name) => {
+        const e = performance.getEntriesByName(name, 'mark').pop();
+        return e ? e.startTime : null;
+    };
+    const measure = (name) => {
+        const e = performance.getEntriesByName(name, 'measure').pop();
+        return e ? e.duration : null;
+    };
+
+    // Paint timings from the browser (free, no instrumentation needed)
+    const paintEntries = performance.getEntriesByType('paint');
+    const fcp = paintEntries.find(e => e.name === 'first-contentful-paint')?.startTime;
+    const fp = paintEntries.find(e => e.name === 'first-paint')?.startTime;
+
+    const rows = [
+        ['first-paint (browser)',        fp],
+        ['first-contentful-paint',        fcp],
+        ['duckdb init',                   measure('duckdb_init')],
+        ['viewer init',                   measure('viewer_init')],
+        ['nav → viewer ready',            mark('viewer-init-end')],
+        ['phase 1 res4 (duration)',       measure('p1')],
+        ['nav → phase 1 complete',        mark('p1-end')],
+        ['nav → first globe frame',       mark('first-globe-frame')],
+    ].filter(([, v]) => v != null);
+
+    // Console table for CI / offline capture
+    console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));
+
+    // Render a small floating panel
+    const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? `${(ms/1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`;
+    const panel = document.createElement('div');
+    panel.id = 'perfPanel';
+    panel.style.cssText = `
+        position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+        background: rgba(0,0,0,0.82); color: #e8f5e9; padding: 10px 12px;
+        border-radius: 6px; font: 11px/1.4 ui-monospace, SFMono-Regular, monospace;
+        max-width: 320px; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    `;
+    panel.innerHTML = `
+        <div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+            <span>⏱ Perf timings</span>
+            <button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button>
+        </div>
+        <table style="border-collapse:collapse;width:100%;">
+            ${rows.map(([label, v]) => `
+                <tr><td style="padding:1px 8px 1px 0;color:#bbb;">${label}</td>
+                    <td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">${fmt(v)}</td></tr>
+            `).join('')}
+        </table>
+        <div style="margin-top:6px;color:#777;font-size:10px;">timeOrigin: ${new Date(origin).toISOString().split('T')[1].slice(0,12)}</div>
+    `;
+    document.body.appendChild(panel);
+    panel.querySelector('#perfClose').onclick = () => panel.remove();
+
+    return "shown";
 }
 ```
 
