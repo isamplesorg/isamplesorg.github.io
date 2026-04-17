@@ -296,6 +296,7 @@ html`<div style="margin-bottom: 16px;">
 //| code-fold: true
 // Initialize DuckDB-WASM
 db = {
+  performance.mark('explorer-db-start');
   const bundle = await duckdbModule.selectBundle(duckdbModule.getJsDelivrBundles());
 
   const worker_url = URL.createObjectURL(
@@ -315,6 +316,8 @@ db = {
   await conn.query(`CREATE VIEW sample_facets AS SELECT * FROM read_parquet('${sample_facets_url}')`);
   await conn.close();
 
+  performance.mark('explorer-db-end');
+  performance.measure('explorer_db', 'explorer-db-start', 'explorer-db-end');
   return instance;
 }
 
@@ -347,8 +350,11 @@ mutable facetSummariesError = null
 // Tier 1: Load pre-computed facet summaries (2KB, instant)
 facetSummaries = {
   mutable facetSummariesError = null;
+  performance.mark('explorer-facets-start');
   try {
     const rows = await runQuery(`SELECT * FROM read_parquet('${facet_summaries_url}')`);
+    performance.mark('explorer-facets-end');
+    performance.measure('explorer_facets', 'explorer-facets-start', 'explorer-facets-end');
     return rows;
   } catch (e) {
     console.error("Facet summaries load error:", e);
@@ -642,9 +648,12 @@ sourceCounts = facetsByType.source
 //| code-fold: true
 // Get total count matching current filters
 totalCount = {
+  performance.mark('explorer-count-start');
   const query = `SELECT COUNT(*) as count FROM samples WHERE ${whereClause}`;
   try {
     const rows = await runQuery(query);
+    performance.mark('explorer-count-end');
+    performance.measure('explorer_count', 'explorer-count-start', 'explorer-count-end');
     return rows[0]?.count || 0;
   } catch (e) {
     return 0;
@@ -662,6 +671,7 @@ sampleData = {
     statusDiv.textContent = 'Loading samples...';
   }
 
+  performance.mark('explorer-samples-start');
   try {
     const query = `
       SELECT
@@ -680,6 +690,9 @@ sampleData = {
     `;
 
     const data = await runQuery(query);
+
+    performance.mark('explorer-samples-end');
+    performance.measure('explorer_samples', 'explorer-samples-start', 'explorer-samples-end');
 
     if (statusDiv) {
       statusDiv.textContent = `Loaded ${data.length.toLocaleString()} samples`;
@@ -903,6 +916,86 @@ Loaded: ${sampleData.length.toLocaleString()}
 ```
 
 </details>
+
+---
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Performance timing panel (opt-in: append ?perf=1 to URL) ===
+// Ported from progressive_globe.qmd. Reads performance.mark/measure entries
+// and renders a small fixed panel. Ship with perf=1 to measure baseline,
+// then v2=1 to compare.
+perfPanel = {
+  // Depend on sampleData so the panel appears after initial data loads
+  if (sampleData == null) return;
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('perf') !== '1') return;
+
+  await new Promise(r => setTimeout(r, 100));
+
+  const mark = (name) => {
+    const e = performance.getEntriesByName(name, 'mark').pop();
+    return e ? e.startTime : null;
+  };
+  const measure = (name) => {
+    const e = performance.getEntriesByName(name, 'measure').pop();
+    return e ? e.duration : null;
+  };
+
+  const paintEntries = performance.getEntriesByType('paint');
+  const fcp = paintEntries.find(e => e.name === 'first-contentful-paint')?.startTime;
+  const fp = paintEntries.find(e => e.name === 'first-paint')?.startTime;
+
+  const rows = [
+    ['first-paint (browser)',         fp],
+    ['first-contentful-paint',        fcp],
+    ['DuckDB init + views',           measure('explorer_db')],
+    ['facet summaries query',         measure('explorer_facets')],
+    ['count query',                   measure('explorer_count')],
+    ['sample data query',             measure('explorer_samples')],
+    ['nav → DuckDB ready',            mark('explorer-db-end')],
+    ['nav → facets ready',            mark('explorer-facets-end')],
+    ['nav → count ready',             mark('explorer-count-end')],
+    ['nav → samples ready',           mark('explorer-samples-end')],
+  ].filter(([, v]) => v != null);
+
+  console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));
+
+  const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? `${(ms/1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`;
+  // Remove any prior panel (page re-renders on filter change)
+  const prior = document.getElementById('perfPanel');
+  if (prior) prior.remove();
+
+  const version = params.get('v') === '2' ? 'v2' : 'v1';
+  const panel = document.createElement('div');
+  panel.id = 'perfPanel';
+  panel.style.cssText = `
+    position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+    background: rgba(0,0,0,0.82); color: #e8f5e9; padding: 10px 12px;
+    border-radius: 6px; font: 11px/1.4 ui-monospace, SFMono-Regular, monospace;
+    max-width: 340px; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  `;
+  panel.innerHTML = `
+    <div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+      <span>⏱ Explorer perf (${version})</span>
+      <button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button>
+    </div>
+    <table style="border-collapse:collapse;width:100%;">
+      ${rows.map(([label, v]) => `
+        <tr><td style="padding:1px 8px 1px 0;color:#bbb;">${label}</td>
+            <td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">${fmt(v)}</td></tr>
+      `).join('')}
+    </table>
+  `;
+  document.body.appendChild(panel);
+  panel.querySelector('#perfClose').onclick = () => panel.remove();
+
+  return "shown";
+}
+```
 
 ---
 
