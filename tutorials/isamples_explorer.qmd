@@ -921,7 +921,6 @@ Loaded: ${sampleData.length.toLocaleString()}
 
 ```{ojs}
 //| echo: false
-//| output: false
 
 // === Performance timing panel (opt-in: append ?perf=1 to URL) ===
 // Ported from progressive_globe.qmd. Reads performance.mark/measure entries
@@ -993,7 +992,9 @@ perfPanel = {
   document.body.appendChild(panel);
   panel.querySelector('#perfClose').onclick = () => panel.remove();
 
-  return "shown";
+  // Return an invisible element so OJS treats this cell as "observed" and
+  // actually evaluates it (anonymous return values can be dead-code-eliminated).
+  return html`<span style="display:none"></span>`;
 }
 ```
 
