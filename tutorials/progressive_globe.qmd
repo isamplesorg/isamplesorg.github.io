@@ -3,6 +3,10 @@ title: "Interactive Explorer"
 subtitle: "Search and explore 6.7 million material samples"
 categories: [parquet, spatial, h3, performance, isamples]
 sidebar: false
+# No TOC: this page is an app, not an article. The right-hand TOC sidebar
+# (#quarto-margin-sidebar) was overlapping .side-panel and silently
+# intercepting clicks on the Source filter checkboxes — see issue #127.
+toc: false
 format:
   html:
     include-in-header:
