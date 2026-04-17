@@ -1,0 +1,25 @@
+# Cloudflare Worker: data.isamples.org
+#
+# Proxies the iSamples R2 bucket and adds Cache-Control so edge + browser
+# caches can treat versioned parquets as immutable. See README.md for deploy
+# instructions.
+
+name = "data-isamples-org"
+main = "src/index.js"
+compatibility_date = "2026-04-01"
+
+# Bind the R2 bucket that holds the iSamples parquet files.
+# The binding name (BUCKET) matches env.BUCKET in src/index.js.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "isamples-ry"
+
+# Route: everything under data.isamples.org goes through this Worker.
+# Zone is inferred from isamples.org being in the same Cloudflare account.
+routes = [
+  { pattern = "data.isamples.org/*", zone_name = "isamples.org" },
+]
+
+# Observability: enable Worker logs in the Cloudflare dashboard.
+[observability]
+enabled = true
