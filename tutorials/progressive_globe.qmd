@@ -16,17 +16,6 @@ format:
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
 ---
 
-::: {.callout-note collapse="true"}
-## How It Works
-
-1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
-2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
-3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
-4. **Click**: Cluster info or individual sample card with full metadata
-
-Circle size = log(sample count). Color = dominant data source.
-:::
-
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
