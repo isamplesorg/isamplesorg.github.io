@@ -82,8 +82,10 @@ duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+
 // description fetch on click, no ORDER BY RANDOM(), lazy Cesium mount).
 explorerVersion = new URLSearchParams(location.search).get('v') === '2' ? 'v2' : 'v1'
 
-// Data source configuration
-wide_url = "https://data.isamples.org/isamples_202601_wide.parquet"
+// Data source configuration.
+// wide_url uses the /current/ alias so we pick up the latest enriched build
+// (with OpenContext thumbnails); the alias 302-redirects to the dated file.
+wide_url = "https://data.isamples.org/current/wide.parquet"
 lite_url = "https://data.isamples.org/isamples_202601_samples_map_lite.parquet"
 parquet_url = explorerVersion === 'v2' ? lite_url : wide_url
 

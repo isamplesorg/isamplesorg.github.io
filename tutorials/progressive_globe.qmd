@@ -202,7 +202,9 @@ h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
 lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
-wide_url = `${R2_BASE}/isamples_202601_wide.parquet`
+// Stable alias that 302-redirects to the current enriched wide parquet
+// (isamples_YYYYMM_wide.parquet). Gets OpenContext thumbnails populated.
+wide_url = `${R2_BASE}/current/wide.parquet`
 facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
 

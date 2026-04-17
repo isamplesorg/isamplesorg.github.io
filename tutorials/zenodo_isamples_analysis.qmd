@@ -95,7 +95,7 @@ parquet_urls = [
   'https://data.isamples.org/isamples_202601_wide_h3.parquet',
 
   // Fallback: original wide format without H3
-  'https://data.isamples.org/isamples_202601_wide.parquet',
+  'https://data.isamples.org/current/wide.parquet',
 
   // Fallback: older versions
   'https://labs.dataunbound.com/docs/2025/07/isamples_export_2025_04_21_16_23_46_geo.parquet',
