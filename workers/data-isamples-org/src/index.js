@@ -58,6 +58,43 @@ export default {
       });
     }
 
+    // === /current/ alias layer ===
+    // `/current/<flavor>.parquet` reads `current/manifest.json` from R2 and
+    // 302-redirects to the dated file it points to. Lets consumers pin to a
+    // stable URL while the underlying immutable file rotates out-of-band.
+    const currentAliasMatch = key.match(/^current\/([a-z0-9_-]+)\.parquet$/i);
+    if (currentAliasMatch) {
+      const flavor = currentAliasMatch[1];
+      const manifestObj = await env.BUCKET.get('current/manifest.json');
+      if (!manifestObj) {
+        return new Response('current/manifest.json not found', { status: 503, headers: CORS_HEADERS });
+      }
+      let manifest;
+      try {
+        manifest = JSON.parse(await manifestObj.text());
+      } catch (e) {
+        return new Response('current/manifest.json is invalid JSON', { status: 503, headers: CORS_HEADERS });
+      }
+      const entry = manifest[flavor];
+      if (!entry || !entry.public_url) {
+        return new Response(
+          `current/manifest.json has no entry for flavor '${flavor}'`,
+          { status: 404, headers: CORS_HEADERS }
+        );
+      }
+      // 302 Found preserves the request method semantics and lets clients
+      // re-issue range requests against the target URL directly.
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': entry.public_url,
+          // Short TTL so rotation propagates quickly without stale fanout.
+          'Cache-Control': `public, max-age=${FALLBACK_MAX_AGE}`,
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
     // Parse Range header if present. R2's get() accepts { offset, length } or
     // { suffix }, mirroring HTTP Range semantics.
     const rangeHeader = request.headers.get('range');
