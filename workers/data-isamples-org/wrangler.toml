@@ -4,18 +4,16 @@
 # caches can treat versioned parquets as immutable. See README.md for deploy
 # instructions.
 
-name = "data-isamples-org"
+name = "isamples-data"
 main = "src/index.js"
 compatibility_date = "2026-04-01"
 
-# Bind the R2 bucket that holds the iSamples parquet files.
-# The binding name (BUCKET) matches env.BUCKET in src/index.js.
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "isamples-ry"
+# Raymond.yee@gmail.com's account — owner of the isamples.org zone and the
+# isamples-ry R2 bucket.
+account_id = "75e8a095c424e5a4e18fd6f5e6145064"
 
 # Route: everything under data.isamples.org goes through this Worker.
-# Zone is inferred from isamples.org being in the same Cloudflare account.
+# (Declared before [[r2_buckets]] so TOML doesn't scope it to that table.)
 routes = [
   { pattern = "data.isamples.org/*", zone_name = "isamples.org" },
 ]
@@ -23,3 +21,9 @@ routes = [
 # Observability: enable Worker logs in the Cloudflare dashboard.
 [observability]
 enabled = true
+
+# Bind the R2 bucket that holds the iSamples parquet files.
+# The binding name (BUCKET) matches env.BUCKET in src/index.js.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "isamples-ry"
