@@ -10,6 +10,10 @@ format:
     toc: true
     toc-depth: 3
     theme: cosmo
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://data.isamples.org" crossorigin>
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
 ---
 
 # Introduction

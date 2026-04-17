@@ -6,6 +6,11 @@ format:
     code-fold: true
     toc: true
     toc-depth: 3
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://data.isamples.org" crossorigin>
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_cross_filter.parquet">
 ---
 
 Search and explore **6.7 million physical samples** from scientific collections worldwide.
