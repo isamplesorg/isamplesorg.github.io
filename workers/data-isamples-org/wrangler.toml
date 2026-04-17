@@ -10,10 +10,9 @@ compatibility_date = "2026-04-01"
 
 # Bind the R2 bucket that holds the iSamples parquet files.
 # The binding name (BUCKET) matches env.BUCKET in src/index.js.
-# Replace `isamples-data` with the actual R2 bucket name if different.
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "isamples-data"
+bucket_name = "isamples-ry"
 
 # Route: everything under data.isamples.org goes through this Worker.
 # Zone is inferred from isamples.org being in the same Cloudflare account.
