@@ -18,7 +18,15 @@
  * working.
  */
 
-const IMMUTABLE_PATTERN = /^isamples_\d{6}_.*\.parquet$/;
+// Immutable-by-filename patterns. Match files whose path fully determines
+// their contents (filename includes a version / date stamp).
+//   - isamples_YYYYMM_*.parquet  (monthly iSamples snapshots)
+//   - oc_pqg/oc_isamples_pqg*_YYYYMMDD.parquet  (mirror of Eric Kansa's
+//     OpenContext PQG files — versioned by the upstream GCS updated-date)
+const IMMUTABLE_PATTERNS = [
+  /^isamples_\d{6}_.*\.parquet$/,
+  /^oc_pqg\/oc_isamples_pqg.*_\d{8}\.parquet$/,
+];
 const IMMUTABLE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 const FALLBACK_MAX_AGE = 300; // 5 minutes
 
@@ -72,7 +80,7 @@ export default {
     for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
 
     // Cache-Control: this is the optimization.
-    if (IMMUTABLE_PATTERN.test(key)) {
+    if (IMMUTABLE_PATTERNS.some(p => p.test(key))) {
       headers.set('Cache-Control', `public, max-age=${IMMUTABLE_MAX_AGE}, immutable`);
     } else {
       headers.set('Cache-Control', `public, max-age=${FALLBACK_MAX_AGE}`);
