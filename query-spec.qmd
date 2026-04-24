@@ -285,7 +285,7 @@ missing values gracefully.
 
 | Spec | Binding |
 |---|---|
-| `source IN (…)` | `source IN (…)` on wide / lite parquet |
+| `source IN (…)` | `n IN (…)` on wide / narrow (column is `n` per PQG); `source IN (…)` on lite / sample_facets_v2 (alias exposed) |
 | `material IN (…)` | `pid IN (SELECT pid FROM sample_facets WHERE material IN (…))` |
 | `text MATCHES "q"` | `(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')` — currently a subset of §3.2 |
 | `bbox WITHIN (…)` | `latitude BETWEEN … AND … AND longitude BETWEEN … AND …` |
