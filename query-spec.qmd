@@ -159,8 +159,10 @@ be materialized but 4/6/8 are load-bearing.
 ::: {.callout-important}
 **H3 column availability across shipped parquet files (v0.2)**:
 
-- `wide_h3` and the `h3_summary_res{4,6,8}` tier files carry
-  `h3_res4`, `h3_res6`, `h3_res8`.
+- `wide_h3` ships three direct columns: `h3_res4`, `h3_res6`, `h3_res8`.
+- `h3_summary_res{4,6,8}` tier files do NOT ship `h3_res{N}` columns —
+  they ship a single `h3_cell` (UBIGINT) plus a `resolution` (INTEGER)
+  column. Query them as `WHERE h3_cell = X AND resolution = N`.
 - `lite` carries `h3_res8` (and `h3_res8_hex`) only — not res4 / res6.
 - Plain `wide` and `narrow` do **not** carry H3 columns. To filter at
   res 4 or res 6, query `wide_h3` or the appropriate `h3_summary`
@@ -287,7 +289,7 @@ missing values gracefully.
 | `material IN (…)` | `pid IN (SELECT pid FROM sample_facets WHERE material IN (…))` |
 | `text MATCHES "q"` | `(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')` — currently a subset of §3.2 |
 | `bbox WITHIN (…)` | `latitude BETWEEN … AND … AND longitude BETWEEN … AND …` |
-| `h3 AT RES 6 IN (…)` | `h3_res6 IN (…)` on `wide_h3` or `h3_summary_res6` (see §2.4 note) |
+| `h3 AT RES 6 IN (…)` | `h3_res6 IN (…)` on `wide_h3`; OR `h3_cell IN (…) AND resolution = 6` on `h3_summary_res6` (see §2.4 note) |
 | `time BETWEEN …` | `TRY_CAST(result_time AS TIMESTAMP) BETWEEN t1 AND t2` — `result_time` ships as VARCHAR in `lite`, `wide`, and `narrow` |
 
 **Canonical data URL base**: `https://data.isamples.org/` (Cloudflare
@@ -394,7 +396,7 @@ PQG (the parquet property-graph binding) is specified in
 - [`pqg/docs/conformance_matrix.md`](https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md)
   — which shipped parquet files cover which QUERY_SPEC dimensions
   (companion to this spec; informed every v0.2 amendment)
-- [`pqg/docs/SERIALIZATIONS.md`](https://github.com/isamplesorg/pqg/pull/143)
+- [`SERIALIZATIONS.md`](https://github.com/isamplesorg/isamplesorg.github.io/pull/143) (catalog of shipped parquet files, in `isamplesorg.github.io`)
   — the three canonical parquet formats (export / narrow / wide) and
   how they round-trip
 - `QUERY_COMPARISON.md` — PQG traversal query alignment (Eric's Python
