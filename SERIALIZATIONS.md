@@ -181,12 +181,13 @@ for the alias when you want "latest."
 ### 4.3 `isamples_202601_wide.parquet`
 
 - **Role**: PQG wide format — primary analytic substrate for Explorer + notebook.
-- **Headline schema** (49 cols): same core columns as narrow, plus `p__produced_by`, `p__sample_location`, `p__sampling_site`, `p__site_location`, `p__responsibility`, `p__registrant`, `p__has_material_category`, `p__has_context_category`, `p__has_sample_object_type`, `p__keywords`, `p__curation`, `p__related_resource` — each an `INT32[]` of target `row_id`s.
+- **Headline schema** (49 cols): same core columns as narrow, plus `p__produced_by`, `p__sample_location`, `p__sampling_site`, `p__site_location`, `p__responsibility`, `p__registrant`, `p__has_material_category`, `p__has_context_category`, `p__has_sample_object_type`, `p__keywords`, `p__curation`, `p__related_resource` — each an integer array of target `row_id`s. Exact DuckDB types are mixed: `p__produced_by`, `p__sample_location`, `p__sampling_site`, `p__site_location`, `p__registrant`, `p__curation` are `INTEGER[]`; `p__has_material_category`, `p__has_context_category`, `p__has_sample_object_type`, `p__keywords`, `p__responsibility`, `p__related_resource` are `BIGINT[]`.
+- **Column name gotcha**: the source column is `n` on wide/narrow (PQG convention), not `source`. Alias it in projections (e.g. `n AS source`) to match what the lite and facet parquets already call it.
 - **Query pattern**: entity-centric; relationships via array-element JOIN (see PQG §3.2).
 - **DuckDB**:
   ```sql
-  SELECT source, COUNT(*) FROM read_parquet('https://data.isamples.org/isamples_202601_wide.parquet')
-  WHERE otype = 'MaterialSampleRecord' GROUP BY 1 ORDER BY 2 DESC;
+  SELECT n AS source, COUNT(*) FROM read_parquet('https://data.isamples.org/isamples_202601_wide.parquet')
+  WHERE otype = 'MaterialSampleRecord' GROUP BY n ORDER BY 2 DESC;
   ```
 
 ### 4.4 `isamples_202604_wide.parquet`
