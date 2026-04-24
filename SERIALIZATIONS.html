@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="iSamples team">
+<meta name="dcterms.date" content="2026-04-24">
+
+<title>iSamples Data Serializations – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-84244d6014897f94eda7509784684fcb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/progressive_globe.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/isamples_explorer.html">
+ <span class="dropdown-text">Search Explorer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#purpose-and-scope" id="toc-purpose-and-scope" class="nav-link active" data-scroll-target="#purpose-and-scope"><span class="header-section-number">1</span> 1. Purpose and scope</a></li>
+  <li><a href="#the-derivation-dag" id="toc-the-derivation-dag" class="nav-link" data-scroll-target="#the-derivation-dag"><span class="header-section-number">2</span> 2. The derivation DAG</a></li>
+  <li><a href="#catalog" id="toc-catalog" class="nav-link" data-scroll-target="#catalog"><span class="header-section-number">3</span> 3. Catalog</a>
+  <ul>
+  <li><a href="#tier-source-of-truth" id="toc-tier-source-of-truth" class="nav-link" data-scroll-target="#tier-source-of-truth"><span class="header-section-number">3.1</span> Tier: source of truth</a></li>
+  <li><a href="#tier-graph-normalization" id="toc-tier-graph-normalization" class="nav-link" data-scroll-target="#tier-graph-normalization"><span class="header-section-number">3.2</span> Tier: graph normalization</a></li>
+  <li><a href="#tier-derived-aggregates-progressive-globe-h3" id="toc-tier-derived-aggregates-progressive-globe-h3" class="nav-link" data-scroll-target="#tier-derived-aggregates-progressive-globe-h3"><span class="header-section-number">3.3</span> Tier: derived aggregates (progressive globe / H3)</a></li>
+  <li><a href="#tier-display-projections" id="toc-tier-display-projections" class="nav-link" data-scroll-target="#tier-display-projections"><span class="header-section-number">3.4</span> Tier: display projections</a></li>
+  <li><a href="#tier-facet-caches" id="toc-tier-facet-caches" class="nav-link" data-scroll-target="#tier-facet-caches"><span class="header-section-number">3.5</span> Tier: facet caches</a></li>
+  <li><a href="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" id="toc-tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="nav-link" data-scroll-target="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.6</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</a></li>
+  <li><a href="#tier-legacy-bindings-and-convenience-copies" id="toc-tier-legacy-bindings-and-convenience-copies" class="nav-link" data-scroll-target="#tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.7</span> Tier: legacy bindings and convenience copies</a></li>
+  <li><a href="#tier-source-specific-variants-not-part-of-the-substrate" id="toc-tier-source-specific-variants-not-part-of-the-substrate" class="nav-link" data-scroll-target="#tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.8</span> Tier: source-specific variants (not part of the substrate)</a></li>
+  </ul></li>
+  <li><a href="#per-file-detail" id="toc-per-file-detail" class="nav-link" data-scroll-target="#per-file-detail"><span class="header-section-number">4</span> 4. Per-file detail</a>
+  <ul>
+  <li><a href="#zenodo-export-source-of-truth" id="toc-zenodo-export-source-of-truth" class="nav-link" data-scroll-target="#zenodo-export-source-of-truth"><span class="header-section-number">4.1</span> 4.1 Zenodo export (source of truth)</a></li>
+  <li><a href="#isamples_202512_narrow.parquet" id="toc-isamples_202512_narrow.parquet" class="nav-link" data-scroll-target="#isamples_202512_narrow.parquet"><span class="header-section-number">4.2</span> 4.2 <code>isamples_202512_narrow.parquet</code></a></li>
+  <li><a href="#isamples_202601_wide.parquet" id="toc-isamples_202601_wide.parquet" class="nav-link" data-scroll-target="#isamples_202601_wide.parquet"><span class="header-section-number">4.3</span> 4.3 <code>isamples_202601_wide.parquet</code></a></li>
+  <li><a href="#isamples_202604_wide.parquet" id="toc-isamples_202604_wide.parquet" class="nav-link" data-scroll-target="#isamples_202604_wide.parquet"><span class="header-section-number">4.4</span> 4.4 <code>isamples_202604_wide.parquet</code></a></li>
+  <li><a href="#isamples_202601_wide_h3.parquet" id="toc-isamples_202601_wide_h3.parquet" class="nav-link" data-scroll-target="#isamples_202601_wide_h3.parquet"><span class="header-section-number">4.5</span> 4.5 <code>isamples_202601_wide_h3.parquet</code></a></li>
+  <li><a href="#isamples_202601_h3_summary_res468.parquet" id="toc-isamples_202601_h3_summary_res468.parquet" class="nav-link" data-scroll-target="#isamples_202601_h3_summary_res468.parquet"><span class="header-section-number">4.6</span> 4.6 <code>isamples_202601_h3_summary_res{4,6,8}.parquet</code></a></li>
+  <li><a href="#isamples_202601_samples_map_lite.parquet" id="toc-isamples_202601_samples_map_lite.parquet" class="nav-link" data-scroll-target="#isamples_202601_samples_map_lite.parquet"><span class="header-section-number">4.7</span> 4.7 <code>isamples_202601_samples_map_lite.parquet</code></a></li>
+  <li><a href="#isamples_202601_sample_facets_v2.parquet" id="toc-isamples_202601_sample_facets_v2.parquet" class="nav-link" data-scroll-target="#isamples_202601_sample_facets_v2.parquet"><span class="header-section-number">4.8</span> 4.8 <code>isamples_202601_sample_facets_v2.parquet</code></a></li>
+  <li><a href="#isamples_202601_facet_summaries.parquet" id="toc-isamples_202601_facet_summaries.parquet" class="nav-link" data-scroll-target="#isamples_202601_facet_summaries.parquet"><span class="header-section-number">4.9</span> 4.9 <code>isamples_202601_facet_summaries.parquet</code></a></li>
+  <li><a href="#isamples_202601_facet_cross_filter.parquet" id="toc-isamples_202601_facet_cross_filter.parquet" class="nav-link" data-scroll-target="#isamples_202601_facet_cross_filter.parquet"><span class="header-section-number">4.10</span> 4.10 <code>isamples_202601_facet_cross_filter.parquet</code></a></li>
+  <li><a href="#oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants" id="toc-oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants" class="nav-link" data-scroll-target="#oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants"><span class="header-section-number">4.11</span> 4.11 <code>oc_isamples_pqg.parquet</code> and <code>oc_isamples_pqg_wide.parquet</code> (OC variants)</a></li>
+  </ul></li>
+  <li><a href="#url-convention" id="toc-url-convention" class="nav-link" data-scroll-target="#url-convention"><span class="header-section-number">5</span> 5. URL convention</a></li>
+  <li><a href="#relationship-to-other-documents" id="toc-relationship-to-other-documents" class="nav-link" data-scroll-target="#relationship-to-other-documents"><span class="header-section-number">6</span> 6. Relationship to other documents</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SERIALIZATIONS.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">iSamples Data Serializations</h1>
+<p class="subtitle lead">A catalog of the parquet files that back the iSamples query substrate</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">data</div>
+    <div class="quarto-category">architecture</div>
+    <div class="quarto-category">parquet</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>iSamples team </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 24, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose-and-scope" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="purpose-and-scope"><span class="header-section-number">1</span> 1. Purpose and scope</h2>
+<p>iSamples has roughly a dozen parquet files in circulation at any given moment — each with a specific role, a specific upstream parent, and a specific set of downstream consumers (the web Explorer, the Python reference notebook, the progressive globe, the PQG conformance work). Some are primary archival products; others are derived aggregates or caches; still others are source-specific variants published outside the <code>data.isamples.org</code> namespace.</p>
+<p>This document is a <strong>catalog</strong>, not an ingestion guide: it tells you what each file is, where it came from, who consumes it, and where in the spec tree to look for its normative definition. For how to <em>build</em> these files, see the scripts in <a href="https://github.com/isamplesorg/isamplesorg.github.io/tree/main/scripts"><code>scripts/</code></a> and the converters in <a href="https://github.com/isamplesorg/pqg"><code>pqg/</code></a>. For how to <em>query</em> them, see <a href="query-spec.qmd"><code>query-spec.qmd</code></a>. For how to <em>cite</em> them, see the Zenodo deposition plan.</p>
+<p>All sizes and row counts below were verified by DuckDB <code>DESCRIBE</code> + <code>COUNT(*)</code> against <code>https://data.isamples.org/</code> on 2026-04-24.</p>
+</section>
+<section id="the-derivation-dag" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="the-derivation-dag"><span class="header-section-number">2</span> 2. The derivation DAG</h2>
+<pre><code>Zenodo export (doi:10.5281/zenodo.15278211, ~300 MB, 6.7 M samples)
+  │   sample-centric, nested STRUCTs (PQG "export" format)
+  │
+  └─► isamples_202512_narrow.parquet  (820 MB, 101 M rows)
+        │   graph-normalized, nodes + _edge_ rows (PQG "narrow")
+        │
+        └─► isamples_202601_wide.parquet  (278 MB, 20.7 M rows)
+              │   entity-centric, p__* relationship arrays (PQG "wide")
+              │
+              ├─► isamples_202604_wide.parquet  (292 MB, 20.7 M rows)
+              │     = 202601 wide + ~47 K OpenContext thumbnails
+              │     (see scripts/enrich_wide_with_oc_thumbnails.py)
+              │
+              ├─► isamples_202601_wide_h3.parquet  (292 MB, 20.7 M)
+              │     = wide + h3_res4 / h3_res6 / h3_res8 columns
+              │
+              ├─► isamples_202601_samples_map_lite.parquet  (60 MB, 6.0 M)
+              │     display projection for map points
+              │
+              ├─► isamples_202601_sample_facets_v2.parquet  (63 MB, 6.0 M)
+              │     pid → facet-URI strings for multi-dim filtering
+              │
+              ├─► isamples_202601_facet_summaries.parquet  (2 KB, 56 rows)
+              │     baseline (facet_type, facet_value, count) tuples
+              │
+              ├─► isamples_202601_facet_cross_filter.parquet  (6 KB, 526 rows)
+              │     single-active-filter cross cache
+              │
+              └─► isamples_202601_h3_summary_res{4,6,8}.parquet
+                    geospatial aggregates for the progressive globe
+                    (38 K / 112 K / 176 K cells)
+
+Source-specific variants (parallel to the substrate, not derived from it):
+
+oc_isamples_pqg.parquet        (GCS, 11.8 M, narrow, OC-only)
+oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
+  └─► serve as upstream for OpenContext thumbnails folded into 202604 wide</code></pre>
+<p>Arrows indicate derivation, not containment. Every file in the left column can be rebuilt from its parent by a script in <code>isamples-python/</code> or <code>isamplesorg.github.io/scripts/</code>.</p>
+</section>
+<section id="catalog" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="catalog"><span class="header-section-number">3</span> 3. Catalog</h2>
+<section id="tier-source-of-truth" class="level3" data-number="3.1">
+<h3 data-number="3.1" data-anchor-id="tier-source-of-truth"><span class="header-section-number">3.1</span> Tier: source of truth</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>zenodo.15278211</code> export</td>
+<td>Aggregated Zenodo export (all 4 sources, sample-centric, nested)</td>
+<td style="text-align: right;">~300 MB</td>
+<td style="text-align: right;">6.7 M</td>
+<td>SESAR + OpenContext + GEOME + Smithsonian ingestion</td>
+<td>PQG converters (narrow, wide)</td>
+<td>PQG §3.3 (export format)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-graph-normalization" class="level3" data-number="3.2">
+<h3 data-number="3.2" data-anchor-id="tier-graph-normalization"><span class="header-section-number">3.2</span> Tier: graph normalization</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202512_narrow.parquet</code></td>
+<td>Graph-normalized with explicit <code>_edge_</code> rows; canonical archival form</td>
+<td style="text-align: right;">820 MB</td>
+<td style="text-align: right;">101.4 M</td>
+<td>Zenodo export</td>
+<td>Graph traversals, PQG tutorials, narrow→wide converter, Zenodo archive</td>
+<td>PQG §3.1, §4.2</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202601_wide.parquet</code></td>
+<td>Entity-centric, relationships as <code>p__*</code> arrays; primary analytic substrate</td>
+<td style="text-align: right;">278 MB</td>
+<td style="text-align: right;">20.7 M</td>
+<td>narrow</td>
+<td>Search Explorer, Python notebook, facet/h3/lite derivations</td>
+<td>PQG §3.2, §4.5</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202604_wide.parquet</code></td>
+<td>202601 wide + ~47 K OC thumbnails folded in</td>
+<td style="text-align: right;">292 MB</td>
+<td style="text-align: right;">20.7 M</td>
+<td>202601 wide + <code>oc_isamples_pqg.parquet</code></td>
+<td><code>current/wide.parquet</code> alias points here</td>
+<td>PQG §3.2</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-derived-aggregates-progressive-globe-h3" class="level3" data-number="3.3">
+<h3 data-number="3.3" data-anchor-id="tier-derived-aggregates-progressive-globe-h3"><span class="header-section-number">3.3</span> Tier: derived aggregates (progressive globe / H3)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202601_wide_h3.parquet</code></td>
+<td>Wide with <code>h3_res{4,6,8}</code> BIGINT columns pre-joined</td>
+<td style="text-align: right;">292 MB</td>
+<td style="text-align: right;">20.7 M</td>
+<td>wide</td>
+<td>Deep-Dive Analysis tutorial (H3 filtering without join)</td>
+<td>QUERY_SPEC §2.4</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202601_h3_summary_res4.parquet</code></td>
+<td>Continental tier: <code>(h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count, resolution)</code></td>
+<td style="text-align: right;">580 KB</td>
+<td style="text-align: right;">38 K</td>
+<td>wide_h3</td>
+<td>Interactive Explorer globe (zoomed out), Python Explorer H3 tier mode</td>
+<td>QUERY_SPEC §2.4</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202601_h3_summary_res6.parquet</code></td>
+<td>Regional tier</td>
+<td style="text-align: right;">1.6 MB</td>
+<td style="text-align: right;">112 K</td>
+<td>wide_h3</td>
+<td>Interactive Explorer globe (mid zoom)</td>
+<td>QUERY_SPEC §2.4</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202601_h3_summary_res8.parquet</code></td>
+<td>Neighborhood tier</td>
+<td style="text-align: right;">2.4 MB</td>
+<td style="text-align: right;">176 K</td>
+<td>wide_h3</td>
+<td>Interactive Explorer globe (close zoom)</td>
+<td>QUERY_SPEC §2.4</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-display-projections" class="level3" data-number="3.4">
+<h3 data-number="3.4" data-anchor-id="tier-display-projections"><span class="header-section-number">3.4</span> Tier: display projections</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202601_samples_map_lite.parquet</code></td>
+<td>Minimum map projection; only <code>MaterialSampleRecord</code> rows with coordinates</td>
+<td style="text-align: right;">60 MB</td>
+<td style="text-align: right;">6.0 M</td>
+<td>wide (filtered)</td>
+<td>Interactive Explorer point-level rendering below ~120 km altitude</td>
+<td>QUERY_SPEC §4.1</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-facet-caches" class="level3" data-number="3.5">
+<h3 data-number="3.5" data-anchor-id="tier-facet-caches"><span class="header-section-number">3.5</span> Tier: facet caches</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202601_sample_facets_v2.parquet</code></td>
+<td><code>(pid, source, material, context, object_type, label, description, place_name)</code> — all VARCHAR scalars; each facet column is a single URI per sample (not an array)</td>
+<td style="text-align: right;">63 MB</td>
+<td style="text-align: right;">6.0 M</td>
+<td>wide</td>
+<td>Search Explorer multi-dim facet filtering</td>
+<td>QUERY_SPEC §3.3, §5.1</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202601_facet_summaries.parquet</code></td>
+<td>Baseline <code>(facet_type, facet_value, scheme, count)</code></td>
+<td style="text-align: right;">2 KB</td>
+<td style="text-align: right;">56</td>
+<td>wide</td>
+<td>Every tutorial (instant initial facet counts)</td>
+<td>QUERY_SPEC §3.3 tier 1</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202601_facet_cross_filter.parquet</code></td>
+<td>Pre-computed counts for single-filter cross-facet queries</td>
+<td style="text-align: right;">6 KB</td>
+<td style="text-align: right;">526</td>
+<td>wide</td>
+<td>Search Explorer cross-filter UI</td>
+<td>QUERY_SPEC §3.3 tier 2a</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="level3" data-number="3.6">
+<h3 data-number="3.6" data-anchor-id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.6</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</h3>
+<p>The <code>export_client</code> can emit each source’s records in multiple formats; the aggregated Zenodo deposition archives the GeoParquet flavor, but JSONL and CSV are also emitted by the same pipeline and are useful for streaming or human inspection.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_export_*.jsonl</code></td>
+<td>Streaming JSON export (one sample per line, nested structs)</td>
+<td style="text-align: right;">per query</td>
+<td style="text-align: right;">—</td>
+<td><code>isamplesorg/export_client</code> (<code>isample export -f jsonl</code>)</td>
+<td>Local DuckDB ingestion, STAC catalog generation</td>
+<td><a href="https://github.com/isamplesorg/export_client">export_client docs</a></td>
+</tr>
+<tr class="even">
+<td><code>isamples_export_*.csv</code></td>
+<td>Flat CSV export — convenience only, not authoritative for the query substrate</td>
+<td style="text-align: right;">per query</td>
+<td style="text-align: right;">—</td>
+<td><code>isamplesorg/export_client</code> (<code>isample export -f csv</code>)</td>
+<td>Human inspection</td>
+<td><a href="https://github.com/isamplesorg/export_client">export_client docs</a></td>
+</tr>
+<tr class="odd">
+<td><code>stac.json</code> / <code>manifest.json</code></td>
+<td>STAC/discovery sidecars emitted with local exports</td>
+<td style="text-align: right;">&lt; 1 KB</td>
+<td style="text-align: right;">—</td>
+<td><code>isamplesorg/export_client</code></td>
+<td>STAC browser, local server, refresh workflow</td>
+<td><a href="https://github.com/isamplesorg/export_client">export_client README</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-legacy-bindings-and-convenience-copies" class="level3" data-number="3.7">
+<h3 data-number="3.7" data-anchor-id="tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.7</span> Tier: legacy bindings and convenience copies</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Solr indexed documents</td>
+<td>Legacy search-server binding for the same canonical query dimensions. <em>Not a portable serialization</em>; listed here because QUERY_SPEC §5.3 documents the Solr dialect bindings</td>
+<td style="text-align: right;">N/A</td>
+<td style="text-align: right;">~6 M</td>
+<td><code>isamplesorg/isamples_inabox</code> harvest/index pipelines + schema mappings</td>
+<td><a href="https://central.isample.xyz/isamples_central/">iSamples Central</a> (API offline as of Aug 2025; Solr schema remains the authoritative precedent for dimension names)</td>
+<td><a href="query-spec.qmd#sec-bindings">QUERY_SPEC §5.3</a></td>
+</tr>
+<tr class="even">
+<td>H3 + lite CSV twins</td>
+<td>Human-readable CSV duplicates of <code>samples_map_lite.parquet</code> and <code>h3_summary_res{4,6,8}.parquet</code></td>
+<td style="text-align: right;">~640 MB total</td>
+<td style="text-align: right;">mirror</td>
+<td>the corresponding parquet files</td>
+<td>Manual inspection only</td>
+<td>parquet copies are authoritative; CSV twins excluded from the Zenodo substrate deposition by design</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-source-specific-variants-not-part-of-the-substrate" class="level3" data-number="3.8">
+<h3 data-number="3.8" data-anchor-id="tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.8</span> Tier: source-specific variants (not part of the substrate)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>oc_isamples_pqg.parquet</code> (GCS)</td>
+<td>OpenContext-only narrow; carries <code>thumbnail_url</code> values absent from the aggregated export</td>
+<td style="text-align: right;">~1.8 GB</td>
+<td style="text-align: right;">11.8 M</td>
+<td>OpenContext ETL (Eric Kansa)</td>
+<td><code>scripts/enrich_wide_with_oc_thumbnails.py</code> → 202604 wide; PQG development</td>
+<td>PQG §3.1</td>
+</tr>
+<tr class="even">
+<td><code>oc_isamples_pqg_wide.parquet</code> (GCS)</td>
+<td>OpenContext-only wide</td>
+<td style="text-align: right;">~600 MB</td>
+<td style="text-align: right;">2.5 M</td>
+<td>OC narrow</td>
+<td>OC-specific analyses, PQG benchmarks</td>
+<td>PQG §3.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>No OpenContext sidecar file exists yet.</strong> Per the sidecar-pattern plan (Raymond endorsed 2026-04-17), thumbnails are currently merged directly into <code>isamples_202604_wide.parquet</code> rather than joined at query time from a sidecar. A future <code>isamples_202601_oc_sidecar.parquet</code> (keyed on <code>pid</code>, with <code>thumbnail_url</code>, <code>is_public</code>, <code>license</code>, <code>media_url</code>, <code>harvested_at</code>) is planned — see <code>project_isamples_sidecar_pattern.md</code>.</p>
+</section>
+</section>
+<section id="per-file-detail" class="level2" data-number="4">
+<h2 data-number="4" data-anchor-id="per-file-detail"><span class="header-section-number">4</span> 4. Per-file detail</h2>
+<p>URL convention: each file is available at <code>https://data.isamples.org/&lt;filename&gt;</code> (versioned, 1-yr immutable cache) and, where applicable, at <code>https://data.isamples.org/current/&lt;alias&gt;</code> (302 redirect, 5-min cache). Examples below use the versioned URL; swap for the alias when you want “latest.”</p>
+<section id="zenodo-export-source-of-truth" class="level3" data-number="4.1">
+<h3 data-number="4.1" data-anchor-id="zenodo-export-source-of-truth"><span class="header-section-number">4.1</span> 4.1 Zenodo export (source of truth)</h3>
+<ul>
+<li><strong>Role</strong>: The raw aggregated Zenodo export — all four sources, sample-centric, nested STRUCTs.</li>
+<li><strong>DOI</strong>: <code>10.5281/zenodo.15278211</code></li>
+<li><strong>Headline schema</strong> (PQG export, 19 cols): <code>sample_identifier</code>, <code>label</code>, <code>description</code>, <code>produced_by {sampling_site {sample_location {latitude, longitude, ...}}}</code>, etc.</li>
+<li><strong>Query pattern</strong>: one row per sample; no JOINs needed for basic queries.</li>
+<li><strong>DuckDB</strong>: download the parquet from Zenodo, then <code>SELECT * FROM read_parquet('isamples_export_*.parquet') LIMIT 10</code>.</li>
+</ul>
+</section>
+<section id="isamples_202512_narrow.parquet" class="level3" data-number="4.2">
+<h3 data-number="4.2" data-anchor-id="isamples_202512_narrow.parquet"><span class="header-section-number">4.2</span> 4.2 <code>isamples_202512_narrow.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: PQG narrow format — the canonical, lossless graph-normalized representation.</p></li>
+<li><p><strong>Headline schema</strong> (40 cols): <code>row_id, pid, otype, s, p, o, n, altids, geometry, ...entity-specific columns...</code>. Edges are rows with <code>otype='_edge_'</code> and populated <code>s/p/o</code>.</p></li>
+<li><p><strong>Query pattern</strong>: multi-hop JOIN via <code>_edge_</code> rows (see PQG §2.2).</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202512_narrow.parquet'</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> otype <span class="op">=</span> <span class="st">'MaterialSampleRecord'</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_wide.parquet" class="level3" data-number="4.3">
+<h3 data-number="4.3" data-anchor-id="isamples_202601_wide.parquet"><span class="header-section-number">4.3</span> 4.3 <code>isamples_202601_wide.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: PQG wide format — primary analytic substrate for Explorer + notebook.</p></li>
+<li><p><strong>Headline schema</strong> (49 cols): same core columns as narrow, plus <code>p__produced_by</code>, <code>p__sample_location</code>, <code>p__sampling_site</code>, <code>p__site_location</code>, <code>p__responsibility</code>, <code>p__registrant</code>, <code>p__has_material_category</code>, <code>p__has_context_category</code>, <code>p__has_sample_object_type</code>, <code>p__keywords</code>, <code>p__curation</code>, <code>p__related_resource</code> — each an integer array of target <code>row_id</code>s. Exact DuckDB types are mixed: <code>p__produced_by</code>, <code>p__sample_location</code>, <code>p__sampling_site</code>, <code>p__site_location</code>, <code>p__registrant</code>, <code>p__curation</code> are <code>INTEGER[]</code>; <code>p__has_material_category</code>, <code>p__has_context_category</code>, <code>p__has_sample_object_type</code>, <code>p__keywords</code>, <code>p__responsibility</code>, <code>p__related_resource</code> are <code>BIGINT[]</code>.</p></li>
+<li><p><strong>Column name gotcha</strong>: the source column is <code>n</code> on wide/narrow (PQG convention), not <code>source</code>. Alias it in projections (e.g.&nbsp;<code>n AS source</code>) to match what the lite and facet parquets already call it.</p></li>
+<li><p><strong>Query pattern</strong>: entity-centric; relationships via array-element JOIN (see PQG §3.2).</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> n <span class="kw">AS</span> <span class="kw">source</span>, <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_wide.parquet'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> otype <span class="op">=</span> <span class="st">'MaterialSampleRecord'</span> <span class="kw">GROUP</span> <span class="kw">BY</span> n <span class="kw">ORDER</span> <span class="kw">BY</span> <span class="dv">2</span> <span class="kw">DESC</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202604_wide.parquet" class="level3" data-number="4.4">
+<h3 data-number="4.4" data-anchor-id="isamples_202604_wide.parquet"><span class="header-section-number">4.4</span> 4.4 <code>isamples_202604_wide.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: 202601 wide enriched with ~47 K OpenContext thumbnails. <code>current/wide.parquet</code> 302-redirects here.</p></li>
+<li><p><strong>Headline schema</strong>: identical to 202601 wide (49 cols). Only the <code>thumbnail_url</code> column on OC <code>MaterialSampleRecord</code> rows is populated differently.</p></li>
+<li><p><strong>Query pattern</strong>: drop-in replacement for 202601 wide; use <code>current/wide.parquet</code> unless you need a pinned version.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/current/wide.parquet'</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> thumbnail_url <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_wide_h3.parquet" class="level3" data-number="4.5">
+<h3 data-number="4.5" data-anchor-id="isamples_202601_wide_h3.parquet"><span class="header-section-number">4.5</span> 4.5 <code>isamples_202601_wide_h3.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Wide with H3 indices pre-joined, so H3 predicates don’t need a join.</p></li>
+<li><p><strong>Headline schema</strong> (52 cols): wide columns + <code>h3_res4</code>, <code>h3_res6</code>, <code>h3_res8</code> (BIGINT).</p></li>
+<li><p><strong>Query pattern</strong>: direct H3-cell filtering without an H3 UDF.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_wide_h3.parquet'</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> h3_res6 <span class="op">=</span> <span class="dv">604932829406232575</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_h3_summary_res468.parquet" class="level3" data-number="4.6">
+<h3 data-number="4.6" data-anchor-id="isamples_202601_h3_summary_res468.parquet"><span class="header-section-number">4.6</span> 4.6 <code>isamples_202601_h3_summary_res{4,6,8}.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Zoom-adaptive aggregates that back the Cesium progressive globe and the Python Explorer’s “H3 tier” rendering mode.</p></li>
+<li><p><strong>Headline schema</strong> (7 cols, identical across resolutions): <code>h3_cell</code> (BIGINT), <code>sample_count</code> (INT), <code>center_lat</code>, <code>center_lng</code> (DOUBLE), <code>dominant_source</code> (VARCHAR), <code>source_count</code> (INT), <code>resolution</code> (INT).</p></li>
+<li><p><strong>Query pattern</strong>: fetch the right resolution for the current zoom; no join needed.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_h3_summary_res6.parquet'</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ORDER</span> <span class="kw">BY</span> sample_count <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="dv">20</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_samples_map_lite.parquet" class="level3" data-number="4.7">
+<h3 data-number="4.7" data-anchor-id="isamples_202601_samples_map_lite.parquet"><span class="header-section-number">4.7</span> 4.7 <code>isamples_202601_samples_map_lite.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Display projection for point-level map rendering. Contains only <code>MaterialSampleRecord</code> rows with valid coordinates.</p></li>
+<li><p><strong>Headline schema</strong> (9 cols): <code>pid, label, source, latitude, longitude, place_name, result_time, h3_res8, h3_res8_hex</code>. <strong>No <code>description</code></strong> — it’s in wide only.</p></li>
+<li><p><strong>Query pattern</strong>: the Explorer reads this directly when altitude drops below the point-render threshold.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="kw">source</span>, <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_samples_map_lite.parquet'</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> latitude <span class="kw">BETWEEN</span> <span class="dv">32</span> <span class="kw">AND</span> <span class="dv">42</span> <span class="kw">GROUP</span> <span class="kw">BY</span> <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_sample_facets_v2.parquet" class="level3" data-number="4.8">
+<h3 data-number="4.8" data-anchor-id="isamples_202601_sample_facets_v2.parquet"><span class="header-section-number">4.8</span> 4.8 <code>isamples_202601_sample_facets_v2.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI (the leaf concept the sample is tagged with at that dimension).</p></li>
+<li><p><strong>Headline schema</strong> (8 cols, all VARCHAR): <code>pid, source, material, context, object_type, label, description, place_name</code>. <code>material</code>/<code>context</code>/<code>object_type</code> are scalar URI strings, NOT arrays — the file’s grain is one row per sample, so a sample tagged with multiple material URIs is represented by a single chosen URI (currently the first/leaf). For multi-material accuracy, JOIN back to <code>wide.p__has_material_category</code>.</p></li>
+<li><p><strong>Query pattern</strong>: <code>WHERE material = '&lt;uri&gt;'</code> for exact match; <code>WHERE material ILIKE '%rock%'</code> to substring-match URI fragments.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_sample_facets_v2.parquet'</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> material ILIKE <span class="st">'%rock%'</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">LIMIT</span> <span class="dv">10</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_facet_summaries.parquet" class="level3" data-number="4.9">
+<h3 data-number="4.9" data-anchor-id="isamples_202601_facet_summaries.parquet"><span class="header-section-number">4.9</span> 4.9 <code>isamples_202601_facet_summaries.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Baseline (no-filter) facet counts. Loaded by every tutorial at startup.</p></li>
+<li><p><strong>Headline schema</strong> (4 cols, 56 rows): <code>facet_type</code> (source|material|context|object_type), <code>facet_value</code>, <code>scheme</code>, <code>count</code>.</p></li>
+<li><p><strong>Query pattern</strong>: sort by <code>count DESC</code> to render a top-N facet list.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_facet_summaries.parquet'</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> facet_type <span class="op">=</span> <span class="st">'material'</span> <span class="kw">ORDER</span> <span class="kw">BY</span> <span class="fu">count</span> <span class="kw">DESC</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="isamples_202601_facet_cross_filter.parquet" class="level3" data-number="4.10">
+<h3 data-number="4.10" data-anchor-id="isamples_202601_facet_cross_filter.parquet"><span class="header-section-number">4.10</span> 4.10 <code>isamples_202601_facet_cross_filter.parquet</code></h3>
+<ul>
+<li><p><strong>Role</strong>: Cross-facet counts for the single-active-filter case (QUERY_SPEC §3.3 tier 2a). Avoids recomputing when one facet dimension is active.</p></li>
+<li><p><strong>Headline schema</strong> (7 cols, 526 rows): <code>filter_source, filter_material, filter_context, filter_object_type, facet_type, facet_value, count</code>. Exactly one <code>filter_*</code> column is non-NULL per row.</p></li>
+<li><p><strong>Query pattern</strong>: lookup by the active filter to get counts for the remaining dimensions.</p></li>
+<li><p><strong>DuckDB</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> facet_type, facet_value, <span class="fu">count</span> <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_facet_cross_filter.parquet'</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> filter_source <span class="op">=</span> <span class="st">'SESAR'</span> <span class="kw">ORDER</span> <span class="kw">BY</span> facet_type, <span class="fu">count</span> <span class="kw">DESC</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
+</section>
+<section id="oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants" class="level3" data-number="4.11">
+<h3 data-number="4.11" data-anchor-id="oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants"><span class="header-section-number">4.11</span> 4.11 <code>oc_isamples_pqg.parquet</code> and <code>oc_isamples_pqg_wide.parquet</code> (OC variants)</h3>
+<ul>
+<li><strong>Role</strong>: OpenContext-specific PQG files maintained by Eric Kansa. Hosted at <code>https://storage.googleapis.com/opencontext-parquet/</code>, <strong>not</strong> under <code>data.isamples.org</code>. They are not part of the cross-source substrate — they carry OC-internal detail (notably <code>thumbnail_url</code>) that the aggregated Zenodo export drops.</li>
+<li><strong>Headline schema</strong>: PQG narrow (40 cols) and wide (47 cols). OC wide has slightly fewer <code>p__*</code> columns than the unified wide — this is schema drift, not semantically meaningful for standard queries.</li>
+<li><strong>Consumer</strong>: <code>scripts/enrich_wide_with_oc_thumbnails.py</code> uses OC narrow to fill thumbnails into 202604 unified wide. Also used directly in PQG benchmark work.</li>
+<li><strong>Future</strong>: these become the prototype upstream for per-source sidecars (see §3, bottom row).</li>
+</ul>
+</section>
+</section>
+<section id="url-convention" class="level2" data-number="5">
+<h2 data-number="5" data-anchor-id="url-convention"><span class="header-section-number">5</span> 5. URL convention</h2>
+<p>All substrate files live under <code>https://data.isamples.org/</code> — a Cloudflare Worker fronting an R2 bucket. The Worker provides:</p>
+<ul>
+<li><strong>Versioned URLs</strong> <code>https://data.isamples.org/isamples_&lt;YYYYMM&gt;_&lt;variant&gt;.parquet</code> — 1-year immutable cache. Safe to pin in papers, Zenodo manifests, reproducibility notebooks.</li>
+<li><strong>Alias URLs</strong> <code>https://data.isamples.org/current/&lt;alias&gt;</code> — 302 redirect with 5-min cache; always resolves to the latest snapshot. Use for “always fresh” consumers. Currently <code>current/wide.parquet → isamples_202604_wide.parquet</code>.</li>
+</ul>
+<p><strong>Never reference the raw <code>pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...</code> URL.</strong> It bypasses the Worker and defeats both the alias layer and the Cache-Control headers that DuckDB-WASM relies on for HTTP range requests.</p>
+<p>OpenContext-specific variants live at <code>https://storage.googleapis.com/opencontext-parquet/</code> and are maintained outside this convention.</p>
+</section>
+<section id="relationship-to-other-documents" class="level2" data-number="6">
+<h2 data-number="6" data-anchor-id="relationship-to-other-documents"><span class="header-section-number">6</span> 6. Relationship to other documents</h2>
+<ul>
+<li><strong><a href="query-spec.qmd"><code>query-spec.qmd</code></a></strong> §5.1 — the DuckDB binding table, which maps query-spec dimensions (<code>source</code>, <code>material</code>, <code>bbox</code>, <code>h3</code>, <code>time</code>, <code>text</code>) to the specific parquet files above. This catalog says <em>what</em> the files are; the query spec says <em>which dimension</em> each file serves.</li>
+<li><strong><code>ZENODO_DEPOSITION_PLAN.md</code></strong> (in the monorepo root) — specifies which subset of these files are archived in each Zenodo deposition. The 202601 deposition bundles the 10 R2-served files plus a <code>MANIFEST.json</code> and <code>README.md</code>. Source-specific OC variants and the raw Zenodo export are <strong>not</strong> part of the substrate deposition.</li>
+<li><strong><a href="https://github.com/isamplesorg/pqg/blob/main/docs/PQG_SPECIFICATION.md"><code>pqg/docs/PQG_SPECIFICATION.md</code></a></strong> — defines the three canonical formats (export, narrow, wide) whose schemas the primary files conform to. §3.5 is the normative section.</li>
+<li><strong><code>pqg/docs/conformance_matrix.md</code></strong> (planned) — will document, for each file above, exactly which clauses of the PQG spec it satisfies (required columns, allowed <code>otype</code> values, edge-type constraints, etc.). This catalog is the prose companion; the conformance matrix will be the machine-checkable companion.</li>
+<li><strong><code>project_isamples_sidecar_pattern.md</code></strong> (memory) — planning for per-source sidecars that would sit alongside the unified wide file rather than being folded in at build time (as OC thumbnails currently are). When that lands, it adds a new tier to §3.</li>
+</ul>
+<hr>
+<p><em>Last updated: 2026-04-24 by iSamples team. Row counts and sizes verified by DuckDB against <code>https://data.isamples.org/</code> on the same date.</em></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SERIALIZATIONS.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
