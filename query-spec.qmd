@@ -1,0 +1,411 @@
+---
+title: "iSamples Query Specification"
+subtitle: "A substrate-neutral contract for searching and filtering iSamples data"
+author: "iSamples team"
+date: today
+toc: true
+sidebar: false
+categories: [spec, architecture, query]
+---
+
+::: {.callout-warning}
+## Draft — v0.2
+
+Field inventories are drawn from the Solr schema (authoritative
+precedent) and the PQG metadata model. v0.2 incorporates findings from
+the [PQG conformance matrix][cmatrix] (which parquet files actually
+carry which dimensions) to resolve naming drift, drop ghosts, and
+tighten substrate bindings. Comments and PRs welcome — see
+[issue tracker][issues].
+
+[issues]: https://github.com/isamplesorg/isamplesorg.github.io/issues
+[cmatrix]: https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md
+:::
+
+## 1. Purpose and scope {#sec-scope}
+
+iSamples data is reached today through at least three substrates — and
+potentially more in the future:
+
+- **DuckDB-WASM against parquet** (this website's Interactive Explorer)
+- **DuckDB / Ibis against parquet** (the Python client and notebooks)
+- **Apache Solr** (legacy iSamples Central; potentially revived)
+
+Each substrate has its own query dialect. Users and maintainers shouldn't
+have to relearn the facet vocabulary, the text-search semantics, or the
+spatial filter grammar when moving between them. This document specifies
+a **substrate-neutral query model** that each implementation can bind to.
+
+**What this spec covers:**
+
+- Canonical facet / filter dimensions and their names
+- Filter grammar (an abstract syntax, not a wire format)
+- Full-text search semantics (which fields participate)
+- Spatial and temporal primitives
+- Sample-card projection (what a clicked sample returns)
+- Substrate binding tables (spec → DuckDB, spec → Solr)
+
+**What it does NOT cover:**
+
+- PQG graph traversal queries (edge walking, multi-hop joins). See
+  [QUERY_COMPARISON.md][qc] in the monorepo root for that work and the
+  Eric-vs-Observable alignment notes.
+- Bulk export / download mechanics. See [how-to-use](how-to-use.qmd).
+- Ingestion and metadata normalization.
+
+[qc]: https://github.com/isamplesorg/isamplesorg.github.io/blob/main/QUERY_COMPARISON.md
+
+**Normative precedent.** Where this spec names a field, the name mirrors
+the iSamples metadata model's dotted-path form as used in the Solr schema
+(`isamples_inabox/solr_schema_init/create_isb_core_schema.py`), because
+that's the most complete, externally-documented query vocabulary the
+project has shipped. Aliases for substrate-specific naming are provided
+in §5.
+
+## 2. Canonical dimensions {#sec-dimensions}
+
+A **dimension** is an attribute of a material sample record that users
+filter, facet, or search on. Every binding (§5) must provide at least
+the **required** dimensions.
+
+### 2.1 Identity and provenance
+
+| Dimension | Type | Required | Solr field | PQG path | Notes |
+|---|---|---|---|---|---|
+| `pid` | string | ✅ | `id` | `MaterialSampleRecord.pid` | Primary key |
+| `source` | enum | ✅ | `source` | `MaterialSampleRecord.source_name` | `SESAR\|OPENCONTEXT\|GEOME\|SMITHSONIAN` |
+| `label` | string | ✅ | `label` | `MaterialSampleRecord.label` | Display name |
+| `description` | text | ✅ | `description` | `MaterialSampleRecord.description` | Free text |
+| `registrant` | string | | `registrant` | `MaterialSampleRecord.registrant` | Who registered |
+| `sourceUpdatedTime` | instant | | `sourceUpdatedTime` | `MaterialSampleRecord.tmodified` | Freshness; bind to `tmodified` (INTEGER epoch) — see note below |
+| `thumbnailURL` | string | | — | `MaterialSampleRecord.thumbnail_url` | Optional; shipped in `wide` today (OpenContext only). Expected to move to per-source sidecars over time (see §4.2 sample card, issue #131) |
+
+::: {.callout-note}
+**`sourceUpdatedTime` binding**: the `wide` parquet ships both
+`last_modified_time` (VARCHAR) and `tmodified` (INTEGER unix epoch).
+v0.2 picks `tmodified` as canonical because epoch is easier to filter
+and sort; `last_modified_time` is kept as a deprecated alias for
+backwards compatibility and will be removed in a future major release.
+:::
+
+### 2.2 Classification (the four facets)
+
+| Dimension | Type | Required | Solr field | PQG path |
+|---|---|---|---|---|
+| `material` | enum | ✅ | `hasMaterialCategory` | `MaterialSampleRecord.has_material_category.label` |
+| `context` | enum | ✅ | `hasContextCategory` | `MaterialSampleRecord.has_context_category.label` |
+| `objectType` | enum | ⚠️ (see below) | `hasSampleObjectType` (alias `hasSpecimenCategory`) | `MaterialSampleRecord.has_sample_object_type.label` |
+| `keywords` | multi-string | | `keywords` | `MaterialSampleRecord.keywords[]` |
+
+::: {.callout-note}
+**Naming resolution (v0.2)**: v0.1 named this dimension `specimen` with
+Solr field `hasSpecimenCategory`. Every shipped parquet file uses
+`object_type` / `hasSampleObjectType`. v0.2 adopts the data-side name
+(`objectType`) as canonical and keeps `hasSpecimenCategory` as a Solr
+alias. See [PQG conformance matrix §3.2][cmatrix-3-2] for the audit
+that prompted this rename.
+
+`objectType` is in the blessed vocabulary but is **not currently
+exposed** in the web Explorer. Adding it is on the P1 stack.
+
+[cmatrix-3-2]: https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md#32-classification-query_spec-22
+:::
+
+::: {.callout-note}
+**Dropped from v0.2**: `informalClassification` was named in v0.1 but
+no shipped parquet file carries it (it was a Solr-era remnant). It is
+removed from the canonical dimension list until/unless the pipeline
+adds it.
+:::
+
+Each of these has a paired **confidence** field (`…Confidence`, `pfloat`)
+in Solr. The spec allows filters to reference confidence (e.g.
+`material.confidence >= 0.8`) but implementations MAY omit if the
+substrate doesn't carry the field.
+
+### 2.3 Sampling event and site
+
+| Dimension | Type | Solr field | PQG path |
+|---|---|---|---|
+| `resultTime` | instant | `producedBy_resultTime` (`pdate`) | `SamplingEvent.result_time` |
+| `samplingPurpose` | string | `samplingPurpose` | `SamplingEvent.sampling_purpose` |
+| `featureOfInterest` | string | `producedBy_hasFeatureOfInterest` | `SamplingEvent.has_feature_of_interest` |
+| `responsibility` | multi-string | `producedBy_responsibility` | `SamplingEvent.responsibility[]` |
+| `siteLabel` | string | `producedBy_samplingSite_label` | `SamplingSite.label` |
+| `siteDescription` | text | `producedBy_samplingSite_description` | `SamplingSite.description` |
+| `placeName` | string | `producedBy_samplingSite_placeName` | `SamplingSite.place_name[]` |
+| `elevation` | float | `producedBy_samplingSite_location_elevationInMeters` | `GeospatialCoordLocation.elevation` |
+
+::: {.callout-note}
+**Dropped from v0.2**: `resultTimeRange` (Solr `producedBy_resultTimeRange`,
+a `date_range` field) was named in v0.1 but no shipped parquet carries
+an interval type. It was a Solr-era remnant that never migrated. Query
+a `resultTime` range with `time BETWEEN t1 AND t2` (§3.1) instead.
+:::
+
+### 2.4 Spatial {#sec-spatial}
+
+| Dimension | Type | Solr field | PQG path |
+|---|---|---|---|
+| `latitude` | float | `producedBy_samplingSite_location_latitude` | `GeospatialCoordLocation.latitude` |
+| `longitude` | float | `producedBy_samplingSite_location_longitude` | `GeospatialCoordLocation.longitude` |
+| `bbox` | bbox | `producedBy_samplingSite_location_bb` | derived |
+| `h3[resN]` | h3-index | `producedBy_samplingSite_location_h3_{0..13}` | `samples_wide.h3_res{N}` |
+
+**H3 tier convention.** Resolutions 4, 6, and 8 are the spec-recommended
+tier breakpoints for zoom-adaptive visualization. Other resolutions MAY
+be materialized but 4/6/8 are load-bearing.
+
+::: {.callout-important}
+**H3 column availability across shipped parquet files (v0.2)**:
+
+- `wide_h3` ships three direct columns: `h3_res4`, `h3_res6`, `h3_res8`.
+- `h3_summary_res{4,6,8}` tier files do NOT ship `h3_res{N}` columns —
+  they ship a single `h3_cell` (UBIGINT) plus a `resolution` (INTEGER)
+  column. Query them as `WHERE h3_cell = X AND resolution = N`.
+- `lite` carries `h3_res8` (and `h3_res8_hex`) only — not res4 / res6.
+- Plain `wide` and `narrow` do **not** carry H3 columns. To filter at
+  res 4 or res 6, query `wide_h3` or the appropriate `h3_summary`
+  tier file.
+
+See [PQG conformance matrix §3.4][cmatrix-3-4] for the full table.
+
+[cmatrix-3-4]: https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md#34-spatial-query_spec-24
+:::
+
+### 2.5 Curation
+
+| Dimension | Type | Solr field |
+|---|---|---|
+| `curationLocation` | string | `curation_location` |
+| `curationResponsibility` | string | `curation_responsibility` |
+| `curationAccessConstraints` | string | `curation_accessContraints` |
+
+## 3. Filter grammar {#sec-grammar}
+
+A query is a conjunction (AND) of filters. Each binding is responsible
+for translating the abstract filter into its dialect.
+
+### 3.1 Filter primitives
+
+```text
+Filter       := FieldFilter | TextFilter | SpatialFilter | TemporalFilter
+
+FieldFilter  := dim  IN  (value, ...)
+              | dim  =   value
+              | dim  >=  value        ( numeric / date only )
+              | dim  <=  value
+              | dim  CONTAINS  token  ( multi-string / keywords )
+
+TextFilter   := text MATCHES  "phrase"
+
+SpatialFilter:= bbox WITHIN  (min_lat, min_lon, max_lat, max_lon)
+              | h3   AT RES n  IN  (h3_cell, ...)
+
+TemporalFilter
+             := time BETWEEN  t1  AND  t2
+```
+
+### 3.2 Full-text search semantics {#sec-text}
+
+`text MATCHES "phrase"` searches the aggregate of these fields (the
+Solr `searchText` copy-field target, canonical list):
+
+- `source`, `label`, `description`
+- `keywords`
+- `producedBy_label`, `producedBy_description`, `producedBy_hasFeatureOfInterest`,
+  `producedBy_responsibility`
+- `producedBy_samplingSite_label`, `producedBy_samplingSite_description`,
+  `producedBy_samplingSite_placeName`
+- `registrant`, `samplingPurpose`
+- `curation_label`, `curation_description`, `curation_location`
+
+Substrates that can't index all 15 fields MUST document which subset
+they cover and surface the limitation in UI. (The current web Explorer
+covers `label` + `description` + `place_name` only — a known gap.)
+
+Multi-term queries default to **AND** with relevance ranking where the
+substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS
+work.
+
+### 3.3 Cross-filter counts
+
+A faceted UI exposing a dimension SHOULD show, next to each facet value,
+the count of records matching **the current query *excluding* that
+dimension's own filter**. This lets users see the effect of selecting
+additional values without shrinking the list to zero.
+
+Substrates may pre-compute these counts (see
+`isamples_202601_facet_cross_filter.parquet` for the single-filter
+cache) or compute them on the fly.
+
+## 4. Result projections {#sec-projections}
+
+### 4.1 Map / globe point
+
+Minimum projection for a point on a map:
+
+```
+{ pid, label, source, latitude, longitude }
+```
+
+This is what the web Explorer's "lite parquet" already provides.
+
+### 4.2 Sample card
+
+Projection for a clicked / selected sample:
+
+```
+{
+  pid, label, source,
+  description,
+  latitude, longitude, placeName, elevation,
+  material, context, objectType, keywords,
+  resultTime, samplingPurpose,
+  registrant, responsibility,
+  curationLocation, curationResponsibility,
+  sourceRecordURL,
+  thumbnailURL            // see §2.1; ships in `wide` today (OpenContext
+                          // only), moving to per-source sidecars — issue #131
+}
+```
+
+Fields MAY be null. The sample card UI in every binding SHOULD handle
+missing values gracefully.
+
+### 4.3 Facet counts
+
+```
+{ dimension, value, count }[]
+```
+
+## 5. Substrate bindings {#sec-bindings}
+
+### 5.1 DuckDB-WASM on parquet (web)
+
+| Spec | Binding |
+|---|---|
+| `source IN (…)` | `n IN (…)` on wide / narrow (column is `n` per PQG); `source IN (…)` on lite / sample_facets_v2 (alias exposed) |
+| `material IN (…)` | `pid IN (SELECT pid FROM sample_facets WHERE material IN (…))` |
+| `text MATCHES "q"` | `(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')` — currently a subset of §3.2 |
+| `bbox WITHIN (…)` | `latitude BETWEEN … AND … AND longitude BETWEEN … AND …` |
+| `h3 AT RES 6 IN (…)` | `h3_res6 IN (…)` on `wide_h3`; OR `h3_cell IN (…) AND resolution = 6` on `h3_summary_res6` (see §2.4 note) |
+| `time BETWEEN …` | `TRY_CAST(result_time AS TIMESTAMP) BETWEEN t1 AND t2` — `result_time` ships as VARCHAR in `lite`, `wide`, and `narrow` |
+
+**Canonical data URL base**: `https://data.isamples.org/` (Cloudflare
+Worker in front of the R2 bucket). Two layers:
+
+- **Versioned** `/isamples_YYYYMM_<file>.parquet` — 1-yr immutable cache,
+  safe to pin in papers, spec examples, or reproducibility notebooks.
+- **Alias** `/current/<alias>` — 302 redirect with 5-minute cache; tracks
+  whatever the latest snapshot is. Use for "always fresh" consumers.
+
+Never reference the raw `pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...`
+URL — it bypasses the Worker and defeats the alias layer.
+
+Data files: see [catalog in how-to-use](how-to-use.qmd#data-files).
+
+### 5.2 DuckDB / Ibis on parquet (Python)
+
+| Spec | Binding |
+|---|---|
+| Same DuckDB SQL as §5.1 | Same URLs under `https://data.isamples.org/` |
+| Ibis expressions | `t.source.isin([...])` and so on |
+
+See `isamples-python/examples/basic/isamples_explorer.ipynb` for the
+reference implementation. A `isamples_query.py` module extracting the
+filter builder is planned.
+
+### 5.3 Apache Solr (if Central returns)
+
+| Spec | Binding |
+|---|---|
+| `source IN (a, b)` | `fq=source:(a OR b)` |
+| `material IN (…)` | `fq=hasMaterialCategory:(…)` |
+| `text MATCHES "q"` | `q=searchText:q` (relevance-ranked by default) |
+| `bbox WITHIN (…)` | `fq={!field f=producedBy_samplingSite_location_rpt}Intersects(ENVELOPE(...))` |
+| `time BETWEEN …` | `fq=producedBy_resultTime:[t1 TO t2]` |
+
+See `isamples_inabox/isb_web/isb_solr_query.py` for the full client.
+
+## 6. Versioning and compatibility {#sec-versioning}
+
+This spec uses semantic-ish versioning:
+
+- **Major** (1.0, 2.0): new required dimensions, renames, or grammar
+  changes that break existing clients.
+- **Minor** (0.2, 0.3): new optional dimensions, clarifications,
+  additional binding rows.
+- **Patch**: typo fixes.
+
+Breaking changes MUST be accompanied by a migration note and a sunset
+window for the prior spec version.
+
+## 7. Open questions (for v0.3) {#sec-open}
+
+1. **`objectType` filter in the web Explorer.** Canonical vocabulary is
+   now `hasSampleObjectType` (resolved in v0.2; see §2.2). The
+   `sample_facets_v2` parquet carries `object_type` as a denormalized
+   URI string, so binding is straightforward. Which display labels
+   should the UI surface, and should `object_type` be added to `lite`
+   so specimen-type filters don't require a second file fetch?
+2. **Text-search field coverage** in the web Explorer (currently 3 of
+   15 post-v0.2). Which of the remaining 12 are worth indexing in a
+   browser FTS? See PR #95.
+3. **Cross-filter cache shape** for multi-dimension filter combinations
+   (current cache handles single-filter only).
+4. **Confidence thresholds** — should the spec define a default for
+   `*.Confidence` fields, or leave it per-client?
+5. **H3 tier breakpoints** — when filters are active, what zoom level
+   triggers the switch from H3 clusters to individual points? The web
+   Explorer currently uses ~120 km; the Python notebooks use viewport
+   bounding box size.
+6. **Sample-card thumbnail provenance** — `thumbnail_url` is now named
+   in §2.1 (v0.2) but lives in `wide` and is populated only for
+   OpenContext. Move to per-source sidecars per issue #131 / the
+   sidecar pattern memo.
+
+### Questions resolved in v0.2
+
+- ~~**Specimen vs. objectType naming**~~ — resolved: adopt data-side
+  name `objectType` (Solr `hasSampleObjectType`) as canonical. See
+  §2.2 and conformance matrix §3.2.
+- ~~**Time filter in lite parquet**~~ — resolved: `result_time` is
+  already present in `lite` (as VARCHAR). §5.1 binding now shows the
+  DuckDB cast.
+
+## Appendix A. Metadata model at a glance
+
+iSamples treats these as the core entity types (domain-agnostic):
+
+- `MaterialSampleRecord` — the sample itself
+- `SamplingEvent` — the act of collection
+- `SamplingSite` — the place
+- `GeospatialCoordLocation` — lat/lon/elevation
+- `MaterialSampleCuration` — curation metadata
+- `IdentifiedConcept` — vocabulary terms (materials, contexts, specimens)
+- `Agent` — people / institutions
+
+The canonical UML is in the
+[isamplesorg-metadata](https://github.com/isamplesorg/metadata) repo.
+PQG (the parquet property-graph binding) is specified in
+[`pqg/docs/PQG_SPECIFICATION.md`](https://github.com/isamplesorg/isamples-python/blob/main/pqg/docs/PQG_SPECIFICATION.md).
+
+## Appendix B. Related documents
+
+- [`pqg/docs/conformance_matrix.md`](https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md)
+  — which shipped parquet files cover which QUERY_SPEC dimensions
+  (companion to this spec; informed every v0.2 amendment)
+- [`SERIALIZATIONS.md`](https://github.com/isamplesorg/isamplesorg.github.io/pull/143) (catalog of shipped parquet files, in `isamplesorg.github.io`)
+  — the three canonical parquet formats (export / narrow / wide) and
+  how they round-trip
+- `QUERY_COMPARISON.md` — PQG traversal query alignment (Eric's Python
+  vs. the Observable JS, Oct 2025)
+- `test_cesium_queries.js`, `test_python_js_alignment.py` — alignment
+  test harness at the monorepo root
+- [Interactive Explorer](tutorials/progressive_globe.qmd) — the reference
+  web UI
+- `isamples-python/examples/basic/isamples_explorer.ipynb` — the
+  reference Python UI
+- `isamples_inabox/solr_schema_init/create_isb_core_schema.py` — the
+  authoritative Solr schema
