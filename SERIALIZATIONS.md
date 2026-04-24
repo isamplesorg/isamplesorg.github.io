@@ -111,7 +111,7 @@ column can be rebuilt from its parent by a script in
 
 | File | Role | Size | Rows | Upstream | Consumers | Spec |
 |---|---|---:|---:|---|---|---|
-| `isamples_202601_sample_facets_v2.parquet` | `(pid, source, material, context, object_type, label, description, place_name)`; URI-string facets per sample | 63 MB | 6.0 M | wide | Search Explorer multi-dim facet filtering | QUERY_SPEC §3.3, §5.1 |
+| `isamples_202601_sample_facets_v2.parquet` | `(pid, source, material, context, object_type, label, description, place_name)` — all VARCHAR scalars; each facet column is a single URI per sample (not an array) | 63 MB | 6.0 M | wide | Search Explorer multi-dim facet filtering | QUERY_SPEC §3.3, §5.1 |
 | `isamples_202601_facet_summaries.parquet` | Baseline `(facet_type, facet_value, scheme, count)` | 2 KB | 56 | wide | Every tutorial (instant initial facet counts) | QUERY_SPEC §3.3 tier 1 |
 | `isamples_202601_facet_cross_filter.parquet` | Pre-computed counts for single-filter cross-facet queries | 6 KB | 526 | wide | Search Explorer cross-filter UI | QUERY_SPEC §3.3 tier 2a |
 
@@ -235,13 +235,15 @@ for the alias when you want "latest."
 
 ### 4.8 `isamples_202601_sample_facets_v2.parquet`
 
-- **Role**: Cross-dimension facet filtering — one row per sample, facets expanded as arrays of URI strings.
-- **Headline schema** (8 cols): `pid, source, material, context, object_type, label, description, place_name`. `material`/`context`/`object_type` are string arrays of controlled-vocabulary URIs.
-- **Query pattern**: `WHERE list_has_any(material, ['<uri>', ...])` for multi-select facets.
+- **Role**: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI (the leaf concept the sample is tagged with at that dimension).
+- **Headline schema** (8 cols, all VARCHAR): `pid, source, material, context, object_type, label, description, place_name`. `material`/`context`/`object_type` are scalar URI strings, NOT arrays — the file's grain is one row per sample, so a sample tagged with multiple material URIs is represented by a single chosen URI (currently the first/leaf). For multi-material accuracy, JOIN back to `wide.p__has_material_category`.
+- **Query pattern**: `WHERE material = '<uri>'` for exact match; `WHERE material ILIKE '%rock%'` to substring-match URI fragments.
 - **DuckDB**:
   ```sql
-  SELECT pid FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet')
-  WHERE 'https://w3id.org/isample/vocabulary/material/rock' = ANY(material) LIMIT 10;
+  SELECT pid, label
+  FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet')
+  WHERE material ILIKE '%rock%'
+  LIMIT 10;
   ```
 
 ### 4.9 `isamples_202601_facet_summaries.parquet`
