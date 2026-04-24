@@ -40,13 +40,23 @@ Preview the site:
 quarto preview
 ```
 
-Vocabulary documentation is generated from the vocabulary source ttl files using a python script, `scripts/vocab2md.py` and a convenience shell script wrapper, `scripts/generate_vocab_docs.sh`. To regenerate the vocabulary documentation, first `cd` to the root folder of the documentation, then:
+### Vocabulary page generation
+
+The vocabulary pages under `models/generated/vocabularies/` (e.g. [material_sample_object_type.html](https://isamples.org/models/generated/vocabularies/material_sample_object_type.html)) are produced by a deterministic two-stage pipeline:
+
+1. **TTL → markdown.** `scripts/generate_vocab_docs.sh` fetches each `.ttl` from [isamplesorg/vocabularies](https://github.com/isamplesorg/vocabularies) (and the extension repos) and runs `vocab markdown <ttl-url>` — the `vocab` CLI from [isamplesorg/vocab_tools](https://github.com/isamplesorg/vocab_tools), installed via `pipx` in CI. The output is written as a `.qmd` (core vocabularies) or `.md` (extensions) into `models/generated/`.
+2. **Markdown → HTML.** `quarto render` walks the site and applies the theme, navigation, and sidebar defined in `_quarto.yml` to every page, including the generated vocabulary markdown. The site chrome comes from Quarto; the vocabulary content is untouched.
+
+Both stages run in the [`quarto-pages.yml`](.github/workflows/quarto-pages.yml) GitHub Action on every deploy.
+
+To regenerate locally, from the repo root:
 
 ```
 scripts/generate_vocab_docs.sh
+quarto render
 ```
 
-The generated docs are placed under `models/generated/vocabularies`
+**Note on `scripts/vocab2md.py`.** An earlier version of this pipeline invoked `vocab2md.py` directly. PR [#48](https://github.com/isamplesorg/isamplesorg.github.io/pull/48) switched to the `vocab markdown` CLI entry point — same tool, same transform. The `vocab2md.py` file is retained for reference but is no longer part of the build.
 
 After editing, push the sources to GitHub. The rendered pages are generated using the `Render using Quarto and push to GH-pages` GitHub action that is currently manually triggered.
 
