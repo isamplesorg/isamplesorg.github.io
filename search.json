@@ -574,7 +574,7 @@
     "href": "pubs.html#github-repositories",
     "title": "Research & Resources",
     "section": "GitHub Repositories",
-    "text": "GitHub Repositories\nAll iSamples source code is available on GitHub:\n\n\n\nRepository\nDescription\n\n\n\n\nisamplesorg.github.io\nThis website — Quarto, Observable JS, DuckDB-WASM\n\n\nmetadata\niSamples metadata model and schema documentation\n\n\nisamples_inabox\niSamples-in-a-Box server infrastructure\n\n\niSamples vocabularies\nSKOS vocabulary RDF files",
+    "text": "GitHub Repositories\nAll iSamples source code is available at the isamplesorg GitHub org. The repositories form a tight pipeline from schema through serialization to consumers:\nmetadata + vocabularies      ← canonical data model & SKOS terms\n          │\n          ▼\n        pqg                  ← property-graph parquet format + tooling\n          │\n          ▼\n data.isamples.org + Zenodo  ← published parquet snapshots (narrow, wide, H3, lite, facet caches)\n          │\n   ┌──────┴──────┐\n   ▼             ▼\nexamples   isamplesorg.github.io\n(Python)   (Web + DuckDB-WASM + Cesium)\n\nCore repositories\n\n\n\nRepository\nRole\nLayer\n\n\n\n\nmetadata\nCanonical data model — the 8 entity types (MaterialSampleRecord, SamplingEvent, SamplingSite, GeospatialCoordLocation, …) and their relationships\nschema\n\n\nvocabularies\nSKOS vocabularies for material type, context, and specimen categories\nschema\n\n\npqg\nProperty-graph Parquet format spec + conversion tooling (narrow ↔︎ wide); H3 augmentation and facet caches\nserialization\n\n\nexamples\nPython client and Jupyter notebooks — DuckDB + lonboard for interactive analysis. Also known as isamples-python (see below)\nconsumer\n\n\nisamplesorg.github.io\nThis documentation site — Quarto, Observable, browser-side DuckDB-WASM, Cesium globe\nconsumer\n\n\n\n\n\nDomain extensions\nDomain-specific vocabularies extend the core terms via skos:broader:\n\nmetadata_profile_earth_science — mineral groups, rock/sediment types, sampled-feature roles\nmetadata_profile_biology — sampled-feature extensions for biological specimens\nmetadata_profile_archaeology — OpenContext-style material and object-type extensions\n\n\n\nLegacy / infrastructure\n\nisamples_inabox — the original iSamples-in-a-Box server (Solr + FastAPI). The public iSamples Central API was offline as of August 2025; the Solr schema there remains the authoritative precedent for query-dimension names (see Query Specification)\n\n\n\nRelated documents\n\nQuery Specification — substrate-neutral query contract (v0.1)\nSerialization catalog — every published parquet file with role, size, upstream, and consumer\n\n\n\n\n\n\n\nNoteNaming note: examples vs isamples-python\n\n\n\nThe Python client repo is called examples on GitHub but is referred to as isamples-python in its own README, the Zenodo deposition metadata, and most prose documentation. This mismatch is known and slated for reconciliation — likely a GitHub repo rename with automatic redirects handling prior links.",
     "crumbs": [
       "Publications & Conferences"
     ]
@@ -861,6 +861,55 @@
     "title": "1 Cesium Tutorial Performance Optimization - Final Implementation",
     "section": "",
     "text": "The expensive part was classification (JOIN + GROUP BY), not geocode retrieval.\nBy deferring classification to an optional button: - Fast initial load (no classification) - Progressive enhancement (classify if needed) - Zero maintenance overhead\nBest of both worlds! ✨"
+  },
+  {
+    "objectID": "data.html",
+    "href": "data.html",
+    "title": "iSamples Data Files",
+    "section": "",
+    "text": "Tip\n\n\n\nQuick start: every file on this page is queryable directly from a URL — no bulk download needed. DuckDB’s httpfs extension fetches only the byte ranges a query touches.\nimport duckdb\ncon = duckdb.connect()\ncon.sql(\"INSTALL httpfs; LOAD httpfs;\")\n# Note: the wide parquet uses `n` for the source column (PQG `n` = source name).\n# Other files (lite, sample_facets_v2) use the friendlier alias `source`.\ncon.sql(\"\"\"\n    SELECT pid, label, n AS source, latitude, longitude\n    FROM read_parquet('https://data.isamples.org/current/wide.parquet')\n    WHERE n = 'GEOME' AND latitude BETWEEN -20 AND 20\n    LIMIT 10\n\"\"\").df()"
+  },
+  {
+    "objectID": "data.html#where-to-get-it",
+    "href": "data.html#where-to-get-it",
+    "title": "iSamples Data Files",
+    "section": "1 1. Where to get it",
+    "text": "1 1. Where to get it\nTwo places depending on what you need:\n\nhttps://data.isamples.org/ — Cloudflare Worker in front of Cloudflare R2. HTTP range requests supported; DuckDB and DuckDB-WASM work directly against URLs. Two layers:\n\n/&lt;versioned-file&gt;.parquet — 1-year immutable cache. Pin in papers.\n/current/&lt;alias&gt;.parquet — 302 redirect to the latest snapshot. Use for “always fresh.” Currently aliases:\n\n/current/wide.parquet → isamples_202604_wide.parquet\n\n\niSamples Zenodo community — long-term archival with DOIs. The raw aggregated export is doi:10.5281/zenodo.15278211 (April 2025, all four sources, ~300 MB). A query-substrate deposition for snapshot 202601 is planned (see the deposition issue).\n\n\n\n\n\n\n\nWarning\n\n\n\nNever reference the raw pub-*.r2.dev URL. It bypasses the Cloudflare Worker and defeats the versioned/alias cache layer. Always cite https://data.isamples.org/&lt;file&gt;."
+  },
+  {
+    "objectID": "data.html#quick-pick-table",
+    "href": "data.html#quick-pick-table",
+    "title": "iSamples Data Files",
+    "section": "2 2. Quick-pick table",
+    "text": "2 2. Quick-pick table\n\n\n\nIf you want to…\nUse this file\nSize\n\n\n\n\nShow samples on a map (display fields only)\nsamples_map_lite.parquet\n60 MB\n\n\nQuery all fields on all samples\ncurrent/wide.parquet\n~292 MB\n\n\nAggregate map clusters by zoom\nh3_summary_res{4,6,8}.parquet\n≤ 2.4 MB each\n\n\nFilter by material / context / object-type\nsample_facets_v2.parquet\n63 MB\n\n\nWalk relationships (graph queries)\nisamples_202512_narrow.parquet\n820 MB"
+  },
+  {
+    "objectID": "data.html#copy-pasteable-duckdb-snippets",
+    "href": "data.html#copy-pasteable-duckdb-snippets",
+    "title": "iSamples Data Files",
+    "section": "3 3. Copy-pasteable DuckDB snippets",
+    "text": "3 3. Copy-pasteable DuckDB snippets\nEach snippet is self-contained. Prepend these two lines once per session:\nimport duckdb\ncon = duckdb.connect()\ncon.sql(\"INSTALL httpfs; LOAD httpfs;\")\n\n3.1 3.1 Map-lite: points near Kyoto\ncon.sql(\"\"\"\n    SELECT pid, label, source, latitude, longitude, result_time\n    FROM read_parquet('https://data.isamples.org/isamples_202601_samples_map_lite.parquet')\n    WHERE latitude BETWEEN 34.9 AND 35.1\n      AND longitude BETWEEN 135.6 AND 135.9\n    LIMIT 10\n\"\"\").df()\n\n\n3.2 3.2 Wide: source breakdown\ncon.sql(\"\"\"\n    SELECT n AS source, COUNT(*) AS n_samples\n    FROM read_parquet('https://data.isamples.org/current/wide.parquet')\n    WHERE otype = 'MaterialSampleRecord'\n    GROUP BY n\n    ORDER BY n_samples DESC\n\"\"\").df()\n\n\n3.3 3.3 H3 res-4 aggregates: densest continental cells\ncon.sql(\"\"\"\n    SELECT h3_cell, sample_count, dominant_source, center_lat, center_lng\n    FROM read_parquet('https://data.isamples.org/isamples_202601_h3_summary_res4.parquet')\n    ORDER BY sample_count DESC\n    LIMIT 10\n\"\"\").df()\n\n\n3.4 3.4 Sample facets: OpenContext artifacts\n# object_type is a URI; match on URI fragments (the concept leaf name).\ncon.sql(\"\"\"\n    SELECT pid, label, place_name, object_type\n    FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet')\n    WHERE source = 'OPENCONTEXT'\n      AND object_type ILIKE '%artifact%'\n    LIMIT 10\n\"\"\").df()\n\n\n3.5 3.5 Narrow (graph): count edges by predicate\ncon.sql(\"\"\"\n    SELECT p AS predicate, COUNT(*) AS n_edges\n    FROM read_parquet('https://data.isamples.org/isamples_202512_narrow.parquet')\n    WHERE otype = '_edge_'\n    GROUP BY p\n    ORDER BY n_edges DESC\n    LIMIT 10\n\"\"\").df()"
+  },
+  {
+    "objectID": "data.html#h3-tier-breakpoints-for-map-authors",
+    "href": "data.html#h3-tier-breakpoints-for-map-authors",
+    "title": "iSamples Data Files",
+    "section": "4 4. H3 tier breakpoints (for map authors)",
+    "text": "4 4. H3 tier breakpoints (for map authors)\nThe H3 summary files back a progressive-globe rendering pattern: render aggregate circles at low zoom, individual points at high zoom. Approximate breakpoints:\n\n\n\n\n\n\n\nZoom / altitude\nUse\n\n\n\n\nWorld (zoom 0-3)\nh3_summary_res4.parquet (~38 K cells, 600 KB)\n\n\nCountry (zoom 4-6)\nh3_summary_res6.parquet (~112 K cells, 1.6 MB)\n\n\nCity (zoom 7-9)\nh3_summary_res8.parquet (~176 K cells, 2.4 MB)\n\n\nStreet (zoom ≥ 10, altitude &lt; ~120 km)\nindividual points from samples_map_lite.parquet\n\n\n\nReference implementations:\n\nInteractive Explorer (web) — Observable JS + DuckDB-WASM + Cesium\niSamples Explorer (Python) — Jupyter widgets + DuckDB + lonboard"
+  },
+  {
+    "objectID": "data.html#full-catalog-companion-docs",
+    "href": "data.html#full-catalog-companion-docs",
+    "title": "iSamples Data Files",
+    "section": "5 5. Full catalog + companion docs",
+    "text": "5 5. Full catalog + companion docs\n\nSerialization catalog — every shipped file with role, schema headline, upstream, consumers, and size\nQuery Specification — substrate-neutral query contract that these files bind to\nZenodo deposition plan — planned 202601 snapshot deposition\nPQG Specification — property-graph parquet format semantics\nPQG conformance matrix — which QUERY_SPEC dimensions each file carries"
+  },
+  {
+    "objectID": "data.html#data-sources-and-licensing",
+    "href": "data.html#data-sources-and-licensing",
+    "title": "iSamples Data Files",
+    "section": "6 6. Data sources and licensing",
+    "text": "6 6. Data sources and licensing\nFour upstream sources contribute to the aggregated iSamples corpus:\n\nSESAR — geological samples (~4.6 M records)\nOpenContext — archaeological samples (~1 M records)\nGEOME — biological / genomic samples (~605 K records)\nSmithsonian — museum specimens (~322 K records)\n\nEach source has its own license and use terms. Authoritative license information for any specific deposition is carried in the Zenodo record metadata — see the iSamples Zenodo community. When reusing these data, cite both the original source and the iSamples aggregation DOI.\n\nLast updated: 2026-04-24. Sizes and row counts verified by DuckDB DESCRIBE + COUNT(*) against https://data.isamples.org/ on the same date. Every snippet on this page was executed successfully against the live files during authoring."
   },
   {
     "objectID": "people.html",
@@ -1688,6 +1737,6 @@
     "href": "models/mapping_sources.html#geome",
     "title": "Mapping Source Records",
     "section": "2 GEOME",
-    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```oqfobnph assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```oqfobnph assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
+    "text": "2 GEOME\n\n\n\ns\np\no\nLabel\nSource\n\n\n\n\nARK\nhas_record\n_id\nevent\nGEOME\n\n\nARK\nhas_record\n_id\nsample\nGEOME\n\n\nARK\nhas_record\n_id\ntissue\nGEOME\n\n\nIGSN\nhas_record\n_id\nsample\nSESAR\n\n\nARK\nhas_record\n_id\nSMITHSONIAN\n\n\n\n\n\n\n\n```dfnxxsby assets/geome_mapping.drawio.svg\n\n\n\n\nalign: left\n\n\n\nSource record representation.\n\n```{figure} assets/geome_mapping_1.drawio.svg\n---\nalign: left\n---\nMapping to individual core records and relation records. \nRelations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.\n\n\n\n```dfnxxsby assets/geome_mapping_2.drawio.svg\n\n\n\n\nalign: left\n\n\n\nMapping to individual core records and including relations in the records. ```\nRelations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers."
   }
 ]
