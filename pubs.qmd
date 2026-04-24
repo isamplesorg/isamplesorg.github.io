@@ -34,11 +34,52 @@ The [iSamples Zenodo Community](https://zenodo.org/communities/isamples) archive
 
 ## GitHub Repositories {.unnumbered}
 
-All iSamples source code is available on [GitHub](https://github.com/isamplesorg/):
+All iSamples source code is available at the [isamplesorg GitHub org](https://github.com/isamplesorg/). The repositories form a tight pipeline from **schema** through **serialization** to **consumers**:
 
-| Repository | Description |
-|------------|-------------|
-| [isamplesorg.github.io](https://github.com/isamplesorg/isamplesorg.github.io) | This website — Quarto, Observable JS, DuckDB-WASM |
-| [metadata](https://github.com/isamplesorg/metadata) | iSamples metadata model and schema documentation |
-| [isamples_inabox](https://github.com/isamplesorg/isamples_inabox) | iSamples-in-a-Box server infrastructure |
-| [iSamples vocabularies](https://github.com/isamplesorg/metadata/tree/develop/vocabulary) | SKOS vocabulary RDF files |
+```
+metadata + vocabularies      ← canonical data model & SKOS terms
+          │
+          ▼
+        pqg                  ← property-graph parquet format + tooling
+          │
+          ▼
+ data.isamples.org + Zenodo  ← published parquet snapshots (narrow, wide, H3, lite, facet caches)
+          │
+   ┌──────┴──────┐
+   ▼             ▼
+examples   isamplesorg.github.io
+(Python)   (Web + DuckDB-WASM + Cesium)
+```
+
+### Core repositories {.unnumbered}
+
+| Repository | Role | Layer |
+|---|---|---|
+| [metadata](https://github.com/isamplesorg/metadata) | Canonical data model — the 8 entity types (MaterialSampleRecord, SamplingEvent, SamplingSite, GeospatialCoordLocation, …) and their relationships | schema |
+| [vocabularies](https://github.com/isamplesorg/vocabularies) | SKOS vocabularies for material type, context, and specimen categories | schema |
+| [pqg](https://github.com/isamplesorg/pqg) | Property-graph Parquet format spec + conversion tooling (narrow ↔ wide); H3 augmentation and facet caches | serialization |
+| [examples](https://github.com/isamplesorg/examples) | Python client and Jupyter notebooks — DuckDB + lonboard for interactive analysis. Also known as `isamples-python` (see below) | consumer |
+| [isamplesorg.github.io](https://github.com/isamplesorg/isamplesorg.github.io) | This documentation site — Quarto, Observable, browser-side DuckDB-WASM, Cesium globe | consumer |
+
+### Domain extensions {.unnumbered}
+
+Domain-specific vocabularies extend the core terms via `skos:broader`:
+
+- [metadata_profile_earth_science](https://github.com/isamplesorg/metadata_profile_earth_science) — mineral groups, rock/sediment types, sampled-feature roles
+- [metadata_profile_biology](https://github.com/isamplesorg/metadata_profile_biology) — sampled-feature extensions for biological specimens
+- [metadata_profile_archaeology](https://github.com/isamplesorg/metadata_profile_archaeology) — OpenContext-style material and object-type extensions
+
+### Legacy / infrastructure {.unnumbered}
+
+- [isamples_inabox](https://github.com/isamplesorg/isamples_inabox) — the original iSamples-in-a-Box server (Solr + FastAPI). The public [iSamples Central](https://central.isample.xyz/isamples_central/) API was offline as of August 2025; the Solr schema there remains the authoritative precedent for query-dimension names (see [Query Specification](query-spec.qmd))
+
+### Related documents {.unnumbered}
+
+- [Query Specification](query-spec.qmd) — substrate-neutral query contract (v0.1)
+- [Serialization catalog](SERIALIZATIONS.md) — every published parquet file with role, size, upstream, and consumer
+
+::: {.callout-note}
+### Naming note: `examples` vs `isamples-python`
+
+The Python client repo is called `examples` on GitHub but is referred to as `isamples-python` in its own README, the Zenodo deposition metadata, and most prose documentation. This mismatch is known and slated for reconciliation — likely a GitHub repo rename with automatic redirects handling prior links.
+:::
