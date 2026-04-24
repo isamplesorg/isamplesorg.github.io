@@ -115,6 +115,26 @@ column can be rebuilt from its parent by a script in
 | `isamples_202601_facet_summaries.parquet` | Baseline `(facet_type, facet_value, scheme, count)` | 2 KB | 56 | wide | Every tutorial (instant initial facet counts) | QUERY_SPEC §3.3 tier 1 |
 | `isamples_202601_facet_cross_filter.parquet` | Pre-computed counts for single-filter cross-facet queries | 6 KB | 526 | wide | Search Explorer cross-filter UI | QUERY_SPEC §3.3 tier 2a |
 
+### Tier: alternative export formats (upstream of the aggregated Zenodo export)
+
+The `export_client` can emit each source's records in multiple formats;
+the aggregated Zenodo deposition archives the GeoParquet flavor, but
+JSONL and CSV are also emitted by the same pipeline and are useful for
+streaming or human inspection.
+
+| File | Role | Size | Rows | Upstream | Consumers | Spec |
+|---|---|---:|---:|---|---|---|
+| `isamples_export_*.jsonl` | Streaming JSON export (one sample per line, nested structs) | per query | — | `isamplesorg/export_client` (`isample export -f jsonl`) | Local DuckDB ingestion, STAC catalog generation | [export_client docs](https://github.com/isamplesorg/export_client) |
+| `isamples_export_*.csv` | Flat CSV export — convenience only, not authoritative for the query substrate | per query | — | `isamplesorg/export_client` (`isample export -f csv`) | Human inspection | [export_client docs](https://github.com/isamplesorg/export_client) |
+| `stac.json` / `manifest.json` | STAC/discovery sidecars emitted with local exports | < 1 KB | — | `isamplesorg/export_client` | STAC browser, local server, refresh workflow | [export_client README](https://github.com/isamplesorg/export_client) |
+
+### Tier: legacy bindings and convenience copies
+
+| File | Role | Size | Rows | Upstream | Consumers | Spec |
+|---|---|---:|---:|---|---|---|
+| Solr indexed documents | Legacy search-server binding for the same canonical query dimensions. *Not a portable serialization*; listed here because QUERY_SPEC §5.3 documents the Solr dialect bindings | N/A | ~6 M | `isamplesorg/isamples_inabox` harvest/index pipelines + schema mappings | [iSamples Central](https://central.isample.xyz/isamples_central/) (API offline as of Aug 2025; Solr schema remains the authoritative precedent for dimension names) | [QUERY_SPEC §5.3](query-spec.qmd#sec-bindings) |
+| H3 + lite CSV twins | Human-readable CSV duplicates of `samples_map_lite.parquet` and `h3_summary_res{4,6,8}.parquet` | ~640 MB total | mirror | the corresponding parquet files | Manual inspection only | parquet copies are authoritative; CSV twins excluded from the Zenodo substrate deposition by design |
+
 ### Tier: source-specific variants (not part of the substrate)
 
 | File | Role | Size | Rows | Upstream | Consumers | Spec |
