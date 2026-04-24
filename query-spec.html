@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="iSamples team">
+<meta name="dcterms.date" content="2026-04-24">
+
+<title>iSamples Query Specification – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-84244d6014897f94eda7509784684fcb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/progressive_globe.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/isamples_explorer.html">
+ <span class="dropdown-text">Search Explorer</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sec-scope" id="toc-sec-scope" class="nav-link active" data-scroll-target="#sec-scope"><span class="header-section-number">1</span> 1. Purpose and scope</a></li>
+  <li><a href="#sec-dimensions" id="toc-sec-dimensions" class="nav-link" data-scroll-target="#sec-dimensions"><span class="header-section-number">2</span> 2. Canonical dimensions</a>
+  <ul>
+  <li><a href="#identity-and-provenance" id="toc-identity-and-provenance" class="nav-link" data-scroll-target="#identity-and-provenance"><span class="header-section-number">2.1</span> 2.1 Identity and provenance</a></li>
+  <li><a href="#classification-the-four-facets" id="toc-classification-the-four-facets" class="nav-link" data-scroll-target="#classification-the-four-facets"><span class="header-section-number">2.2</span> 2.2 Classification (the four facets)</a></li>
+  <li><a href="#sampling-event-and-site" id="toc-sampling-event-and-site" class="nav-link" data-scroll-target="#sampling-event-and-site"><span class="header-section-number">2.3</span> 2.3 Sampling event and site</a></li>
+  <li><a href="#sec-spatial" id="toc-sec-spatial" class="nav-link" data-scroll-target="#sec-spatial"><span class="header-section-number">2.4</span> 2.4 Spatial</a></li>
+  <li><a href="#curation" id="toc-curation" class="nav-link" data-scroll-target="#curation"><span class="header-section-number">2.5</span> 2.5 Curation</a></li>
+  </ul></li>
+  <li><a href="#sec-grammar" id="toc-sec-grammar" class="nav-link" data-scroll-target="#sec-grammar"><span class="header-section-number">3</span> 3. Filter grammar</a>
+  <ul>
+  <li><a href="#filter-primitives" id="toc-filter-primitives" class="nav-link" data-scroll-target="#filter-primitives"><span class="header-section-number">3.1</span> 3.1 Filter primitives</a></li>
+  <li><a href="#sec-text" id="toc-sec-text" class="nav-link" data-scroll-target="#sec-text"><span class="header-section-number">3.2</span> 3.2 Full-text search semantics</a></li>
+  <li><a href="#cross-filter-counts" id="toc-cross-filter-counts" class="nav-link" data-scroll-target="#cross-filter-counts"><span class="header-section-number">3.3</span> 3.3 Cross-filter counts</a></li>
+  </ul></li>
+  <li><a href="#sec-projections" id="toc-sec-projections" class="nav-link" data-scroll-target="#sec-projections"><span class="header-section-number">4</span> 4. Result projections</a>
+  <ul>
+  <li><a href="#map-globe-point" id="toc-map-globe-point" class="nav-link" data-scroll-target="#map-globe-point"><span class="header-section-number">4.1</span> 4.1 Map / globe point</a></li>
+  <li><a href="#sample-card" id="toc-sample-card" class="nav-link" data-scroll-target="#sample-card"><span class="header-section-number">4.2</span> 4.2 Sample card</a></li>
+  <li><a href="#facet-counts" id="toc-facet-counts" class="nav-link" data-scroll-target="#facet-counts"><span class="header-section-number">4.3</span> 4.3 Facet counts</a></li>
+  </ul></li>
+  <li><a href="#sec-bindings" id="toc-sec-bindings" class="nav-link" data-scroll-target="#sec-bindings"><span class="header-section-number">5</span> 5. Substrate bindings</a>
+  <ul>
+  <li><a href="#duckdb-wasm-on-parquet-web" id="toc-duckdb-wasm-on-parquet-web" class="nav-link" data-scroll-target="#duckdb-wasm-on-parquet-web"><span class="header-section-number">5.1</span> 5.1 DuckDB-WASM on parquet (web)</a></li>
+  <li><a href="#duckdb-ibis-on-parquet-python" id="toc-duckdb-ibis-on-parquet-python" class="nav-link" data-scroll-target="#duckdb-ibis-on-parquet-python"><span class="header-section-number">5.2</span> 5.2 DuckDB / Ibis on parquet (Python)</a></li>
+  <li><a href="#apache-solr-if-central-returns" id="toc-apache-solr-if-central-returns" class="nav-link" data-scroll-target="#apache-solr-if-central-returns"><span class="header-section-number">5.3</span> 5.3 Apache Solr (if Central returns)</a></li>
+  </ul></li>
+  <li><a href="#sec-versioning" id="toc-sec-versioning" class="nav-link" data-scroll-target="#sec-versioning"><span class="header-section-number">6</span> 6. Versioning and compatibility</a></li>
+  <li><a href="#sec-open" id="toc-sec-open" class="nav-link" data-scroll-target="#sec-open"><span class="header-section-number">7</span> 7. Open questions (for v0.3)</a>
+  <ul>
+  <li><a href="#questions-resolved-in-v0.2" id="toc-questions-resolved-in-v0.2" class="nav-link" data-scroll-target="#questions-resolved-in-v0.2"><span class="header-section-number">7.1</span> Questions resolved in v0.2</a></li>
+  </ul></li>
+  <li><a href="#appendix-a.-metadata-model-at-a-glance" id="toc-appendix-a.-metadata-model-at-a-glance" class="nav-link" data-scroll-target="#appendix-a.-metadata-model-at-a-glance"><span class="header-section-number">8</span> Appendix A. Metadata model at a glance</a></li>
+  <li><a href="#appendix-b.-related-documents" id="toc-appendix-b.-related-documents" class="nav-link" data-scroll-target="#appendix-b.-related-documents"><span class="header-section-number">9</span> Appendix B. Related documents</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/query-spec.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">iSamples Query Specification</h1>
+<p class="subtitle lead">A substrate-neutral contract for searching and filtering iSamples data</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">spec</div>
+    <div class="quarto-category">architecture</div>
+    <div class="quarto-category">query</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>iSamples team </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 24, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Draft — v0.2
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Field inventories are drawn from the Solr schema (authoritative precedent) and the PQG metadata model. v0.2 incorporates findings from the <a href="https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md">PQG conformance matrix</a> (which parquet files actually carry which dimensions) to resolve naming drift, drop ghosts, and tighten substrate bindings. Comments and PRs welcome — see <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues">issue tracker</a>.</p>
+</div>
+</div>
+<section id="sec-scope" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="sec-scope"><span class="header-section-number">1</span> 1. Purpose and scope</h2>
+<p>iSamples data is reached today through at least three substrates — and potentially more in the future:</p>
+<ul>
+<li><strong>DuckDB-WASM against parquet</strong> (this website’s Interactive Explorer)</li>
+<li><strong>DuckDB / Ibis against parquet</strong> (the Python client and notebooks)</li>
+<li><strong>Apache Solr</strong> (legacy iSamples Central; potentially revived)</li>
+</ul>
+<p>Each substrate has its own query dialect. Users and maintainers shouldn’t have to relearn the facet vocabulary, the text-search semantics, or the spatial filter grammar when moving between them. This document specifies a <strong>substrate-neutral query model</strong> that each implementation can bind to.</p>
+<p><strong>What this spec covers:</strong></p>
+<ul>
+<li>Canonical facet / filter dimensions and their names</li>
+<li>Filter grammar (an abstract syntax, not a wire format)</li>
+<li>Full-text search semantics (which fields participate)</li>
+<li>Spatial and temporal primitives</li>
+<li>Sample-card projection (what a clicked sample returns)</li>
+<li>Substrate binding tables (spec → DuckDB, spec → Solr)</li>
+</ul>
+<p><strong>What it does NOT cover:</strong></p>
+<ul>
+<li>PQG graph traversal queries (edge walking, multi-hop joins). See <a href="https://github.com/isamplesorg/isamplesorg.github.io/blob/main/QUERY_COMPARISON.md">QUERY_COMPARISON.md</a> in the monorepo root for that work and the Eric-vs-Observable alignment notes.</li>
+<li>Bulk export / download mechanics. See <a href="./how-to-use.html">how-to-use</a>.</li>
+<li>Ingestion and metadata normalization.</li>
+</ul>
+<p><strong>Normative precedent.</strong> Where this spec names a field, the name mirrors the iSamples metadata model’s dotted-path form as used in the Solr schema (<code>isamples_inabox/solr_schema_init/create_isb_core_schema.py</code>), because that’s the most complete, externally-documented query vocabulary the project has shipped. Aliases for substrate-specific naming are provided in §5.</p>
+</section>
+<section id="sec-dimensions" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="sec-dimensions"><span class="header-section-number">2</span> 2. Canonical dimensions</h2>
+<p>A <strong>dimension</strong> is an attribute of a material sample record that users filter, facet, or search on. Every binding (§5) must provide at least the <strong>required</strong> dimensions.</p>
+<section id="identity-and-provenance" class="level3" data-number="2.1">
+<h3 data-number="2.1" data-anchor-id="identity-and-provenance"><span class="header-section-number">2.1</span> 2.1 Identity and provenance</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dimension</th>
+<th>Type</th>
+<th>Required</th>
+<th>Solr field</th>
+<th>PQG path</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pid</code></td>
+<td>string</td>
+<td>✅</td>
+<td><code>id</code></td>
+<td><code>MaterialSampleRecord.pid</code></td>
+<td>Primary key</td>
+</tr>
+<tr class="even">
+<td><code>source</code></td>
+<td>enum</td>
+<td>✅</td>
+<td><code>source</code></td>
+<td><code>MaterialSampleRecord.source_name</code></td>
+<td><code>SESAR\|OPENCONTEXT\|GEOME\|SMITHSONIAN</code></td>
+</tr>
+<tr class="odd">
+<td><code>label</code></td>
+<td>string</td>
+<td>✅</td>
+<td><code>label</code></td>
+<td><code>MaterialSampleRecord.label</code></td>
+<td>Display name</td>
+</tr>
+<tr class="even">
+<td><code>description</code></td>
+<td>text</td>
+<td>✅</td>
+<td><code>description</code></td>
+<td><code>MaterialSampleRecord.description</code></td>
+<td>Free text</td>
+</tr>
+<tr class="odd">
+<td><code>registrant</code></td>
+<td>string</td>
+<td></td>
+<td><code>registrant</code></td>
+<td><code>MaterialSampleRecord.registrant</code></td>
+<td>Who registered</td>
+</tr>
+<tr class="even">
+<td><code>sourceUpdatedTime</code></td>
+<td>instant</td>
+<td></td>
+<td><code>sourceUpdatedTime</code></td>
+<td><code>MaterialSampleRecord.tmodified</code></td>
+<td>Freshness; bind to <code>tmodified</code> (INTEGER epoch) — see note below</td>
+</tr>
+<tr class="odd">
+<td><code>thumbnailURL</code></td>
+<td>string</td>
+<td></td>
+<td>—</td>
+<td><code>MaterialSampleRecord.thumbnail_url</code></td>
+<td>Optional; shipped in <code>wide</code> today (OpenContext only). Expected to move to per-source sidecars over time (see §4.2 sample card, issue #131)</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong><code>sourceUpdatedTime</code> binding</strong>: the <code>wide</code> parquet ships both <code>last_modified_time</code> (VARCHAR) and <code>tmodified</code> (INTEGER unix epoch). v0.2 picks <code>tmodified</code> as canonical because epoch is easier to filter and sort; <code>last_modified_time</code> is kept as a deprecated alias for backwards compatibility and will be removed in a future major release.</p>
+</div>
+</div>
+</section>
+<section id="classification-the-four-facets" class="level3" data-number="2.2">
+<h3 data-number="2.2" data-anchor-id="classification-the-four-facets"><span class="header-section-number">2.2</span> 2.2 Classification (the four facets)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dimension</th>
+<th>Type</th>
+<th>Required</th>
+<th>Solr field</th>
+<th>PQG path</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>material</code></td>
+<td>enum</td>
+<td>✅</td>
+<td><code>hasMaterialCategory</code></td>
+<td><code>MaterialSampleRecord.has_material_category.label</code></td>
+</tr>
+<tr class="even">
+<td><code>context</code></td>
+<td>enum</td>
+<td>✅</td>
+<td><code>hasContextCategory</code></td>
+<td><code>MaterialSampleRecord.has_context_category.label</code></td>
+</tr>
+<tr class="odd">
+<td><code>objectType</code></td>
+<td>enum</td>
+<td>⚠️ (see below)</td>
+<td><code>hasSampleObjectType</code> (alias <code>hasSpecimenCategory</code>)</td>
+<td><code>MaterialSampleRecord.has_sample_object_type.label</code></td>
+</tr>
+<tr class="even">
+<td><code>keywords</code></td>
+<td>multi-string</td>
+<td></td>
+<td><code>keywords</code></td>
+<td><code>MaterialSampleRecord.keywords[]</code></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Naming resolution (v0.2)</strong>: v0.1 named this dimension <code>specimen</code> with Solr field <code>hasSpecimenCategory</code>. Every shipped parquet file uses <code>object_type</code> / <code>hasSampleObjectType</code>. v0.2 adopts the data-side name (<code>objectType</code>) as canonical and keeps <code>hasSpecimenCategory</code> as a Solr alias. See <a href="https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md#32-classification-query_spec-22">PQG conformance matrix §3.2</a> for the audit that prompted this rename.</p>
+<p><code>objectType</code> is in the blessed vocabulary but is <strong>not currently exposed</strong> in the web Explorer. Adding it is on the P1 stack.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Dropped from v0.2</strong>: <code>informalClassification</code> was named in v0.1 but no shipped parquet file carries it (it was a Solr-era remnant). It is removed from the canonical dimension list until/unless the pipeline adds it.</p>
+</div>
+</div>
+<p>Each of these has a paired <strong>confidence</strong> field (<code>…Confidence</code>, <code>pfloat</code>) in Solr. The spec allows filters to reference confidence (e.g. <code>material.confidence &gt;= 0.8</code>) but implementations MAY omit if the substrate doesn’t carry the field.</p>
+</section>
+<section id="sampling-event-and-site" class="level3" data-number="2.3">
+<h3 data-number="2.3" data-anchor-id="sampling-event-and-site"><span class="header-section-number">2.3</span> 2.3 Sampling event and site</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dimension</th>
+<th>Type</th>
+<th>Solr field</th>
+<th>PQG path</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>resultTime</code></td>
+<td>instant</td>
+<td><code>producedBy_resultTime</code> (<code>pdate</code>)</td>
+<td><code>SamplingEvent.result_time</code></td>
+</tr>
+<tr class="even">
+<td><code>samplingPurpose</code></td>
+<td>string</td>
+<td><code>samplingPurpose</code></td>
+<td><code>SamplingEvent.sampling_purpose</code></td>
+</tr>
+<tr class="odd">
+<td><code>featureOfInterest</code></td>
+<td>string</td>
+<td><code>producedBy_hasFeatureOfInterest</code></td>
+<td><code>SamplingEvent.has_feature_of_interest</code></td>
+</tr>
+<tr class="even">
+<td><code>responsibility</code></td>
+<td>multi-string</td>
+<td><code>producedBy_responsibility</code></td>
+<td><code>SamplingEvent.responsibility[]</code></td>
+</tr>
+<tr class="odd">
+<td><code>siteLabel</code></td>
+<td>string</td>
+<td><code>producedBy_samplingSite_label</code></td>
+<td><code>SamplingSite.label</code></td>
+</tr>
+<tr class="even">
+<td><code>siteDescription</code></td>
+<td>text</td>
+<td><code>producedBy_samplingSite_description</code></td>
+<td><code>SamplingSite.description</code></td>
+</tr>
+<tr class="odd">
+<td><code>placeName</code></td>
+<td>string</td>
+<td><code>producedBy_samplingSite_placeName</code></td>
+<td><code>SamplingSite.place_name[]</code></td>
+</tr>
+<tr class="even">
+<td><code>elevation</code></td>
+<td>float</td>
+<td><code>producedBy_samplingSite_location_elevationInMeters</code></td>
+<td><code>GeospatialCoordLocation.elevation</code></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Dropped from v0.2</strong>: <code>resultTimeRange</code> (Solr <code>producedBy_resultTimeRange</code>, a <code>date_range</code> field) was named in v0.1 but no shipped parquet carries an interval type. It was a Solr-era remnant that never migrated. Query a <code>resultTime</code> range with <code>time BETWEEN t1 AND t2</code> (§3.1) instead.</p>
+</div>
+</div>
+</section>
+<section id="sec-spatial" class="level3" data-number="2.4">
+<h3 data-number="2.4" data-anchor-id="sec-spatial"><span class="header-section-number">2.4</span> 2.4 Spatial</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dimension</th>
+<th>Type</th>
+<th>Solr field</th>
+<th>PQG path</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>latitude</code></td>
+<td>float</td>
+<td><code>producedBy_samplingSite_location_latitude</code></td>
+<td><code>GeospatialCoordLocation.latitude</code></td>
+</tr>
+<tr class="even">
+<td><code>longitude</code></td>
+<td>float</td>
+<td><code>producedBy_samplingSite_location_longitude</code></td>
+<td><code>GeospatialCoordLocation.longitude</code></td>
+</tr>
+<tr class="odd">
+<td><code>bbox</code></td>
+<td>bbox</td>
+<td><code>producedBy_samplingSite_location_bb</code></td>
+<td>derived</td>
+</tr>
+<tr class="even">
+<td><code>h3[resN]</code></td>
+<td>h3-index</td>
+<td><code>producedBy_samplingSite_location_h3_{0..13}</code></td>
+<td><code>samples_wide.h3_res{N}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>H3 tier convention.</strong> Resolutions 4, 6, and 8 are the spec-recommended tier breakpoints for zoom-adaptive visualization. Other resolutions MAY be materialized but 4/6/8 are load-bearing.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>H3 column availability across shipped parquet files (v0.2)</strong>:</p>
+<ul>
+<li><code>wide_h3</code> ships three direct columns: <code>h3_res4</code>, <code>h3_res6</code>, <code>h3_res8</code>.</li>
+<li><code>h3_summary_res{4,6,8}</code> tier files do NOT ship <code>h3_res{N}</code> columns — they ship a single <code>h3_cell</code> (UBIGINT) plus a <code>resolution</code> (INTEGER) column. Query them as <code>WHERE h3_cell = X AND resolution = N</code>.</li>
+<li><code>lite</code> carries <code>h3_res8</code> (and <code>h3_res8_hex</code>) only — not res4 / res6.</li>
+<li>Plain <code>wide</code> and <code>narrow</code> do <strong>not</strong> carry H3 columns. To filter at res 4 or res 6, query <code>wide_h3</code> or the appropriate <code>h3_summary</code> tier file.</li>
+</ul>
+<p>See <a href="https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md#34-spatial-query_spec-24">PQG conformance matrix §3.4</a> for the full table.</p>
+</div>
+</div>
+</section>
+<section id="curation" class="level3" data-number="2.5">
+<h3 data-number="2.5" data-anchor-id="curation"><span class="header-section-number">2.5</span> 2.5 Curation</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Dimension</th>
+<th>Type</th>
+<th>Solr field</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>curationLocation</code></td>
+<td>string</td>
+<td><code>curation_location</code></td>
+</tr>
+<tr class="even">
+<td><code>curationResponsibility</code></td>
+<td>string</td>
+<td><code>curation_responsibility</code></td>
+</tr>
+<tr class="odd">
+<td><code>curationAccessConstraints</code></td>
+<td>string</td>
+<td><code>curation_accessContraints</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="sec-grammar" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="sec-grammar"><span class="header-section-number">3</span> 3. Filter grammar</h2>
+<p>A query is a conjunction (AND) of filters. Each binding is responsible for translating the abstract filter into its dialect.</p>
+<section id="filter-primitives" class="level3" data-number="3.1">
+<h3 data-number="3.1" data-anchor-id="filter-primitives"><span class="header-section-number">3.1</span> 3.1 Filter primitives</h3>
+<pre class="text"><code>Filter       := FieldFilter | TextFilter | SpatialFilter | TemporalFilter
+
+FieldFilter  := dim  IN  (value, ...)
+              | dim  =   value
+              | dim  &gt;=  value        ( numeric / date only )
+              | dim  &lt;=  value
+              | dim  CONTAINS  token  ( multi-string / keywords )
+
+TextFilter   := text MATCHES  "phrase"
+
+SpatialFilter:= bbox WITHIN  (min_lat, min_lon, max_lat, max_lon)
+              | h3   AT RES n  IN  (h3_cell, ...)
+
+TemporalFilter
+             := time BETWEEN  t1  AND  t2</code></pre>
+</section>
+<section id="sec-text" class="level3" data-number="3.2">
+<h3 data-number="3.2" data-anchor-id="sec-text"><span class="header-section-number">3.2</span> 3.2 Full-text search semantics</h3>
+<p><code>text MATCHES "phrase"</code> searches the aggregate of these fields (the Solr <code>searchText</code> copy-field target, canonical list):</p>
+<ul>
+<li><code>source</code>, <code>label</code>, <code>description</code></li>
+<li><code>keywords</code></li>
+<li><code>producedBy_label</code>, <code>producedBy_description</code>, <code>producedBy_hasFeatureOfInterest</code>, <code>producedBy_responsibility</code></li>
+<li><code>producedBy_samplingSite_label</code>, <code>producedBy_samplingSite_description</code>, <code>producedBy_samplingSite_placeName</code></li>
+<li><code>registrant</code>, <code>samplingPurpose</code></li>
+<li><code>curation_label</code>, <code>curation_description</code>, <code>curation_location</code></li>
+</ul>
+<p>Substrates that can’t index all 15 fields MUST document which subset they cover and surface the limitation in UI. (The current web Explorer covers <code>label</code> + <code>description</code> + <code>place_name</code> only — a known gap.)</p>
+<p>Multi-term queries default to <strong>AND</strong> with relevance ranking where the substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS work.</p>
+</section>
+<section id="cross-filter-counts" class="level3" data-number="3.3">
+<h3 data-number="3.3" data-anchor-id="cross-filter-counts"><span class="header-section-number">3.3</span> 3.3 Cross-filter counts</h3>
+<p>A faceted UI exposing a dimension SHOULD show, next to each facet value, the count of records matching <strong>the current query <em>excluding</em> that dimension’s own filter</strong>. This lets users see the effect of selecting additional values without shrinking the list to zero.</p>
+<p>Substrates may pre-compute these counts (see <code>isamples_202601_facet_cross_filter.parquet</code> for the single-filter cache) or compute them on the fly.</p>
+</section>
+</section>
+<section id="sec-projections" class="level2" data-number="4">
+<h2 data-number="4" data-anchor-id="sec-projections"><span class="header-section-number">4</span> 4. Result projections</h2>
+<section id="map-globe-point" class="level3" data-number="4.1">
+<h3 data-number="4.1" data-anchor-id="map-globe-point"><span class="header-section-number">4.1</span> 4.1 Map / globe point</h3>
+<p>Minimum projection for a point on a map:</p>
+<pre><code>{ pid, label, source, latitude, longitude }</code></pre>
+<p>This is what the web Explorer’s “lite parquet” already provides.</p>
+</section>
+<section id="sample-card" class="level3" data-number="4.2">
+<h3 data-number="4.2" data-anchor-id="sample-card"><span class="header-section-number">4.2</span> 4.2 Sample card</h3>
+<p>Projection for a clicked / selected sample:</p>
+<pre><code>{
+  pid, label, source,
+  description,
+  latitude, longitude, placeName, elevation,
+  material, context, objectType, keywords,
+  resultTime, samplingPurpose,
+  registrant, responsibility,
+  curationLocation, curationResponsibility,
+  sourceRecordURL,
+  thumbnailURL            // see §2.1; ships in `wide` today (OpenContext
+                          // only), moving to per-source sidecars — issue #131
+}</code></pre>
+<p>Fields MAY be null. The sample card UI in every binding SHOULD handle missing values gracefully.</p>
+</section>
+<section id="facet-counts" class="level3" data-number="4.3">
+<h3 data-number="4.3" data-anchor-id="facet-counts"><span class="header-section-number">4.3</span> 4.3 Facet counts</h3>
+<pre><code>{ dimension, value, count }[]</code></pre>
+</section>
+</section>
+<section id="sec-bindings" class="level2" data-number="5">
+<h2 data-number="5" data-anchor-id="sec-bindings"><span class="header-section-number">5</span> 5. Substrate bindings</h2>
+<section id="duckdb-wasm-on-parquet-web" class="level3" data-number="5.1">
+<h3 data-number="5.1" data-anchor-id="duckdb-wasm-on-parquet-web"><span class="header-section-number">5.1</span> 5.1 DuckDB-WASM on parquet (web)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Spec</th>
+<th>Binding</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>source IN (…)</code></td>
+<td><code>n IN (…)</code> on wide / narrow (column is <code>n</code> per PQG); <code>source IN (…)</code> on lite / sample_facets_v2 (alias exposed)</td>
+</tr>
+<tr class="even">
+<td><code>material IN (…)</code></td>
+<td><code>pid IN (SELECT pid FROM sample_facets WHERE material IN (…))</code></td>
+</tr>
+<tr class="odd">
+<td><code>text MATCHES "q"</code></td>
+<td><code>(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')</code> — currently a subset of §3.2</td>
+</tr>
+<tr class="even">
+<td><code>bbox WITHIN (…)</code></td>
+<td><code>latitude BETWEEN … AND … AND longitude BETWEEN … AND …</code></td>
+</tr>
+<tr class="odd">
+<td><code>h3 AT RES 6 IN (…)</code></td>
+<td><code>h3_res6 IN (…)</code> on <code>wide_h3</code>; OR <code>h3_cell IN (…) AND resolution = 6</code> on <code>h3_summary_res6</code> (see §2.4 note)</td>
+</tr>
+<tr class="even">
+<td><code>time BETWEEN …</code></td>
+<td><code>TRY_CAST(result_time AS TIMESTAMP) BETWEEN t1 AND t2</code> — <code>result_time</code> ships as VARCHAR in <code>lite</code>, <code>wide</code>, and <code>narrow</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Canonical data URL base</strong>: <code>https://data.isamples.org/</code> (Cloudflare Worker in front of the R2 bucket). Two layers:</p>
+<ul>
+<li><strong>Versioned</strong> <code>/isamples_YYYYMM_&lt;file&gt;.parquet</code> — 1-yr immutable cache, safe to pin in papers, spec examples, or reproducibility notebooks.</li>
+<li><strong>Alias</strong> <code>/current/&lt;alias&gt;</code> — 302 redirect with 5-minute cache; tracks whatever the latest snapshot is. Use for “always fresh” consumers.</li>
+</ul>
+<p>Never reference the raw <code>pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...</code> URL — it bypasses the Worker and defeats the alias layer.</p>
+<p>Data files: see <a href="./how-to-use.html#data-files">catalog in how-to-use</a>.</p>
+</section>
+<section id="duckdb-ibis-on-parquet-python" class="level3" data-number="5.2">
+<h3 data-number="5.2" data-anchor-id="duckdb-ibis-on-parquet-python"><span class="header-section-number">5.2</span> 5.2 DuckDB / Ibis on parquet (Python)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Spec</th>
+<th>Binding</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Same DuckDB SQL as §5.1</td>
+<td>Same URLs under <code>https://data.isamples.org/</code></td>
+</tr>
+<tr class="even">
+<td>Ibis expressions</td>
+<td><code>t.source.isin([...])</code> and so on</td>
+</tr>
+</tbody>
+</table>
+<p>See <code>isamples-python/examples/basic/isamples_explorer.ipynb</code> for the reference implementation. A <code>isamples_query.py</code> module extracting the filter builder is planned.</p>
+</section>
+<section id="apache-solr-if-central-returns" class="level3" data-number="5.3">
+<h3 data-number="5.3" data-anchor-id="apache-solr-if-central-returns"><span class="header-section-number">5.3</span> 5.3 Apache Solr (if Central returns)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Spec</th>
+<th>Binding</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>source IN (a, b)</code></td>
+<td><code>fq=source:(a OR b)</code></td>
+</tr>
+<tr class="even">
+<td><code>material IN (…)</code></td>
+<td><code>fq=hasMaterialCategory:(…)</code></td>
+</tr>
+<tr class="odd">
+<td><code>text MATCHES "q"</code></td>
+<td><code>q=searchText:q</code> (relevance-ranked by default)</td>
+</tr>
+<tr class="even">
+<td><code>bbox WITHIN (…)</code></td>
+<td><code>fq={!field f=producedBy_samplingSite_location_rpt}Intersects(ENVELOPE(...))</code></td>
+</tr>
+<tr class="odd">
+<td><code>time BETWEEN …</code></td>
+<td><code>fq=producedBy_resultTime:[t1 TO t2]</code></td>
+</tr>
+</tbody>
+</table>
+<p>See <code>isamples_inabox/isb_web/isb_solr_query.py</code> for the full client.</p>
+</section>
+</section>
+<section id="sec-versioning" class="level2" data-number="6">
+<h2 data-number="6" data-anchor-id="sec-versioning"><span class="header-section-number">6</span> 6. Versioning and compatibility</h2>
+<p>This spec uses semantic-ish versioning:</p>
+<ul>
+<li><strong>Major</strong> (1.0, 2.0): new required dimensions, renames, or grammar changes that break existing clients.</li>
+<li><strong>Minor</strong> (0.2, 0.3): new optional dimensions, clarifications, additional binding rows.</li>
+<li><strong>Patch</strong>: typo fixes.</li>
+</ul>
+<p>Breaking changes MUST be accompanied by a migration note and a sunset window for the prior spec version.</p>
+</section>
+<section id="sec-open" class="level2" data-number="7">
+<h2 data-number="7" data-anchor-id="sec-open"><span class="header-section-number">7</span> 7. Open questions (for v0.3)</h2>
+<ol type="1">
+<li><strong><code>objectType</code> filter in the web Explorer.</strong> Canonical vocabulary is now <code>hasSampleObjectType</code> (resolved in v0.2; see §2.2). The <code>sample_facets_v2</code> parquet carries <code>object_type</code> as a denormalized URI string, so binding is straightforward. Which display labels should the UI surface, and should <code>object_type</code> be added to <code>lite</code> so specimen-type filters don’t require a second file fetch?</li>
+<li><strong>Text-search field coverage</strong> in the web Explorer (currently 3 of 15 post-v0.2). Which of the remaining 12 are worth indexing in a browser FTS? See PR #95.</li>
+<li><strong>Cross-filter cache shape</strong> for multi-dimension filter combinations (current cache handles single-filter only).</li>
+<li><strong>Confidence thresholds</strong> — should the spec define a default for <code>*.Confidence</code> fields, or leave it per-client?</li>
+<li><strong>H3 tier breakpoints</strong> — when filters are active, what zoom level triggers the switch from H3 clusters to individual points? The web Explorer currently uses ~120 km; the Python notebooks use viewport bounding box size.</li>
+<li><strong>Sample-card thumbnail provenance</strong> — <code>thumbnail_url</code> is now named in §2.1 (v0.2) but lives in <code>wide</code> and is populated only for OpenContext. Move to per-source sidecars per issue #131 / the sidecar pattern memo.</li>
+</ol>
+<section id="questions-resolved-in-v0.2" class="level3" data-number="7.1">
+<h3 data-number="7.1" data-anchor-id="questions-resolved-in-v0.2"><span class="header-section-number">7.1</span> Questions resolved in v0.2</h3>
+<ul>
+<li><del><strong>Specimen vs.&nbsp;objectType naming</strong></del> — resolved: adopt data-side name <code>objectType</code> (Solr <code>hasSampleObjectType</code>) as canonical. See §2.2 and conformance matrix §3.2.</li>
+<li><del><strong>Time filter in lite parquet</strong></del> — resolved: <code>result_time</code> is already present in <code>lite</code> (as VARCHAR). §5.1 binding now shows the DuckDB cast.</li>
+</ul>
+</section>
+</section>
+<section id="appendix-a.-metadata-model-at-a-glance" class="level2" data-number="8">
+<h2 data-number="8" data-anchor-id="appendix-a.-metadata-model-at-a-glance"><span class="header-section-number">8</span> Appendix A. Metadata model at a glance</h2>
+<p>iSamples treats these as the core entity types (domain-agnostic):</p>
+<ul>
+<li><code>MaterialSampleRecord</code> — the sample itself</li>
+<li><code>SamplingEvent</code> — the act of collection</li>
+<li><code>SamplingSite</code> — the place</li>
+<li><code>GeospatialCoordLocation</code> — lat/lon/elevation</li>
+<li><code>MaterialSampleCuration</code> — curation metadata</li>
+<li><code>IdentifiedConcept</code> — vocabulary terms (materials, contexts, specimens)</li>
+<li><code>Agent</code> — people / institutions</li>
+</ul>
+<p>The canonical UML is in the <a href="https://github.com/isamplesorg/metadata">isamplesorg-metadata</a> repo. PQG (the parquet property-graph binding) is specified in <a href="https://github.com/isamplesorg/isamples-python/blob/main/pqg/docs/PQG_SPECIFICATION.md"><code>pqg/docs/PQG_SPECIFICATION.md</code></a>.</p>
+</section>
+<section id="appendix-b.-related-documents" class="level2" data-number="9">
+<h2 data-number="9" data-anchor-id="appendix-b.-related-documents"><span class="header-section-number">9</span> Appendix B. Related documents</h2>
+<ul>
+<li><a href="https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md"><code>pqg/docs/conformance_matrix.md</code></a> — which shipped parquet files cover which QUERY_SPEC dimensions (companion to this spec; informed every v0.2 amendment)</li>
+<li><a href="https://github.com/isamplesorg/isamplesorg.github.io/pull/143"><code>SERIALIZATIONS.md</code></a> (catalog of shipped parquet files, in <code>isamplesorg.github.io</code>) — the three canonical parquet formats (export / narrow / wide) and how they round-trip</li>
+<li><code>QUERY_COMPARISON.md</code> — PQG traversal query alignment (Eric’s Python vs.&nbsp;the Observable JS, Oct 2025)</li>
+<li><code>test_cesium_queries.js</code>, <code>test_python_js_alignment.py</code> — alignment test harness at the monorepo root</li>
+<li><a href="./tutorials/progressive_globe.html">Interactive Explorer</a> — the reference web UI</li>
+<li><code>isamples-python/examples/basic/isamples_explorer.ipynb</code> — the reference Python UI</li>
+<li><code>isamples_inabox/solr_schema_init/create_isb_core_schema.py</code> — the authoritative Solr schema</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/query-spec.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

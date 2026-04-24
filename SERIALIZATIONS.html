@@ -332,7 +332,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="purpose-and-scope" class="level2" data-number="1">
 <h2 data-number="1" data-anchor-id="purpose-and-scope"><span class="header-section-number">1</span> 1. Purpose and scope</h2>
 <p>iSamples has roughly a dozen parquet files in circulation at any given moment — each with a specific role, a specific upstream parent, and a specific set of downstream consumers (the web Explorer, the Python reference notebook, the progressive globe, the PQG conformance work). Some are primary archival products; others are derived aggregates or caches; still others are source-specific variants published outside the <code>data.isamples.org</code> namespace.</p>
-<p>This document is a <strong>catalog</strong>, not an ingestion guide: it tells you what each file is, where it came from, who consumes it, and where in the spec tree to look for its normative definition. For how to <em>build</em> these files, see the scripts in <a href="https://github.com/isamplesorg/isamplesorg.github.io/tree/main/scripts"><code>scripts/</code></a> and the converters in <a href="https://github.com/isamplesorg/pqg"><code>pqg/</code></a>. For how to <em>query</em> them, see <a href="query-spec.qmd"><code>query-spec.qmd</code></a>. For how to <em>cite</em> them, see the Zenodo deposition plan.</p>
+<p>This document is a <strong>catalog</strong>, not an ingestion guide: it tells you what each file is, where it came from, who consumes it, and where in the spec tree to look for its normative definition. For how to <em>build</em> these files, see the scripts in <a href="https://github.com/isamplesorg/isamplesorg.github.io/tree/main/scripts"><code>scripts/</code></a> and the converters in <a href="https://github.com/isamplesorg/pqg"><code>pqg/</code></a>. For how to <em>query</em> them, see <a href="./query-spec.html"><code>query-spec.qmd</code></a>. For how to <em>cite</em> them, see the Zenodo deposition plan.</p>
 <p>All sizes and row counts below were verified by DuckDB <code>DESCRIBE</code> + <code>COUNT(*)</code> against <code>https://data.isamples.org/</code> on 2026-04-24.</p>
 </section>
 <section id="the-derivation-dag" class="level2" data-number="2">
@@ -689,7 +689,7 @@ oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
 <td style="text-align: right;">~6 M</td>
 <td><code>isamplesorg/isamples_inabox</code> harvest/index pipelines + schema mappings</td>
 <td><a href="https://central.isample.xyz/isamples_central/">iSamples Central</a> (API offline as of Aug 2025; Solr schema remains the authoritative precedent for dimension names)</td>
-<td><a href="query-spec.qmd#sec-bindings">QUERY_SPEC §5.3</a></td>
+<td><a href="./query-spec.html#sec-bindings">QUERY_SPEC §5.3</a></td>
 </tr>
 <tr class="even">
 <td>H3 + lite CSV twins</td>
@@ -888,7 +888,7 @@ oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
 <section id="relationship-to-other-documents" class="level2" data-number="6">
 <h2 data-number="6" data-anchor-id="relationship-to-other-documents"><span class="header-section-number">6</span> 6. Relationship to other documents</h2>
 <ul>
-<li><strong><a href="query-spec.qmd"><code>query-spec.qmd</code></a></strong> §5.1 — the DuckDB binding table, which maps query-spec dimensions (<code>source</code>, <code>material</code>, <code>bbox</code>, <code>h3</code>, <code>time</code>, <code>text</code>) to the specific parquet files above. This catalog says <em>what</em> the files are; the query spec says <em>which dimension</em> each file serves.</li>
+<li><strong><a href="./query-spec.html"><code>query-spec.qmd</code></a></strong> §5.1 — the DuckDB binding table, which maps query-spec dimensions (<code>source</code>, <code>material</code>, <code>bbox</code>, <code>h3</code>, <code>time</code>, <code>text</code>) to the specific parquet files above. This catalog says <em>what</em> the files are; the query spec says <em>which dimension</em> each file serves.</li>
 <li><strong><code>ZENODO_DEPOSITION_PLAN.md</code></strong> (in the monorepo root) — specifies which subset of these files are archived in each Zenodo deposition. The 202601 deposition bundles the 10 R2-served files plus a <code>MANIFEST.json</code> and <code>README.md</code>. Source-specific OC variants and the raw Zenodo export are <strong>not</strong> part of the substrate deposition.</li>
 <li><strong><a href="https://github.com/isamplesorg/pqg/blob/main/docs/PQG_SPECIFICATION.md"><code>pqg/docs/PQG_SPECIFICATION.md</code></a></strong> — defines the three canonical formats (export, narrow, wide) whose schemas the primary files conform to. §3.5 is the normative section.</li>
 <li><strong><code>pqg/docs/conformance_matrix.md</code></strong> (planned) — will document, for each file above, exactly which clauses of the PQG spec it satisfies (required columns, allowed <code>otype</code> values, edge-type constraints, etc.). This catalog is the prose companion; the conformance matrix will be the machine-checkable companion.</li>
