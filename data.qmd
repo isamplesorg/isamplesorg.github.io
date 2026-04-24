@@ -1,0 +1,179 @@
+---
+title: "iSamples Data Files"
+subtitle: "Parquet snapshots, H3 tier aggregates, and facet caches served from data.isamples.org (+ Zenodo)"
+toc: true
+categories: [data, parquet, download]
+---
+
+::: {.callout-tip}
+**Quick start**: every file on this page is queryable directly from a URL
+— no bulk download needed. DuckDB's `httpfs` extension fetches only the
+byte ranges a query touches.
+
+```python
+import duckdb
+con = duckdb.connect()
+con.sql("INSTALL httpfs; LOAD httpfs;")
+# Note: the wide parquet uses `n` for the source column (PQG `n` = source name).
+# Other files (lite, sample_facets_v2) use the friendlier alias `source`.
+con.sql("""
+    SELECT pid, label, n AS source, latitude, longitude
+    FROM read_parquet('https://data.isamples.org/current/wide.parquet')
+    WHERE n = 'GEOME' AND latitude BETWEEN -20 AND 20
+    LIMIT 10
+""").df()
+```
+:::
+
+## 1. Where to get it
+
+Two places depending on what you need:
+
+- **`https://data.isamples.org/`** — Cloudflare Worker in front of
+  Cloudflare R2. HTTP range requests supported; DuckDB and DuckDB-WASM
+  work directly against URLs. Two layers:
+  - `/<versioned-file>.parquet` — 1-year immutable cache. Pin in papers.
+  - `/current/<alias>.parquet` — 302 redirect to the latest snapshot.
+    Use for "always fresh." Currently aliases:
+    - `/current/wide.parquet` → `isamples_202604_wide.parquet`
+- **[iSamples Zenodo community](https://zenodo.org/communities/isamples)**
+  — long-term archival with DOIs. The raw aggregated export is
+  [doi:10.5281/zenodo.15278211](https://doi.org/10.5281/zenodo.15278211)
+  (April 2025, all four sources, ~300 MB). A query-substrate deposition
+  for snapshot 202601 is planned (see the [deposition issue](https://github.com/isamplesorg/isamplesorg.github.io/issues/139)).
+
+::: {.callout-warning}
+**Never reference the raw `pub-*.r2.dev` URL.** It bypasses the
+Cloudflare Worker and defeats the versioned/alias cache layer. Always
+cite `https://data.isamples.org/<file>`.
+:::
+
+## 2. Quick-pick table
+
+| If you want to… | Use this file | Size |
+|---|---|---:|
+| Show samples on a map (display fields only) | [`samples_map_lite.parquet`](https://data.isamples.org/isamples_202601_samples_map_lite.parquet) | 60 MB |
+| Query all fields on all samples | [`current/wide.parquet`](https://data.isamples.org/current/wide.parquet) | ~292 MB |
+| Aggregate map clusters by zoom | [`h3_summary_res{4,6,8}.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | ≤ 2.4 MB each |
+| Filter by material / context / object-type | [`sample_facets_v2.parquet`](https://data.isamples.org/isamples_202601_sample_facets_v2.parquet) | 63 MB |
+| Walk relationships (graph queries) | [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 820 MB |
+
+## 3. Copy-pasteable DuckDB snippets
+
+Each snippet is self-contained. Prepend these two lines once per session:
+
+```python
+import duckdb
+con = duckdb.connect()
+con.sql("INSTALL httpfs; LOAD httpfs;")
+```
+
+### 3.1 Map-lite: points near Kyoto
+
+```python
+con.sql("""
+    SELECT pid, label, source, latitude, longitude, result_time
+    FROM read_parquet('https://data.isamples.org/isamples_202601_samples_map_lite.parquet')
+    WHERE latitude BETWEEN 34.9 AND 35.1
+      AND longitude BETWEEN 135.6 AND 135.9
+    LIMIT 10
+""").df()
+```
+
+### 3.2 Wide: source breakdown
+
+```python
+con.sql("""
+    SELECT n AS source, COUNT(*) AS n_samples
+    FROM read_parquet('https://data.isamples.org/current/wide.parquet')
+    WHERE otype = 'MaterialSampleRecord'
+    GROUP BY n
+    ORDER BY n_samples DESC
+""").df()
+```
+
+### 3.3 H3 res-4 aggregates: densest continental cells
+
+```python
+con.sql("""
+    SELECT h3_cell, sample_count, dominant_source, center_lat, center_lng
+    FROM read_parquet('https://data.isamples.org/isamples_202601_h3_summary_res4.parquet')
+    ORDER BY sample_count DESC
+    LIMIT 10
+""").df()
+```
+
+### 3.4 Sample facets: OpenContext artifacts
+
+```python
+# object_type is a URI; match on URI fragments (the concept leaf name).
+con.sql("""
+    SELECT pid, label, place_name, object_type
+    FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet')
+    WHERE source = 'OPENCONTEXT'
+      AND object_type ILIKE '%artifact%'
+    LIMIT 10
+""").df()
+```
+
+### 3.5 Narrow (graph): count edges by predicate
+
+```python
+con.sql("""
+    SELECT p AS predicate, COUNT(*) AS n_edges
+    FROM read_parquet('https://data.isamples.org/isamples_202512_narrow.parquet')
+    WHERE otype = '_edge_'
+    GROUP BY p
+    ORDER BY n_edges DESC
+    LIMIT 10
+""").df()
+```
+
+## 4. H3 tier breakpoints (for map authors)
+
+The H3 summary files back a progressive-globe rendering pattern:
+render aggregate circles at low zoom, individual points at high zoom.
+Approximate breakpoints:
+
+| Zoom / altitude | Use |
+|---|---|
+| World (zoom 0-3) | `h3_summary_res4.parquet` (~38 K cells, 600 KB) |
+| Country (zoom 4-6) | `h3_summary_res6.parquet` (~112 K cells, 1.6 MB) |
+| City (zoom 7-9) | `h3_summary_res8.parquet` (~176 K cells, 2.4 MB) |
+| Street (zoom ≥ 10, altitude < ~120 km) | individual points from `samples_map_lite.parquet` |
+
+Reference implementations:
+
+- [Interactive Explorer (web)](tutorials/progressive_globe.qmd) — Observable JS + DuckDB-WASM + Cesium
+- [iSamples Explorer (Python)](https://github.com/isamplesorg/examples/blob/main/examples/basic/isamples_explorer.ipynb) — Jupyter widgets + DuckDB + lonboard
+
+## 5. Full catalog + companion docs
+
+- **[Serialization catalog](SERIALIZATIONS.md)** — every shipped file with role, schema headline, upstream, consumers, and size
+- **[Query Specification](query-spec.qmd)** — substrate-neutral query contract that these files bind to
+- **[Zenodo deposition plan](https://github.com/isamplesorg/isamplesorg.github.io/issues/139)** — planned 202601 snapshot deposition
+- **[PQG Specification](https://github.com/isamplesorg/pqg/blob/main/docs/PQG_SPECIFICATION.md)** — property-graph parquet format semantics
+- **[PQG conformance matrix](https://github.com/isamplesorg/pqg/blob/main/docs/conformance_matrix.md)** — which QUERY_SPEC dimensions each file carries
+
+## 6. Data sources and licensing
+
+Four upstream sources contribute to the aggregated iSamples corpus:
+
+- **[SESAR](https://www.geosamples.org/)** — geological samples (~4.6 M records)
+- **[OpenContext](https://opencontext.org/)** — archaeological samples (~1 M records)
+- **[GEOME](https://geome-db.org/)** — biological / genomic samples (~605 K records)
+- **[Smithsonian](https://collections.si.edu/)** — museum specimens (~322 K records)
+
+Each source has its own license and use terms. Authoritative license
+information for any specific deposition is carried in the Zenodo
+record metadata — see the
+[iSamples Zenodo community](https://zenodo.org/communities/isamples).
+When reusing these data, cite both the original source and the iSamples
+aggregation DOI.
+
+---
+
+*Last updated: 2026-04-24. Sizes and row counts verified by DuckDB
+`DESCRIBE` + `COUNT(*)` against `https://data.isamples.org/` on the same
+date. Every snippet on this page was executed successfully against the
+live files during authoring.*
