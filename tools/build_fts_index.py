@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 """
+STATUS: spike artifact — NOT in production pipeline.
+
 Build a DuckDB full-text search index for the iSamples Explorer.
 
-Creates a .duckdb file containing the FTS index (BM25-scored) that can
-be ATTACHed in DuckDB-WASM for ranked text search over 6.7M samples.
+This script was used to evaluate whether DuckDB FTS could replace the
+ILIKE-based search in the Explorer. Findings (PR #95):
+  - Full index (label + description + place_name): 358 MB
+  - Lite index (label + place_name only):          211 MB
+  - ATTACH-over-HTTP works in DuckDB-WASM, but the download is too
+    large for an interactive page.
+The Explorer continues to use ILIKE; this script is preserved so we
+can revisit FTS once we have a smaller index strategy (e.g.
+pre-tokenized inverted index as parquet, or on-demand loading behind
+an "Enhanced Search" toggle).
 
 Usage:
     python tools/build_fts_index.py
 
 Output:
-    tools/isamples_fts_index.duckdb  (upload to data.isamples.org)
+    tools/isamples_fts_index.duckdb  (NOT currently uploaded anywhere)
 
 Requirements:
     pip install duckdb
@@ -89,8 +99,8 @@ def build_fts_index():
     size_mb = OUTPUT_DB.stat().st_size / (1024 * 1024)
     print(f"\nIndex file: {OUTPUT_DB}")
     print(f"Size: {size_mb:.1f} MB")
-    print(f"\nUpload to data.isamples.org and ATTACH in DuckDB-WASM:")
-    print(f"  ATTACH 'https://data.isamples.org/isamples_fts_index.duckdb' AS fts_db;")
+    print(f"\nNOTE: Index is too large to ship to the browser as-is.")
+    print(f"      See module docstring for the spike findings.")
 
 
 if __name__ == "__main__":

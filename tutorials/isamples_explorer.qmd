@@ -392,15 +392,17 @@ whereClause = {
     "latitude IS NOT NULL"
   ];
 
-  // Multi-term text search: each word must match at least one text field
+  // Multi-term text search: each word must match at least one text field.
+  // Escape ILIKE wildcards (% _) and the escape char (\) so user input like
+  // "100%" or "co_op" is treated literally rather than as a wildcard.
   if (searchInput?.trim()) {
     const terms = searchInput.trim().split(/\s+/).filter(t => t.length > 0);
     for (const raw of terms) {
-      const term = raw.replace(/'/g, "''");
+      const term = raw.replace(/[\\%_]/g, "\\$&").replace(/'/g, "''");
       conditions.push(`(
-        label ILIKE '%${term}%'
-        OR description ILIKE '%${term}%'
-        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
+        label ILIKE '%${term}%' ESCAPE '\\'
+        OR description ILIKE '%${term}%' ESCAPE '\\'
+        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%' ESCAPE '\\'
       )`);
     }
   }
@@ -477,14 +479,14 @@ sampleData = {
       : [];
 
     // Build a relevance score: +3 for label match, +2 for place, +1 for description
-    // per term — higher scores float to top
+    // per term — higher scores float to top. Same wildcard escaping as whereClause.
     let scoreExpr = "0";
     if (terms.length > 0) {
       const termScores = terms.map(raw => {
-        const t = raw.replace(/'/g, "''");
-        return `(CASE WHEN label ILIKE '%${t}%' THEN 3 ELSE 0 END
-               + CASE WHEN CAST(place_name AS VARCHAR) ILIKE '%${t}%' THEN 2 ELSE 0 END
-               + CASE WHEN description ILIKE '%${t}%' THEN 1 ELSE 0 END)`;
+        const t = raw.replace(/[\\%_]/g, "\\$&").replace(/'/g, "''");
+        return `(CASE WHEN label ILIKE '%${t}%' ESCAPE '\\' THEN 3 ELSE 0 END
+               + CASE WHEN CAST(place_name AS VARCHAR) ILIKE '%${t}%' ESCAPE '\\' THEN 2 ELSE 0 END
+               + CASE WHEN description ILIKE '%${t}%' ESCAPE '\\' THEN 1 ELSE 0 END)`;
       });
       scoreExpr = termScores.join(" + ");
     }
