@@ -1,0 +1,8 @@
+# Dependencies for one-shot scripts in this directory (NOT the Quarto site
+# build — that uses ../requirements.txt). Install with:
+#   pip install -r scripts/requirements.txt
+
+# build_vocab_labels.py
+rdflib>=6.3
+pandas>=2.0
+pyarrow>=14

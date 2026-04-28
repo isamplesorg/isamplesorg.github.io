@@ -31,6 +31,7 @@ issue #148 for the full background.
 Issue: https://github.com/isamplesorg/isamplesorg.github.io/issues/148
 
 Usage:
+    pip install -r scripts/requirements.txt
     python scripts/build_vocab_labels.py              # writes ./vocab_labels.parquet
     python scripts/build_vocab_labels.py -o /tmp/v.parquet
 """
@@ -249,9 +250,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Also emit a sibling .csv for diff-friendly review.",
     )
+    ap.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help=(
+            "Continue and emit an artifact even if one or more TTL sources "
+            "fail to fetch/parse. Default is to fail-loud, since this "
+            "artifact is intended for publishing."
+        ),
+    )
     args = ap.parse_args(argv)
 
     all_rows: list[dict] = []
+    failures: list[tuple[str, str]] = []
     for url in VOCAB_TTLS:
         try:
             n_before = len(all_rows)
@@ -259,6 +270,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {len(all_rows) - n_before:>4} rows  {url}")
         except Exception as e:
             print(f"WARN: failed to parse {url}: {e}", file=sys.stderr)
+            failures.append((url, str(e)))
+
+    if failures and not args.allow_partial:
+        print(
+            f"\nERROR: {len(failures)} TTL source(s) failed; refusing to "
+            f"emit a partial artifact. Pass --allow-partial to override.",
+            file=sys.stderr,
+        )
+        for url, err in failures:
+            print(f"  - {url}: {err}", file=sys.stderr)
+        return 3
 
     if not all_rows:
         print("ERROR: no rows extracted; aborting.", file=sys.stderr)
