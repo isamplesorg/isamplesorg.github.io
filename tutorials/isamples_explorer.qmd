@@ -11,6 +11,7 @@ format:
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_cross_filter.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels.parquet">
         <script>
         // Opt-in perf panel (?perf=1). Plain script — independent of the
         // OJS reactive graph, which was unreliable at firing this cell.
@@ -98,8 +99,15 @@ cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter
 // Facets file for on-the-fly multi-filter queries (63MB - URI strings, not BIGINT FKs)
 sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
 
+// Vocabulary labels (~60KB) — maps SKOS concept URIs to human-readable prefLabels.
+// Built by scripts/build_vocab_labels.py from isamplesorg/vocabularies TTLs. See #148.
+vocab_labels_url = "https://data.isamples.org/vocab_labels.parquet"
+
 // Source color scheme — imported from canonical palette (issue #113)
-_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
+// Use a path-relative URL so this works under both the production custom
+// domain (isamples.org/tutorials/...) and a project-pages fork preview
+// (rdhyee.github.io/isamplesorg.github.io/tutorials/...).
+_palette = await import(new URL('../assets/js/source-palette.js', document.baseURI).href)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 
 // Cesium colors
@@ -180,8 +188,8 @@ viewof materialCheckboxes = {
     format: (x) => {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span class="facet-count" data-facet="material" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
+        ${prettyLabel(x)} <span class="facet-count" data-facet="material" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -201,8 +209,8 @@ viewof contextCheckboxes = {
     format: (x) => {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span class="facet-count" data-facet="context" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
+        ${prettyLabel(x)} <span class="facet-count" data-facet="context" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -222,8 +230,8 @@ viewof objectTypeCheckboxes = {
     format: (x) => {
       const r = counts.find(s => s.value === x);
       const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;">
-        ${x} <span class="facet-count" data-facet="object_type" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
+      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
+        ${prettyLabel(x)} <span class="facet-count" data-facet="object_type" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
       </span>`;
     }
   });
@@ -454,6 +462,36 @@ facetsByType = {
     grouped[key].sort((a, b) => b.count - a.count);
   }
   return grouped;
+}
+```
+
+```{ojs}
+//| code-fold: true
+// Load SKOS prefLabels for vocabulary URIs (#148). Tiny lookup (~60KB);
+// fallback to last URI segment if a URI isn't covered.
+vocabLabels = {
+  try {
+    const rows = await runQuery(
+      `SELECT uri, pref_label FROM read_parquet('${vocab_labels_url}') WHERE lang = 'en'`
+    );
+    const m = new Map();
+    for (const r of rows) m.set(r.uri, r.pref_label);
+    return m;
+  } catch (e) {
+    console.warn("vocab_labels load failed; falling back to URI tails:", e);
+    return new Map();
+  }
+}
+
+prettyLabel = function (uri) {
+  if (uri == null) return "";
+  const hit = vocabLabels.get(uri);
+  if (hit) return hit;
+  // Fallback: last non-empty path segment of the URI
+  const s = String(uri);
+  if (!/^https?:\/\//.test(s)) return s;
+  const parts = s.replace(/[#?].*$/, "").split("/").filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : s;
 }
 ```
 

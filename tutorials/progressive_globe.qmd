@@ -208,8 +208,10 @@ wide_url = `${R2_BASE}/current/wide.parquet`
 facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
 
-// Canonical palette — see issue #113
-_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
+// Canonical palette — see issue #113. Path-relative so this works under
+// both isamples.org (custom domain at root) and project-pages fork
+// previews (rdhyee.github.io/isamplesorg.github.io/...).
+_palette = await import(new URL('../assets/js/source-palette.js', document.baseURI).href)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 SOURCE_NAMES = _palette.SOURCE_NAMES
 
