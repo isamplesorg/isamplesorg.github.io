@@ -96,7 +96,7 @@ viewof viewModeToggle = Inputs.radio(["clustered", "all points"], {
 ```{ojs}
 //| echo: false
 // Source color scheme — imported from canonical palette (issue #113)
-_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
+_palette = await import(new URL('../../assets/js/source-palette.js', document.baseURI).href)
 CLUSTER_COLORS = _palette.SOURCE_COLORS
 
 // H3 resolution based on camera height

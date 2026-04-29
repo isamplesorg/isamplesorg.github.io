@@ -104,7 +104,10 @@ sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.
 vocab_labels_url = "https://data.isamples.org/vocab_labels.parquet"
 
 // Source color scheme — imported from canonical palette (issue #113)
-_palette = await import(new URL('/assets/js/source-palette.js', document.baseURI).href)
+// Use a path-relative URL so this works under both the production custom
+// domain (isamples.org/tutorials/...) and a project-pages fork preview
+// (rdhyee.github.io/isamplesorg.github.io/tutorials/...).
+_palette = await import(new URL('../assets/js/source-palette.js', document.baseURI).href)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 
 // Cesium colors
