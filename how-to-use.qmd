@@ -90,6 +90,7 @@ and counts instantly, without touching the 278 MB primary file:
 | [`isamples_202601_facet_summaries.parquet`](https://data.isamples.org/isamples_202601_facet_summaries.parquet) | 2 KB | `(facet_type, facet_value, count)` for source, material, context, object_type | You want instant initial facet counts with no filters applied |
 | [`isamples_202601_facet_cross_filter.parquet`](https://data.isamples.org/isamples_202601_facet_cross_filter.parquet) | 6 KB | Pre-computed counts for single-facet selections | You want instant cross-filtered counts for a single active filter |
 | [`isamples_202601_sample_facets_v2.parquet`](https://data.isamples.org/isamples_202601_sample_facets_v2.parquet) | 63 MB | `(pid, material, context, object_type)` facet URIs per sample | You need to filter on *combinations* of facets at query time |
+| [`vocab_labels.parquet`](https://data.isamples.org/vocab_labels.parquet) | 58 KB | `(uri, pref_label, definition, alt_labels, scheme)` for 537 SKOS concepts (material, sample object type, sampled feature type) | You need to render facet URIs as human-readable text |
 
 ### Geospatial aggregates (H3) {.unnumbered}
 
@@ -123,6 +124,7 @@ browsers use the parquet versions.
 | `sample_facets_v2.parquet` | ● | ● | |
 | `h3_summary_res4/6/8.parquet` | ● | | |
 | `samples_map_lite.parquet` | ● | | |
+| `vocab_labels.parquet` | ● | ● | |
 
 ### Quick query recipes {.unnumbered}
 

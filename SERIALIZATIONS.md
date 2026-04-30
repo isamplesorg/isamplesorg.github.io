@@ -70,6 +70,11 @@ Source-specific variants (parallel to the substrate, not derived from it):
 oc_isamples_pqg.parquet        (GCS, 11.8 M, narrow, OC-only)
 oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
   └─► serve as upstream for OpenContext thumbnails folded into 202604 wide
+
+Vocabulary labels (parallel to the substrate, sourced from isamplesorg/vocabularies):
+
+vocab_labels.parquet           (58 KB, 537 SKOS concepts)
+  └─► consumed by Search Explorer to render facet URIs as prefLabels
 ```
 
 Arrows indicate derivation, not containment. Every file in the left
@@ -114,6 +119,12 @@ column can be rebuilt from its parent by a script in
 | `isamples_202601_sample_facets_v2.parquet` | `(pid, source, material, context, object_type, label, description, place_name)` — all VARCHAR scalars; each facet column is a single URI per sample (not an array) | 63 MB | 6.0 M | wide | Search Explorer multi-dim facet filtering | QUERY_SPEC §3.3, §5.1 |
 | `isamples_202601_facet_summaries.parquet` | Baseline `(facet_type, facet_value, scheme, count)` | 2 KB | 56 | wide | Every tutorial (instant initial facet counts) | QUERY_SPEC §3.3 tier 1 |
 | `isamples_202601_facet_cross_filter.parquet` | Pre-computed counts for single-filter cross-facet queries | 6 KB | 526 | wide | Search Explorer cross-filter UI | QUERY_SPEC §3.3 tier 2a |
+
+### Tier: vocabulary labels
+
+| File | Role | Size | Rows | Upstream | Consumers | Spec |
+|---|---|---:|---:|---|---|---|
+| `vocab_labels.parquet` | SKOS concept URI → human-readable `pref_label` map (plus `definition`, `alt_labels`, `scheme`); covers material, sample object type, and sampled feature type vocabularies | 58 KB | 537 | `isamplesorg/vocabularies` TTLs (built by `scripts/build_vocab_labels.py`) | Search Explorer (renders facet URIs as prefLabels); any tutorial that surfaces controlled-vocabulary URIs | issue #148 |
 
 ### Tier: alternative export formats (upstream of the aggregated Zenodo export)
 
