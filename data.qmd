@@ -57,6 +57,7 @@ cite `https://data.isamples.org/<file>`.
 | Aggregate map clusters by zoom | [`h3_summary_res{4,6,8}.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | ≤ 2.4 MB each |
 | Filter by material / context / object-type | [`sample_facets_v2.parquet`](https://data.isamples.org/isamples_202601_sample_facets_v2.parquet) | 63 MB |
 | Walk relationships (graph queries) | [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 820 MB |
+| Translate vocabulary URIs to human-readable labels | [`vocab_labels.parquet`](https://data.isamples.org/vocab_labels.parquet) | 58 KB |
 
 ## 3. Copy-pasteable DuckDB snippets
 
@@ -125,6 +126,21 @@ con.sql("""
     WHERE otype = '_edge_'
     GROUP BY p
     ORDER BY n_edges DESC
+    LIMIT 10
+""").df()
+```
+
+### 3.6 Vocab labels: render facet URIs as human-readable text
+
+```python
+# Join sample facets to vocabulary prefLabels so the UI shows
+# "Ceramic Clay" instead of the raw concept URI.
+con.sql("""
+    SELECT f.pid, f.label, v.pref_label AS material_label
+    FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet') f
+    LEFT JOIN read_parquet('https://data.isamples.org/vocab_labels.parquet') v
+      ON f.material = v.uri
+    WHERE f.material IS NOT NULL
     LIMIT 10
 """).df()
 ```
