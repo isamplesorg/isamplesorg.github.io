@@ -264,6 +264,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#h3-res-4-aggregates-densest-continental-cells" id="toc-h3-res-4-aggregates-densest-continental-cells" class="nav-link" data-scroll-target="#h3-res-4-aggregates-densest-continental-cells"><span class="header-section-number">3.3</span> 3.3 H3 res-4 aggregates: densest continental cells</a></li>
   <li><a href="#sample-facets-opencontext-artifacts" id="toc-sample-facets-opencontext-artifacts" class="nav-link" data-scroll-target="#sample-facets-opencontext-artifacts"><span class="header-section-number">3.4</span> 3.4 Sample facets: OpenContext artifacts</a></li>
   <li><a href="#narrow-graph-count-edges-by-predicate" id="toc-narrow-graph-count-edges-by-predicate" class="nav-link" data-scroll-target="#narrow-graph-count-edges-by-predicate"><span class="header-section-number">3.5</span> 3.5 Narrow (graph): count edges by predicate</a></li>
+  <li><a href="#vocab-labels-render-facet-uris-as-human-readable-text" id="toc-vocab-labels-render-facet-uris-as-human-readable-text" class="nav-link" data-scroll-target="#vocab-labels-render-facet-uris-as-human-readable-text"><span class="header-section-number">3.6</span> 3.6 Vocab labels: render facet URIs as human-readable text</a></li>
   </ul></li>
   <li><a href="#h3-tier-breakpoints-for-map-authors" id="toc-h3-tier-breakpoints-for-map-authors" class="nav-link" data-scroll-target="#h3-tier-breakpoints-for-map-authors"><span class="header-section-number">4</span> 4. H3 tier breakpoints (for map authors)</a></li>
   <li><a href="#full-catalog-companion-docs" id="toc-full-catalog-companion-docs" class="nav-link" data-scroll-target="#full-catalog-companion-docs"><span class="header-section-number">5</span> 5. Full catalog + companion docs</a></li>
@@ -387,6 +388,11 @@ Warning
 <td><a href="https://data.isamples.org/isamples_202512_narrow.parquet"><code>isamples_202512_narrow.parquet</code></a></td>
 <td style="text-align: right;">820 MB</td>
 </tr>
+<tr class="even">
+<td>Translate vocabulary URIs to human-readable labels</td>
+<td><a href="https://data.isamples.org/vocab_labels.parquet"><code>vocab_labels.parquet</code></a></td>
+<td style="text-align: right;">58 KB</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -446,6 +452,19 @@ Warning
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="st">    ORDER BY n_edges DESC</span></span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="st">    LIMIT 10</span></span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="vocab-labels-render-facet-uris-as-human-readable-text" class="level3" data-number="3.6">
+<h3 data-number="3.6" data-anchor-id="vocab-labels-render-facet-uris-as-human-readable-text"><span class="header-section-number">3.6</span> 3.6 Vocab labels: render facet URIs as human-readable text</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join sample facets to vocabulary prefLabels so the UI shows</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># "Ceramic Clay" instead of the raw concept URI.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT f.pid, f.label, v.pref_label AS material_label</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM read_parquet('https://data.isamples.org/isamples_202601_sample_facets_v2.parquet') f</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="st">    LEFT JOIN read_parquet('https://data.isamples.org/vocab_labels.parquet') v</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="st">      ON f.material = v.uri</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE f.material IS NOT NULL</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="st">    LIMIT 10</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="h3-tier-breakpoints-for-map-authors" class="level2" data-number="4">

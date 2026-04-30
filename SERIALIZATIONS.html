@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="iSamples team">
-<meta name="dcterms.date" content="2026-04-29">
+<meta name="dcterms.date" content="2026-04-30">
 
 <title>iSamples Data Serializations – iSamples</title>
 <style>
@@ -266,9 +266,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#tier-derived-aggregates-progressive-globe-h3" id="toc-tier-derived-aggregates-progressive-globe-h3" class="nav-link" data-scroll-target="#tier-derived-aggregates-progressive-globe-h3"><span class="header-section-number">3.3</span> Tier: derived aggregates (progressive globe / H3)</a></li>
   <li><a href="#tier-display-projections" id="toc-tier-display-projections" class="nav-link" data-scroll-target="#tier-display-projections"><span class="header-section-number">3.4</span> Tier: display projections</a></li>
   <li><a href="#tier-facet-caches" id="toc-tier-facet-caches" class="nav-link" data-scroll-target="#tier-facet-caches"><span class="header-section-number">3.5</span> Tier: facet caches</a></li>
-  <li><a href="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" id="toc-tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="nav-link" data-scroll-target="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.6</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</a></li>
-  <li><a href="#tier-legacy-bindings-and-convenience-copies" id="toc-tier-legacy-bindings-and-convenience-copies" class="nav-link" data-scroll-target="#tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.7</span> Tier: legacy bindings and convenience copies</a></li>
-  <li><a href="#tier-source-specific-variants-not-part-of-the-substrate" id="toc-tier-source-specific-variants-not-part-of-the-substrate" class="nav-link" data-scroll-target="#tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.8</span> Tier: source-specific variants (not part of the substrate)</a></li>
+  <li><a href="#tier-vocabulary-labels" id="toc-tier-vocabulary-labels" class="nav-link" data-scroll-target="#tier-vocabulary-labels"><span class="header-section-number">3.6</span> Tier: vocabulary labels</a></li>
+  <li><a href="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" id="toc-tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="nav-link" data-scroll-target="#tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.7</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</a></li>
+  <li><a href="#tier-legacy-bindings-and-convenience-copies" id="toc-tier-legacy-bindings-and-convenience-copies" class="nav-link" data-scroll-target="#tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.8</span> Tier: legacy bindings and convenience copies</a></li>
+  <li><a href="#tier-source-specific-variants-not-part-of-the-substrate" id="toc-tier-source-specific-variants-not-part-of-the-substrate" class="nav-link" data-scroll-target="#tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.9</span> Tier: source-specific variants (not part of the substrate)</a></li>
   </ul></li>
   <li><a href="#per-file-detail" id="toc-per-file-detail" class="nav-link" data-scroll-target="#per-file-detail"><span class="header-section-number">4</span> 4. Per-file detail</a>
   <ul>
@@ -317,7 +318,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 29, 2026</p>
+      <p class="date">April 30, 2026</p>
     </div>
   </div>
   
@@ -373,7 +374,12 @@ Source-specific variants (parallel to the substrate, not derived from it):
 
 oc_isamples_pqg.parquet        (GCS, 11.8 M, narrow, OC-only)
 oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
-  └─► serve as upstream for OpenContext thumbnails folded into 202604 wide</code></pre>
+  └─► serve as upstream for OpenContext thumbnails folded into 202604 wide
+
+Vocabulary labels (parallel to the substrate, sourced from isamplesorg/vocabularies):
+
+vocab_labels.parquet           (58 KB, 537 SKOS concepts)
+  └─► consumed by Search Explorer to render facet URIs as prefLabels</code></pre>
 <p>Arrows indicate derivation, not containment. Every file in the left column can be rebuilt from its parent by a script in <code>isamples-python/</code> or <code>isamplesorg.github.io/scripts/</code>.</p>
 </section>
 <section id="catalog" class="level2" data-number="3">
@@ -621,8 +627,44 @@ oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
 </tbody>
 </table>
 </section>
-<section id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="level3" data-number="3.6">
-<h3 data-number="3.6" data-anchor-id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.6</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</h3>
+<section id="tier-vocabulary-labels" class="level3" data-number="3.6">
+<h3 data-number="3.6" data-anchor-id="tier-vocabulary-labels"><span class="header-section-number">3.6</span> Tier: vocabulary labels</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Role</th>
+<th style="text-align: right;">Size</th>
+<th style="text-align: right;">Rows</th>
+<th>Upstream</th>
+<th>Consumers</th>
+<th>Spec</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>vocab_labels.parquet</code></td>
+<td>SKOS concept URI → human-readable <code>pref_label</code> map (plus <code>definition</code>, <code>alt_labels</code>, <code>scheme</code>); covers material, sample object type, and sampled feature type vocabularies</td>
+<td style="text-align: right;">58 KB</td>
+<td style="text-align: right;">537</td>
+<td><code>isamplesorg/vocabularies</code> TTLs (built by <code>scripts/build_vocab_labels.py</code>)</td>
+<td>Search Explorer (renders facet URIs as prefLabels); any tutorial that surfaces controlled-vocabulary URIs</td>
+<td>issue #148</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export" class="level3" data-number="3.7">
+<h3 data-number="3.7" data-anchor-id="tier-alternative-export-formats-upstream-of-the-aggregated-zenodo-export"><span class="header-section-number">3.7</span> Tier: alternative export formats (upstream of the aggregated Zenodo export)</h3>
 <p>The <code>export_client</code> can emit each source’s records in multiple formats; the aggregated Zenodo deposition archives the GeoParquet flavor, but JSONL and CSV are also emitted by the same pipeline and are useful for streaming or human inspection.</p>
 <table class="caption-top table">
 <thead>
@@ -667,8 +709,8 @@ oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
 </tbody>
 </table>
 </section>
-<section id="tier-legacy-bindings-and-convenience-copies" class="level3" data-number="3.7">
-<h3 data-number="3.7" data-anchor-id="tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.7</span> Tier: legacy bindings and convenience copies</h3>
+<section id="tier-legacy-bindings-and-convenience-copies" class="level3" data-number="3.8">
+<h3 data-number="3.8" data-anchor-id="tier-legacy-bindings-and-convenience-copies"><span class="header-section-number">3.8</span> Tier: legacy bindings and convenience copies</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -703,8 +745,8 @@ oc_isamples_pqg_wide.parquet   (GCS,  2.5 M, wide,   OC-only)
 </tbody>
 </table>
 </section>
-<section id="tier-source-specific-variants-not-part-of-the-substrate" class="level3" data-number="3.8">
-<h3 data-number="3.8" data-anchor-id="tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.8</span> Tier: source-specific variants (not part of the substrate)</h3>
+<section id="tier-source-specific-variants-not-part-of-the-substrate" class="level3" data-number="3.9">
+<h3 data-number="3.9" data-anchor-id="tier-source-specific-variants-not-part-of-the-substrate"><span class="header-section-number">3.9</span> Tier: source-specific variants (not part of the substrate)</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 13%">
