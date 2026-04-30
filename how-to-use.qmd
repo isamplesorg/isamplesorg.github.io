@@ -96,7 +96,8 @@ and counts instantly, without touching the 278 MB primary file:
 
 Hexagonal H3 cells pre-aggregated at three resolutions for zoom-adaptive
 globe rendering. Each row: `h3_cell, center_lat, center_lng, sample_count,
-dominant_source, source_count`.
+dominant_source, source_count`. For the design rationale (why hexagons,
+why these resolutions), see [Technical: Why H3?](tutorials/why_h3.qmd).
 
 | File | Size | Cells | Typical altitude |
 |---|---:|---:|---|

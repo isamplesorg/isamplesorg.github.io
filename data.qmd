@@ -149,6 +149,8 @@ con.sql("""
 
 The H3 summary files back a progressive-globe rendering pattern:
 render aggregate circles at low zoom, individual points at high zoom.
+For why we use H3 at all and why specifically resolutions 4 / 6 / 8,
+see [Technical: Why H3?](tutorials/why_h3.qmd).
 Approximate breakpoints:
 
 | Zoom / altitude | Use |

@@ -3,7 +3,7 @@ title: "iSamples Interactive Explorer"
 categories: [parquet, spatial, interactive]
 format:
   html:
-    code-fold: true
+    echo: false
     toc: true
     toc-depth: 3
     include-in-header:
@@ -68,16 +68,12 @@ Search and explore **6.7 million physical samples** from scientific collections 
 This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts, while the full ~280 MB Parquet file is queried on demand. **Cross-filtering** keeps counts accurate — selecting a source updates material/context/specimen counts to reflect only that source's samples. All powered by DuckDB-WASM in your browser — no server required!
 :::
 
-## Setup
-
 ```{ojs}
-//| code-fold: true
 // Imports - use dynamic import to avoid CORS issues
 duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm")
 ```
 
 ```{ojs}
-//| code-fold: true
 // Version gate. Append ?v=2 to the URL to opt into the lite-backed
 // rewrite (samples_map_lite.parquet instead of wide.parquet, lazy
 // description fetch on click, no ORDER BY RANDOM(), lazy Cesium mount).
@@ -118,14 +114,12 @@ function getCesiumColor(source) {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Parse URL params for bookmarkable searches
 initialParams = {
   const params = new URLSearchParams(window.location.search);
   return {
     q: params.get("q") || "",
-    sources: params.get("sources")?.split(",").filter(s => s) || [],
-    view: ["list", "table", "globe"].includes(params.get("view")) ? params.get("view") : "globe"
+    sources: params.get("sources")?.split(",").filter(s => s) || []
   };
 }
 ```
@@ -133,7 +127,6 @@ initialParams = {
 ## Search & Filters
 
 ```{ojs}
-//| code-fold: false
 // Search input
 viewof searchInput = Inputs.text({
   placeholder: "Search samples (e.g., pottery, basalt, Cyprus...)",
@@ -154,7 +147,6 @@ facetSummariesWarning
 **Source**
 
 ```{ojs}
-//| code-fold: true
 // Source checkboxes with counts - uses pre-computed summaries for instant load
 viewof sourceCheckboxes = {
   const counts = facetsByType.source;
@@ -178,7 +170,6 @@ viewof sourceCheckboxes = {
 **Material**
 
 ```{ojs}
-//| code-fold: true
 // Material filter - loaded from pre-computed summaries
 viewof materialCheckboxes = {
   const counts = facetsByType.material;
@@ -199,7 +190,6 @@ viewof materialCheckboxes = {
 **Sampled Feature**
 
 ```{ojs}
-//| code-fold: true
 // Context filter - loaded from pre-computed summaries
 viewof contextCheckboxes = {
   const counts = facetsByType.context;
@@ -220,7 +210,6 @@ viewof contextCheckboxes = {
 **Specimen Type**
 
 ```{ojs}
-//| code-fold: true
 // Object type filter - loaded from pre-computed summaries
 viewof objectTypeCheckboxes = {
   const counts = facetsByType.object_type;
@@ -239,14 +228,12 @@ viewof objectTypeCheckboxes = {
 ```
 
 ```{ojs}
-//| code-fold: true
 html`<a href="?" style="font-size: 13px;">Clear All Filters</a>`
 ```
 
 **Max Samples**
 
 ```{ojs}
-//| code-fold: false
 viewof maxSamples = Inputs.range([1000, 100000], {
   value: 25000,
   step: 1000
@@ -256,10 +243,7 @@ viewof maxSamples = Inputs.range([1000, 100000], {
 </div>
 <div>
 
-### Results
-
 ```{ojs}
-//| code-fold: true
 // Update URL without reloading
 {
   const params = new URLSearchParams();
@@ -268,7 +252,6 @@ viewof maxSamples = Inputs.range([1000, 100000], {
   if (materialCheckboxes?.length) params.set("material", materialCheckboxes.join(","));
   if (contextCheckboxes?.length) params.set("context", contextCheckboxes.join(","));
   if (objectTypeCheckboxes?.length) params.set("object_type", objectTypeCheckboxes.join(","));
-  if (viewMode !== "globe") params.set("view", viewMode);
 
   const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
   if (window.location.search !== `?${params.toString()}`) {
@@ -277,87 +260,51 @@ viewof maxSamples = Inputs.range([1000, 100000], {
 }
 ```
 
-```{ojs}
-//| code-fold: false
-// View mode selector
-viewof viewMode = Inputs.radio(["globe", "list", "table"], {
-  value: initialParams.view,
-  format: (x) => x === "globe" ? "🌍 Globe" : x === "list" ? "📋 List" : "📊 Table"
-})
-```
+<div id="cesiumContainer" style="width: 100%; aspect-ratio: 16/9;"></div>
+
+<div style="display: flex; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
+  <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
+</div>
 
 <div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px;">
 Loading data...
 </div>
 
 ```{ojs}
-//| code-fold: true
 // Show result count
-html`<div style="margin-bottom: 16px;">
+html`<div style="margin: 12px 0;">
   <strong>Showing ${sampleData.length.toLocaleString()} of ${Number(totalCount).toLocaleString()} matching samples</strong>
 </div>`
 ```
 
+</div>
+</div>
+
+### Results
+
 ```{ojs}
-//| code-fold: true
-// Render results based on view mode
-{
-  if (viewMode === "globe") {
-    // Globe is rendered in its own section below
-    return html`<div style="color: #666; font-style: italic;">See globe view below</div>`;
-  } else if (viewMode === "table") {
-    return Inputs.table(sampleData, {
-      columns: ['source', 'label', 'latitude', 'longitude'],
-      header: {
-        source: 'Source',
-        label: 'Label',
-        latitude: 'Lat',
-        longitude: 'Lon'
-      },
-      format: {
-        source: (x) => html`<span style="color: ${SOURCE_COLORS[x] || '#808080'}; font-weight: 600;">${x}</span>`,
-        latitude: (x) => x?.toFixed(4),
-        longitude: (x) => x?.toFixed(4)
-      },
-      rows: 20
-    });
-  } else {
-    // List view
-    if (sampleData.length === 0) {
-      return html`<div style="color: #888; padding: 20px; text-align: center;">No results found</div>`;
-    }
-
-    const items = sampleData.map(r => {
-      const color = SOURCE_COLORS[r.source] || SOURCE_COLORS.default;
-      const desc = r.description || "";
-      const description = desc.length > 150 ? desc.slice(0, 150) + "..." : (desc || "<em>No description</em>");
-
-      return html`<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-            ${r.source}
-          </span>
-        </div>
-        <div style="font-weight: 600; margin-bottom: 4px;">${r.label || "Unlabeled"}</div>
-        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${description}</div>
-        <div style="font-size: 12px; color: #888;">
-          📍 ${r.latitude?.toFixed(4)}, ${r.longitude?.toFixed(4)}
-        </div>
-      </div>`;
-    });
-
-    return html`<div style="max-height: 500px; overflow-y: auto;">${items}</div>`;
-  }
-}
+// Full-width results table
+Inputs.table(sampleData, {
+  columns: ['source', 'label', 'latitude', 'longitude'],
+  header: {
+    source: 'Source',
+    label: 'Label',
+    latitude: 'Lat',
+    longitude: 'Lon'
+  },
+  format: {
+    source: (x) => html`<span style="color: ${SOURCE_COLORS[x] || '#808080'}; font-weight: 600;">${x}</span>`,
+    latitude: (x) => x?.toFixed(4),
+    longitude: (x) => x?.toFixed(4)
+  },
+  rows: 20
+})
 ```
 
-</div>
-</div>
-
-## Database & Queries
-
 ```{ojs}
-//| code-fold: true
 // Initialize DuckDB-WASM
 db = {
   performance.mark('explorer-db-start');
@@ -415,12 +362,10 @@ async function runQuery(sql) {
 ```
 
 ```{ojs}
-//| code-fold: true
 mutable facetSummariesError = null
 ```
 
 ```{ojs}
-//| code-fold: true
 // Tier 1: Load pre-computed facet summaries (2KB, instant)
 facetSummaries = {
   mutable facetSummariesError = null;
@@ -440,7 +385,6 @@ facetSummaries = {
 ```
 
 ```{ojs}
-//| code-fold: true
 facetSummariesWarning = {
   if (!facetSummariesError) return null;
   return html`<div style="margin: 6px 0 10px; padding: 8px 10px; border: 1px solid #f0b429; background: #fff7e6; border-radius: 6px; color: #7a4b00; font-size: 12px;">
@@ -466,7 +410,6 @@ facetsByType = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Load SKOS prefLabels for vocabulary URIs (#148). Tiny lookup (~60KB);
 // fallback to last URI segment if a URI isn't covered.
 vocabLabels = {
@@ -496,7 +439,6 @@ prettyLabel = function (uri) {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Cross-filter: build WHERE clause excluding one facet dimension
 // Queries the sample_facets view (URI strings, correct column names)
 function buildCrossFilterWhere(excludeFacet) {
@@ -549,7 +491,6 @@ function buildCrossFilterWhere(excludeFacet) {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Detect whether any filter is active (triggers cross-filter queries)
 hasActiveFilters = {
   const hasSearch = searchInput?.trim()?.length > 0;
@@ -562,7 +503,6 @@ hasActiveFilters = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Cross-filtered facet counts: use pre-computed cache for single-filter,
 // fall back to on-the-fly queries against sample_facets for multi-filter
 crossFilteredFacets = {
@@ -653,7 +593,6 @@ crossFilteredFacets = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Update facet count labels in-place when cross-filtered counts change
 // This avoids re-rendering checkboxes (which would reset user selections)
 {
@@ -687,7 +626,6 @@ crossFilteredFacets = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
 // Source filter uses the wide parquet's `n` column directly.
 // Material/context/object_type filters use the sample_facets view (URI strings)
@@ -754,14 +692,12 @@ whereClause = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Source counts now come from pre-computed facet summaries (Tier 1)
 // No longer scans the full parquet file on every page load
 sourceCounts = facetsByType.source
 ```
 
 ```{ojs}
-//| code-fold: true
 // Get total count matching current filters
 totalCount = {
   performance.mark('explorer-count-start');
@@ -778,7 +714,6 @@ totalCount = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Load sample data
 sampleData = {
   const statusDiv = document.getElementById('loading_status');
@@ -843,35 +778,14 @@ sampleData = {
 }
 ```
 
-## Globe View
-
 ```{ojs}
-//| code-fold: true
 mutable clickedPointId = null
 mutable clickedPointIndex = null
 ```
 
-<div id="cesiumContainer" style="width: 100%; aspect-ratio: 16/9; display: ${viewMode === 'globe' ? 'block' : 'none'};"></div>
-
-<div style="display: ${viewMode === 'globe' ? 'flex' : 'none'}; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
-</div>
-
 ```{ojs}
-//| code-fold: true
 // Cesium viewer setup
 viewer = {
-  // v2: defer Cesium construction until the user actually switches to
-  // globe view. The cell re-evaluates when viewMode changes (reactive
-  // dependency below), so toggling into globe will mount on demand.
-  // v1 mounts eagerly to preserve original behavior.
-  if (explorerVersion === 'v2' && viewMode !== 'globe') {
-    return null;
-  }
-
   // Wait for Cesium to be available
   await new Promise(resolve => {
     if (typeof Cesium !== 'undefined') resolve();
@@ -916,7 +830,6 @@ viewer = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Render points on globe
 renderPoints = {
   if (!viewer || sampleData.length === 0) return null;
@@ -971,7 +884,6 @@ renderPoints = {
 ## Sample Card
 
 ```{ojs}
-//| code-fold: true
 // Get selected sample data
 selectedSample = {
   if (clickedPointIndex === null || clickedPointIndex < 0) return null;
@@ -981,7 +893,6 @@ selectedSample = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // v2: lazy description fetch — only hit the 278 MB wide parquet when a sample
 // is actually clicked, rather than pulling description for every row eagerly.
 lazyDescription = {
@@ -1003,7 +914,6 @@ lazyDescription = {
 ```
 
 ```{ojs}
-//| code-fold: true
 // Render sample card
 sampleCard = {
   if (!selectedSample) {
@@ -1064,12 +974,10 @@ sampleCard = {
 <summary>Current State & Query</summary>
 
 ```{ojs}
-//| code-fold: true
 html`<pre style="font-size: 12px; background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
 State:
   search: "${searchInput || ''}"
   sources: ${JSON.stringify(Array.from(sourceCheckboxes || []))}
-  view: "${viewMode}"
   maxSamples: ${maxSamples}
 
 WHERE clause:
