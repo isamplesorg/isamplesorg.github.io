@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Tutorials – iSamples</title>
+<title>Technical: Why H3? – iSamples</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -22,6 +22,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -75,7 +110,7 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="../styles.css">
 </head>
 
-<body class="nav-fixed quarto-light">
+<body class="nav-sidebar docked nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -214,32 +249,100 @@ ul.task-list li input[type="checkbox"] {
 </div>
       </div> <!-- /container-fluid -->
     </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/why_h3.html">Technical: Why H3?</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
 </header>
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../design/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../design/requirements.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Requirements</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="https://isamples.org/metadata/" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Schema</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../models/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Vocabularies</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/narrow_vs_wide_performance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Technical: Narrow vs Wide</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/why_h3.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Technical: Why H3?</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#start-here" id="toc-start-here" class="nav-link active" data-scroll-target="#start-here">Start Here</a></li>
-  <li><a href="#whats-in-the-data" id="toc-whats-in-the-data" class="nav-link" data-scroll-target="#whats-in-the-data">What’s in the Data?</a></li>
-  <li><a href="#data-files" id="toc-data-files" class="nav-link" data-scroll-target="#data-files">Data Files</a></li>
-  <li><a href="#why-browser-based" id="toc-why-browser-based" class="nav-link" data-scroll-target="#why-browser-based">Why Browser-Based?</a></li>
-  <li><a href="#for-developers" id="toc-for-developers" class="nav-link" data-scroll-target="#for-developers">For Developers</a></li>
+  <li><a href="#what-h3-is" id="toc-what-h3-is" class="nav-link active" data-scroll-target="#what-h3-is"><span class="header-section-number">1</span> What H3 is</a></li>
+  <li><a href="#why-hexagons-over-squares-or-triangles" id="toc-why-hexagons-over-squares-or-triangles" class="nav-link" data-scroll-target="#why-hexagons-over-squares-or-triangles"><span class="header-section-number">2</span> Why hexagons over squares (or triangles)</a></li>
+  <li><a href="#why-h3-over-s2-or-geohash" id="toc-why-h3-over-s2-or-geohash" class="nav-link" data-scroll-target="#why-h3-over-s2-or-geohash"><span class="header-section-number">3</span> Why H3 over S2 or geohash</a></li>
+  <li><a href="#why-resolutions-4-6-8-specifically" id="toc-why-resolutions-4-6-8-specifically" class="nav-link" data-scroll-target="#why-resolutions-4-6-8-specifically"><span class="header-section-number">4</span> Why resolutions 4 / 6 / 8 specifically</a></li>
+  <li><a href="#what-this-means-for-queries" id="toc-what-this-means-for-queries" class="nav-link" data-scroll-target="#what-this-means-for-queries"><span class="header-section-number">5</span> What this means for queries</a></li>
+  <li><a href="#what-wed-revisit" id="toc-what-wed-revisit" class="nav-link" data-scroll-target="#what-wed-revisit"><span class="header-section-number">6</span> What we’d revisit</a></li>
+  <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also"><span class="header-section-number">7</span> See also</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/why_h3.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Tutorials</h1>
-<p class="subtitle lead">Learn to explore 6.7 million physical samples from scientific collections worldwide using modern browser-based tools.</p>
-</div>
+<h1 class="title">Technical: Why H3?</h1>
+<p class="subtitle lead">Why iSamples uses Uber’s H3 hexagonal grid for spatial aggregation, and why specifically resolutions 4 / 6 / 8</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">h3</div>
+    <div class="quarto-category">spatial</div>
+    <div class="quarto-category">design-rationale</div>
+  </div>
+  </div>
 
 
 
@@ -255,122 +358,238 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="start-here" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="start-here">Start Here</h2>
+<p>The progressive globe and the Interactive Explorer both render millions of samples by aggregating points into pre-computed <a href="https://h3geo.org/">H3</a> cells at three resolutions. This page documents <em>why</em> H3, why <em>those</em> resolutions, and what we considered before adopting it.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>One-paragraph version
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>H3 is a hierarchical hexagonal grid system, originally built by Uber for ride-sharing analytics and released as open source in 2018. We use it because hexagons have <strong>uniform neighbor distance</strong> (square grids do not), the index is a single 64-bit integer (cheap to store, fast to filter), and DuckDB has first-class H3 support. We pre-aggregate at resolutions 4 / 6 / 8 — chosen so each tier file fits comfortably in browser memory and roughly matches a continental / regional / neighborhood zoom band on the globe.</p>
+</div>
+</div>
+<section id="what-h3-is" class="level2" data-number="1">
+<h2 data-number="1" data-anchor-id="what-h3-is"><span class="header-section-number">1</span> What H3 is</h2>
+<p>H3 partitions the Earth’s surface into a hierarchy of hexagonal cells at 16 resolutions (0 = ~4.4 M km² per cell, 15 = ~0.9 m²). Each cell has a unique 64-bit integer ID. Parents and children at adjacent resolutions don’t perfectly nest (a hexagon can’t tile to seven smaller hexagons exactly), but the approximate parent–child relationship is good enough for binning and rollup.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
-<th>Tutorial</th>
-<th>What You’ll Learn</th>
+<th>Resource</th>
+<th>Why follow it</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="../tutorials/progressive_globe.html"><strong>Interactive Explorer</strong></a></td>
-<td>Browse samples on a 3D globe with H3-clustered, zoom-adaptive rendering</td>
+<td><a href="https://h3geo.org/">h3geo.org</a></td>
+<td>Authoritative documentation, including the resolution table</td>
 </tr>
 <tr class="even">
-<td><a href="../tutorials/isamples_explorer.html"><strong>Search Explorer</strong></a></td>
-<td>Faceted search and filter across all 6.7M samples with cross-filtering</td>
+<td><a href="https://github.com/uber/h3">H3 GitHub</a></td>
+<td>C library (canonical) plus bindings for Python, JS, Java, R, Go</td>
 </tr>
 <tr class="odd">
-<td><a href="../tutorials/zenodo_isamples_analysis.html"><strong>Deep-Dive Analysis</strong></a></td>
-<td>Comprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics</td>
+<td><a href="https://www.uber.com/blog/h3/">Uber Engineering blog (2018)</a></td>
+<td>Original announcement and design rationale</td>
 </tr>
 <tr class="even">
-<td><a href="../tutorials/narrow_vs_wide_performance.html"><strong>Technical: Narrow vs Wide</strong></a></td>
-<td>Schema comparison and performance benchmarks for the PQG data formats</td>
+<td><a href="https://discreteglobalgrids.org/">Sahr (2008), <em>Discrete Global Grid Systems</em></a></td>
+<td>Theoretical underpinning for hex-based DGGs</td>
+</tr>
+<tr class="odd">
+<td><a href="https://en.wikipedia.org/wiki/Discrete_global_grid">Wikipedia: Discrete global grid</a></td>
+<td>Background — H3 has no standalone Wikipedia article yet (April 2026)</td>
 </tr>
 </tbody>
 </table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The lack of a standalone Wikipedia article is a real gap and a fair signal of how niche the technology still is outside ride-sharing, mapping, and geo-analytics circles. iSamples chose H3 anyway; this page is part of how we make the choice legible to people who would otherwise have a Wikipedia article to fall back on.</p>
+</div>
+</div>
 </section>
-<section id="whats-in-the-data" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="whats-in-the-data">What’s in the Data?</h2>
+<section id="why-hexagons-over-squares-or-triangles" class="level2" data-number="2">
+<h2 data-number="2" data-anchor-id="why-hexagons-over-squares-or-triangles"><span class="header-section-number">2</span> Why hexagons over squares (or triangles)</h2>
+<p>Most map-tile systems and database geohash schemes (Google’s quadkey, the geohash string, S2’s Hilbert-curve-on-square cells) partition the world into squares or rectangles. The classical critique:</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
-<th>Source</th>
-<th>Samples</th>
-<th>Focus</th>
+<th>Property</th>
+<th>Square grid</th>
+<th>Hex grid</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>SESAR</strong></td>
-<td>4.6M</td>
-<td>Earth science — rocks, minerals, sediments, soils</td>
+<td>Neighbor count</td>
+<td>8 (4 edge + 4 corner)</td>
+<td>6 (all edge)</td>
 </tr>
 <tr class="even">
-<td><strong>OpenContext</strong></td>
-<td>1M</td>
-<td>Archaeology — artifacts, excavation materials</td>
+<td>Distance to all neighbors</td>
+<td>Two distinct values (<code>d</code> and <code>d√2</code>)</td>
+<td>One value</td>
 </tr>
 <tr class="odd">
-<td><strong>GEOME</strong></td>
-<td>605K</td>
-<td>Biology — genomic and tissue specimens</td>
+<td>Direction sampling</td>
+<td>Anisotropic (axis-aligned)</td>
+<td>More uniform</td>
 </tr>
 <tr class="even">
-<td><strong>Smithsonian</strong></td>
-<td>322K</td>
-<td>Natural history — museum collections</td>
+<td>Fits a sphere cleanly</td>
+<td>No (poles/dateline distortion)</td>
+<td>Better (12 pentagons hide the curvature)</td>
 </tr>
 </tbody>
 </table>
+<p>For aggregation queries — “how many samples in this cell and its neighbors?” — uniform neighbor distance is the property that matters. With squares, you must decide whether a diagonal neighbor “counts the same” as an edge neighbor; with hexagons, you don’t.</p>
+<p>Triangles satisfy uniform neighbor distance too, but they alternate orientation (point-up / point-down), which makes neighborhood logic and rendering both more complex.</p>
 </section>
-<section id="data-files" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="data-files">Data Files</h2>
-<p>All data is hosted on <a href="https://data.isamples.org"><code>data.isamples.org</code></a> with HTTP range request support — DuckDB-WASM only downloads the bytes it needs.</p>
+<section id="why-h3-over-s2-or-geohash" class="level2" data-number="3">
+<h2 data-number="3" data-anchor-id="why-h3-over-s2-or-geohash"><span class="header-section-number">3</span> Why H3 over S2 or geohash</h2>
+<p><a href="http://s2geometry.io/">S2</a> (Google) and <a href="https://en.wikipedia.org/wiki/Geohash">geohash</a> are the two most common alternatives. Both partition into squares.</p>
+<ul>
+<li><strong>Geohash</strong> uses a string-based base-32 encoding. Adjacent cells often have very different prefixes (the <em>poles-and-dateline problem</em>), which makes range queries unreliable for neighborhood lookups. Cells get badly distorted near the poles.</li>
+<li><strong>S2</strong> uses a quad-tree projected onto the six faces of a cube, with cells indexed via a Hilbert curve. The neighborhood logic is sound, but cells are still squares with anisotropic neighbor distance, and the index is not as straightforward to use from SQL.</li>
+<li><strong>H3</strong> is a hex grid with a 64-bit integer index, with first-class C / Python / JavaScript / SQL bindings. The DuckDB H3 extension (which we use) operates on the integer index directly — <code>WHERE h3_res6 = 612345...</code> is a fast equality scan over a sorted column.</li>
+</ul>
+<p>We did not benchmark S2 head-to-head against H3 for this project. The hexagon-vs-square argument plus H3’s DuckDB integration plus the prior art (Eric Kansa flagged H3 in December 2025; pqg #19 added the H3 indexing CLI in February 2026) was enough.</p>
+</section>
+<section id="why-resolutions-4-6-8-specifically" class="level2" data-number="4">
+<h2 data-number="4" data-anchor-id="why-resolutions-4-6-8-specifically"><span class="header-section-number">4</span> Why resolutions 4 / 6 / 8 specifically</h2>
+<p>H3 has 16 resolutions. We pre-aggregate at three of them — 4, 6, 8 — and serve each as a separate parquet file. The choice is driven by:</p>
+<ol type="1">
+<li><p><strong>Cell size at each resolution</strong>, from the <a href="https://h3geo.org/docs/core-library/restable">H3 resolution table</a>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Resolution</th>
+<th style="text-align: right;">Avg edge length</th>
+<th style="text-align: right;">Avg cell area</th>
+<th>Roughly…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">22 km</td>
+<td style="text-align: right;">1,770 km²</td>
+<td>Subregion of a small country</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">8.5 km</td>
+<td style="text-align: right;">253 km²</td>
+<td>County</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3.2 km</td>
+<td style="text-align: right;">36 km²</td>
+<td>Town</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1.2 km</td>
+<td style="text-align: right;">5 km²</td>
+<td>Neighborhood</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">460 m</td>
+<td style="text-align: right;">0.74 km²</td>
+<td>A few city blocks</td>
+</tr>
+</tbody>
+</table></li>
+<li><p><strong>Globe altitude bands</strong>. The Cesium camera at altitude 1000 km sees roughly continental scale; at 100 km, regional; below ~10 km, neighborhood. Resolutions 4 / 6 / 8 land near the centers of those bands — odd resolutions (5, 7, 9) would also work but offer diminishing returns at the cost of an extra file to ship.</p></li>
+<li><p><strong>Parquet size budget</strong>. The progressive globe loads the lowest-resolution tier first and reaches for higher resolution as the user zooms in. Each tier has to fit comfortably in browser memory:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
 <th>File</th>
-<th>Size</th>
-<th>Description</th>
+<th style="text-align: right;">Resolution</th>
+<th style="text-align: right;">Cells</th>
+<th style="text-align: right;">Size on R2</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="https://data.isamples.org/current/wide.parquet">Wide format</a></td>
-<td>292 MB</td>
-<td>One row per entity, all sources — primary file for tutorials. Stable alias redirects to the current dated build (<code>isamples_YYYYMM_wide.parquet</code>).</td>
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet"><code>isamples_202601_h3_summary_res4.parquet</code></a></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">~38 K</td>
+<td style="text-align: right;">580 KB</td>
 </tr>
 <tr class="even">
-<td><a href="https://data.isamples.org/isamples_202601_wide_h3.parquet">Wide + H3</a></td>
-<td>292 MB</td>
-<td>Wide format with H3 spatial indices for globe visualizations</td>
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res6.parquet"><code>isamples_202601_h3_summary_res6.parquet</code></a></td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">~112 K</td>
+<td style="text-align: right;">1.6 MB</td>
 </tr>
 <tr class="odd">
-<td><a href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">Facet summaries</a></td>
-<td>2 KB</td>
-<td>Pre-computed filter counts — loads instantly</td>
-</tr>
-<tr class="even">
-<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">H3 clusters (res4)</a></td>
-<td>0.6 MB</td>
-<td>Zoomed-out globe view</td>
+<td><a href="https://data.isamples.org/isamples_202601_h3_summary_res8.parquet"><code>isamples_202601_h3_summary_res8.parquet</code></a></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">~176 K</td>
+<td style="text-align: right;">2.4 MB</td>
 </tr>
 </tbody>
 </table>
+<p>Adding res-5 and res-7 tiers would roughly triple the on-the-wire payload for a barely-perceptible improvement in cluster smoothness during zoom transitions.</p></li>
+<li><p><strong>Skip-by-two leaves obvious detail jumps</strong>, which the renderer leans into rather than fights — the user perceives the level change as deliberate progressive disclosure rather than a stutter.</p></li>
+</ol>
+<p>Below res-8 (zoom ≥ ~10, altitude &lt; ~120 km on the globe), aggregation stops mattering: there are usually fewer than a few thousand individual samples in view, and we serve them as points from <a href="https://data.isamples.org/isamples_202601_samples_map_lite.parquet"><code>samples_map_lite.parquet</code></a> instead.</p>
 </section>
-<section id="why-browser-based" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="why-browser-based">Why Browser-Based?</h2>
-<p>Our approach using <strong>geoparquet + DuckDB-WASM</strong> provides:</p>
-<ul>
-<li><strong>Universal access</strong> — No installation, works in Chrome, Firefox, Edge, Safari, and Brave</li>
-<li><strong>Fast analysis</strong> — 5-10x faster than downloading full datasets</li>
-<li><strong>Memory efficient</strong> — Analyze 300MB datasets using &lt;100MB browser memory</li>
-<li><strong>Minimal transfer</strong> — HTTP range requests download only the columns and rows you need (typically &lt;1 MB to start)</li>
-<li><strong>Reproducible</strong> — All code is visible and foldable on tutorial pages</li>
-</ul>
+<section id="what-this-means-for-queries" class="level2" data-number="5">
+<h2 data-number="5" data-anchor-id="what-this-means-for-queries"><span class="header-section-number">5</span> What this means for queries</h2>
+<p>The wide parquet carries <code>h3_res4</code>, <code>h3_res6</code>, and <code>h3_res8</code> BIGINT columns (added by <code>pqg add-h3</code> — see <a href="https://github.com/isamplesorg/pqg/pull/19">pqg PR #19</a>). Filtering or grouping on these columns is a sorted-integer scan — much faster than recomputing H3 cells from <code>(latitude, longitude)</code> at query time, and DuckDB-WASM doesn’t ship the H3 extension, so the alternative would mean shipping every point.</p>
+<p>Two query patterns are common:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Aggregate cells in a region (use the dedicated tier file — much smaller)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT h3_cell, sample_count, dominant_source, center_lat, center_lng</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM read_parquet('https://data.isamples.org/isamples_202601_h3_summary_res6.parquet')</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE center_lat BETWEEN 30 AND 40</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">      AND center_lng BETWEEN -125 AND -115</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">    ORDER BY sample_count DESC</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Filter the wide file to one or more H3 cells (use the precomputed column)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>con.sql(<span class="st">"""</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT pid, label, latitude, longitude, n AS source</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM read_parquet('https://data.isamples.org/current/wide.parquet')</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE h3_res6 = 612345678901234567   -- one cell at resolution 6</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="st">      AND otype = 'MaterialSampleRecord'</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="st">    LIMIT 100</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>).df()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For the full schema and aggregate columns, see the <a href="../SERIALIZATIONS.html">serialization catalog</a> and <a href="../data.html#h3-tier-breakpoints-for-map-authors">data downloads</a>.</p>
 </section>
-<section id="for-developers" class="level2 unnumbered">
-<h2 class="unnumbered" data-anchor-id="for-developers">For Developers</h2>
-<p>All tutorial source code is on <a href="https://github.com/isamplesorg/isamplesorg.github.io/tree/main/tutorials">GitHub</a>. Want to build your own analysis? Fork the repo, modify a <code>.qmd</code> file, and run <code>quarto preview</code>.</p>
+<section id="what-wed-revisit" class="level2" data-number="6">
+<h2 data-number="6" data-anchor-id="what-wed-revisit"><span class="header-section-number">6</span> What we’d revisit</h2>
+<p>The current design assumes <strong>dominant-source-per-cell</strong> is good enough for color encoding on the globe (see the source-color legend in the Interactive Explorer). When two sources are nearly equally represented in the same cell, the rendered color hides the second one. Eric Kansa raised this in our December 2025 discussion; we accepted the simplification for the initial release and may revisit it with per-source counts if the closeout demos or the June 2026 keynote surface the issue.</p>
+<p>We also do not ship resolutions 0–3 (continental / global) or 9–15 (sub-meter). The globe never zooms out far enough to need lower resolutions, and the lite parquet covers the high-resolution case better than per-cell aggregates would.</p>
+</section>
+<section id="see-also" class="level2" data-number="7">
+<h2 data-number="7" data-anchor-id="see-also"><span class="header-section-number">7</span> See also</h2>
 <ul>
-<li><a href="https://github.com/isamplesorg/">GitHub repositories</a> — all source code and data pipelines</li>
-<li><a href="https://zenodo.org/communities/isamples">Zenodo community</a> — archived datasets for reproducible research</li>
-<li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/82">Query architecture</a> — how the Explorer queries work under the hood</li>
+<li><a href="../tutorials/progressive_globe.html"><code>tutorials/progressive_globe.qmd</code></a> — the tier files in action on a Cesium globe</li>
+<li><a href="../tutorials/narrow_vs_wide_performance.html"><code>tutorials/narrow_vs_wide_performance.qmd</code></a> — performance comparison across schema shapes, including the H3-augmented wide</li>
+<li><a href="../data.html#h3-tier-breakpoints-for-map-authors"><code>data.qmd §4</code></a> — the zoom-to-resolution breakpoint table</li>
+<li><a href="../SERIALIZATIONS.html"><code>SERIALIZATIONS.md</code></a> — full catalog including the H3 tier files</li>
+<li><a href="https://github.com/isamplesorg/pqg/pull/19">pqg PR #19</a> — the build-time CLI that adds H3 columns and emits the tier files</li>
 </ul>
 
 
@@ -778,7 +997,7 @@ ul.task-list li input[type="checkbox"] {
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/tutorials/why_h3.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
