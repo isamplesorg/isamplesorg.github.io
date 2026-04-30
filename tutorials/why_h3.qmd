@@ -1,0 +1,133 @@
+---
+title: "Technical: Why H3?"
+subtitle: "Why iSamples uses Uber's H3 hexagonal grid for spatial aggregation, and why specifically resolutions 4 / 6 / 8"
+categories: [h3, spatial, design-rationale]
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 3
+---
+
+The progressive globe and the Interactive Explorer both render millions of samples by aggregating points into pre-computed [H3](https://h3geo.org/) cells at three resolutions. This page documents *why* H3, why *those* resolutions, and what we considered before adopting it.
+
+::: {.callout-tip}
+### One-paragraph version
+
+H3 is a hierarchical hexagonal grid system, originally built by Uber for ride-sharing analytics and released as open source in 2018. We use it because hexagons have **uniform neighbor distance** (square grids do not), the index is a single 64-bit integer (cheap to store, fast to filter), and DuckDB has first-class H3 support. We pre-aggregate at resolutions 4 / 6 / 8 — chosen so each tier file fits comfortably in browser memory and roughly matches a continental / regional / neighborhood zoom band on the globe.
+:::
+
+## What H3 is
+
+H3 partitions the Earth's surface into a hierarchy of hexagonal cells at 16 resolutions (0 = ~4.4 M km² per cell, 15 = ~0.9 m²). Each cell has a unique 64-bit integer ID. Parents and children at adjacent resolutions don't perfectly nest (a hexagon can't tile to seven smaller hexagons exactly), but the approximate parent–child relationship is good enough for binning and rollup.
+
+| Resource | Why follow it |
+|---|---|
+| [h3geo.org](https://h3geo.org/) | Authoritative documentation, including the resolution table |
+| [H3 GitHub](https://github.com/uber/h3) | C library (canonical) plus bindings for Python, JS, Java, R, Go |
+| [Uber Engineering blog (2018)](https://www.uber.com/blog/h3/) | Original announcement and design rationale |
+| [Sahr (2008), *Discrete Global Grid Systems*](https://discreteglobalgrids.org/) | Theoretical underpinning for hex-based DGGs |
+| [Wikipedia: Discrete global grid](https://en.wikipedia.org/wiki/Discrete_global_grid) | Background — H3 has no standalone Wikipedia article yet (April 2026) |
+
+::: {.callout-note}
+The lack of a standalone Wikipedia article is a real gap and a fair signal of how niche the technology still is outside ride-sharing, mapping, and geo-analytics circles. iSamples chose H3 anyway; this page is part of how we make the choice legible to people who would otherwise have a Wikipedia article to fall back on.
+:::
+
+## Why hexagons over squares (or triangles)
+
+Most map-tile systems and database geohash schemes (Google's quadkey, the geohash string, S2's Hilbert-curve-on-square cells) partition the world into squares or rectangles. The classical critique:
+
+| Property | Square grid | Hex grid |
+|---|---|---|
+| Neighbor count | 8 (4 edge + 4 corner) | 6 (all edge) |
+| Distance to all neighbors | Two distinct values (`d` and `d√2`) | One value |
+| Direction sampling | Anisotropic (axis-aligned) | More uniform |
+| Fits a sphere cleanly | No (poles/dateline distortion) | Better (12 pentagons hide the curvature) |
+
+For aggregation queries — "how many samples in this cell and its neighbors?" — uniform neighbor distance is the property that matters. With squares, you must decide whether a diagonal neighbor "counts the same" as an edge neighbor; with hexagons, you don't.
+
+Triangles satisfy uniform neighbor distance too, but they alternate orientation (point-up / point-down), which makes neighborhood logic and rendering both more complex.
+
+## Why H3 over S2 or geohash
+
+[S2](http://s2geometry.io/) (Google) and [geohash](https://en.wikipedia.org/wiki/Geohash) are the two most common alternatives. Both partition into squares.
+
+- **Geohash** uses a string-based base-32 encoding. Adjacent cells often have very different prefixes (the *poles-and-dateline problem*), which makes range queries unreliable for neighborhood lookups. Cells get badly distorted near the poles.
+- **S2** uses a quad-tree projected onto the six faces of a cube, with cells indexed via a Hilbert curve. The neighborhood logic is sound, but cells are still squares with anisotropic neighbor distance, and the index is not as straightforward to use from SQL.
+- **H3** is a hex grid with a 64-bit integer index, with first-class C / Python / JavaScript / SQL bindings. The DuckDB H3 extension (which we use) operates on the integer index directly — `WHERE h3_res6 = 612345...` is a fast equality scan over a sorted column.
+
+We did not benchmark S2 head-to-head against H3 for this project. The hexagon-vs-square argument plus H3's DuckDB integration plus the prior art (Eric Kansa flagged H3 in December 2025; pqg #19 added the H3 indexing CLI in February 2026) was enough.
+
+## Why resolutions 4 / 6 / 8 specifically
+
+H3 has 16 resolutions. We pre-aggregate at three of them — 4, 6, 8 — and serve each as a separate parquet file. The choice is driven by:
+
+1. **Cell size at each resolution**, from the [H3 resolution table](https://h3geo.org/docs/core-library/restable):
+
+   | Resolution | Avg edge length | Avg cell area | Roughly… |
+   |---:|---:|---:|---|
+   | 4 | 22 km | 1,770 km² | Subregion of a small country |
+   | 5 | 8.5 km | 253 km² | County |
+   | 6 | 3.2 km | 36 km² | Town |
+   | 7 | 1.2 km | 5 km² | Neighborhood |
+   | 8 | 460 m | 0.74 km² | A few city blocks |
+
+2. **Globe altitude bands**. The Cesium camera at altitude 1000 km sees roughly continental scale; at 100 km, regional; below ~10 km, neighborhood. Resolutions 4 / 6 / 8 land near the centers of those bands — odd resolutions (5, 7, 9) would also work but offer diminishing returns at the cost of an extra file to ship.
+
+3. **Parquet size budget**. The progressive globe loads the lowest-resolution tier first and reaches for higher resolution as the user zooms in. Each tier has to fit comfortably in browser memory:
+
+   | File | Resolution | Cells | Size on R2 |
+   |---|---:|---:|---:|
+   | [`isamples_202601_h3_summary_res4.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | 4 | ~38 K | 580 KB |
+   | [`isamples_202601_h3_summary_res6.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res6.parquet) | 6 | ~112 K | 1.6 MB |
+   | [`isamples_202601_h3_summary_res8.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res8.parquet) | 8 | ~176 K | 2.4 MB |
+
+   Adding res-5 and res-7 tiers would roughly triple the on-the-wire payload for a barely-perceptible improvement in cluster smoothness during zoom transitions.
+
+4. **Skip-by-two leaves obvious detail jumps**, which the renderer leans into rather than fights — the user perceives the level change as deliberate progressive disclosure rather than a stutter.
+
+Below res-8 (zoom ≥ ~10, altitude < ~120 km on the globe), aggregation stops mattering: there are usually fewer than a few thousand individual samples in view, and we serve them as points from [`samples_map_lite.parquet`](https://data.isamples.org/isamples_202601_samples_map_lite.parquet) instead.
+
+## What this means for queries
+
+The wide parquet carries `h3_res4`, `h3_res6`, and `h3_res8` BIGINT columns (added by `pqg add-h3` — see [pqg PR #19](https://github.com/isamplesorg/pqg/pull/19)). Filtering or grouping on these columns is a sorted-integer scan — much faster than recomputing H3 cells from `(latitude, longitude)` at query time, and DuckDB-WASM doesn't ship the H3 extension, so the alternative would mean shipping every point.
+
+Two query patterns are common:
+
+```python
+# 1. Aggregate cells in a region (use the dedicated tier file — much smaller)
+con.sql("""
+    SELECT h3_cell, sample_count, dominant_source, center_lat, center_lng
+    FROM read_parquet('https://data.isamples.org/isamples_202601_h3_summary_res6.parquet')
+    WHERE center_lat BETWEEN 30 AND 40
+      AND center_lng BETWEEN -125 AND -115
+    ORDER BY sample_count DESC
+""").df()
+```
+
+```python
+# 2. Filter the wide file to one or more H3 cells (use the precomputed column)
+con.sql("""
+    SELECT pid, label, latitude, longitude, n AS source
+    FROM read_parquet('https://data.isamples.org/current/wide.parquet')
+    WHERE h3_res6 = 612345678901234567   -- one cell at resolution 6
+      AND otype = 'MaterialSampleRecord'
+    LIMIT 100
+""").df()
+```
+
+For the full schema and aggregate columns, see the [serialization catalog](/SERIALIZATIONS.md) and [data downloads](/data.qmd#h3-tier-breakpoints-for-map-authors).
+
+## What we'd revisit
+
+The current design assumes **dominant-source-per-cell** is good enough for color encoding on the globe (see the source-color legend in the Interactive Explorer). When two sources are nearly equally represented in the same cell, the rendered color hides the second one. Eric Kansa raised this in our December 2025 discussion; we accepted the simplification for the initial release and may revisit it with per-source counts if the closeout demos or the June 2026 keynote surface the issue.
+
+We also do not ship resolutions 0–3 (continental / global) or 9–15 (sub-meter). The globe never zooms out far enough to need lower resolutions, and the lite parquet covers the high-resolution case better than per-cell aggregates would.
+
+## See also
+
+- [`tutorials/progressive_globe.qmd`](progressive_globe.qmd) — the tier files in action on a Cesium globe
+- [`tutorials/narrow_vs_wide_performance.qmd`](narrow_vs_wide_performance.qmd) — performance comparison across schema shapes, including the H3-augmented wide
+- [`data.qmd §4`](/data.html#h3-tier-breakpoints-for-map-authors) — the zoom-to-resolution breakpoint table
+- [`SERIALIZATIONS.md`](/SERIALIZATIONS.md) — full catalog including the H3 tier files
+- [pqg PR #19](https://github.com/isamplesorg/pqg/pull/19) — the build-time CLI that adds H3 columns and emits the tier files

@@ -44,6 +44,8 @@ website:
             href: models/index.qmd
           - text: "Technical: Narrow vs Wide"
             href: tutorials/narrow_vs_wide_performance.qmd
+          - text: "Technical: Why H3?"
+            href: tutorials/why_h3.qmd
       - text: "Research & Resources"
         menu:
           - text: "Publications & Conferences"
@@ -97,6 +99,8 @@ website:
           text: Vocabularies
         - text: "Technical: Narrow vs Wide"
           href: tutorials/narrow_vs_wide_performance.qmd
+        - text: "Technical: Why H3?"
+          href: tutorials/why_h3.qmd
     - id: research
       title: "Research & Resources"
       style: "docked"
