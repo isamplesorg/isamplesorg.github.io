@@ -1563,6 +1563,10 @@ zoomWatcher = {
         }
     });
 
+    if (searchInput && searchInput.value.trim().length >= 2) {
+        doSearch();
+    }
+
     refreshFacetCounts();
 
     // --- Deep-link: restore selection from initial hash ---
