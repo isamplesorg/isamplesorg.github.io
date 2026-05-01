@@ -305,8 +305,12 @@ function getActiveSources() {
 
 function sourceFilterSQL(col) {
     const active = getActiveSources();
-    if (active.length === 0) return ' AND 1=0';  // nothing checked = show nothing
-    if (active.length === 4) return '';           // all checked = no filter
+    // Empty == all (no filter), matching the semantics of the other facet
+    // groups (material / context / object_type) and Raymond's stated
+    // intuition (PR #155 thread). All-4 checked is also "all" by virtue
+    // of the IN list covering everything; we short-circuit to skip an
+    // unnecessary IN clause.
+    if (active.length === 0 || active.length === 4) return '';
     const list = active.map(s => `'${s}'`).join(',');
     return ` AND ${col} IN (${list})`;
 }
@@ -1283,6 +1287,9 @@ zoomWatcher = {
     }
 
     async function refreshFacetCountsNow(myReq) {
+        // Stale check up front: if a newer schedule has happened during the
+        // debounce window, drop this run before doing any work.
+        if (myReq !== facetCountsReqId) return;
         const { dims, activeDims, totalActiveValues } = describeActiveFilters();
 
         // Case 1: no filters → restore baseline.
@@ -1375,9 +1382,14 @@ zoomWatcher = {
     }
 
     function refreshFacetCounts() {
+        // Bump the generation synchronously so any in-flight queries
+        // (whose `myReq` is now strictly less) are invalidated immediately
+        // — without this, a stale query could finish during the debounce
+        // window of the new request and pass the gen check, repainting
+        // stale counts (Codex review on PR #155).
         clearTimeout(facetCountsDebounce);
+        const myReq = ++facetCountsReqId;
         facetCountsDebounce = setTimeout(() => {
-            const myReq = ++facetCountsReqId;
             refreshFacetCountsNow(myReq);
         }, 250);
     }
