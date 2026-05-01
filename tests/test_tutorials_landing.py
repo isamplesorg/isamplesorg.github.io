@@ -27,12 +27,6 @@ class TestHowToUseLanding:
         link = page.locator("a:has-text('Globe')")
         assert link.count() > 0
 
-    def test_has_search_explorer_link(self, page):
-        """And I see a link to the Search Explorer."""
-        page.goto(HOW_TO_USE_URL, wait_until="domcontentloaded")
-        link = page.locator("a:has-text('Explorer')")
-        assert link.count() > 0
-
     def test_has_narrow_vs_wide_link(self, page):
         """And I see a link to Narrow vs Wide."""
         page.goto(HOW_TO_USE_URL, wait_until="domcontentloaded")
@@ -57,9 +51,9 @@ class TestTutorialPageLoads:
         assert len(critical) == 0, f"JS errors: {critical}"
 
     def test_globe_viz_loads(self, page):
-        """Given I navigate to the 3D Globe page, Then the Cesium container exists."""
+        """Given I navigate to /explorer.html, Then the Cesium container exists."""
         page.goto(
-            f"{SITE_URL}/tutorials/progressive_globe.html",
+            f"{SITE_URL}/explorer.html",
             wait_until="domcontentloaded",
             timeout=30000,
         )

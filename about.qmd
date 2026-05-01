@@ -20,7 +20,7 @@ The iSamples project will:
 * Encourage a high-level metadata standard for natural history samples (across biosciences, geosciences, and archaeology), while supporting community-developed metadata standards in specialist domains.
 * Extend existing capabilities, enhance consistency, and expand their reach to serve science and society much more broadly through integration with established discipline-specific infrastructure at SESAR (geoscience), CyVerse (bioscience), Open Context (archaeology), and the Smithsonian Institution.
 
-**Current data access**: The project now uses **geoparquet files + DuckDB-WASM** for efficient, browser-based data access and analysis. See the [Interactive Explorer](/tutorials/progressive_globe.html) for a live demo.
+**Current data access**: The project now uses **geoparquet files + DuckDB-WASM** for efficient, browser-based data access and analysis. See the [Interactive Explorer](/explorer.html) for a live demo.
 
 ![iSamples Architecture](assets/iSamplesArchitecture.png)
 :::

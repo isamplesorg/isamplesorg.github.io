@@ -6,7 +6,7 @@ number-sections: false
 
 ## Quick Start {.unnumbered}
 
-1. **Open the [Interactive Explorer](/tutorials/progressive_globe.html)** — a 3D globe loads with clustered sample data
+1. **Open the [Interactive Explorer](/explorer.html)** — a 3D globe loads with clustered sample data
 2. **Zoom in** — clusters break into finer detail as you zoom (resolution 4 → 6 → 8 → individual samples)
 3. **Filter by source** — use the checkboxes to show/hide data from SESAR, OpenContext, GEOME, or Smithsonian
 4. **Click a cluster** — see sample count and nearby samples with links to source records
@@ -36,7 +36,6 @@ Works in Chrome, Firefox, Edge, Safari, and Brave. No plugins, no downloads, no 
 
 All code is visible and foldable on tutorial pages. Want to build your own analysis?
 
-- **[Search Explorer](/tutorials/isamples_explorer.html)** — faceted search across all 6.7M samples with cross-filtering
 - **[Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html)** — statistical exploration with Observable Plot
 - **[Tutorials index](/tutorials/)** — step-by-step guides from basic exploration to advanced analysis
 - **[GitHub](https://github.com/isamplesorg/)** — all source code and data pipelines

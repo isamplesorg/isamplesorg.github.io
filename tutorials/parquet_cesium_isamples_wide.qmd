@@ -4,16 +4,16 @@ format:
   html:
     include-in-header:
       text: |
-        <meta http-equiv="refresh" content="0; url=/tutorials/progressive_globe.html">
-        <link rel="canonical" href="https://isamples.org/tutorials/progressive_globe.html">
+        <meta http-equiv="refresh" content="0; url=/explorer.html">
+        <link rel="canonical" href="https://isamples.org/explorer.html">
 ---
 
 This page has moved. The **3D Globe Visualization** has been superseded by the
-[**Interactive Explorer**](/tutorials/progressive_globe.html), which subsumes
+[**Interactive Explorer**](/explorer.html), which subsumes
 its functionality with zoom-adaptive H3 clustering and sample-level drilldown.
 
 If your browser does not redirect automatically, open
-[/tutorials/progressive_globe.html](/tutorials/progressive_globe.html).
+[/explorer.html](/explorer.html).
 
 The original page is archived for historical reference at
 [/tutorials/archive/parquet_cesium_isamples_wide.html](/tutorials/archive/parquet_cesium_isamples_wide.html).
