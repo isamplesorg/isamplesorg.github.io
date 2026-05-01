@@ -1,1027 +1,1514 @@
 ---
 title: "iSamples Interactive Explorer"
-categories: [parquet, spatial, interactive]
+subtitle: "Search, filter, and explore 6.7 million material samples"
+categories: [parquet, spatial, h3, performance, isamples]
+sidebar: false
+# No TOC: this page is an app, not an article. The right-hand TOC sidebar
+# (#quarto-margin-sidebar) was overlapping .side-panel and silently
+# intercepting clicks on the Source filter checkboxes — see issue #127.
+toc: false
 format:
   html:
-    echo: false
-    toc: true
-    toc-depth: 3
     include-in-header:
       text: |
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_cross_filter.parquet">
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels.parquet">
-        <script>
-        // Opt-in perf panel (?perf=1). Plain script — independent of the
-        // OJS reactive graph, which was unreliable at firing this cell.
-        (function() {
-          if (new URLSearchParams(location.search).get('perf') !== '1') return;
-          const mark = (n) => { const e = performance.getEntriesByName(n, 'mark').pop(); return e ? e.startTime : null; };
-          const meas = (n) => { const e = performance.getEntriesByName(n, 'measure').pop(); return e ? e.duration : null; };
-          const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? (ms/1000).toFixed(2)+' s' : Math.round(ms)+' ms';
-          function render() {
-            const paints = performance.getEntriesByType('paint');
-            const fp  = paints.find(e => e.name === 'first-paint')?.startTime;
-            const fcp = paints.find(e => e.name === 'first-contentful-paint')?.startTime;
-            const rows = [
-              ['first-paint (browser)',  fp],
-              ['first-contentful-paint', fcp],
-              ['DuckDB init + views',    meas('explorer_db')],
-              ['facet summaries query',  meas('explorer_facets')],
-              ['count query',            meas('explorer_count')],
-              ['sample data query',      meas('explorer_samples')],
-              ['nav → DuckDB ready',     mark('explorer-db-end')],
-              ['nav → facets ready',     mark('explorer-facets-end')],
-              ['nav → count ready',      mark('explorer-count-end')],
-              ['nav → samples ready',    mark('explorer-samples-end')],
-            ].filter(([,v]) => v != null);
-            const prior = document.getElementById('perfPanel');
-            if (prior) prior.remove();
-            const version = new URLSearchParams(location.search).get('v') === '2' ? 'v2' : 'v1';
-            const panel = document.createElement('div');
-            panel.id = 'perfPanel';
-            panel.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:9999;background:rgba(0,0,0,0.82);color:#e8f5e9;padding:10px 12px;border-radius:6px;font:11px/1.4 ui-monospace,SFMono-Regular,monospace;max-width:340px;box-shadow:0 2px 12px rgba(0,0,0,0.3);';
-            panel.innerHTML = '<div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><span>⏱ Explorer perf (' + version + ')</span><button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button></div><table style="border-collapse:collapse;width:100%;">' + rows.map(([l,v])=>'<tr><td style="padding:1px 8px 1px 0;color:#bbb;">'+l+'</td><td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">'+fmt(v)+'</td></tr>').join('') + '</table>';
-            document.body.appendChild(panel);
-            panel.querySelector('#perfClose').onclick = () => panel.remove();
-            console.table(Object.fromEntries(rows.map(([k,v])=>[k, fmt(v)])));
-          }
-          // Poll for the last-expected mark; re-render as each new mark arrives.
-          let done = false;
-          const id = setInterval(() => {
-            const haveAll = mark('explorer-samples-end') != null && mark('explorer-count-end') != null;
-            const haveSome = mark('explorer-db-end') != null;
-            if (haveSome) render();
-            if (haveAll && !done) { done = true; setTimeout(() => clearInterval(id), 500); }
-          }, 500);
-          // Safety: stop polling after 2 minutes regardless
-          setTimeout(() => clearInterval(id), 120000);
-        })();
-        </script>
 ---
 
-Search and explore **6.7 million physical samples** from scientific collections worldwide.
-
-::: {.callout-note}
-### Serverless Architecture
-This app uses a **two-tier loading strategy**: a 2KB pre-computed summary loads instantly for facet counts, while the full ~280 MB Parquet file is queried on demand. **Cross-filtering** keeps counts accurate — selecting a source updates material/context/specimen counts to reflect only that source's samples. All powered by DuckDB-WASM in your browser — no server required!
-:::
-
-```{ojs}
-// Imports - use dynamic import to avoid CORS issues
-duckdbModule = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm")
-```
-
-```{ojs}
-// Version gate. Append ?v=2 to the URL to opt into the lite-backed
-// rewrite (samples_map_lite.parquet instead of wide.parquet, lazy
-// description fetch on click, no ORDER BY RANDOM(), lazy Cesium mount).
-explorerVersion = new URLSearchParams(location.search).get('v') === '2' ? 'v2' : 'v1'
-
-// Data source configuration.
-// wide_url uses the /current/ alias so we pick up the latest enriched build
-// (with OpenContext thumbnails); the alias 302-redirects to the dated file.
-wide_url = "https://data.isamples.org/current/wide.parquet"
-lite_url = "https://data.isamples.org/isamples_202601_samples_map_lite.parquet"
-parquet_url = explorerVersion === 'v2' ? lite_url : wide_url
-
-// Pre-computed facet summaries (2KB - loads instantly)
-facet_summaries_url = "https://data.isamples.org/isamples_202601_facet_summaries.parquet"
-
-// Pre-computed cross-filter cache (6KB - instant single-filter lookups)
-cross_filter_url = "https://data.isamples.org/isamples_202601_facet_cross_filter.parquet"
-
-// Facets file for on-the-fly multi-filter queries (63MB - URI strings, not BIGINT FKs)
-sample_facets_url = "https://data.isamples.org/isamples_202601_sample_facets_v2.parquet"
-
-// Vocabulary labels (~60KB) — maps SKOS concept URIs to human-readable prefLabels.
-// Built by scripts/build_vocab_labels.py from isamplesorg/vocabularies TTLs. See #148.
-vocab_labels_url = "https://data.isamples.org/vocab_labels.parquet"
-
-// Source color scheme — imported from canonical palette (issue #113)
-// Use a path-relative URL so this works under both the production custom
-// domain (isamples.org/tutorials/...) and a project-pages fork preview
-// (rdhyee.github.io/isamplesorg.github.io/tutorials/...).
-_palette = await import(new URL('../assets/js/source-palette.js', document.baseURI).href)
-SOURCE_COLORS = _palette.SOURCE_COLORS
-
-// Cesium colors
-function getCesiumColor(source) {
-  const hex = SOURCE_COLORS[source];
-  return hex ? Cesium.Color.fromCssColorString(hex) : Cesium.Color.GRAY;
-}
-```
-
-```{ojs}
-// Parse URL params for bookmarkable searches
-initialParams = {
-  const params = new URLSearchParams(window.location.search);
-  return {
-    q: params.get("q") || "",
-    sources: params.get("sources")?.split(",").filter(s => s) || []
-  };
-}
-```
-
-## Search & Filters
-
-```{ojs}
-// Search input
-viewof searchInput = Inputs.text({
-  placeholder: "Search samples (e.g., pottery, basalt, Cyprus...)",
-  value: initialParams.q,
-  submit: "Search"
-})
-```
-
-<div class="grid" style="grid-template-columns: 1fr 3fr; gap: 20px;">
-<div class="card" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px;">
-
-### Filters
-
-```{ojs}
-facetSummariesWarning
-```
-
-**Source**
-
-```{ojs}
-// Source checkboxes with counts - uses pre-computed summaries for instant load
-viewof sourceCheckboxes = {
-  const counts = facetsByType.source;
-  const options = counts.map(r => r.value);
-
-  return Inputs.checkbox(options, {
-    value: initialParams.sources.filter(s => options.includes(s)),
-    format: (x) => {
-      const r = counts.find(s => s.value === x);
-      const color = SOURCE_COLORS[x] || SOURCE_COLORS.default;
-      const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 6px;">
-        <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></span>
-        ${x} <span class="facet-count" data-facet="source" data-value="${x}" style="color: #888;">(${count})</span>
-      </span>`;
-    }
-  });
-}
-```
-
-**Material**
-
-```{ojs}
-// Material filter - loaded from pre-computed summaries
-viewof materialCheckboxes = {
-  const counts = facetsByType.material;
-  const options = counts.map(r => r.value);
-  return Inputs.checkbox(options, {
-    value: [],
-    format: (x) => {
-      const r = counts.find(s => s.value === x);
-      const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
-        ${prettyLabel(x)} <span class="facet-count" data-facet="material" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
-      </span>`;
-    }
-  });
-}
-```
-
-**Sampled Feature**
-
-```{ojs}
-// Context filter - loaded from pre-computed summaries
-viewof contextCheckboxes = {
-  const counts = facetsByType.context;
-  const options = counts.map(r => r.value);
-  return Inputs.checkbox(options, {
-    value: [],
-    format: (x) => {
-      const r = counts.find(s => s.value === x);
-      const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
-        ${prettyLabel(x)} <span class="facet-count" data-facet="context" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
-      </span>`;
-    }
-  });
-}
-```
-
-**Specimen Type**
-
-```{ojs}
-// Object type filter - loaded from pre-computed summaries
-viewof objectTypeCheckboxes = {
-  const counts = facetsByType.object_type;
-  const options = counts.map(r => r.value);
-  return Inputs.checkbox(options, {
-    value: [],
-    format: (x) => {
-      const r = counts.find(s => s.value === x);
-      const count = r ? Number(r.count).toLocaleString() : "0";
-      return html`<span style="display: inline-flex; align-items: center; gap: 4px;" title="${x}">
-        ${prettyLabel(x)} <span class="facet-count" data-facet="object_type" data-value="${x}" style="color: #888; font-size: 11px;">(${count})</span>
-      </span>`;
-    }
-  });
-}
-```
-
-```{ojs}
-html`<a href="?" style="font-size: 13px;">Clear All Filters</a>`
-```
-
-**Max Samples**
-
-```{ojs}
-viewof maxSamples = Inputs.range([1000, 100000], {
-  value: 25000,
-  step: 1000
-})
-```
-
-</div>
-<div>
-
-```{ojs}
-// Update URL without reloading
-{
-  const params = new URLSearchParams();
-  if (searchInput) params.set("q", searchInput);
-  if (sourceCheckboxes?.length) params.set("sources", sourceCheckboxes.join(","));
-  if (materialCheckboxes?.length) params.set("material", materialCheckboxes.join(","));
-  if (contextCheckboxes?.length) params.set("context", contextCheckboxes.join(","));
-  if (objectTypeCheckboxes?.length) params.set("object_type", objectTypeCheckboxes.join(","));
-
-  const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
-  if (window.location.search !== `?${params.toString()}`) {
-    history.replaceState(null, "", newUrl);
-  }
-}
-```
-
-<div id="cesiumContainer" style="width: 100%; aspect-ratio: 16/9;"></div>
-
-<div style="display: flex; gap: 15px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; margin-top: 8px;">
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #3366CC; border-radius: 50%; margin-right: 4px;"></span>SESAR</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #DC3912; border-radius: 50%; margin-right: 4px;"></span>OpenContext</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #109618; border-radius: 50%; margin-right: 4px;"></span>GEOME</span>
-  <span><span style="display: inline-block; width: 12px; height: 12px; background: #FF9900; border-radius: 50%; margin-right: 4px;"></span>Smithsonian</span>
-</div>
-
-<div id="loading_status" style="padding: 10px; margin: 10px 0; background: #e7f3ff; border-radius: 4px;">
-Loading data...
-</div>
-
-```{ojs}
-// Show result count
-html`<div style="margin: 12px 0;">
-  <strong>Showing ${sampleData.length.toLocaleString()} of ${Number(totalCount).toLocaleString()} matching samples</strong>
-</div>`
-```
-
-</div>
-</div>
-
-### Results
-
-```{ojs}
-// Full-width results table
-Inputs.table(sampleData, {
-  columns: ['source', 'label', 'latitude', 'longitude'],
-  header: {
-    source: 'Source',
-    label: 'Label',
-    latitude: 'Lat',
-    longitude: 'Lon'
-  },
-  format: {
-    source: (x) => html`<span style="color: ${SOURCE_COLORS[x] || '#808080'}; font-weight: 600;">${x}</span>`,
-    latitude: (x) => x?.toFixed(4),
-    longitude: (x) => x?.toFixed(4)
-  },
-  rows: 20
-})
-```
-
-```{ojs}
-// Initialize DuckDB-WASM
-db = {
-  performance.mark('explorer-db-start');
-  const bundle = await duckdbModule.selectBundle(duckdbModule.getJsDelivrBundles());
-
-  const worker_url = URL.createObjectURL(
-    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
-  );
-  const worker = new Worker(worker_url);
-  const logger = new duckdbModule.ConsoleLogger(duckdbModule.LogLevel.WARNING);
-
-  const instance = new duckdbModule.AsyncDuckDB(logger, worker);
-  await instance.instantiate(bundle.mainModule, bundle.pthreadWorker);
-  URL.revokeObjectURL(worker_url);
-
-  // Create views for convenience. v1 reads the full wide parquet directly;
-  // v2 reads the 60 MB lite file (no description, no row_id, source is
-  // already named 'source' not 'n').
-  const conn = await instance.connect();
-  if (explorerVersion === 'v2') {
-    await conn.query(`
-      CREATE VIEW samples AS
-      SELECT pid, label, source, latitude, longitude, place_name
-      FROM read_parquet('${parquet_url}')
-    `);
-  } else {
-    await conn.query(`CREATE VIEW samples AS SELECT * FROM read_parquet('${parquet_url}')`);
-  }
-  // Slim facets view with correct URI-string columns for cross-filtering
-  await conn.query(`CREATE VIEW sample_facets AS SELECT * FROM read_parquet('${sample_facets_url}')`);
-  await conn.close();
-
-  performance.mark('explorer-db-end');
-  performance.measure('explorer_db', 'explorer-db-start', 'explorer-db-end');
-  return instance;
-}
-
-// Helper function to run queries
-async function runQuery(sql) {
-  const conn = await db.connect();
-  try {
-    const result = await conn.query(sql);
-    return result.toArray().map(row => {
-      const obj = row.toJSON();
-      // Convert BigInt to Number
-      for (const key in obj) {
-        if (typeof obj[key] === 'bigint') obj[key] = Number(obj[key]);
-      }
-      return obj;
-    });
-  } finally {
-    await conn.close();
-  }
-}
-```
-
-```{ojs}
-mutable facetSummariesError = null
-```
-
-```{ojs}
-// Tier 1: Load pre-computed facet summaries (2KB, instant)
-facetSummaries = {
-  mutable facetSummariesError = null;
-  performance.mark('explorer-facets-start');
-  try {
-    const rows = await runQuery(`SELECT * FROM read_parquet('${facet_summaries_url}')`);
-    performance.mark('explorer-facets-end');
-    performance.measure('explorer_facets', 'explorer-facets-start', 'explorer-facets-end');
-    return rows;
-  } catch (e) {
-    console.error("Facet summaries load error:", e);
-    mutable facetSummariesError = e;
-    return [];
-  }
-}
-
-```
-
-```{ojs}
-facetSummariesWarning = {
-  if (!facetSummariesError) return null;
-  return html`<div style="margin: 6px 0 10px; padding: 8px 10px; border: 1px solid #f0b429; background: #fff7e6; border-radius: 6px; color: #7a4b00; font-size: 12px;">
-    Facet summaries failed to load. Filter counts may be missing. Try refreshing.
-  </div>`;
-}
-
-// Extract facet counts by type from pre-computed summaries (baseline)
-facetsByType = {
-  const grouped = { source: [], material: [], context: [], object_type: [] };
-  for (const row of facetSummaries) {
-    const ft = row.facet_type;
-    if (grouped[ft]) {
-      grouped[ft].push({ value: row.facet_value, count: Number(row.count), scheme: row.scheme });
-    }
-  }
-  // Sort each by count descending
-  for (const key of Object.keys(grouped)) {
-    grouped[key].sort((a, b) => b.count - a.count);
-  }
-  return grouped;
-}
-```
-
-```{ojs}
-// Load SKOS prefLabels for vocabulary URIs (#148). Tiny lookup (~60KB);
-// fallback to last URI segment if a URI isn't covered.
-vocabLabels = {
-  try {
-    const rows = await runQuery(
-      `SELECT uri, pref_label FROM read_parquet('${vocab_labels_url}') WHERE lang = 'en'`
-    );
-    const m = new Map();
-    for (const r of rows) m.set(r.uri, r.pref_label);
-    return m;
-  } catch (e) {
-    console.warn("vocab_labels load failed; falling back to URI tails:", e);
-    return new Map();
-  }
-}
-
-prettyLabel = function (uri) {
-  if (uri == null) return "";
-  const hit = vocabLabels.get(uri);
-  if (hit) return hit;
-  // Fallback: last non-empty path segment of the URI
-  const s = String(uri);
-  if (!/^https?:\/\//.test(s)) return s;
-  const parts = s.replace(/[#?].*$/, "").split("/").filter(Boolean);
-  return parts.length ? parts[parts.length - 1] : s;
-}
-```
-
-```{ojs}
-// Cross-filter: build WHERE clause excluding one facet dimension
-// Queries the sample_facets view (URI strings, correct column names)
-function buildCrossFilterWhere(excludeFacet) {
-  const conditions = [];
-
-  // Text search participates in cross-filtering
-  if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    conditions.push(`(
-      label ILIKE '%${term}%'
-      OR description ILIKE '%${term}%'
-      OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-    )`);
-  }
-
-  if (excludeFacet !== 'source') {
-    const sources = Array.from(sourceCheckboxes || []);
-    if (sources.length > 0) {
-      const sourceList = sources.map(s => `'${s}'`).join(", ");
-      conditions.push(`source IN (${sourceList})`);
-    }
-  }
-
-  if (excludeFacet !== 'material') {
-    const materials = Array.from(materialCheckboxes || []);
-    if (materials.length > 0) {
-      const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`material IN (${matList})`);
-    }
-  }
-
-  if (excludeFacet !== 'context') {
-    const contexts = Array.from(contextCheckboxes || []);
-    if (contexts.length > 0) {
-      const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`context IN (${ctxList})`);
-    }
-  }
-
-  if (excludeFacet !== 'object_type') {
-    const objectTypes = Array.from(objectTypeCheckboxes || []);
-    if (objectTypes.length > 0) {
-      const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
-      conditions.push(`object_type IN (${otList})`);
-    }
-  }
-
-  return conditions.length > 0 ? conditions.join(" AND ") : "1=1";
-}
-```
-
-```{ojs}
-// Detect whether any filter is active (triggers cross-filter queries)
-hasActiveFilters = {
-  const hasSearch = searchInput?.trim()?.length > 0;
-  const hasSources = (sourceCheckboxes || []).length > 0;
-  const hasMaterials = (materialCheckboxes || []).length > 0;
-  const hasContexts = (contextCheckboxes || []).length > 0;
-  const hasObjectTypes = (objectTypeCheckboxes || []).length > 0;
-  return hasSearch || hasSources || hasMaterials || hasContexts || hasObjectTypes;
-}
-```
-
-```{ojs}
-// Cross-filtered facet counts: use pre-computed cache for single-filter,
-// fall back to on-the-fly queries against sample_facets for multi-filter
-crossFilteredFacets = {
-  if (!hasActiveFilters) return null;  // Use pre-computed summaries when no filters
-
-  // Count how many facets have active filters
-  const activeSources = Array.from(sourceCheckboxes || []);
-  const activeMaterials = Array.from(materialCheckboxes || []);
-  const activeContexts = Array.from(contextCheckboxes || []);
-  const activeObjectTypes = Array.from(objectTypeCheckboxes || []);
-  const hasSearch = searchInput?.trim()?.length > 0;
-
-  const activeFilterCount = [activeSources, activeMaterials, activeContexts, activeObjectTypes]
-    .filter(a => a.length > 0).length;
-
-  // Try pre-computed cache: exactly one facet active, exactly one value, no text search
-  const singleValueFacet = (
-    !hasSearch && activeFilterCount === 1 &&
-    [activeSources, activeMaterials, activeContexts, activeObjectTypes]
-      .every(a => a.length <= 1)
-  );
-
-  if (singleValueFacet) {
-    try {
-      const conditions = ["filter_source IS NULL", "filter_material IS NULL",
-                          "filter_context IS NULL", "filter_object_type IS NULL"];
-      if (activeSources.length === 1)
-        conditions[0] = `filter_source = '${activeSources[0].replace(/'/g, "''")}'`;
-      else if (activeMaterials.length === 1)
-        conditions[1] = `filter_material = '${activeMaterials[0].replace(/'/g, "''")}'`;
-      else if (activeContexts.length === 1)
-        conditions[2] = `filter_context = '${activeContexts[0].replace(/'/g, "''")}'`;
-      else if (activeObjectTypes.length === 1)
-        conditions[3] = `filter_object_type = '${activeObjectTypes[0].replace(/'/g, "''")}'`;
-
-      const sql = `
-        SELECT facet_type, facet_value AS value, count
-        FROM read_parquet('${cross_filter_url}')
-        WHERE ${conditions.join(" AND ")}
-      `;
-      const rows = await runQuery(sql);
-
-      if (rows.length > 0) {
-        const results = { source: [], material: [], context: [], object_type: [] };
-        for (const r of rows) {
-          if (results[r.facet_type]) {
-            results[r.facet_type].push({ value: r.value, count: Number(r.count) });
-          }
-        }
-        return results;
-      }
-    } catch (e) {
-      console.warn("Pre-computed cache miss, falling back to on-the-fly:", e);
-    }
-  }
-
-  // Fallback: on-the-fly queries against the slim sample_facets view
-  const facetConfig = [
-    { key: 'source',      column: 'source',      exclude: 'source' },
-    { key: 'material',    column: 'material',     exclude: 'material' },
-    { key: 'context',     column: 'context',      exclude: 'context' },
-    { key: 'object_type', column: 'object_type',  exclude: 'object_type' },
-  ];
-
-  const results = {};
-
-  const queries = facetConfig.map(async ({ key, column, exclude }) => {
-    const where = buildCrossFilterWhere(exclude);
-    const sql = `
-      SELECT ${column} AS value, COUNT(*) AS count
-      FROM sample_facets
-      WHERE ${where} AND ${column} IS NOT NULL
-      GROUP BY ${column}
-      ORDER BY count DESC
-    `;
-    try {
-      const rows = await runQuery(sql);
-      results[key] = rows.map(r => ({ value: r.value, count: r.count }));
-    } catch (e) {
-      console.warn(`Cross-filter query failed for ${key}:`, e);
-      results[key] = null;
-    }
-  });
-
-  await Promise.all(queries);
-  return results;
-}
-```
-
-```{ojs}
-// Update facet count labels in-place when cross-filtered counts change
-// This avoids re-rendering checkboxes (which would reset user selections)
-{
-  if (!crossFilteredFacets) {
-    // No active filters — restore baseline counts and remove dimming
-    for (const facetKey of ['source', 'material', 'context', 'object_type']) {
-      const baseline = facetsByType[facetKey] || [];
-      const countMap = new Map(baseline.map(r => [r.value, r.count]));
-      document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
-        const value = el.getAttribute('data-value');
-        const count = countMap.get(value) ?? 0;
-        el.textContent = `(${Number(count).toLocaleString()})`;
-        el.style.opacity = '1';
-      });
-    }
-    return;
-  }
-
-  for (const [facetKey, rows] of Object.entries(crossFilteredFacets)) {
-    if (!rows) continue;
-    const countMap = new Map(rows.map(r => [r.value, r.count]));
-
-    document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
-      const value = el.getAttribute('data-value');
-      const count = countMap.get(value) ?? 0;
-      el.textContent = `(${Number(count).toLocaleString()})`;
-      el.style.opacity = count === 0 ? '0.4' : '1';
-    });
-  }
-}
-```
-
-```{ojs}
-// Build WHERE clause from current filters (Tier 2: queries full parquet only when filtering)
-// Source filter uses the wide parquet's `n` column directly.
-// Material/context/object_type filters use the sample_facets view (URI strings)
-// via a subquery, since the wide parquet stores these as BIGINT foreign keys.
-whereClause = {
-  const conditions = ["latitude IS NOT NULL"];
-
-  // v1 reads the multi-entity-type wide parquet, so filter to sample records.
-  // v2 reads lite which is already samples-only.
-  if (explorerVersion !== 'v2') {
-    conditions.unshift("otype = 'MaterialSampleRecord'");
-  }
-
-  // Text search. v1 can search description (column exists in wide);
-  // v2 can't (description is not in lite — lazy-fetched on sample click).
-  if (searchInput?.trim()) {
-    const term = searchInput.trim().replace(/'/g, "''");
-    if (explorerVersion === 'v2') {
-      conditions.push(`(
-        label ILIKE '%${term}%'
-        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-      )`);
-    } else {
-      conditions.push(`(
-        label ILIKE '%${term}%'
-        OR description ILIKE '%${term}%'
-        OR CAST(place_name AS VARCHAR) ILIKE '%${term}%'
-      )`);
-    }
-  }
-
-  // Source filter. v1 uses the wide parquet's `n` column; v2 uses `source`.
-  const sources = Array.from(sourceCheckboxes || []);
-  if (sources.length > 0) {
-    const sourceList = sources.map(s => `'${s}'`).join(", ");
-    const col = explorerVersion === 'v2' ? 'source' : 'n';
-    conditions.push(`${col} IN (${sourceList})`);
-  }
-
-  // Facet filters: build a subquery against sample_facets to get matching PIDs
-  const facetConditions = [];
-  const materials = Array.from(materialCheckboxes || []);
-  if (materials.length > 0) {
-    const matList = materials.map(m => `'${m.replace(/'/g, "''")}'`).join(", ");
-    facetConditions.push(`material IN (${matList})`);
-  }
-  const contexts = Array.from(contextCheckboxes || []);
-  if (contexts.length > 0) {
-    const ctxList = contexts.map(c => `'${c.replace(/'/g, "''")}'`).join(", ");
-    facetConditions.push(`context IN (${ctxList})`);
-  }
-  const objectTypes = Array.from(objectTypeCheckboxes || []);
-  if (objectTypes.length > 0) {
-    const otList = objectTypes.map(o => `'${o.replace(/'/g, "''")}'`).join(", ");
-    facetConditions.push(`object_type IN (${otList})`);
-  }
-
-  if (facetConditions.length > 0) {
-    conditions.push(`pid IN (SELECT pid FROM sample_facets WHERE ${facetConditions.join(" AND ")})`);
-  }
-
-  return conditions.join(" AND ");
-}
-```
-
-```{ojs}
-// Source counts now come from pre-computed facet summaries (Tier 1)
-// No longer scans the full parquet file on every page load
-sourceCounts = facetsByType.source
-```
-
-```{ojs}
-// Get total count matching current filters
-totalCount = {
-  performance.mark('explorer-count-start');
-  const query = `SELECT COUNT(*) as count FROM samples WHERE ${whereClause}`;
-  try {
-    const rows = await runQuery(query);
-    performance.mark('explorer-count-end');
-    performance.measure('explorer_count', 'explorer-count-start', 'explorer-count-end');
-    return rows[0]?.count || 0;
-  } catch (e) {
-    return 0;
-  }
-}
-```
-
-```{ojs}
-// Load sample data
-sampleData = {
-  const statusDiv = document.getElementById('loading_status');
-  if (statusDiv) {
-    statusDiv.style.display = 'block';
-    statusDiv.textContent = 'Loading samples...';
-  }
-
-  performance.mark('explorer-samples-start');
-  try {
-    // v2: read from lite (60 MB), no description (fetched lazily on click),
-    //     no row_id, no ORDER BY RANDOM(). LIMIT returns whatever rows the
-    //     scan encounters first — biased toward row order but ~20x faster
-    //     than RANDOM() on a columnar file.
-    // v1: original query against the 278 MB wide file.
-    const query = explorerVersion === 'v2' ? `
-      SELECT
-        pid,
-        label,
-        '' AS description,
-        latitude,
-        longitude,
-        source,
-        place_name
-      FROM samples
-      WHERE ${whereClause}
-      LIMIT ${maxSamples}
-    ` : `
-      SELECT
-        row_id,
-        pid,
-        label,
-        COALESCE(description, '') as description,
-        latitude,
-        longitude,
-        n as source,
-        place_name
-      FROM samples
-      WHERE ${whereClause}
-      ORDER BY RANDOM()
-      LIMIT ${maxSamples}
-    `;
-
-    const data = await runQuery(query);
-
-    performance.mark('explorer-samples-end');
-    performance.measure('explorer_samples', 'explorer-samples-start', 'explorer-samples-end');
-
-    if (statusDiv) {
-      statusDiv.textContent = `Loaded ${data.length.toLocaleString()} samples`;
-      setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
-    }
-
-    return data;
-  } catch (error) {
-    if (statusDiv) {
-      statusDiv.textContent = `Error: ${error.message}`;
-      statusDiv.style.background = '#ffebee';
-    }
-    return [];
-  }
-}
-```
-
-```{ojs}
-mutable clickedPointId = null
-mutable clickedPointIndex = null
-```
-
-```{ojs}
-// Cesium viewer setup
-viewer = {
-  // Wait for Cesium to be available
-  await new Promise(resolve => {
-    if (typeof Cesium !== 'undefined') resolve();
-    else {
-      const check = setInterval(() => {
-        if (typeof Cesium !== 'undefined') {
-          clearInterval(check);
-          resolve();
-        }
-      }, 100);
-    }
-  });
-
-  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
-
-  const container = document.getElementById('cesiumContainer');
-
-  const v = new Cesium.Viewer(container, {
-    timeline: false,
-    animation: false,
-    baseLayerPicker: false,
-    fullscreenElement: container,
-    terrain: Cesium.Terrain.fromWorldTerrain()
-  });
-
-  // Point collection for efficient rendering
-  v.pointCollection = new Cesium.PointPrimitiveCollection();
-  v.scene.primitives.add(v.pointCollection);
-
-  // Click handler
-  const handler = new Cesium.ScreenSpaceEventHandler(v.scene.canvas);
-  handler.setInputAction((e) => {
-    const picked = v.scene.pick(e.position);
-    if (Cesium.defined(picked) && picked.primitive && picked.id !== undefined) {
-      mutable clickedPointId = picked.id.pid;
-      mutable clickedPointIndex = picked.id.index;
-    }
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-  return v;
-}
-```
-
-```{ojs}
-// Render points on globe
-renderPoints = {
-  if (!viewer || sampleData.length === 0) return null;
-
-  const statusDiv = document.getElementById('loading_status');
-  if (statusDiv) {
-    statusDiv.style.display = 'block';
-    statusDiv.textContent = 'Rendering points...';
-  }
-
-  // Clear existing points
-  viewer.pointCollection.removeAll();
-
-  const scalar = new Cesium.NearFarScalar(1.5e2, 3, 8.0e6, 0.5);
-  const CHUNK_SIZE = 500;
-
-  for (let i = 0; i < sampleData.length; i += CHUNK_SIZE) {
-    const chunk = sampleData.slice(i, i + CHUNK_SIZE);
-
-    for (let j = 0; j < chunk.length; j++) {
-      const row = chunk[j];
-      viewer.pointCollection.add({
-        id: { pid: row.pid, index: i + j, row: row },
-        position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
-        pixelSize: 5,
-        color: getCesiumColor(row.source),
-        scaleByDistance: scalar,
-      });
-    }
-
-    // Update progress
-    if (statusDiv && i % 5000 === 0) {
-      const pct = Math.round((i / sampleData.length) * 100);
-      statusDiv.textContent = `Rendering points... ${pct}%`;
-    }
-
-    // Yield to browser
-    if (i + CHUNK_SIZE < sampleData.length) {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-  }
-
-  if (statusDiv) {
-    statusDiv.textContent = `Rendered ${sampleData.length.toLocaleString()} points`;
-    setTimeout(() => { statusDiv.style.display = 'none'; }, 2000);
-  }
-
-  return sampleData.length;
-}
-```
-
-## Sample Card
-
-```{ojs}
-// Get selected sample data
-selectedSample = {
-  if (clickedPointIndex === null || clickedPointIndex < 0) return null;
-  if (clickedPointIndex >= sampleData.length) return null;
-  return sampleData[clickedPointIndex];
-}
-```
-
-```{ojs}
-// v2: lazy description fetch — only hit the 278 MB wide parquet when a sample
-// is actually clicked, rather than pulling description for every row eagerly.
-lazyDescription = {
-  if (explorerVersion !== 'v2') return null;
-  if (!selectedSample?.pid) return null;
-  const pid = selectedSample.pid.replace(/'/g, "''");
-  try {
-    const rows = await runQuery(`
-      SELECT description FROM read_parquet('${wide_url}')
-      WHERE pid = '${pid}' AND otype = 'MaterialSampleRecord'
-      LIMIT 1
-    `);
-    return rows[0]?.description || '';
-  } catch (e) {
-    console.warn('Lazy description fetch failed:', e);
-    return '';
-  }
-}
-```
-
-```{ojs}
-// Render sample card
-sampleCard = {
-  if (!selectedSample) {
-    return html`<div style="padding: 20px; color: #666; text-align: center; background: #f9f9f9; border-radius: 8px;">
-      Click a point on the globe to see details
-    </div>`;
-  }
-
-  const s = selectedSample;
-  const sourceColor = SOURCE_COLORS[s.source] || SOURCE_COLORS.default;
-
-  const label = s.label || 'No label';
-  // v2: prefer the lazily-fetched description (from wide parquet on click);
-  // v1: the description is already in sampleData.
-  const description = (s.description || lazyDescription || '').trim();
-  const truncDesc = description.length > 200 ? description.substring(0, 200) + '...' : description;
-
-  let placeStr = '';
-  if (s.place_name) {
-    if (Array.isArray(s.place_name)) {
-      placeStr = s.place_name.filter(p => p).join(' > ');
-    } else {
-      placeStr = String(s.place_name);
-    }
-  }
-
-  const placeHtml = placeStr ? `<div style="margin-bottom: 4px;"><strong>Place:</strong> ${placeStr.substring(0, 100)}</div>` : '';
-
-  const pidShort = s.pid ? (s.pid.length > 50 ? s.pid.substring(0, 50) + '...' : s.pid) : '';
-
-  return html`
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                border: 1px solid #ddd; border-radius: 8px; padding: 16px;
-                max-width: 500px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-      <div style="display: flex; align-items: center; margin-bottom: 12px;">
-        <span style="background: ${sourceColor}; color: white; padding: 4px 8px;
-                    border-radius: 4px; font-size: 12px; font-weight: 600;">${s.source}</span>
-      </div>
-      <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${label}</h3>
-      <p style="margin: 0 0 12px 0; font-size: 13px; color: #666; line-height: 1.4;">
-        ${truncDesc || '<em>No description</em>'}
-      </p>
-      <div style="font-size: 12px; color: #888;">
-        <div style="margin-bottom: 4px;"><strong>Location:</strong> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
-        ${placeHtml}
-        <div><strong>ID:</strong> <code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${pidShort}</code></div>
-      </div>
-    </div>
-  `;
-}
-```
-
----
-
-## Debug Info
-
-<details>
-<summary>Current State & Query</summary>
-
-```{ojs}
-html`<pre style="font-size: 12px; background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
-State:
-  search: "${searchInput || ''}"
-  sources: ${JSON.stringify(Array.from(sourceCheckboxes || []))}
-  maxSamples: ${maxSamples}
-
-WHERE clause:
-${whereClause}
-
-Total matching: ${Number(totalCount).toLocaleString()}
-Loaded: ${sampleData.length.toLocaleString()}
-</pre>`
-```
-
-</details>
-
----
-
-<!-- Perf timing panel is implemented as a plain <script> in the header
-     (see include-in-header in the YAML frontmatter above). Using a plain
-     script rather than an OJS cell because OJS was inconsistently evaluating
-     the cell on this page. -->
-
----
-
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
-.card {
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-form[name="checkbox"] label {
-  display: block;
-  margin: 4px 0;
-}
-
-#cesiumContainer {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.cesium-viewer-bottom {
-  display: none !important;
-}
+    div.cesium-topleft {
+        display: block;
+        position: absolute;
+        background: #00000099;
+        color: white;
+        height: auto;
+        z-index: 999;
+    }
+    .globe-layout {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    @media (max-width: 900px) {
+        .globe-layout { grid-template-columns: 1fr; }
+    }
+    #cesiumContainer {
+        width: 100%;
+        min-height: 500px;
+        aspect-ratio: 4/3;
+    }
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 700px;
+        overflow-y: auto;
+    }
+    .panel-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 13px;
+    }
+    .panel-section h4 { margin: 0 0 8px 0; font-size: 14px; }
+    .stats-compact {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    .stat-box {
+        background: #1a1a2e;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 4px;
+        text-align: center;
+    }
+    .stat-box .val { font-weight: bold; font-size: 16px; font-family: monospace; display: block; }
+    .stat-box .lbl { color: #aaa; font-size: 11px; }
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
+    .legend-item.disabled { opacity: 0.3; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .legend-item input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+    .source-badge { color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; white-space: nowrap; }
+    .cluster-card { border-left: 4px solid #ccc; padding: 10px 12px; background: white; border-radius: 0 6px 6px 0; }
+    .sample-row { padding: 6px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
+    .sample-row:last-child { border-bottom: none; }
+    .sample-label { font-weight: 600; font-size: 13px; }
+    .sample-desc { font-size: 12px; color: #555; margin-top: 2px; }
+    .sample-meta { font-size: 11px; color: #888; margin-top: 2px; }
+    .phase-msg { padding: 6px 10px; border-radius: 4px; font-size: 12px; transition: all 0.3s ease; }
+    #clusterSection .empty-state { color: #999; text-align: center; padding: 20px; }
+    .detail-loading { text-align: center; color: #999; padding: 8px; font-size: 12px; }
+    .detail-link { color: #1565c0; text-decoration: none; font-size: 12px; }
+    .detail-link:hover { text-decoration: underline; }
+    .share-btn {
+        background: #1565c0; color: white; border: none; padding: 4px 12px;
+        border-radius: 4px; font-size: 12px; cursor: pointer;
+    }
+    .share-btn:hover { background: #0d47a1; }
+    .share-toast { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
+    .search-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .search-bar input {
+        flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
+        font-size: 14px; outline: none;
+    }
+    .search-bar input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
+    .search-bar button {
+        background: #1565c0; color: white; border: none; padding: 8px 16px;
+        border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap;
+    }
+    .search-bar button:hover { background: #0d47a1; }
+    .search-results { font-size: 12px; color: #666; padding: 4px 0; }
+    .filter-section { border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; }
+    .filter-header {
+        font-size: 12px; font-weight: 600; color: #555; cursor: pointer;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 4px 0; user-select: none;
+    }
+    .filter-header:hover { color: #1565c0; }
+    .filter-body { padding: 4px 0; }
+    .filter-body label { display: block; font-size: 12px; padding: 2px 0; cursor: pointer; }
+    .filter-body label:hover { color: #1565c0; }
+    /* Results table below the globe */
+    #resultsTableWrap { margin-top: 16px; }
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .results-table th, .results-table td {
+        padding: 6px 10px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+        vertical-align: top;
+    }
+    .results-table th {
+        background: #f5f5f5;
+        font-weight: 600;
+        font-size: 12px;
+        color: #555;
+        border-bottom: 2px solid #ddd;
+        position: sticky;
+        top: 0;
+    }
+    .results-table tr:hover td { background: #fafafa; }
+    .results-table .row-badge {
+        color: white; padding: 2px 8px; border-radius: 10px;
+        font-size: 11px; white-space: nowrap;
+    }
+    .results-table .row-link {
+        color: #1565c0; text-decoration: none; cursor: pointer;
+    }
+    .results-table .row-link:hover { text-decoration: underline; }
+    .results-empty { color: #999; padding: 20px; text-align: center; font-style: italic; }
 </style>
 
-<!-- Cesium resources -->
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
-<link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+::: {.callout-note collapse="true"}
+## How It Works
+
+1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
+2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
+3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
+4. **Click**: Cluster info or individual sample card with full metadata
+5. **Search**: Find samples by name — results fly to the location on the globe
+
+Circle size = log(sample count). Color = dominant data source.
+:::
+
+<!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
+<div class="search-bar">
+<input type="text" id="sampleSearch" placeholder="Search samples (e.g., basalt, pottery, coral...)" />
+<button id="searchBtn">Search</button>
+</div>
+<div id="searchResults" class="search-results"></div>
+
+<div class="globe-layout">
+<div id="cesiumContainer"></div>
+<div class="side-panel">
+<div class="panel-section">
+<div class="stats-compact">
+<div class="stat-box"><span id="sPhase" class="val">Loading...</span><span class="lbl">Resolution</span></div>
+<div class="stat-box"><span id="sPoints" class="val">0</span><span id="sPointsLbl" class="lbl">Clusters Loaded</span></div>
+<div class="stat-box"><span id="sSamples" class="val">0</span><span id="sSamplesLbl" class="lbl">Samples Loaded</span></div>
+<div class="stat-box"><span id="sTime" class="val">-</span><span class="lbl">Load Time</span></div>
+</div>
+<div style="margin-top: 8px;">
+<div class="legend" id="sourceFilter">
+<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR</label>
+<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext</label>
+<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME</label>
+<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</label>
+</div>
+</div>
+<div class="filter-section" id="materialFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Material <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="materialFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
+<div class="filter-section" id="contextFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Sampled Feature <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="contextFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
+<div class="filter-section" id="objectTypeFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Specimen Type <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="objectTypeFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
+<div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
+Material / feature / specimen filters apply at sample zoom level
+</div>
+<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+<button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
+<span id="shareToast" class="share-toast">Link copied!</span>
+</div>
+<div id="phaseMsg" class="phase-msg" style="margin-top: 8px; background: #e3f2fd; color: #1565c0;">
+Loading H3 global overview...
+</div>
+</div>
+<div id="clusterSection" class="panel-section">
+<div class="empty-state">Click a cluster or sample on the globe</div>
+</div>
+<div id="samplesSection" class="panel-section" style="flex: 1; overflow-y: auto;"></div>
+</div>
+</div>
+
+### Results {#results}
+
+<div id="resultsTableWrap">
+<div id="resultsTableMeta" style="font-size: 13px; color: #555; margin-bottom: 6px;">Loading samples matching your filters...</div>
+<div id="resultsTable"></div>
+</div>
+
+```{ojs}
+//| output: false
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzk3NjkyMy1iNGI1LTRkN2UtODRiMy04OTYwYWE0N2M3ZTkiLCJpZCI6Njk1MTcsImlhdCI6MTYzMzU0MTQ3N30.e70dpNzOCDRLDGxRguQCC-tRzGzA-23Xgno5lNgCeB4';
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Constants ===
+R2_BASE = "https://data.isamples.org"
+h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
+h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
+h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
+lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
+// Stable alias that 302-redirects to the current enriched wide parquet
+// (isamples_YYYYMM_wide.parquet). Gets OpenContext thumbnails populated.
+wide_url = `${R2_BASE}/current/wide.parquet`
+// v2 carries object_type alongside material and context (URI-string columns).
+facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
+facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+
+// Canonical palette — see issue #113. Path-relative so this works under
+// both isamples.org (custom domain at root) and project-pages fork
+// previews (rdhyee.github.io/isamplesorg.github.io/...).
+_palette = await import(new URL('../assets/js/source-palette.js', document.baseURI).href)
+SOURCE_COLORS = _palette.SOURCE_COLORS
+SOURCE_NAMES = _palette.SOURCE_NAMES
+
+// === Source URL: resolve pid to original repository ===
+function sourceUrl(pid) {
+    if (!pid) return null;
+    // All sources resolve via n2t.net:
+    // ARK pids (OpenContext, GEOME, Smithsonian) → n2t.net/ark:/...
+    // IGSN pids (SESAR) → n2t.net/IGSN:...
+    return `https://n2t.net/${pid}`;
+}
+
+// === Source Filter: get active sources and build SQL clause ===
+function getActiveSources() {
+    const checks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
+    return Array.from(checks).filter(c => c.checked).map(c => c.value);
+}
+
+function sourceFilterSQL(col) {
+    const active = getActiveSources();
+    if (active.length === 0) return ' AND 1=0';  // nothing checked = show nothing
+    if (active.length === 4) return '';           // all checked = no filter
+    const list = active.map(s => `'${s}'`).join(',');
+    return ` AND ${col} IN (${list})`;
+}
+
+// === Material/Context Filters ===
+function getCheckedValues(containerId) {
+    const checks = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
+    return Array.from(checks).filter(c => c.checked).map(c => c.value);
+}
+
+function hasFacetFilters() {
+    const mat = getCheckedValues('materialFilterBody');
+    const ctx = getCheckedValues('contextFilterBody');
+    const ot = getCheckedValues('objectTypeFilterBody');
+    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
+    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
+    const otTotal = document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]').length;
+    // Active if some (but not all) are checked, or if none are checked
+    return (mat.length > 0 && mat.length < matTotal)
+        || (ctx.length > 0 && ctx.length < ctxTotal)
+        || (ot.length > 0 && ot.length < otTotal);
+}
+
+function facetFilterSQL() {
+    let sql = '';
+    const mat = getCheckedValues('materialFilterBody');
+    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
+    if (mat.length > 0 && mat.length < matTotal) {
+        const list = mat.map(s => `'${s}'`).join(',');
+        sql += ` AND f.material IN (${list})`;
+    } else if (mat.length === 0 && matTotal > 0) {
+        sql += ' AND 1=0';
+    }
+    const ctx = getCheckedValues('contextFilterBody');
+    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
+    if (ctx.length > 0 && ctx.length < ctxTotal) {
+        const list = ctx.map(s => `'${s}'`).join(',');
+        sql += ` AND f.context IN (${list})`;
+    } else if (ctx.length === 0 && ctxTotal > 0) {
+        sql += ' AND 1=0';
+    }
+    const ot = getCheckedValues('objectTypeFilterBody');
+    const otTotal = document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]').length;
+    if (ot.length > 0 && ot.length < otTotal) {
+        const list = ot.map(s => `'${s}'`).join(',');
+        sql += ` AND f.object_type IN (${list})`;
+    } else if (ot.length === 0 && otTotal > 0) {
+        sql += ' AND 1=0';
+    }
+    return sql;
+}
+
+// === URL State: encode/decode globe state in hash fragment ===
+function parseNum(val, def, min, max) {
+    if (val == null) return def;
+    const n = parseFloat(val);
+    if (!Number.isFinite(n)) return def;
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+}
+
+function readHash() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    return {
+        v: parseInt(params.get('v')) || 0,
+        lat: parseNum(params.get('lat'), null, -90, 90),
+        lng: parseNum(params.get('lng'), null, -180, 180),
+        alt: parseNum(params.get('alt'), null, 100, 40000000),
+        heading: parseNum(params.get('heading'), 0, 0, 360),
+        pitch: parseNum(params.get('pitch'), -90, -90, 0),
+        mode: params.get('mode') || null,
+        pid: params.get('pid') || null,
+    };
+}
+
+function buildHash(v) {
+    const cam = v.camera;
+    const carto = cam.positionCartographic;
+    const params = new URLSearchParams();
+    params.set('v', '1');
+    params.set('lat', Cesium.Math.toDegrees(carto.latitude).toFixed(4));
+    params.set('lng', Cesium.Math.toDegrees(carto.longitude).toFixed(4));
+    params.set('alt', Math.round(carto.height).toString());
+    const heading = Cesium.Math.toDegrees(cam.heading) % 360;
+    const pitch = Cesium.Math.toDegrees(cam.pitch);
+    if (Math.abs(heading) > 1) params.set('heading', heading.toFixed(1));
+    if (Math.abs(pitch + 90) > 1) params.set('pitch', pitch.toFixed(1));
+    const gs = v._globeState;
+    if (gs.mode === 'point') params.set('mode', 'point');
+    if (gs.selectedPid) params.set('pid', gs.selectedPid);
+    return '#' + params.toString();
+}
+
+// === Helpers: update DOM imperatively (no OJS reactivity) ===
+function updateStats(phase, points, samples, time, pointsLabel, samplesLabel) {
+    const s = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    s('sPhase', phase);
+    s('sPoints', typeof points === 'string' ? points : points.toLocaleString());
+    s('sSamples', typeof samples === 'string' ? samples : samples.toLocaleString());
+    if (time != null) s('sTime', time);
+    if (pointsLabel) s('sPointsLbl', pointsLabel);
+    if (samplesLabel) s('sSamplesLbl', samplesLabel);
+}
+
+function updatePhaseMsg(text, type) {
+    const m = document.getElementById('phaseMsg');
+    if (!m) return;
+    m.textContent = text;
+    if (type === 'loading') { m.style.background = '#e3f2fd'; m.style.color = '#1565c0'; }
+    else { m.style.background = '#e8f5e9'; m.style.color = '#2e7d32'; }
+}
+
+function updateClusterCard(info) {
+    const el = document.getElementById('clusterSection');
+    if (!el) return;
+    if (!info) {
+        el.innerHTML = '<div class="empty-state">Click a cluster or sample on the globe</div>';
+        return;
+    }
+    const color = SOURCE_COLORS[info.source] || '#666';
+    const name = SOURCE_NAMES[info.source] || info.source;
+    el.innerHTML = `<h4>Selected Cluster</h4>
+        <div class="cluster-card" style="border-left-color: ${color}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="source-badge" style="background: ${color}">${name}</span>
+                <span style="font-size: 11px; color: #999;">H3 res${info.resolution}</span>
+            </div>
+            <div style="font-size: 22px; font-weight: bold; margin-bottom: 4px;">
+                ${info.count.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: #666;">samples</span>
+            </div>
+            <div style="font-size: 12px; color: #666;">
+                ${info.lat.toFixed(4)}, ${info.lng.toFixed(4)}
+            </div>
+        </div>`;
+}
+
+function updateSampleCard(sample) {
+    const el = document.getElementById('clusterSection');
+    if (!el) return;
+    const color = SOURCE_COLORS[sample.source] || '#666';
+    const name = SOURCE_NAMES[sample.source] || sample.source;
+    const placeParts = sample.place_name;
+    const placeStr = Array.isArray(placeParts) && placeParts.length > 0
+        ? placeParts.filter(Boolean).join(' › ')
+        : '';
+    const srcUrl = sourceUrl(sample.pid);
+    el.innerHTML = `<h4>Sample</h4>
+        <div class="cluster-card" style="border-left-color: ${color}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="source-badge" style="background: ${color}">${name}</span>
+            </div>
+            <div style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">
+                ${sample.label || sample.pid || 'Unnamed'}
+            </div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                ${sample.lat.toFixed(5)}, ${sample.lng.toFixed(5)}
+            </div>
+            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${placeStr}</div>` : ''}
+            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${sample.result_time}</div>` : ''}
+            ${srcUrl ? `<div style="margin-top: 4px;"><a class="detail-link" href="${srcUrl}" target="_blank" rel="noopener noreferrer">View at ${name} →</a></div>` : ''}
+            <div id="sampleDetail" class="detail-loading">Loading full details...</div>
+        </div>`;
+}
+
+function updateSampleDetail(detail) {
+    const el = document.getElementById('sampleDetail');
+    if (!el) return;
+    if (!detail) {
+        el.innerHTML = '<span style="color: #c62828; font-size: 12px;">Detail query failed</span>';
+        return;
+    }
+    const desc = detail.description
+        ? (detail.description.length > 300 ? detail.description.slice(0, 300) + '...' : detail.description)
+        : '';
+    el.innerHTML = `${desc ? `<div style="font-size: 12px; color: #444; margin-top: 6px; line-height: 1.4;">${desc}</div>` : ''}`;
+}
+
+function updateSamples(samples) {
+    const el = document.getElementById('samplesSection');
+    if (!el) return;
+    if (!samples || samples.length === 0) {
+        el.innerHTML = '';
+        return;
+    }
+    let h = `<h4>Nearby Samples (${samples.length})</h4>`;
+    for (const s of samples) {
+        const color = SOURCE_COLORS[s.source] || '#666';
+        const name = SOURCE_NAMES[s.source] || s.source;
+        const placeParts = s.place_name;
+        const desc = Array.isArray(placeParts) && placeParts.length > 0
+            ? placeParts.filter(Boolean).join(' › ')
+            : '';
+        const sUrl = sourceUrl(s.pid);
+        h += `<div class="sample-row">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
+                <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
+            </div>
+            ${desc ? `<div class="sample-desc">${desc}</div>` : ''}
+        </div>`;
+    }
+    el.innerHTML = h;
+}
+
+// === Results table (below globe) ===
+// Renders the first N samples matching current filters, regardless of camera.
+// Stable, sourceless ordering (no ORDER BY RANDOM) keeps it cheap on lite_url.
+function renderResultsTable(rows) {
+    const el = document.getElementById('resultsTable');
+    if (!el) return;
+    if (!rows || rows.length === 0) {
+        el.innerHTML = '<div class="results-empty">No samples match the current filters.</div>';
+        return;
+    }
+    const head = `<thead><tr><th>Source</th><th>Label</th><th>Place</th><th>Lat</th><th>Lon</th></tr></thead>`;
+    const body = rows.map(r => {
+        const color = SOURCE_COLORS[r.source] || '#666';
+        const name = SOURCE_NAMES[r.source] || r.source;
+        const placeParts = r.place_name;
+        const place = Array.isArray(placeParts) && placeParts.length > 0
+            ? placeParts.filter(Boolean).join(' › ')
+            : '';
+        const lat = (r.latitude != null) ? r.latitude.toFixed(4) : '';
+        const lng = (r.longitude != null) ? r.longitude.toFixed(4) : '';
+        const sUrl = sourceUrl(r.pid);
+        const labelHtml = sUrl
+            ? `<a class="row-link" href="${sUrl}" target="_blank" rel="noopener noreferrer">${r.label || r.pid}</a>`
+            : (r.label || r.pid);
+        return `<tr data-pid="${r.pid}" data-lat="${r.latitude}" data-lng="${r.longitude}">
+            <td><span class="row-badge" style="background:${color}">${name}</span></td>
+            <td>${labelHtml}</td>
+            <td>${place}</td>
+            <td>${lat}</td>
+            <td>${lng}</td>
+        </tr>`;
+    }).join('');
+    el.innerHTML = `<table class="results-table">${head}<tbody>${body}</tbody></table>`;
+}
+
+function updateResultsTableMeta(text, isLoading) {
+    const el = document.getElementById('resultsTableMeta');
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = isLoading ? '#1565c0' : '#555';
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === DuckDB ===
+db = {
+    performance.mark('duckdb-init-start');
+    const instance = await DuckDBClient.of();
+    performance.mark('duckdb-init-end');
+    performance.measure('duckdb_init', 'duckdb-init-start', 'duckdb-init-end');
+    return instance;
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Cesium Viewer (created once, never re-created) ===
+viewer = {
+    performance.mark('viewer-init-start');
+    const v = new Cesium.Viewer("cesiumContainer", {
+        timeline: false,
+        animation: false,
+        baseLayerPicker: false,
+        fullscreenElement: "cesiumContainer",
+        terrain: Cesium.Terrain.fromWorldTerrain()
+    });
+
+    // URL deep-link state (must be set before globalRect/once block reads it)
+    v._globeState = { mode: 'cluster', selectedPid: null };
+    v._initialHash = readHash();
+    v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
+    v._suppressTimer = null;
+
+    const globalRect = Cesium.Rectangle.fromDegrees(-180, -60, 180, 80);
+    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = globalRect;
+    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0.5;
+    const ih = v._initialHash;
+    const once = () => {
+        if (ih.lat != null && ih.lng != null) {
+            v.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(ih.lng, ih.lat, ih.alt || 20000000),
+                orientation: {
+                    heading: Cesium.Math.toRadians(ih.heading),
+                    pitch: Cesium.Math.toRadians(ih.pitch)
+                }
+            });
+        } else {
+            v.camera.setView({ destination: globalRect });
+        }
+        v.scene.postRender.removeEventListener(once);
+    };
+    v.scene.postRender.addEventListener(once);
+
+    // Two separate point collections: clusters and individual samples
+    v.h3Points = new Cesium.PointPrimitiveCollection();
+    v.scene.primitives.add(v.h3Points);
+
+    v.samplePoints = new Cesium.PointPrimitiveCollection();
+    v.scene.primitives.add(v.samplePoints);
+    v.samplePoints.show = false; // hidden until point mode
+
+    // Hover tooltip — works for both clusters and samples
+    v.pointLabel = v.entities.add({
+        label: {
+            show: false, showBackground: true, font: "13px monospace",
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(15, 0),
+            disableDepthTestDistance: Number.POSITIVE_INFINITY, text: "",
+        }
+    });
+
+    new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction((movement) => {
+        const picked = v.scene.pick(movement.endPosition);
+        if (Cesium.defined(picked) && picked.primitive && picked.id) {
+            v.pointLabel.position = picked.primitive.position;
+            v.pointLabel.label.show = true;
+            const meta = picked.id;
+            if (typeof meta === 'object' && meta.type === 'sample') {
+                v.pointLabel.label.text = `${meta.label || meta.pid}`;
+            } else if (typeof meta === 'object' && meta.count) {
+                v.pointLabel.label.text = `${meta.source}: ${meta.count.toLocaleString()} samples`;
+            } else {
+                v.pointLabel.label.text = String(meta);
+            }
+        } else {
+            v.pointLabel.label.show = false;
+        }
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+    // Click handler — routes to cluster card or sample card
+    new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction(async (e) => {
+        const picked = v.scene.pick(e.position);
+        if (!Cesium.defined(picked) || !picked.primitive || !picked.id) return;
+        const meta = picked.id;
+
+        if (typeof meta === 'object' && meta.type === 'sample') {
+            // --- Individual sample click ---
+            updateSampleCard(meta);
+            v._globeState.selectedPid = meta.pid;
+            history.pushState(null, '', buildHash(v));
+            // Clear nearby list
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) sampEl.innerHTML = '';
+
+            // Stage 2: lazy-load full description from wide parquet
+            try {
+                const detail = await db.query(`
+                    SELECT description
+                    FROM read_parquet('${wide_url}')
+                    WHERE pid = '${meta.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (detail && detail.length > 0) {
+                    updateSampleDetail(detail[0]);
+                } else {
+                    updateSampleDetail({ description: '' });
+                }
+            } catch(err) {
+                console.error("Detail query failed:", err);
+                updateSampleDetail(null);
+            }
+
+        } else if (typeof meta === 'object' && meta.count) {
+            // --- Cluster click ---
+            updateClusterCard(meta);
+            v._globeState.selectedPid = null;
+            history.pushState(null, '', buildHash(v));
+
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+
+            const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
+            try {
+                const facetActive = hasFacetFilters();
+                const facetSQL = facetActive ? facetFilterSQL() : '';
+                let nearbyQuery;
+                if (facetActive) {
+                    nearbyQuery = `
+                        SELECT l.pid, l.label, l.source, l.latitude, l.longitude, l.place_name
+                        FROM read_parquet('${lite_url}') l
+                        JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                        WHERE l.latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                          AND l.longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                          ${sourceFilterSQL('l.source')}
+                          ${facetSQL}
+                        LIMIT 30
+                    `;
+                } else {
+                    nearbyQuery = `
+                        SELECT pid, label, source, latitude, longitude, place_name
+                        FROM read_parquet('${lite_url}')
+                        WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                          AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                          ${sourceFilterSQL('source')}
+                        LIMIT 30
+                    `;
+                }
+                const samples = await db.query(nearbyQuery);
+                updateSamples(samples);
+            } catch(err) {
+                console.error("Sample query failed:", err);
+                if (sampEl) sampEl.innerHTML = '<div style="color: #c62828; padding: 12px;">Query failed — try again.</div>';
+            }
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Timing: viewer ready (mount complete, pre-first-render)
+    performance.mark('viewer-init-end');
+    performance.measure('viewer_init', 'viewer-init-start', 'viewer-init-end');
+
+    // Timing: first Cesium frame painted (globe visible, may be pre-cluster)
+    const firstGlobeFrame = () => {
+        performance.mark('first-globe-frame');
+        v.scene.postRender.removeEventListener(firstGlobeFrame);
+    };
+    v.scene.postRender.addEventListener(firstGlobeFrame);
+
+    return v;
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === PHASE 1: Load H3 res4 globally (instant) ===
+phase1 = {
+    performance.mark('p1-start');
+
+    // Read ?sources=A,B from query string and pre-check the matching legend
+    // checkboxes BEFORE running the cluster query (so phase 1 honors the
+    // bookmarkable filter). Camera state still lives in the hash.
+    {
+        const initialSources = (new URLSearchParams(location.search).get('sources') || '')
+            .split(',').map(s => s.trim()).filter(Boolean);
+        if (initialSources.length > 0) {
+            document.querySelectorAll('#sourceFilter input[type="checkbox"]').forEach(cb => {
+                cb.checked = initialSources.includes(cb.value);
+            });
+            document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
+                const cb = li.querySelector('input');
+                li.classList.toggle('disabled', !cb.checked);
+            });
+        }
+    }
+
+    const data = await db.query(`
+        SELECT h3_cell, sample_count, center_lat, center_lng,
+               dominant_source, source_count
+        FROM read_parquet('${h3_res4_url}')
+        WHERE 1=1${sourceFilterSQL('dominant_source')}
+    `);
+
+    const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.5);
+    let totalSamples = 0;
+
+    for (const row of data) {
+        const count = row.sample_count;
+        totalSamples += count;
+        const size = Math.min(3 + Math.log10(count) * 4, 20);
+        viewer.h3Points.add({
+            id: { count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: 4 },
+            position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
+            pixelSize: size,
+            color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.8),
+            scaleByDistance: scalar,
+        });
+    }
+
+    // Cache cluster data for viewport counting
+    viewer._clusterData = Array.from(data);
+    viewer._clusterTotal = { clusters: data.length, samples: totalSamples };
+
+    performance.mark('p1-end');
+    performance.measure('p1', 'p1-start', 'p1-end');
+    const elapsed = performance.getEntriesByName('p1').pop().duration;
+
+    updateStats('H3 Res4', data.length, totalSamples, `${(elapsed/1000).toFixed(1)}s`, 'Clusters Loaded', 'Samples Loaded');
+    updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${totalSamples.toLocaleString()} samples. Zoom in for finer detail.`, 'done');
+    console.log(`Phase 1: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
+
+    return { count: data.length, samples: totalSamples };
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Load facet summaries and populate filter checkboxes ===
+facetFilters = {
+    if (!phase1) return;
+    try {
+        const summaries = await db.query(`
+            SELECT facet_type, facet_value, count
+            FROM read_parquet('${facet_summaries_url}')
+            ORDER BY facet_type, count DESC
+        `);
+
+        const grouped = { material: [], context: [], object_type: [] };
+        for (const row of summaries) {
+            if (grouped[row.facet_type]) {
+                // Extract short label from URI
+                const shortLabel = row.facet_value.split('/').pop() || row.facet_value;
+                grouped[row.facet_type].push({ value: shortLabel, fullUri: row.facet_value, count: row.count });
+            }
+        }
+
+        const renderFilter = (bodyId, items) => {
+            const body = document.getElementById(bodyId);
+            if (body && items.length > 0) {
+                body.innerHTML = items.map(it =>
+                    `<label><input type="checkbox" value="${it.value}" checked> ${it.value} <span style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
+                ).join('');
+            }
+        };
+
+        renderFilter('materialFilterBody', grouped.material);
+        renderFilter('contextFilterBody', grouped.context);
+        renderFilter('objectTypeFilterBody', grouped.object_type);
+
+        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types`);
+    } catch(err) {
+        console.warn("Facet summaries failed to load:", err);
+    }
+    return "loaded";
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Zoom watcher: H3 cluster mode + individual sample point mode ===
+zoomWatcher = {
+    if (!phase1) return;
+    if (!facetFilters) return;  // wait for facet checkboxes
+
+    // --- State ---
+    let mode = 'cluster';  // 'cluster' or 'point'
+    let currentRes = 4;
+    let loading = false;
+    let requestId = 0;      // stale-request guard
+    // clusterDataCache stored on viewer._clusterData (set by phase1 and loadRes)
+
+    // Hysteresis thresholds to avoid flicker
+    const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
+    const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
+    const POINT_BUDGET = 5000;
+
+    // Viewport cache: avoid re-querying same area
+    let cachedBounds = null;  // { south, north, west, east }
+    let cachedData = null;    // array of rows
+
+    // --- H3 cluster loading (existing logic) ---
+    let loadResGen = 0;  // generation counter to discard stale results
+    const loadRes = async (res, url) => {
+        const gen = ++loadResGen;  // claim a generation
+        loading = true;
+        updatePhaseMsg(`Loading H3 res${res}...`, 'loading');
+
+        try {
+            performance.mark(`r${res}-s`);
+            const data = await db.query(`
+                SELECT h3_cell, sample_count, center_lat, center_lng,
+                       dominant_source, source_count
+                FROM read_parquet('${url}')
+                WHERE 1=1${sourceFilterSQL('dominant_source')}
+            `);
+
+            if (gen !== loadResGen) return;  // stale — a newer call superseded this one
+            viewer.h3Points.removeAll();
+            const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
+            let total = 0;
+
+            for (const row of data) {
+                total += row.sample_count;
+                const size = Math.min(3 + Math.log10(row.sample_count) * 3.5, 18);
+                viewer.h3Points.add({
+                    id: { count: row.sample_count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: res },
+                    position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
+                    pixelSize: size,
+                    color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.85),
+                    scaleByDistance: scalar,
+                });
+            }
+
+            // Cache for viewport counting
+            viewer._clusterData = Array.from(data);
+            viewer._clusterTotal = { clusters: data.length, samples: total };
+
+            performance.mark(`r${res}-e`);
+            performance.measure(`r${res}`, `r${res}-s`, `r${res}-e`);
+            const elapsed = performance.getEntriesByName(`r${res}`).pop().duration;
+
+            // Show viewport count immediately
+            const bounds = getViewportBounds();
+            const inView = countInViewport(bounds);
+            updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
+            updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
+
+            currentRes = res;
+            console.log(`Res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
+        } catch(err) {
+            console.error(`Failed to load res${res}:`, err);
+            updatePhaseMsg(`Failed to load H3 res${res} — try zooming again.`, 'loading');
+        } finally {
+            loading = false;
+        }
+    };
+
+    // --- Get camera viewport bounds ---
+    function getViewportBounds() {
+        const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+        if (!rect) return null;
+        return {
+            south: Cesium.Math.toDegrees(rect.south),
+            north: Cesium.Math.toDegrees(rect.north),
+            west: Cesium.Math.toDegrees(rect.west),
+            east: Cesium.Math.toDegrees(rect.east)
+        };
+    }
+
+    // --- Count clusters visible in current viewport (from cached array) ---
+    function countInViewport(bounds) {
+        const cache = viewer._clusterData;
+        if (!bounds || !cache || cache.length === 0) return { clusters: 0, samples: 0 };
+        const { south, north, west, east } = bounds;
+        const wrapLng = west > east;  // dateline crossing
+        let clusters = 0, samples = 0;
+        for (const row of cache) {
+            if (row.center_lat < south || row.center_lat > north) continue;
+            if (wrapLng ? (row.center_lng < west && row.center_lng > east) : (row.center_lng < west || row.center_lng > east)) continue;
+            clusters++;
+            samples += row.sample_count;
+        }
+        return { clusters, samples };
+    }
+
+    // --- Check if viewport is within cached bounds ---
+    function isWithinCache(bounds) {
+        if (!cachedBounds || !bounds) return false;
+        return bounds.south >= cachedBounds.south &&
+               bounds.north <= cachedBounds.north &&
+               bounds.west >= cachedBounds.west &&
+               bounds.east <= cachedBounds.east;
+    }
+
+    // --- Load individual samples for current viewport ---
+    async function loadViewportSamples() {
+        const myReqId = ++requestId;
+        const bounds = getViewportBounds();
+        if (!bounds) return;
+
+        // If viewport is within cached area, just re-render from cache
+        if (isWithinCache(bounds) && cachedData) {
+            renderSamplePoints(cachedData, bounds);
+            return;
+        }
+
+        // Fetch with 30% padding for smooth panning
+        const latPad = (bounds.north - bounds.south) * 0.3;
+        const lngPad = (bounds.east - bounds.west) * 0.3;
+        const padded = {
+            south: bounds.south - latPad,
+            north: bounds.north + latPad,
+            west: bounds.west - lngPad,
+            east: bounds.east + lngPad
+        };
+
+        updatePhaseMsg('Loading individual samples...', 'loading');
+
+        try {
+            performance.mark('sp-s');
+            const facetActive = hasFacetFilters();
+            const facetSQL = facetActive ? facetFilterSQL() : '';
+            let query;
+            if (facetActive) {
+                query = `
+                    SELECT l.pid, l.label, l.source, l.latitude, l.longitude,
+                           l.place_name, l.result_time, f.material, f.context
+                    FROM read_parquet('${lite_url}') l
+                    JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                    WHERE l.latitude BETWEEN ${padded.south} AND ${padded.north}
+                      AND l.longitude BETWEEN ${padded.west} AND ${padded.east}
+                      ${sourceFilterSQL('l.source')}
+                      ${facetSQL}
+                    LIMIT ${POINT_BUDGET}
+                `;
+            } else {
+                query = `
+                    SELECT pid, label, source, latitude, longitude,
+                           place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
+                      AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                      ${sourceFilterSQL('source')}
+                    LIMIT ${POINT_BUDGET}
+                `;
+            }
+            const data = await db.query(query);
+            performance.mark('sp-e');
+            performance.measure('sp', 'sp-s', 'sp-e');
+            const elapsed = performance.getEntriesByName('sp').pop().duration;
+
+            // Stale guard: discard if a newer request was issued
+            if (myReqId !== requestId) {
+                console.log(`Discarding stale sample response (req ${myReqId}, current ${requestId})`);
+                return;
+            }
+
+            // Cache the padded bounds + data
+            cachedBounds = padded;
+            cachedData = Array.from(data);
+
+            renderSamplePoints(cachedData, bounds);
+
+            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`, 'Samples in View', 'Samples in View');
+            updatePhaseMsg(`${cachedData.length.toLocaleString()} individual samples. Click one for details.`, 'done');
+            console.log(`Point mode: ${cachedData.length} samples in ${elapsed.toFixed(0)}ms`);
+
+        } catch(err) {
+            if (myReqId !== requestId) return;
+            console.error("Viewport sample query failed:", err);
+            updatePhaseMsg('Sample query failed — try again.', 'loading');
+        }
+    }
+
+    // --- Render sample points on globe ---
+    function renderSamplePoints(data, bounds) {
+        viewer.samplePoints.removeAll();
+        const scalar = new Cesium.NearFarScalar(1e2, 8, 2e5, 3);
+
+        for (const row of data) {
+            const color = SOURCE_COLORS[row.source] || '#666';
+            viewer.samplePoints.add({
+                id: {
+                    type: 'sample',
+                    pid: row.pid,
+                    label: row.label,
+                    source: row.source,
+                    lat: row.latitude,
+                    lng: row.longitude,
+                    place_name: row.place_name,
+                    result_time: row.result_time
+                },
+                position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
+                pixelSize: 6,
+                color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
+                scaleByDistance: scalar,
+            });
+        }
+    }
+
+    // --- Mode transitions ---
+    function enterPointMode(pushHistory) {
+        mode = 'point';
+        viewer._globeState.mode = 'point';
+        viewer.h3Points.show = false;
+        viewer.samplePoints.show = true;
+        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        loadViewportSamples();
+        console.log('Entered point mode');
+    }
+
+    function exitPointMode(pushHistory) {
+        mode = 'cluster';
+        viewer._globeState.mode = 'cluster';
+        viewer.samplePoints.show = false;
+        viewer.samplePoints.removeAll();
+        viewer.h3Points.show = true;
+        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        cachedBounds = null;
+        cachedData = null;
+
+        // Restore cluster stats with viewport count
+        const bounds = getViewportBounds();
+        const inView = countInViewport(bounds);
+        const total = viewer._clusterTotal;
+        if (total) {
+            updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), '—', 'Clusters in View / Loaded', 'Samples in View');
+        } else {
+            updateStats(`H3 Res${currentRes}`, viewer.h3Points.length, '—', '—', 'Clusters Loaded', 'Samples Loaded');
+        }
+        updatePhaseMsg(`${inView.clusters.toLocaleString()} clusters in view. Zoom closer for individual samples.`, 'done');
+        console.log('Exited point mode');
+    }
+
+    // --- Results table refresh (below globe) ---
+    // Independent of globe mode — always shows top-N samples matching filters.
+    const RESULTS_TABLE_LIMIT = 200;
+    let tableReqId = 0;
+    async function refreshResultsTable() {
+        const myReq = ++tableReqId;
+        updateResultsTableMeta('Loading samples matching filters…', true);
+        try {
+            const facetActive = hasFacetFilters();
+            const facetSQL = facetActive ? facetFilterSQL() : '';
+            let query;
+            if (facetActive) {
+                query = `
+                    SELECT l.pid, l.label, l.source, l.latitude, l.longitude, l.place_name
+                    FROM read_parquet('${lite_url}') l
+                    JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                    WHERE 1=1
+                      ${sourceFilterSQL('l.source')}
+                      ${facetSQL}
+                    LIMIT ${RESULTS_TABLE_LIMIT}
+                `;
+            } else {
+                query = `
+                    SELECT pid, label, source, latitude, longitude, place_name
+                    FROM read_parquet('${lite_url}')
+                    WHERE 1=1
+                      ${sourceFilterSQL('source')}
+                    LIMIT ${RESULTS_TABLE_LIMIT}
+                `;
+            }
+            const data = await db.query(query);
+            if (myReq !== tableReqId) return;  // stale
+            renderResultsTable(data);
+            const note = data.length === RESULTS_TABLE_LIMIT
+                ? `Showing first ${RESULTS_TABLE_LIMIT} samples matching filters (more exist).`
+                : `Showing ${data.length.toLocaleString()} samples matching filters.`;
+            updateResultsTableMeta(note, false);
+        } catch (err) {
+            if (myReq !== tableReqId) return;
+            console.error('Results table query failed:', err);
+            updateResultsTableMeta('Failed to load results table.', false);
+        }
+    }
+
+    // --- Source filter change handler ---
+    const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
+    document.getElementById('sourceFilter').addEventListener('change', async () => {
+        // Toggle visual state on labels
+        document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
+            const cb = li.querySelector('input');
+            li.classList.toggle('disabled', !cb.checked);
+        });
+        // Persist source filter in URL query string for bookmarkable links
+        // (e.g. ?sources=OPENCONTEXT). Camera state lives in the hash.
+        const active = getActiveSources();
+        const params = new URLSearchParams(location.search);
+        if (active.length > 0 && active.length < 4) {
+            params.set('sources', active.join(','));
+        } else {
+            params.delete('sources');
+        }
+        const qs = params.toString();
+        const newSearch = qs ? `?${qs}` : '';
+        if (location.search !== newSearch) {
+            history.replaceState(null, '', `${location.pathname}${newSearch}${location.hash}`);
+        }
+        if (mode === 'cluster') {
+            loading = false;  // allow loadRes to run (gen counter discards stale results)
+            await loadRes(currentRes, resUrls[currentRes]);
+        } else {
+            cachedBounds = null;  // force re-query
+            await loadViewportSamples();
+        }
+        refreshResultsTable();
+    });
+
+    // --- Material/Context/Specimen filter change handler ---
+    const facetNote = document.getElementById('facetNote');
+    function handleFacetFilterChange() {
+        const active = hasFacetFilters();
+        if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
+        if (mode === 'point') {
+            cachedBounds = null;
+            loadViewportSamples();
+        }
+        refreshResultsTable();
+    }
+    document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
+    document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
+    document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
+
+    // Initial table load
+    refreshResultsTable();
+
+    // --- Camera change handler ---
+    let timer = null;
+    viewer.camera.changed.addEventListener(() => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const h = viewer.camera.positionCartographic.height;
+
+            // Determine target mode with hysteresis
+            const targetMode = h < ENTER_POINT_ALT ? 'point'
+                             : h > EXIT_POINT_ALT ? 'cluster'
+                             : mode;
+
+            if (targetMode === 'point' && mode !== 'point') {
+                // Make sure we're at res8 clusters before transitioning
+                if (currentRes !== 8 && !loading) {
+                    await loadRes(8, h3_res8_url);
+                }
+                enterPointMode();
+            } else if (targetMode === 'cluster' && mode !== 'cluster') {
+                exitPointMode();
+                // Reload appropriate resolution
+                const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                if (target !== currentRes && !loading) {
+                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                }
+            } else if (targetMode === 'point') {
+                // Already in point mode — update viewport samples
+                loadViewportSamples();
+            } else {
+                // Cluster mode — check if resolution should change
+                const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                if (target !== currentRes && !loading) {
+                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                }
+            }
+
+            // Update viewport cluster count (cluster mode only; point mode already shows viewport count)
+            if (mode === 'cluster' && viewer._clusterData) {
+                const bounds = getViewportBounds();
+                const inView = countInViewport(bounds);
+                const total = viewer._clusterTotal;
+                if (total) {
+                    updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
+                }
+            }
+
+            // Update URL hash (replaceState for continuous movement)
+            if (!viewer._suppressHashWrite) {
+                history.replaceState(null, '', buildHash(viewer));
+            }
+        }, 600);
+    });
+    viewer.camera.percentageChanged = 0.1;
+
+    // --- Handle browser back/forward ---
+    window.addEventListener('hashchange', async () => {
+        const state = readHash();
+        if (state.lat == null || state.lng == null) return;
+
+        viewer._suppressHashWrite = true;
+        clearTimeout(viewer._suppressTimer);
+        viewer.camera.cancelFlight();
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(state.lng, state.lat, state.alt || 20000000),
+            orientation: {
+                heading: Cesium.Math.toRadians(state.heading),
+                pitch: Cesium.Math.toRadians(state.pitch)
+            },
+            duration: 1.5,
+        });
+
+        // After flight settles, force mode and clear suppress flag
+        viewer._suppressTimer = setTimeout(() => {
+            viewer._suppressHashWrite = false;
+            const s = readHash();
+            if (s.mode === 'point' && mode !== 'point') enterPointMode(false);
+            else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
+        }, 2000);
+
+        // Handle pid selection
+        if (state.pid) {
+            viewer._globeState.selectedPid = state.pid;
+            try {
+                const sample = await db.query(`
+                    SELECT pid, label, source, latitude, longitude, place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    WHERE pid = '${state.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (sample && sample.length > 0) {
+                    const s = sample[0];
+                    updateSampleCard({
+                        pid: s.pid, label: s.label, source: s.source,
+                        lat: s.latitude, lng: s.longitude,
+                        place_name: s.place_name, result_time: s.result_time
+                    });
+                }
+            } catch(err) {
+                console.error("Hash pid query failed:", err);
+            }
+        } else {
+            viewer._globeState.selectedPid = null;
+            updateClusterCard(null);
+        }
+    });
+
+    // --- Share button ---
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            history.replaceState(null, '', buildHash(viewer));
+            try {
+                await navigator.clipboard.writeText(location.href);
+                const toast = document.getElementById('shareToast');
+                if (toast) {
+                    toast.style.opacity = '1';
+                    setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+                }
+            } catch(err) {
+                prompt('Copy this link:', location.href);
+            }
+        });
+    }
+
+    // --- Search handler ---
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('sampleSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    async function doSearch() {
+        const term = searchInput.value.trim();
+        if (!term || term.length < 2) {
+            searchResults.textContent = 'Type at least 2 characters';
+            return;
+        }
+        searchResults.textContent = 'Searching...';
+        try {
+            const escaped = term.replace(/'/g, "''");
+            const results = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name
+                FROM read_parquet('${lite_url}')
+                WHERE label ILIKE '%${escaped}%'
+                ${sourceFilterSQL('source')}
+                LIMIT 50
+            `);
+            if (results.length === 0) {
+                searchResults.textContent = `No results for "${term}"`;
+                return;
+            }
+            searchResults.textContent = `${results.length}${results.length === 50 ? '+' : ''} results for "${term}"`;
+
+            // Show results in the samples panel
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) {
+                let h = `<h4>Search: "${term}" (${results.length})</h4>`;
+                for (const s of results) {
+                    const color = SOURCE_COLORS[s.source] || '#666';
+                    const name = SOURCE_NAMES[s.source] || s.source;
+                    const sUrl = sourceUrl(s.pid);
+                    h += `<div class="sample-row" style="cursor: pointer;" data-lat="${s.latitude}" data-lng="${s.longitude}" data-pid="${s.pid}">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
+                            <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
+                        </div>
+                    </div>`;
+                }
+                sampEl.innerHTML = h;
+
+                // Click search result → fly to it
+                sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
+                    row.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'A') return; // let links work
+                        const lat = parseFloat(row.dataset.lat);
+                        const lng = parseFloat(row.dataset.lng);
+                        const pid = row.dataset.pid;
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            viewer.camera.flyTo({
+                                destination: Cesium.Cartesian3.fromDegrees(lng, lat, 50000),
+                                duration: 1.5
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Fly to the first result
+            if (results[0].latitude && results[0].longitude) {
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
+                    duration: 1.5
+                });
+            }
+        } catch(err) {
+            console.error("Search failed:", err);
+            searchResults.textContent = `Search error: ${err.message}`;
+        }
+    }
+
+    if (searchBtn) searchBtn.addEventListener('click', doSearch);
+    if (searchInput) searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+    });
+
+    // --- Deep-link: restore selection from initial hash ---
+    const ih = viewer._initialHash;
+    if (ih.pid) {
+        viewer._globeState.selectedPid = ih.pid;
+        try {
+            const sample = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name, result_time
+                FROM read_parquet('${lite_url}')
+                WHERE pid = '${ih.pid.replace(/'/g, "''")}'
+                LIMIT 1
+            `);
+            if (sample && sample.length > 0) {
+                const s = sample[0];
+                updateSampleCard({
+                    pid: s.pid, label: s.label, source: s.source,
+                    lat: s.latitude, lng: s.longitude,
+                    place_name: s.place_name, result_time: s.result_time
+                });
+                const detail = await db.query(`
+                    SELECT description FROM read_parquet('${wide_url}')
+                    WHERE pid = '${ih.pid.replace(/'/g, "''")}'
+                    LIMIT 1
+                `);
+                if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                else updateSampleDetail({ description: '' });
+            }
+        } catch(err) {
+            console.error("Deep-link pid query failed:", err);
+        }
+    }
+
+    // Enable hash writing now that everything is initialized
+    viewer._suppressHashWrite = false;
+
+    return "active";
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Performance timing panel (opt-in: append ?perf=1 to URL) ===
+// v0: reads performance.mark/measure entries and renders a small fixed panel.
+// Reports navigation→duckdb_init, navigation→viewer_init, phase 1 res4 load,
+// and navigation→first paint. Also dumps to console.table for CI / Playwright.
+perfPanel = {
+    if (!phase1) return;  // wait for phase 1 to have run
+
+    const params = new URLSearchParams(location.search);
+    const isOn = params.get('perf') === '1';
+    if (!isOn) return;
+
+    // Give first-paint a tick to fire, then collect
+    await new Promise(r => setTimeout(r, 100));
+
+    const origin = performance.timeOrigin;
+    const mark = (name) => {
+        const e = performance.getEntriesByName(name, 'mark').pop();
+        return e ? e.startTime : null;
+    };
+    const measure = (name) => {
+        const e = performance.getEntriesByName(name, 'measure').pop();
+        return e ? e.duration : null;
+    };
+
+    // Paint timings from the browser (free, no instrumentation needed)
+    const paintEntries = performance.getEntriesByType('paint');
+    const fcp = paintEntries.find(e => e.name === 'first-contentful-paint')?.startTime;
+    const fp = paintEntries.find(e => e.name === 'first-paint')?.startTime;
+
+    const rows = [
+        ['first-paint (browser)',        fp],
+        ['first-contentful-paint',        fcp],
+        ['duckdb init',                   measure('duckdb_init')],
+        ['viewer init',                   measure('viewer_init')],
+        ['nav → viewer ready',            mark('viewer-init-end')],
+        ['phase 1 res4 (duration)',       measure('p1')],
+        ['nav → phase 1 complete',        mark('p1-end')],
+        ['nav → first globe frame',       mark('first-globe-frame')],
+    ].filter(([, v]) => v != null);
+
+    // Console table for CI / offline capture
+    console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));
+
+    // Render a small floating panel
+    const fmt = (ms) => ms == null ? '—' : ms >= 1000 ? `${(ms/1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`;
+    const panel = document.createElement('div');
+    panel.id = 'perfPanel';
+    panel.style.cssText = `
+        position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+        background: rgba(0,0,0,0.82); color: #e8f5e9; padding: 10px 12px;
+        border-radius: 6px; font: 11px/1.4 ui-monospace, SFMono-Regular, monospace;
+        max-width: 320px; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    `;
+    panel.innerHTML = `
+        <div style="font-weight:600;color:#fff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+            <span>⏱ Perf timings</span>
+            <button id="perfClose" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 4px;">×</button>
+        </div>
+        <table style="border-collapse:collapse;width:100%;">
+            ${rows.map(([label, v]) => `
+                <tr><td style="padding:1px 8px 1px 0;color:#bbb;">${label}</td>
+                    <td style="padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;">${fmt(v)}</td></tr>
+            `).join('')}
+        </table>
+        <div style="margin-top:6px;color:#777;font-size:10px;">timeOrigin: ${new Date(origin).toISOString().split('T')[1].slice(0,12)}</div>
+    `;
+    document.body.appendChild(panel);
+    panel.querySelector('#perfClose').onclick = () => panel.remove();
+
+    return "shown";
+}
+```
+
+## How It Works
+
+The globe loads progressively: a 580 KB pre-aggregated H3 res4 file paints the world in clusters within ~1 s, finer-grained res6 / res8 files swap in as you zoom, and only when you zoom past 120 km altitude does the explorer switch to individual sample points (capped at 5K, viewport-bounded). The results table below the globe queries the same 60 MB lite parquet for the first 200 samples that match your filters — independent of the camera. Filters compose: source filtering applies at every zoom level (works on H3 cluster files too), while material / sampled feature / specimen filters apply once you're at sample zoom or in the results table (the H3 tier files are not pre-filtered by those facets).
+
+| Phase | Data | Size | Points |
+|-------|------|------|--------|
+| **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
+| **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
+| **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
+| **Zoom deep** | Map lite | 60 MB (range req.) | Up to 5K individual samples |
+| **Click sample** | Full dataset | ~280 MB (range req.) | Full metadata for 1 sample |
+
+All queries run in your browser via DuckDB-WASM with HTTP range requests — only the bytes you need are transferred. No backend.
+
+## See Also
+
+- [Progressive Globe](/tutorials/progressive_globe.html) — Same globe rendering without the faceted filter UI
+- [Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html) — DuckDB-WASM SQL tutorial
+- [Why H3?](/tutorials/why_h3.html) — Why hexagonal hierarchical spatial indexing is the right substrate
