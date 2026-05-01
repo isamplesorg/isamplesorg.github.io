@@ -115,6 +115,11 @@ format:
     .filter-body { padding: 4px 0; }
     .filter-body label { display: block; font-size: 12px; padding: 2px 0; cursor: pointer; }
     .filter-body label:hover { color: #1565c0; }
+    /* Cross-filter zero-count dimming. Don't hide unavailable values; keep
+       them visible so users can understand the current filter context. */
+    .facet-row.zero { opacity: 0.4; }
+    .facet-row.zero:hover { opacity: 0.65; }
+    .facet-count.recomputing { opacity: 0.55; font-style: italic; }
 </style>
 
 ::: {.callout-note collapse="true"}
@@ -148,10 +153,10 @@ Circle size = log(sample count). Color = dominant data source.
 </div>
 <div style="margin-top: 8px;">
 <div class="legend" id="sourceFilter">
-<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR</label>
-<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext</label>
-<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME</label>
-<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</label>
+<label class="legend-item facet-row" data-facet="source" data-value="SESAR"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR <span class="facet-count" data-facet="source" data-value="SESAR" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="OPENCONTEXT"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext <span class="facet-count" data-facet="source" data-value="OPENCONTEXT" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="GEOME"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="facet-count" data-facet="source" data-value="GEOME" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="SMITHSONIAN"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="facet-count" data-facet="source" data-value="SMITHSONIAN" style="color:#888"></span></label>
 </div>
 </div>
 <div class="filter-section" id="materialFilter">
@@ -217,6 +222,8 @@ wide_url = `${R2_BASE}/current/wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
 facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+// Pre-aggregated single-filter cache for fast cross-filtered facet counts.
+cross_filter_url = `${R2_BASE}/isamples_202601_facet_cross_filter.parquet`
 // SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels.parquet`
@@ -298,6 +305,29 @@ function facetFilterSQL() {
     }
     if (conds.length === 0) return '';
     return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
+}
+
+// === Cross-filter facet count UI helpers ===
+function applyFacetCounts(facetKey, countsMap) {
+    const baseline = (viewer && viewer._baselineCounts) ? viewer._baselineCounts[facetKey] : null;
+    document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+        const value = el.getAttribute('data-value');
+        let count;
+        if (countsMap) {
+            count = countsMap.has(value) ? countsMap.get(value) : 0;
+        } else {
+            count = baseline ? (baseline.get(value) ?? 0) : 0;
+        }
+        el.textContent = `(${Number(count).toLocaleString()})`;
+        el.classList.remove('recomputing');
+
+        const row = document.querySelector(`.facet-row[data-facet="${facetKey}"][data-value="${CSS.escape(value)}"]`);
+        if (row) row.classList.toggle('zero', count === 0);
+    });
+}
+
+function markFacetCountsRecomputing() {
+    document.querySelectorAll('.facet-count').forEach(el => el.classList.add('recomputing'));
 }
 
 // === URL State: encode/decode globe state in hash fragment ===
@@ -712,7 +742,7 @@ facetFilters = {
             ORDER BY facet_type, count DESC
         `);
 
-        const grouped = { material: [], context: [], object_type: [] };
+        const grouped = { source: [], material: [], context: [], object_type: [] };
         for (const row of summaries) {
             if (grouped[row.facet_type]) {
                 grouped[row.facet_type].push({
@@ -722,6 +752,13 @@ facetFilters = {
                 });
             }
         }
+
+        viewer._baselineCounts = {
+            source: new Map(grouped.source.map(s => [s.uri, s.count])),
+            material: new Map(grouped.material.map(m => [m.uri, m.count])),
+            context: new Map(grouped.context.map(c => [c.uri, c.count])),
+            object_type: new Map(grouped.object_type.map(o => [o.uri, o.count])),
+        };
 
         // HTML attribute / text escapers for safety when interpolating URIs.
         const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -746,6 +783,7 @@ facetFilters = {
         renderFilter('materialFilterBody', 'material', grouped.material);
         renderFilter('contextFilterBody', 'context', grouped.context);
         renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
+        applyFacetCounts('source', null);
 
         console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
@@ -1000,6 +1038,146 @@ zoomWatcher = {
         console.log('Exited point mode');
     }
 
+    // === Cross-filter facet count refresh (issue #156, Phase 2) ===
+    //
+    // Counts answer: for each value in facet D, how many samples would match
+    // this value plus the active filters in all OTHER facets. This keeps
+    // selected facets useful as drill-out controls instead of just echoing the
+    // selected values. Search text is treated as an additional sample predicate.
+    let facetCountsReqId = 0;
+    let facetCountsDebounce = null;
+
+    function getSearchTerm() {
+        const input = document.getElementById('sampleSearch');
+        return input ? input.value.trim() : '';
+    }
+
+    function describeCrossFilters() {
+        const sourceChecks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
+        const sourceTotal = sourceChecks.length;
+        const sources = getActiveSources();
+        const mat = getCheckedValues('materialFilterBody');
+        const ctx = getCheckedValues('contextFilterBody');
+        const ot = getCheckedValues('objectTypeFilterBody');
+        const search = getSearchTerm();
+        const dims = [
+            { key: 'source', col: 'source', values: sources.length < sourceTotal ? sources : [] },
+            { key: 'material', col: 'material', values: mat },
+            { key: 'context', col: 'context', values: ctx },
+            { key: 'object_type', col: 'object_type', values: ot },
+        ];
+        const activeDims = dims.filter(d => d.values.length > 0);
+        const totalActiveValues = activeDims.reduce((n, d) => n + d.values.length, 0);
+        return {
+            dims,
+            activeDims,
+            totalActiveValues,
+            sourceImpossible: sourceTotal > 0 && sources.length === 0,
+            searchActive: search.length >= 2,
+            search,
+        };
+    }
+
+    function buildCrossFilterWhere(excludeFacet) {
+        const { activeDims, sourceImpossible, searchActive, search } = describeCrossFilters();
+        if (sourceImpossible && excludeFacet !== 'source') return '1=0';
+
+        const conds = activeDims
+            .filter(d => d.key !== excludeFacet)
+            .map(d => {
+                const list = d.values.map(v => `'${escSql(v)}'`).join(',');
+                return `${d.col} IN (${list})`;
+            });
+
+        if (searchActive) {
+            conds.push(`pid IN (
+                SELECT pid
+                FROM read_parquet('${lite_url}')
+                WHERE label ILIKE '%${escSql(search)}%'
+            )`);
+        }
+
+        return conds.length > 0 ? conds.join(' AND ') : '1=1';
+    }
+
+    async function updateCrossFilteredCounts(myReq) {
+        if (myReq !== facetCountsReqId) return;
+        const { dims, activeDims, totalActiveValues, sourceImpossible, searchActive } = describeCrossFilters();
+
+        if (!sourceImpossible && activeDims.length === 0 && !searchActive) {
+            for (const d of dims) applyFacetCounts(d.key, null);
+            return;
+        }
+
+        markFacetCountsRecomputing();
+
+        const singleActiveDim = !sourceImpossible && !searchActive
+            && activeDims.length === 1 && activeDims[0].values.length === 1
+            ? activeDims[0] : null;
+        if (singleActiveDim && totalActiveValues === 1) {
+            try {
+                const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
+                const filterColForKey = {
+                    source: 'filter_source',
+                    material: 'filter_material',
+                    context: 'filter_context',
+                    object_type: 'filter_object_type',
+                };
+                const targetCol = filterColForKey[singleActiveDim.key];
+                const value = escSql(singleActiveDim.values[0]);
+                const whereParts = filterCols.map(c =>
+                    c === targetCol ? `${c} = '${value}'` : `${c} IS NULL`
+                );
+                const rows = await db.query(`
+                    SELECT facet_type, facet_value, count
+                    FROM read_parquet('${cross_filter_url}')
+                    WHERE ${whereParts.join(' AND ')}
+                `);
+                if (myReq !== facetCountsReqId) return;
+                if (rows && rows.length > 0) {
+                    const grouped = { source: new Map(), material: new Map(), context: new Map(), object_type: new Map() };
+                    for (const r of rows) {
+                        if (grouped[r.facet_type]) grouped[r.facet_type].set(r.facet_value, Number(r.count));
+                    }
+                    for (const d of dims) {
+                        applyFacetCounts(d.key, d.key === singleActiveDim.key ? null : grouped[d.key]);
+                    }
+                    return;
+                }
+            } catch (err) {
+                console.warn('Cross-filter cache lookup failed; falling back to on-the-fly:', err);
+            }
+        }
+
+        await Promise.all(dims.map(async (d) => {
+            const where = buildCrossFilterWhere(d.key);
+            try {
+                const rows = await db.query(`
+                    SELECT ${d.col} AS value, COUNT(*) AS count
+                    FROM read_parquet('${facets_url}')
+                    WHERE ${where} AND ${d.col} IS NOT NULL
+                    GROUP BY ${d.col}
+                `);
+                if (myReq !== facetCountsReqId) return;
+                const map = new Map();
+                for (const r of rows) map.set(r.value, Number(r.count));
+                applyFacetCounts(d.key, map);
+            } catch (err) {
+                if (myReq !== facetCountsReqId) return;
+                console.warn(`Cross-filter count query failed for ${d.key}:`, err);
+                applyFacetCounts(d.key, null);
+            }
+        }));
+    }
+
+    function refreshFacetCounts() {
+        clearTimeout(facetCountsDebounce);
+        const myReq = ++facetCountsReqId;
+        facetCountsDebounce = setTimeout(() => {
+            updateCrossFilteredCounts(myReq);
+        }, 250);
+    }
+
     // --- Source filter change handler ---
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
@@ -1015,6 +1193,7 @@ zoomWatcher = {
             cachedBounds = null;  // force re-query
             await loadViewportSamples();
         }
+        refreshFacetCounts();
     });
 
     // --- Material / Context / Specimen Type filter change handler ---
@@ -1032,6 +1211,7 @@ zoomWatcher = {
             cachedBounds = null;
             loadViewportSamples();
         }
+        refreshFacetCounts();
     }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
@@ -1235,10 +1415,23 @@ zoomWatcher = {
         }
     }
 
-    if (searchBtn) searchBtn.addEventListener('click', doSearch);
-    if (searchInput) searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doSearch();
+    if (searchBtn) searchBtn.addEventListener('click', () => {
+        doSearch();
+        refreshFacetCounts();
     });
+    let searchFacetDebounce = null;
+    if (searchInput) searchInput.addEventListener('input', () => {
+        clearTimeout(searchFacetDebounce);
+        searchFacetDebounce = setTimeout(refreshFacetCounts, 300);
+    });
+    if (searchInput) searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            doSearch();
+            refreshFacetCounts();
+        }
+    });
+
+    refreshFacetCounts();
 
     // --- Deep-link: restore selection from initial hash ---
     const ih = viewer._initialHash;
