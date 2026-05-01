@@ -437,10 +437,6 @@ function applyQueryToFacetFilters() {
     setCheckedValues('objectTypeFilterBody', csvParamValues(params, 'object_type'));
 }
 
-function getMaxSamplesLimit() {
-    const params = new URLSearchParams(location.search);
-    return Math.round(parseNum(params.get('maxSamples'), DEFAULT_POINT_BUDGET, 1, 1000000));
-}
 
 function writeQueryState() {
     const params = new URLSearchParams(location.search);
@@ -462,10 +458,6 @@ function writeQueryState() {
         if (values.length > 0) params.set(key, values.join(','));
         else params.delete(key);
     });
-
-    const maxSamples = getMaxSamplesLimit();
-    if (maxSamples !== DEFAULT_POINT_BUDGET) params.set('maxSamples', String(maxSamples));
-    else params.delete('maxSamples');
 
     if (typeof document !== 'undefined' && document.body && document.body.classList.contains('table-view-active')) {
         params.set('view', 'table');
@@ -1270,7 +1262,7 @@ zoomWatcher = {
     // Hysteresis thresholds to avoid flicker
     const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
-    const POINT_BUDGET = getMaxSamplesLimit();
+    const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
     // Viewport cache: avoid re-querying same area
     let cachedBounds = null;  // { south, north, west, east }

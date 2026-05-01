@@ -73,11 +73,23 @@ class TestExplorerCrossFiltering:
     """
 
     def _wait_for_facets(self, page):
-        facet = page.locator(".facet-count[data-facet='source']")
+        # The .facet-count spans are in the static HTML before being populated,
+        # so wait_for("attached") is not enough. Poll until the text contains a
+        # parenthesised number (e.g. "(4,389,231)").
+        facet = page.locator(".facet-count[data-facet='source'][data-value='SESAR']")
         try:
             facet.first.wait_for(state="attached", timeout=60000)
+            page.wait_for_function(
+                """() => {
+                    const el = document.querySelector(
+                        ".facet-count[data-facet='source'][data-value='SESAR']"
+                    );
+                    return el && /\\(\\d/.test(el.textContent || '');
+                }""",
+                timeout=60000,
+            )
         except Exception:
-            pytest.skip("Facet count labels not rendered (DuckDB-WASM may not have loaded)")
+            pytest.skip("Facet count labels not populated (DuckDB-WASM may not have loaded)")
 
     def _get_count(self, page, facet, value):
         el = page.locator(f".facet-count[data-facet='{facet}'][data-value='{value}']")
