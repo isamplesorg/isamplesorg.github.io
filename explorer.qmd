@@ -1858,20 +1858,9 @@ zoomWatcher = {
         }
     }
 
-    if (searchBtn) searchBtn.addEventListener('click', () => {
-        doSearch();
-        refreshFacetCounts();
-    });
-    let searchFacetDebounce = null;
-    if (searchInput) searchInput.addEventListener('input', () => {
-        clearTimeout(searchFacetDebounce);
-        searchFacetDebounce = setTimeout(refreshFacetCounts, 300);
-    });
+    if (searchBtn) searchBtn.addEventListener('click', doSearch);
     if (searchInput) searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            doSearch();
-            refreshFacetCounts();
-        }
+        if (e.key === 'Enter') doSearch();
     });
 
     if (searchInput && searchInput.value.trim().length >= 2) {
