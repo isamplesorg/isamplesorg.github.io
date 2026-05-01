@@ -114,6 +114,11 @@ format:
     .filter-body { padding: 4px 0; }
     .filter-body label { display: block; font-size: 12px; padding: 2px 0; cursor: pointer; }
     .filter-body label:hover { color: #1565c0; }
+    /* Cross-filter zero-count dimming. Don't hide — just signal that the
+       value has no matches under current filters (issue #154). */
+    .facet-row.zero { opacity: 0.4; }
+    .facet-row.zero:hover { opacity: 0.65; }
+    .facet-count.recomputing { opacity: 0.55; font-style: italic; }
     /* Results table below the globe */
     #resultsTableWrap { margin-top: 16px; }
     #resultsTable {
@@ -185,10 +190,10 @@ Circle size = log(sample count). Color = dominant data source.
 </div>
 <div style="margin-top: 8px;">
 <div class="legend" id="sourceFilter">
-<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR <span class="src-count" data-source="SESAR" style="color:#888"></span></label>
-<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext <span class="src-count" data-source="OPENCONTEXT" style="color:#888"></span></label>
-<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="src-count" data-source="GEOME" style="color:#888"></span></label>
-<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="src-count" data-source="SMITHSONIAN" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="SESAR"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR <span class="facet-count" data-facet="source" data-value="SESAR" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="OPENCONTEXT"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext <span class="facet-count" data-facet="source" data-value="OPENCONTEXT" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="GEOME"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="facet-count" data-facet="source" data-value="GEOME" style="color:#888"></span></label>
+<label class="legend-item facet-row" data-facet="source" data-value="SMITHSONIAN"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="facet-count" data-facet="source" data-value="SMITHSONIAN" style="color:#888"></span></label>
 </div>
 </div>
 <div class="filter-section" id="materialFilter">
@@ -268,6 +273,10 @@ wide_url = `${R2_BASE}/current/wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
 facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+// Pre-aggregated cache for fast cross-filter count lookups in the
+// single-facet-value-active case. Multi-filter combinations fall back to
+// on-the-fly GROUP BY queries against facets_url. See issue #154.
+cross_filter_url = `${R2_BASE}/isamples_202601_facet_cross_filter.parquet`
 // SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels.parquet`
@@ -296,8 +305,12 @@ function getActiveSources() {
 
 function sourceFilterSQL(col) {
     const active = getActiveSources();
-    if (active.length === 0) return ' AND 1=0';  // nothing checked = show nothing
-    if (active.length === 4) return '';           // all checked = no filter
+    // Empty == all (no filter), matching the semantics of the other facet
+    // groups (material / context / object_type) and Raymond's stated
+    // intuition (PR #155 thread). All-4 checked is also "all" by virtue
+    // of the IN list covering everything; we short-circuit to skip an
+    // unnecessary IN clause.
+    if (active.length === 0 || active.length === 4) return '';
     const list = active.map(s => `'${s}'`).join(',');
     return ` AND ${col} IN (${list})`;
 }
@@ -530,6 +543,32 @@ function updateResultsTableMeta(text, isLoading) {
     if (!el) return;
     el.textContent = text;
     el.style.color = isLoading ? '#1565c0' : '#555';
+}
+
+// === Cross-filter facet count updates (issue #154) ===
+// Updates the count span next to each checkbox for one facet group. If
+// `countsMap` is null, falls back to baseline counts on `viewer._baselineCounts`
+// (set in facetFilters). Dims rows where count === 0 so the user sees that
+// their selection eliminated those values rather than silently hiding them.
+function applyFacetCounts(facetKey, countsMap) {
+    const baseline = (viewer && viewer._baselineCounts) ? viewer._baselineCounts[facetKey] : null;
+    document.querySelectorAll(`.facet-count[data-facet="${facetKey}"]`).forEach(el => {
+        const value = el.getAttribute('data-value');
+        let count;
+        if (countsMap) {
+            count = countsMap.has(value) ? countsMap.get(value) : 0;
+        } else {
+            count = baseline ? (baseline.get(value) ?? 0) : 0;
+        }
+        el.textContent = `(${Number(count).toLocaleString()})`;
+        el.classList.remove('recomputing');
+        const row = document.querySelector(`.facet-row[data-facet="${facetKey}"][data-value="${CSS.escape(value)}"]`);
+        if (row) row.classList.toggle('zero', count === 0);
+    });
+}
+
+function markFacetCountsRecomputing() {
+    document.querySelectorAll('.facet-count').forEach(el => el.classList.add('recomputing'));
 }
 ```
 
@@ -835,18 +874,34 @@ facetFilters = {
             }
         }
 
-        // Update source count badges in the (hardcoded) legend.
-        const srcCountMap = new Map(grouped.source.map(s => [s.uri, s.count]));
-        document.querySelectorAll('#sourceFilter .src-count').forEach(el => {
-            const key = el.getAttribute('data-source');
-            const c = srcCountMap.get(key);
-            if (c != null) el.textContent = `(${Number(c).toLocaleString()})`;
-        });
+        // Stash baseline counts on `viewer` so refreshFacetCounts() can
+        // restore them when filters return to the no-active-filters state.
+        // Schema: viewer._baselineCounts[facetKey] = Map(uri → count).
+        viewer._baselineCounts = {
+            source: new Map(grouped.source.map(s => [s.uri, s.count])),
+            material: new Map(grouped.material.map(m => [m.uri, m.count])),
+            context: new Map(grouped.context.map(c => [c.uri, c.count])),
+            object_type: new Map(grouped.object_type.map(o => [o.uri, o.count])),
+        };
+
+        // Paint baseline counts now so the source legend and (after this
+        // function's renderFilter calls below) the facet rows show numbers
+        // immediately, before any user interaction debounces refresh.
+        // Wrapped in setTimeout(0) so the renderFilter calls below land first.
+        setTimeout(() => {
+            applyFacetCounts('source', null);
+            applyFacetCounts('material', null);
+            applyFacetCounts('context', null);
+            applyFacetCounts('object_type', null);
+        }, 0);
 
         const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
         const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-        const renderFilter = (bodyId, items) => {
+        // Render checkboxes with `data-facet` / `data-value` count spans so
+        // refreshFacetCounts() can update text in place without rebuilding
+        // the HTML (which would lose mid-interaction selections). See #154.
+        const renderFilter = (bodyId, facetKey, items) => {
             const body = document.getElementById(bodyId);
             if (!body) return;
             if (items.length === 0) {
@@ -854,13 +909,13 @@ facetFilters = {
                 return;
             }
             body.innerHTML = items.map(it =>
-                `<label title="${escAttr(it.uri)}"><input type="checkbox" value="${escAttr(it.uri)}"> ${escText(it.label)} <span style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
+                `<label class="facet-row" data-facet="${facetKey}" data-value="${escAttr(it.uri)}" title="${escAttr(it.uri)}"><input type="checkbox" value="${escAttr(it.uri)}"> ${escText(it.label)} <span class="facet-count" data-facet="${facetKey}" data-value="${escAttr(it.uri)}" style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
             ).join('');
         };
 
-        renderFilter('materialFilterBody', grouped.material);
-        renderFilter('contextFilterBody', grouped.context);
-        renderFilter('objectTypeFilterBody', grouped.object_type);
+        renderFilter('materialFilterBody', 'material', grouped.material);
+        renderFilter('contextFilterBody', 'context', grouped.context);
+        renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
 
         console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
@@ -1189,19 +1244,174 @@ zoomWatcher = {
         }
     }
 
+    // === Cross-filter facet count refresh (issue #154) ===
+    //
+    // Strategy:
+    // - No filters active        → restore baseline counts (no query).
+    // - Exactly one facet value  → cache lookup against cross_filter_url.
+    // - Anything else            → on-the-fly group-by on facets_url, four
+    //                              concurrent queries (one per target facet),
+    //                              each excluding the column being recomputed.
+    //
+    // Debounced ~250 ms with a generation guard so rapid clicking only
+    // resolves the latest selection. Source counts are sample-level
+    // (not H3 dominant_source counts).
+    let facetCountsReqId = 0;
+    let facetCountsDebounce = null;
+
+    function describeActiveFilters() {
+        const sources = getActiveSources();
+        const allSourcesChecked = sources.length === 4;
+        const mat = getCheckedValues('materialFilterBody');
+        const ctx = getCheckedValues('contextFilterBody');
+        const ot = getCheckedValues('objectTypeFilterBody');
+        const dims = [
+            { key: 'source', col: 'source', values: allSourcesChecked ? [] : sources },
+            { key: 'material', col: 'material', values: mat },
+            { key: 'context', col: 'context', values: ctx },
+            { key: 'object_type', col: 'object_type', values: ot },
+        ];
+        const activeDims = dims.filter(d => d.values.length > 0);
+        const totalActiveValues = activeDims.reduce((n, d) => n + d.values.length, 0);
+        return { dims, activeDims, totalActiveValues };
+    }
+
+    function buildExcludeWhere(activeDims, excludeKey) {
+        const conds = activeDims
+            .filter(d => d.key !== excludeKey)
+            .map(d => {
+                const list = d.values.map(v => `'${String(v).replace(/'/g, "''")}'`).join(',');
+                return `${d.col} IN (${list})`;
+            });
+        return conds.length > 0 ? conds.join(' AND ') : '1=1';
+    }
+
+    async function refreshFacetCountsNow(myReq) {
+        // Stale check up front: if a newer schedule has happened during the
+        // debounce window, drop this run before doing any work.
+        if (myReq !== facetCountsReqId) return;
+        const { dims, activeDims, totalActiveValues } = describeActiveFilters();
+
+        // Case 1: no filters → restore baseline.
+        if (activeDims.length === 0) {
+            for (const d of dims) applyFacetCounts(d.key, null);
+            return;
+        }
+
+        markFacetCountsRecomputing();
+
+        // Case 2: single-filter cache. The pre-aggregated parquet has a
+        // (filter_source, filter_material, filter_context, filter_object_type)
+        // schema where exactly one is non-null per row. Use it only when
+        // exactly one facet value is active across all dims (the cache shape).
+        const singleActiveDim = activeDims.length === 1 && activeDims[0].values.length === 1
+            ? activeDims[0] : null;
+        if (singleActiveDim) {
+            try {
+                const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
+                const filterColForKey = {
+                    source: 'filter_source',
+                    material: 'filter_material',
+                    context: 'filter_context',
+                    object_type: 'filter_object_type',
+                };
+                const targetCol = filterColForKey[singleActiveDim.key];
+                const value = String(singleActiveDim.values[0]).replace(/'/g, "''");
+                const whereParts = filterCols.map(c =>
+                    c === targetCol ? `${c} = '${value}'` : `${c} IS NULL`
+                );
+                const sql = `
+                    SELECT facet_type, facet_value, count
+                    FROM read_parquet('${cross_filter_url}')
+                    WHERE ${whereParts.join(' AND ')}
+                `;
+                const rows = await db.query(sql);
+                if (myReq !== facetCountsReqId) return;
+                if (rows && rows.length > 0) {
+                    const grouped = { source: new Map(), material: new Map(), context: new Map(), object_type: new Map() };
+                    for (const r of rows) {
+                        if (grouped[r.facet_type]) grouped[r.facet_type].set(r.facet_value, Number(r.count));
+                    }
+                    for (const d of dims) {
+                        if (d.key === singleActiveDim.key) {
+                            // Active dim with no OTHER filters → recomputing
+                            // its own values under "no other dim filters" =
+                            // baseline. Cache also doesn't carry rows for the
+                            // filter-dim's own facet_type (verified empirically).
+                            applyFacetCounts(d.key, null);
+                        } else {
+                            applyFacetCounts(d.key, grouped[d.key]);
+                        }
+                    }
+                    return;
+                }
+                // empty → fall through to on-the-fly
+            } catch (err) {
+                console.warn('Cross-filter cache lookup failed; falling back to on-the-fly:', err);
+            }
+        }
+
+        // Case 3: on-the-fly — four GROUP BY queries against facets_url, each
+        // excluding the dim being recomputed. Per semantics (A) (issue #154
+        // / PR #155 thread): for *every* dim D, including dims with active
+        // selections, count(value=V) = `WHERE V AND <other-dim filters>`.
+        // This makes each value's count answer "how many samples have THIS
+        // value under my other filters", regardless of which values within
+        // this dim are currently selected.
+        const queries = dims.map(async (d) => {
+            const where = buildExcludeWhere(activeDims, d.key);
+            const sql = `
+                SELECT ${d.col} AS value, COUNT(*) AS count
+                FROM read_parquet('${facets_url}')
+                WHERE ${where} AND ${d.col} IS NOT NULL
+                GROUP BY ${d.col}
+            `;
+            try {
+                const rows = await db.query(sql);
+                if (myReq !== facetCountsReqId) return;
+                const map = new Map();
+                for (const r of rows) map.set(r.value, Number(r.count));
+                applyFacetCounts(d.key, map);
+            } catch (err) {
+                if (myReq !== facetCountsReqId) return;
+                console.warn(`Cross-filter on-the-fly failed for ${d.key}:`, err);
+                applyFacetCounts(d.key, null);  // give up on this dim, leave baseline
+            }
+        });
+        await Promise.all(queries);
+    }
+
+    function refreshFacetCounts() {
+        // Bump the generation synchronously so any in-flight queries
+        // (whose `myReq` is now strictly less) are invalidated immediately
+        // — without this, a stale query could finish during the debounce
+        // window of the new request and pass the gen check, repainting
+        // stale counts (Codex review on PR #155).
+        clearTimeout(facetCountsDebounce);
+        const myReq = ++facetCountsReqId;
+        facetCountsDebounce = setTimeout(() => {
+            refreshFacetCountsNow(myReq);
+        }, 250);
+    }
+
     // --- Source filter change handler ---
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
-        // Toggle visual state on labels
+        // Toggle visual state on labels. Per the new source semantics
+        // (0 == all == 4), don't dim any row when the filter isn't actually
+        // narrowing the result set; only dim unchecked rows when 1–3 are
+        // checked. Without this, unchecking all 4 made every label appear
+        // disabled even though semantically all sources are active.
+        const active = getActiveSources();
+        const filterIsActive = active.length > 0 && active.length < 4;
         document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
             const cb = li.querySelector('input');
-            li.classList.toggle('disabled', !cb.checked);
+            li.classList.toggle('disabled', filterIsActive && !cb.checked);
         });
         // Persist source filter in URL query string for bookmarkable links
         // (e.g. ?sources=OPENCONTEXT). Camera state lives in the hash.
-        const active = getActiveSources();
         const params = new URLSearchParams(location.search);
-        if (active.length > 0 && active.length < 4) {
+        if (filterIsActive) {
             params.set('sources', active.join(','));
         } else {
             params.delete('sources');
@@ -1219,6 +1429,7 @@ zoomWatcher = {
             await loadViewportSamples();
         }
         refreshResultsTable();
+        refreshFacetCounts();
     });
 
     // --- Material/Context/Specimen filter change handler ---
@@ -1231,6 +1442,7 @@ zoomWatcher = {
             loadViewportSamples();
         }
         refreshResultsTable();
+        refreshFacetCounts();
     }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
@@ -1266,8 +1478,10 @@ zoomWatcher = {
         });
     }
 
-    // Initial table load
+    // Initial table load + initial facet counts (paints baseline counts +
+    // applies any dimming if a `?sources=` URL param has narrowed the source set).
     refreshResultsTable();
+    refreshFacetCounts();
 
     // --- Camera change handler ---
     let timer = null;
