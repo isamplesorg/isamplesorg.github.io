@@ -403,7 +403,7 @@ PQG (the parquet property-graph binding) is specified in
   vs. the Observable JS, Oct 2025)
 - `test_cesium_queries.js`, `test_python_js_alignment.py` — alignment
   test harness at the monorepo root
-- [Interactive Explorer](tutorials/progressive_globe.qmd) — the reference
+- [Interactive Explorer](explorer.qmd) — the reference
   web UI
 - `isamples-python/examples/basic/isamples_explorer.ipynb` — the
   reference Python UI

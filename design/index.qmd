@@ -22,7 +22,7 @@ iSamples has defined:
 - A **metadata profile** applicable to all physical samples — see the [Metadata Model](https://isamplesorg.github.io/metadata/)
 - A set of **controlled vocabularies** for interoperable sample description — see [Vocabularies](../models/index.qmd)
 - A **programmatic interface** for sample discovery and access
-- A **browser-based data analysis** approach using geoparquet + DuckDB-WASM — see the [Interactive Explorer](/tutorials/progressive_globe.html)
+- A **browser-based data analysis** approach using geoparquet + DuckDB-WASM — see the [Interactive Explorer](/explorer.html)
 
 ## Further Reading {.unnumbered}
 

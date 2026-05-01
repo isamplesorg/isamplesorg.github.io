@@ -162,7 +162,7 @@ Approximate breakpoints:
 
 Reference implementations:
 
-- [Interactive Explorer (web)](tutorials/progressive_globe.qmd) — Observable JS + DuckDB-WASM + Cesium
+- [Interactive Explorer (web)](explorer.qmd) — Observable JS + DuckDB-WASM + Cesium
 - [iSamples Explorer (Python)](https://github.com/isamplesorg/examples/blob/main/examples/basic/isamples_explorer.ipynb) — Jupyter widgets + DuckDB + lonboard
 
 ## 5. Full catalog + companion docs

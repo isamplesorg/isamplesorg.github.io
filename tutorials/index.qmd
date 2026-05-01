@@ -8,8 +8,7 @@ number-sections: false
 
 | Tutorial | What You'll Learn |
 |----------|-------------------|
-| [**Interactive Explorer**](/tutorials/progressive_globe.html) | Browse samples on a 3D globe with H3-clustered, zoom-adaptive rendering |
-| [**Search Explorer**](isamples_explorer.qmd) | Faceted search and filter across all 6.7M samples with cross-filtering |
+| [**Interactive Explorer**](/explorer.html) | Browse, search, and filter 6.7M samples on a 3D globe or in a paginated table |
 | [**Deep-Dive Analysis**](zenodo_isamples_analysis.qmd) | Comprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics |
 | [**Technical: Narrow vs Wide**](narrow_vs_wide_performance.qmd) | Schema comparison and performance benchmarks for the PQG data formats |
 

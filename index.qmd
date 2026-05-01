@@ -9,7 +9,7 @@ page-layout: full
 
 ::: {.column-page}
 
-[![Explore 6.7 million samples on an interactive globe](assets/isamples_globe.webp){fig-alt="Animated rotating globe showing iSamples data points from 4 scientific repositories" width="100%" .nolightbox}](/tutorials/progressive_globe.html "Explore the interactive globe")
+[![Explore 6.7 million samples on an interactive globe](assets/isamples_globe.webp){fig-alt="Animated rotating globe showing iSamples data points from 4 scientific repositories" width="100%" .nolightbox}](/explorer.html "Explore the interactive globe")
 
 :::
 
@@ -51,7 +51,7 @@ The project uses **geoparquet files + DuckDB-WASM** for efficient, browser-based
 
 - **iSamples Full Dataset**: ~280 MB wide format, 6.7M samples
 - **Available via**: Cloudflare R2 with HTTP range requests
-- **Interactive tools**: [Progressive Globe](/tutorials/progressive_globe.html) for visual exploration, [Interactive Explorer](/tutorials/isamples_explorer.html) for search and filtering
+- **Interactive tools**: [Interactive Explorer](/explorer.html) — search, filter, and explore 6.7M samples on a 3D globe or in a paginated table
 
 All analysis happens in your browser. Only the data you need is downloaded — typically less than 1 MB for initial exploration.
 :::

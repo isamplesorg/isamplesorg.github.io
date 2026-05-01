@@ -67,11 +67,6 @@ class TestSidebarHowToUse:
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("3D Globe Visualization").count() > 0
 
-    def test_how_to_use_has_search_explorer(self, page):
-        page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")
-        sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Search Explorer").count() > 0
-
     def test_how_to_use_has_narrow_vs_wide(self, page):
         page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")

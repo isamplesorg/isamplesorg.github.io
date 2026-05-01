@@ -4,7 +4,7 @@ number-sections: false
 toc: false
 ---
 
-[![](assets/isamples_planet.jpg){group="my-group"}](/tutorials/progressive_globe.html "interact with iSamples data (still a bit slow to load)")
+[![](assets/isamples_planet.jpg){group="my-group"}](/explorer.html "interact with iSamples data (still a bit slow to load)")
 
 ::: {layout-ncol=4 layout-valign="center"}
 
