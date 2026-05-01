@@ -14,6 +14,7 @@ format:
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels.parquet">
 ---
 
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
@@ -169,8 +170,16 @@ Sampled Feature <span>▾</span>
 <em style="font-size: 11px; color: #999;">Loading...</em>
 </div>
 </div>
+<div class="filter-section" id="objectTypeFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Specimen Type <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="objectTypeFilterBody">
+<em style="font-size: 11px; color: #999;">Loading...</em>
+</div>
+</div>
 <div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
-Material/feature filters apply at sample zoom level
+Material / feature / specimen filters apply at sample zoom level — zoom in or click a cluster.
 </div>
 <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
 <button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
@@ -205,8 +214,12 @@ lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
 // Stable alias that 302-redirects to the current enriched wide parquet
 // (isamples_YYYYMM_wide.parquet). Gets OpenContext thumbnails populated.
 wide_url = `${R2_BASE}/current/wide.parquet`
-facets_url = `${R2_BASE}/isamples_202601_sample_facets.parquet`
+// v2 carries object_type alongside material and context (URI-string columns).
+facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+// SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
+// ~60 KB lookup; falls back to URI tail if a URI isn't covered.
+vocab_labels_url = `${R2_BASE}/vocab_labels.parquet`
 
 // Canonical palette — see issue #113. Path-relative so this works under
 // both isamples.org (custom domain at root) and project-pages fork
@@ -238,40 +251,53 @@ function sourceFilterSQL(col) {
     return ` AND ${col} IN (${list})`;
 }
 
-// === Material/Context Filters ===
+// === Material / Sampled Feature / Specimen Type Filters ===
+// Checkbox semantics: start UNCHECKED (no filter; show everything). User
+// checks items to *include only those*. Empty = no filter. Matches the
+// explorer's URI-valued facet UX — with hundreds of materials, defaulting
+// to "all checked" would be unusable, and "empty = no filter" is the
+// natural reading. See issue #155.
 function getCheckedValues(containerId) {
     const checks = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
     return Array.from(checks).filter(c => c.checked).map(c => c.value);
 }
 
 function hasFacetFilters() {
-    const mat = getCheckedValues('materialFilterBody');
-    const ctx = getCheckedValues('contextFilterBody');
-    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
-    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
-    // Active if some (but not all) are checked, or if none are checked
-    return (mat.length > 0 && mat.length < matTotal) || (ctx.length > 0 && ctx.length < ctxTotal);
+    return getCheckedValues('materialFilterBody').length > 0
+        || getCheckedValues('contextFilterBody').length > 0
+        || getCheckedValues('objectTypeFilterBody').length > 0;
 }
 
+function escSql(value) {
+    return String(value).replace(/'/g, "''");
+}
+
+// Returns a portable predicate fragment (no outer-table alias dependency)
+// that callers append to a WHERE: ` AND ${facetFilterSQL()}`. Uses a
+// `pid IN (SELECT pid FROM facets WHERE ...)` subquery so it works
+// without a JOIN and avoids duplicate rows from multi-valued facets
+// (a sample with two materials would appear twice via JOIN). Required
+// for Phase 4's table mode and any non-JOIN caller. See issue #156.
 function facetFilterSQL() {
-    let sql = '';
     const mat = getCheckedValues('materialFilterBody');
-    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
-    if (mat.length > 0 && mat.length < matTotal) {
-        const list = mat.map(s => `'${s}'`).join(',');
-        sql += ` AND f.material IN (${list})`;
-    } else if (mat.length === 0 && matTotal > 0) {
-        sql += ' AND 1=0';
-    }
     const ctx = getCheckedValues('contextFilterBody');
-    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
-    if (ctx.length > 0 && ctx.length < ctxTotal) {
-        const list = ctx.map(s => `'${s}'`).join(',');
-        sql += ` AND f.context IN (${list})`;
-    } else if (ctx.length === 0 && ctxTotal > 0) {
-        sql += ' AND 1=0';
+    const ot  = getCheckedValues('objectTypeFilterBody');
+
+    const conds = [];
+    if (mat.length > 0) {
+        const list = mat.map(s => `'${escSql(s)}'`).join(',');
+        conds.push(`material IN (${list})`);
     }
-    return sql;
+    if (ctx.length > 0) {
+        const list = ctx.map(s => `'${escSql(s)}'`).join(',');
+        conds.push(`context IN (${list})`);
+    }
+    if (ot.length > 0) {
+        const list = ot.map(s => `'${escSql(s)}'`).join(',');
+        conds.push(`object_type IN (${list})`);
+    }
+    if (conds.length === 0) return '';
+    return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
 }
 
 // === URL State: encode/decode globe state in hash fragment ===
@@ -564,30 +590,17 @@ viewer = {
 
             const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
             try {
-                const facetActive = hasFacetFilters();
-                const facetSQL = facetActive ? facetFilterSQL() : '';
-                let nearbyQuery;
-                if (facetActive) {
-                    nearbyQuery = `
-                        SELECT l.pid, l.label, l.source, l.latitude, l.longitude, l.place_name
-                        FROM read_parquet('${lite_url}') l
-                        JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
-                        WHERE l.latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
-                          AND l.longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
-                          ${sourceFilterSQL('l.source')}
-                          ${facetSQL}
-                        LIMIT 30
-                    `;
-                } else {
-                    nearbyQuery = `
-                        SELECT pid, label, source, latitude, longitude, place_name
-                        FROM read_parquet('${lite_url}')
-                        WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
-                          AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
-                          ${sourceFilterSQL('source')}
-                        LIMIT 30
-                    `;
-                }
+                // facetFilterSQL() returns a portable `pid IN (...)` predicate,
+                // so the same query works whether or not facet filters are active.
+                const nearbyQuery = `
+                    SELECT pid, label, source, latitude, longitude, place_name
+                    FROM read_parquet('${lite_url}')
+                    WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                      AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                      ${sourceFilterSQL('source')}
+                      ${facetFilterSQL()}
+                    LIMIT 30
+                `;
                 const samples = await db.query(nearbyQuery);
                 updateSamples(samples);
             } catch(err) {
@@ -663,9 +676,35 @@ phase1 = {
 //| echo: false
 //| output: false
 
-// === Load facet summaries and populate filter checkboxes ===
+// === Load facet summaries + SKOS prefLabels, populate filter checkboxes ===
+//
+// Checkbox value = full URI (matches the URI strings stored in
+// sample_facets_v2.parquet's material / context / object_type columns).
+// Display label = SKOS prefLabel (en) when available, URI tail otherwise.
+// Default state: UNCHECKED — empty = no filter.
 facetFilters = {
     if (!phase1) return;
+
+    // Tiny URI → prefLabel lookup. ~60 KB. Best-effort: fallback to URI tail.
+    const vocabMap = new Map();
+    try {
+        const vocab = await db.query(
+            `SELECT uri, pref_label FROM read_parquet('${vocab_labels_url}') WHERE lang = 'en'`
+        );
+        for (const r of vocab) vocabMap.set(r.uri, r.pref_label);
+    } catch (err) {
+        console.warn("vocab_labels load failed; falling back to URI tails:", err);
+    }
+    const prettyLabel = (uri) => {
+        if (uri == null) return "";
+        const hit = vocabMap.get(uri);
+        if (hit) return hit;
+        const s = String(uri);
+        if (!/^https?:\/\//.test(s)) return s;
+        const parts = s.replace(/[#?].*$/, "").split("/").filter(Boolean);
+        return parts.length ? parts[parts.length - 1] : s;
+    };
+
     try {
         const summaries = await db.query(`
             SELECT facet_type, facet_value, count
@@ -673,32 +712,42 @@ facetFilters = {
             ORDER BY facet_type, count DESC
         `);
 
-        const grouped = { material: [], context: [] };
+        const grouped = { material: [], context: [], object_type: [] };
         for (const row of summaries) {
             if (grouped[row.facet_type]) {
-                // Extract short label from URI
-                const shortLabel = row.facet_value.split('/').pop() || row.facet_value;
-                grouped[row.facet_type].push({ value: shortLabel, fullUri: row.facet_value, count: row.count });
+                grouped[row.facet_type].push({
+                    uri: row.facet_value,
+                    label: prettyLabel(row.facet_value),
+                    count: row.count
+                });
             }
         }
 
-        // Populate material checkboxes
-        const matBody = document.getElementById('materialFilterBody');
-        if (matBody && grouped.material.length > 0) {
-            matBody.innerHTML = grouped.material.map(m =>
-                `<label><input type="checkbox" value="${m.value}" checked> ${m.value} <span style="color:#999">(${Number(m.count).toLocaleString()})</span></label>`
-            ).join('');
-        }
+        // HTML attribute / text escapers for safety when interpolating URIs.
+        const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-        // Populate context checkboxes
-        const ctxBody = document.getElementById('contextFilterBody');
-        if (ctxBody && grouped.context.length > 0) {
-            ctxBody.innerHTML = grouped.context.map(c =>
-                `<label><input type="checkbox" value="${c.value}" checked> ${c.value} <span style="color:#999">(${Number(c.count).toLocaleString()})</span></label>`
+        // Render checkboxes with `data-facet` / `data-value` attributes so
+        // Phase 2's cross-filter count updates can mutate counts in place
+        // without rebuilding the HTML (which would lose mid-interaction
+        // selections). See issue #156, Phase 2.
+        const renderFilter = (bodyId, facetKey, items) => {
+            const body = document.getElementById(bodyId);
+            if (!body) return;
+            if (items.length === 0) {
+                body.innerHTML = '<em style="font-size: 11px; color: #999;">No values</em>';
+                return;
+            }
+            body.innerHTML = items.map(it =>
+                `<label class="facet-row" data-facet="${facetKey}" data-value="${escAttr(it.uri)}" title="${escAttr(it.uri)}"><input type="checkbox" value="${escAttr(it.uri)}"> ${escText(it.label)} <span class="facet-count" data-facet="${facetKey}" data-value="${escAttr(it.uri)}" style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
             ).join('');
-        }
+        };
 
-        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts`);
+        renderFilter('materialFilterBody', 'material', grouped.material);
+        renderFilter('contextFilterBody', 'context', grouped.context);
+        renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
+
+        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
         console.warn("Facet summaries failed to load:", err);
     }
@@ -851,32 +900,18 @@ zoomWatcher = {
 
         try {
             performance.mark('sp-s');
-            const facetActive = hasFacetFilters();
-            const facetSQL = facetActive ? facetFilterSQL() : '';
-            let query;
-            if (facetActive) {
-                query = `
-                    SELECT l.pid, l.label, l.source, l.latitude, l.longitude,
-                           l.place_name, l.result_time, f.material, f.context
-                    FROM read_parquet('${lite_url}') l
-                    JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
-                    WHERE l.latitude BETWEEN ${padded.south} AND ${padded.north}
-                      AND l.longitude BETWEEN ${padded.west} AND ${padded.east}
-                      ${sourceFilterSQL('l.source')}
-                      ${facetSQL}
-                    LIMIT ${POINT_BUDGET}
-                `;
-            } else {
-                query = `
-                    SELECT pid, label, source, latitude, longitude,
-                           place_name, result_time
-                    FROM read_parquet('${lite_url}')
-                    WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
-                      AND longitude BETWEEN ${padded.west} AND ${padded.east}
-                      ${sourceFilterSQL('source')}
-                    LIMIT ${POINT_BUDGET}
-                `;
-            }
+            // facetFilterSQL() returns a portable `pid IN (...)` predicate,
+            // so the same query works whether or not facet filters are active.
+            const query = `
+                SELECT pid, label, source, latitude, longitude,
+                       place_name, result_time
+                FROM read_parquet('${lite_url}')
+                WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
+                  AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                LIMIT ${POINT_BUDGET}
+            `;
             const data = await db.query(query);
             performance.mark('sp-e');
             performance.measure('sp', 'sp-s', 'sp-e');
@@ -982,7 +1017,13 @@ zoomWatcher = {
         }
     });
 
-    // --- Material/Context filter change handler ---
+    // --- Material / Context / Specimen Type filter change handler ---
+    //
+    // Cluster-mode honesty: the H3 summary parquets only carry
+    // `dominant_source`, so material / context / object_type filters cannot
+    // affect cluster counts. When any of these is active in cluster mode,
+    // surface the explanatory `#facetNote` so users understand the filter
+    // takes effect at neighborhood zoom. See issue #156, Phase 1.
     const facetNote = document.getElementById('facetNote');
     function handleFacetFilterChange() {
         const active = hasFacetFilters();
@@ -994,6 +1035,7 @@ zoomWatcher = {
     }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
+    document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
 
     // --- Camera change handler ---
     let timer = null;
