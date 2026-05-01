@@ -1493,14 +1493,9 @@ zoomWatcher = {
     // Counts answer: for each value in facet D, how many samples would match
     // this value plus the active filters in all OTHER facets. This keeps
     // selected facets useful as drill-out controls instead of just echoing the
-    // selected values. Search text is treated as an additional sample predicate.
+    // selected values.
     let facetCountsReqId = 0;
     let facetCountsDebounce = null;
-
-    function getSearchTerm() {
-        const input = document.getElementById('sampleSearch');
-        return input ? input.value.trim() : '';
-    }
 
     function describeCrossFilters() {
         const sourceChecks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
@@ -1509,7 +1504,6 @@ zoomWatcher = {
         const mat = getCheckedValues('materialFilterBody');
         const ctx = getCheckedValues('contextFilterBody');
         const ot = getCheckedValues('objectTypeFilterBody');
-        const search = getSearchTerm();
         const dims = [
             { key: 'source', col: 'source', values: sources.length < sourceTotal ? sources : [] },
             { key: 'material', col: 'material', values: mat },
@@ -1523,13 +1517,11 @@ zoomWatcher = {
             activeDims,
             totalActiveValues,
             sourceImpossible: sourceTotal > 0 && sources.length === 0,
-            searchActive: search.length >= 2,
-            search,
         };
     }
 
     function buildCrossFilterWhere(excludeFacet) {
-        const { activeDims, sourceImpossible, searchActive, search } = describeCrossFilters();
+        const { activeDims, sourceImpossible } = describeCrossFilters();
         if (sourceImpossible && excludeFacet !== 'source') return '1=0';
 
         const conds = activeDims
@@ -1539,31 +1531,21 @@ zoomWatcher = {
                 return `${d.col} IN (${list})`;
             });
 
-        if (searchActive) {
-            const terms = searchTerms(search);
-            const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
-            conds.push(`pid IN (
-                SELECT pid
-                FROM read_parquet('${lite_url}')
-                WHERE ${searchWhere}
-            )`);
-        }
-
         return conds.length > 0 ? conds.join(' AND ') : '1=1';
     }
 
     async function updateCrossFilteredCounts(myReq) {
         if (myReq !== facetCountsReqId) return;
-        const { dims, activeDims, totalActiveValues, sourceImpossible, searchActive } = describeCrossFilters();
+        const { dims, activeDims, totalActiveValues, sourceImpossible } = describeCrossFilters();
 
-        if (!sourceImpossible && activeDims.length === 0 && !searchActive) {
+        if (!sourceImpossible && activeDims.length === 0) {
             for (const d of dims) applyFacetCounts(d.key, null);
             return;
         }
 
         markFacetCountsRecomputing();
 
-        const singleActiveDim = !sourceImpossible && !searchActive
+        const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
         if (singleActiveDim && totalActiveValues === 1) {
