@@ -464,8 +464,11 @@ function writeQueryState() {
     if (maxSamples !== DEFAULT_POINT_BUDGET) params.set('maxSamples', String(maxSamples));
     else params.delete('maxSamples');
 
-    const view = params.get('view');
-    if (view && view !== 'globe' && view !== 'table') params.delete('view');
+    if (typeof document !== 'undefined' && document.body && document.body.classList.contains('table-view-active')) {
+        params.set('view', 'table');
+    } else {
+        params.delete('view');
+    }
 
     const qs = params.toString();
     const url = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
@@ -755,13 +758,6 @@ function getTableMaxSamples() {
 
 function isTableViewActive() {
     return document.body.classList.contains('table-view-active');
-}
-
-function setSearchParam(name, value) {
-    const url = new URL(location.href);
-    if (value == null) url.searchParams.delete(name);
-    else url.searchParams.set(name, value);
-    history.replaceState(null, '', url);
 }
 ```
 
@@ -1090,6 +1086,7 @@ tableView = {
     let requestId = 0;
     let loadedMax = 0;
     let hitHardCap = false;
+    let tableDirty = true;
 
     const globeLayout = document.querySelector('.globe-layout');
     const tableContainer = document.getElementById('tableContainer');
@@ -1184,6 +1181,7 @@ tableView = {
             const arr = Array.from(data);
             hitHardCap = arr.length === loadedMax;
             rows = arr;
+            tableDirty = false;
             renderTable();
             const capText = hitHardCap
                 ? (loadedMax < TABLE_MAX_MAX
@@ -1214,8 +1212,8 @@ tableView = {
             tableBtn.classList.toggle('active', tableMode);
             tableBtn.setAttribute('aria-pressed', String(tableMode));
         }
-        if (updateUrl) setSearchParam('view', tableMode ? 'table' : null);
-        if (tableMode && rows.length === 0) refreshTable();
+        if (updateUrl) writeQueryState();
+        if (tableMode && (tableDirty || rows.length === 0)) refreshTable();
         if (!tableMode && typeof viewer !== 'undefined') {
             setTimeout(() => viewer.resize(), 0);
         }
@@ -1232,18 +1230,15 @@ tableView = {
         });
     }
 
-    document.getElementById('sourceFilter')?.addEventListener('change', () => {
+    function handleTableFilterChange() {
+        tableDirty = true;
         if (isTableViewActive()) refreshTable();
-    });
-    document.getElementById('materialFilterBody')?.addEventListener('change', () => {
-        if (isTableViewActive()) refreshTable();
-    });
-    document.getElementById('contextFilterBody')?.addEventListener('change', () => {
-        if (isTableViewActive()) refreshTable();
-    });
-    document.getElementById('objectTypeFilterBody')?.addEventListener('change', () => {
-        if (isTableViewActive()) refreshTable();
-    });
+    }
+
+    document.getElementById('sourceFilter')?.addEventListener('change', handleTableFilterChange);
+    document.getElementById('materialFilterBody')?.addEventListener('change', handleTableFilterChange);
+    document.getElementById('contextFilterBody')?.addEventListener('change', handleTableFilterChange);
+    document.getElementById('objectTypeFilterBody')?.addEventListener('change', handleTableFilterChange);
 
     window.refreshSamplesTable = refreshTable;
     const params = new URLSearchParams(location.search);
