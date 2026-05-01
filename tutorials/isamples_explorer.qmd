@@ -1407,13 +1407,28 @@ zoomWatcher = {
         searchResults.textContent = 'Searching...';
         try {
             const escaped = term.replace(/'/g, "''");
-            const results = await db.query(`
+            // Compose with facet filters so search honors the same Material /
+            // Sampled Feature / Specimen Type selections that the table and
+            // point-mode globe use. Without this, search would surface (and
+            // fly to) samples outside the active filters.
+            const facetActive = hasFacetFilters();
+            const facetSQL = facetActive ? facetFilterSQL() : '';
+            const query = facetActive ? `
+                SELECT l.pid, l.label, l.source, l.latitude, l.longitude, l.place_name
+                FROM read_parquet('${lite_url}') l
+                JOIN read_parquet('${facets_url}') f ON l.pid = f.pid
+                WHERE l.label ILIKE '%${escaped}%'
+                ${sourceFilterSQL('l.source')}
+                ${facetSQL}
+                LIMIT 50
+            ` : `
                 SELECT pid, label, source, latitude, longitude, place_name
                 FROM read_parquet('${lite_url}')
                 WHERE label ILIKE '%${escaped}%'
                 ${sourceFilterSQL('source')}
                 LIMIT 50
-            `);
+            `;
+            const results = await db.query(query);
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
                 return;
@@ -1589,14 +1604,14 @@ perfPanel = {
 
 ## How It Works
 
-The globe loads progressively: a 580 KB pre-aggregated H3 res4 file paints the world in clusters within ~1 s, finer-grained res6 / res8 files swap in as you zoom, and only when you zoom past 120 km altitude does the explorer switch to individual sample points (capped at 5K, viewport-bounded). The results table below the globe queries the same 60 MB lite parquet for the first 200 samples that match your filters — independent of the camera. Filters compose: source filtering applies at every zoom level (works on H3 cluster files too), while material / sampled feature / specimen filters apply once you're at sample zoom or in the results table (the H3 tier files are not pre-filtered by those facets).
+The globe loads progressively: a 580 KB pre-aggregated H3 res4 file paints the world in clusters within ~1 s, finer-grained res6 / res8 files swap in as you zoom, and only when you zoom past 120 km altitude does the explorer switch to individual sample points (capped at the Max Samples slider, viewport-bounded). The results table below the globe queries the 60 MB lite parquet for samples matching your filters — independent of the camera. Filters compose at sample zoom (and in the results table and search): source + material + sampled feature + specimen type all apply via a join on the facets parquet. **At cluster zoom**, the H3 tier files only carry one row per `(h3_cell, dominant_source)`, so source filtering keeps cells whose *dominant* source matches — a cell where OpenContext is present but isn't the majority will be hidden when you uncheck OpenContext. Material / sampled feature / specimen filters do not apply at cluster zoom at all (the tier files aren't pre-filtered by those facets).
 
 | Phase | Data | Size | Points |
 |-------|------|------|--------|
 | **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
 | **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
 | **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
-| **Zoom deep** | Map lite | 60 MB (range req.) | Up to 5K individual samples |
+| **Zoom deep** | Map lite | 60 MB (range req.) | Up to Max Samples slider value (default 25K, max 100K) individual samples in viewport |
 | **Click sample** | Full dataset | ~280 MB (range req.) | Full metadata for 1 sample |
 
 All queries run in your browser via DuckDB-WASM with HTTP range requests — only the bytes you need are transferred. No backend.
