@@ -136,7 +136,7 @@ Circle size = log(sample count). Color = dominant data source.
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
 <div class="search-bar">
-<input type="text" id="sampleSearch" placeholder="Search samples (e.g., basalt, pottery, coral...)" />
+<input type="text" id="sampleSearch" placeholder="Search samples - multiple words narrow results (e.g., pottery Cyprus)" />
 <button id="searchBtn">Search</button>
 </div>
 <div id="searchResults" class="search-results"></div>
@@ -256,6 +256,124 @@ function sourceFilterSQL(col) {
     if (active.length === 4) return '';           // all checked = no filter
     const list = active.map(s => `'${s}'`).join(',');
     return ` AND ${col} IN (${list})`;
+}
+
+SOURCE_VALUES = ['SESAR', 'OPENCONTEXT', 'GEOME', 'SMITHSONIAN']
+DEFAULT_POINT_BUDGET = 5000
+
+function csvParamValues(params, key) {
+    if (!params.has(key)) return null;
+    const raw = params.get(key) || '';
+    if (raw.trim() === '') return [];
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function updateSourceLegendState() {
+    document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
+        const cb = li.querySelector('input');
+        li.classList.toggle('disabled', !cb.checked);
+    });
+}
+
+function applyQueryToSourceFilter() {
+    const params = new URLSearchParams(location.search);
+    const initialSources = csvParamValues(params, 'sources');
+    if (initialSources == null) return;
+    const allowed = new Set(SOURCE_VALUES);
+    const selected = new Set(initialSources.filter(s => allowed.has(s)));
+    document.querySelectorAll('#sourceFilter input[type="checkbox"]').forEach(cb => {
+        cb.checked = selected.has(cb.value);
+    });
+    updateSourceLegendState();
+}
+
+function applyQueryToSearch() {
+    const input = document.getElementById('sampleSearch');
+    if (!input) return;
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q != null) input.value = q;
+}
+
+function setCheckedValues(containerId, values) {
+    if (values == null) return;
+    const selected = new Set(values);
+    document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach(cb => {
+        cb.checked = selected.has(cb.value);
+    });
+}
+
+function applyQueryToFacetFilters() {
+    const params = new URLSearchParams(location.search);
+    setCheckedValues('materialFilterBody', csvParamValues(params, 'material'));
+    setCheckedValues('contextFilterBody', csvParamValues(params, 'context'));
+    setCheckedValues('objectTypeFilterBody', csvParamValues(params, 'object_type'));
+}
+
+function getMaxSamplesLimit() {
+    const params = new URLSearchParams(location.search);
+    return Math.round(parseNum(params.get('maxSamples'), DEFAULT_POINT_BUDGET, 1, 1000000));
+}
+
+function writeQueryState() {
+    const params = new URLSearchParams(location.search);
+    const searchInput = document.getElementById('sampleSearch');
+    const q = searchInput ? searchInput.value.trim() : '';
+    if (q) params.set('q', q);
+    else params.delete('q');
+
+    const activeSources = getActiveSources();
+    if (activeSources.length === SOURCE_VALUES.length) params.delete('sources');
+    else params.set('sources', activeSources.join(','));
+
+    [
+        ['material', 'materialFilterBody'],
+        ['context', 'contextFilterBody'],
+        ['object_type', 'objectTypeFilterBody'],
+    ].forEach(([key, containerId]) => {
+        const values = getCheckedValues(containerId);
+        if (values.length > 0) params.set(key, values.join(','));
+        else params.delete(key);
+    });
+
+    const maxSamples = getMaxSamplesLimit();
+    if (maxSamples !== DEFAULT_POINT_BUDGET) params.set('maxSamples', String(maxSamples));
+    else params.delete('maxSamples');
+
+    const view = params.get('view');
+    if (view && view !== 'globe' && view !== 'table') params.delete('view');
+
+    const qs = params.toString();
+    const url = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
+    if (url !== `${location.pathname}${location.search}${location.hash}`) {
+        history.replaceState(null, '', url);
+    }
+}
+
+function searchTerms(value) {
+    return String(value || '').trim().split(/\s+/).filter(Boolean);
+}
+
+function escapeIlikePattern(value) {
+    return escSql(value).replace(/[\\%_]/g, "\\$&");
+}
+
+function textSearchWhere(terms, columns) {
+    return terms.map(raw => {
+        const term = escapeIlikePattern(raw);
+        const checks = columns.map(col => `${col} ILIKE '%${term}%' ESCAPE '\\'`);
+        return `(${checks.join(' OR ')})`;
+    }).join(' AND ');
+}
+
+function textSearchScore(terms, weightedColumns) {
+    if (!terms.length) return '0';
+    return terms.map(raw => {
+        const term = escapeIlikePattern(raw);
+        return weightedColumns.map(({ col, weight }) =>
+            `CASE WHEN ${col} ILIKE '%${term}%' ESCAPE '\\' THEN ${weight} ELSE 0 END`
+        ).join(' + ');
+    }).map(score => `(${score})`).join(' + ');
 }
 
 // === Material / Sampled Feature / Specimen Type Filters ===
@@ -662,6 +780,8 @@ viewer = {
 // === PHASE 1: Load H3 res4 globally (instant) ===
 phase1 = {
     performance.mark('p1-start');
+    applyQueryToSearch();
+    applyQueryToSourceFilter();
 
     const data = await db.query(`
         SELECT h3_cell, sample_count, center_lat, center_lng,
@@ -784,6 +904,7 @@ facetFilters = {
         renderFilter('contextFilterBody', 'context', grouped.context);
         renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
         applyFacetCounts('source', null);
+        applyQueryToFacetFilters();
 
         console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
@@ -812,7 +933,7 @@ zoomWatcher = {
     // Hysteresis thresholds to avoid flicker
     const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
-    const POINT_BUDGET = 5000;
+    const POINT_BUDGET = getMaxSamplesLimit();
 
     // Viewport cache: avoid re-querying same area
     let cachedBounds = null;  // { south, north, west, east }
@@ -1090,10 +1211,12 @@ zoomWatcher = {
             });
 
         if (searchActive) {
+            const terms = searchTerms(search);
+            const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
             conds.push(`pid IN (
                 SELECT pid
                 FROM read_parquet('${lite_url}')
-                WHERE label ILIKE '%${escSql(search)}%'
+                WHERE ${searchWhere}
             )`);
         }
 
@@ -1182,10 +1305,8 @@ zoomWatcher = {
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
         // Toggle visual state on labels
-        document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
-            const cb = li.querySelector('input');
-            li.classList.toggle('disabled', !cb.checked);
-        });
+        updateSourceLegendState();
+        writeQueryState();
         if (mode === 'cluster') {
             loading = false;  // allow loadRes to run (gen counter discards stale results)
             await loadRes(currentRes, resUrls[currentRes]);
@@ -1207,6 +1328,7 @@ zoomWatcher = {
     function handleFacetFilterChange() {
         const active = hasFacetFilters();
         if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
+        writeQueryState();
         if (mode === 'point') {
             cachedBounds = null;
             loadViewportSamples();
@@ -1350,16 +1472,26 @@ zoomWatcher = {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
+            writeQueryState();
             return;
         }
+        writeQueryState();
         searchResults.textContent = 'Searching...';
         try {
-            const escaped = term.replace(/'/g, "''");
+            const terms = searchTerms(term);
+            const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
+            const score = textSearchScore(terms, [
+                { col: 'label', weight: 3 },
+                { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
+            ]);
             const results = await db.query(`
-                SELECT pid, label, source, latitude, longitude, place_name
+                SELECT pid, label, source, latitude, longitude, place_name,
+                       (${score}) AS relevance_score
                 FROM read_parquet('${lite_url}')
-                WHERE label ILIKE '%${escaped}%'
+                WHERE ${searchWhere}
                 ${sourceFilterSQL('source')}
+                ${facetFilterSQL()}
+                ORDER BY relevance_score DESC, label
                 LIMIT 50
             `);
             if (results.length === 0) {
@@ -1430,6 +1562,10 @@ zoomWatcher = {
             refreshFacetCounts();
         }
     });
+
+    if (searchInput && searchInput.value.trim().length >= 2) {
+        doSearch();
+    }
 
     refreshFacetCounts();
 
