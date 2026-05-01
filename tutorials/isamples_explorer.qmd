@@ -1327,8 +1327,10 @@ zoomWatcher = {
                     }
                     for (const d of dims) {
                         if (d.key === singleActiveDim.key) {
-                            // Selected facet keeps baseline counts (so the
-                            // user can see what other values *would* yield).
+                            // Active dim with no OTHER filters → recomputing
+                            // its own values under "no other dim filters" =
+                            // baseline. Cache also doesn't carry rows for the
+                            // filter-dim's own facet_type (verified empirically).
                             applyFacetCounts(d.key, null);
                         } else {
                             applyFacetCounts(d.key, grouped[d.key]);
@@ -1343,15 +1345,13 @@ zoomWatcher = {
         }
 
         // Case 3: on-the-fly — four GROUP BY queries against facets_url, each
-        // excluding the dim being recomputed. The selected dim's own counts
-        // stay at baseline (so the user can switch their selection within it).
+        // excluding the dim being recomputed. Per semantics (A) (issue #154
+        // / PR #155 thread): for *every* dim D, including dims with active
+        // selections, count(value=V) = `WHERE V AND <other-dim filters>`.
+        // This makes each value's count answer "how many samples have THIS
+        // value under my other filters", regardless of which values within
+        // this dim are currently selected.
         const queries = dims.map(async (d) => {
-            if (d.key === (singleActiveDim?.key) || activeDims.find(a => a.key === d.key)) {
-                // Don't recompute the column whose own values the user is
-                // selecting. Show baseline so they can switch.
-                applyFacetCounts(d.key, null);
-                return;
-            }
             const where = buildExcludeWhere(activeDims, d.key);
             const sql = `
                 SELECT ${d.col} AS value, COUNT(*) AS count
