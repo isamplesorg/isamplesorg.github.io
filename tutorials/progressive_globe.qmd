@@ -105,6 +105,109 @@ format:
     }
     .search-bar button:hover { background: #0d47a1; }
     .search-results { font-size: 12px; color: #666; padding: 4px 0; }
+    .view-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin: 10px 0 12px;
+        flex-wrap: wrap;
+    }
+    .view-toggle {
+        display: inline-flex;
+        border: 1px solid #b8c7d9;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .view-toggle button {
+        background: white;
+        color: #234;
+        border: 0;
+        border-right: 1px solid #b8c7d9;
+        padding: 6px 14px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .view-toggle button:last-child { border-right: 0; }
+    .view-toggle button.active { background: #1565c0; color: white; }
+    .table-controls {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #555;
+    }
+    .table-controls input {
+        width: 92px;
+        padding: 5px 8px;
+        border: 1px solid #b8c7d9;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    #tableContainer {
+        display: none;
+        margin-bottom: 16px;
+    }
+    .table-meta {
+        font-size: 12px;
+        color: #555;
+        margin: 4px 0 8px;
+    }
+    .table-scroll {
+        overflow-x: auto;
+        border: 1px solid #d8dee6;
+        border-radius: 6px;
+    }
+    .samples-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        background: white;
+    }
+    .samples-table th, .samples-table td {
+        padding: 7px 9px;
+        border-bottom: 1px solid #edf0f4;
+        text-align: left;
+        vertical-align: top;
+    }
+    .samples-table th {
+        background: #f6f8fb;
+        color: #344;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .samples-table tr:last-child td { border-bottom: 0; }
+    .table-badge {
+        color: white;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+    .table-link { color: #1565c0; text-decoration: none; }
+    .table-link:hover { text-decoration: underline; }
+    .table-pager {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: #555;
+    }
+    .table-pager button {
+        background: #1565c0;
+        color: white;
+        border: 0;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .table-pager button:disabled {
+        background: #c7d2df;
+        cursor: default;
+    }
     .filter-section { border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; }
     .filter-header {
         font-size: 12px; font-weight: 600; color: #555; cursor: pointer;
@@ -140,6 +243,17 @@ Circle size = log(sample count). Color = dominant data source.
 <button id="searchBtn">Search</button>
 </div>
 <div id="searchResults" class="search-results"></div>
+
+<div class="view-toolbar">
+<div class="view-toggle" role="group" aria-label="View mode">
+<button id="globeViewBtn" type="button" class="active" aria-pressed="true">Globe</button>
+<button id="tableViewBtn" type="button" aria-pressed="false">Table</button>
+</div>
+<div id="tableControls" class="table-controls">
+<label for="maxSamples">Max samples</label>
+<input type="number" id="maxSamples" min="1000" max="100000" step="1000" value="25000">
+</div>
+</div>
 
 <div class="globe-layout">
 <div id="cesiumContainer"></div>
@@ -198,6 +312,16 @@ Loading H3 global overview...
 <div class="empty-state">Click a cluster or sample on the globe</div>
 </div>
 <div id="samplesSection" class="panel-section" style="flex: 1; overflow-y: auto;"></div>
+</div>
+</div>
+
+<div id="tableContainer">
+<div id="tableMeta" class="table-meta">Table view loads samples matching the current filters.</div>
+<div id="samplesTable"></div>
+<div class="table-pager">
+<button id="tablePrev" type="button">Previous</button>
+<span id="tablePageInfo"></span>
+<button id="tableNext" type="button">Next</button>
 </div>
 </div>
 
@@ -600,6 +724,45 @@ function updateSamples(samples) {
     }
     el.innerHTML = h;
 }
+
+// === Binary Globe/Table view ===
+TABLE_PAGE_SIZE = 100
+TABLE_DEFAULT_MAX = 25000
+TABLE_MIN_MAX = 1000
+TABLE_MAX_MAX = 100000
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function clampTableMaxSamples(value) {
+    const n = parseInt(value, 10);
+    if (!Number.isFinite(n)) return TABLE_DEFAULT_MAX;
+    return Math.min(TABLE_MAX_MAX, Math.max(TABLE_MIN_MAX, n));
+}
+
+function getTableMaxSamples() {
+    const el = document.getElementById('maxSamples');
+    const value = clampTableMaxSamples(el ? el.value : TABLE_DEFAULT_MAX);
+    if (el && String(value) !== String(el.value)) el.value = value;
+    return value;
+}
+
+function isTableViewActive() {
+    return document.body.classList.contains('table-view-active');
+}
+
+function setSearchParam(name, value) {
+    const url = new URL(location.href);
+    if (value == null) url.searchParams.delete(name);
+    else url.searchParams.set(name, value);
+    history.replaceState(null, '', url);
+}
 ```
 
 ```{ojs}
@@ -911,6 +1074,182 @@ facetFilters = {
         console.warn("Facet summaries failed to load:", err);
     }
     return "loaded";
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// === Table view: paginated sample rows matching current filters ===
+tableView = {
+    if (!facetFilters) return;
+
+    let rows = [];
+    let page = 0;
+    let requestId = 0;
+    let loadedMax = 0;
+    let hitHardCap = false;
+
+    const globeLayout = document.querySelector('.globe-layout');
+    const tableContainer = document.getElementById('tableContainer');
+    const tableControls = document.getElementById('tableControls');
+    const globeBtn = document.getElementById('globeViewBtn');
+    const tableBtn = document.getElementById('tableViewBtn');
+    const maxInput = document.getElementById('maxSamples');
+    const prevBtn = document.getElementById('tablePrev');
+    const nextBtn = document.getElementById('tableNext');
+    const metaEl = document.getElementById('tableMeta');
+    const pageInfoEl = document.getElementById('tablePageInfo');
+    const tableEl = document.getElementById('samplesTable');
+
+    function setMeta(text, loading) {
+        if (!metaEl) return;
+        metaEl.textContent = text;
+        metaEl.style.color = loading ? '#1565c0' : '#555';
+    }
+
+    function tableSourceBadge(source) {
+        const color = SOURCE_COLORS[source] || '#666';
+        const name = SOURCE_NAMES[source] || source || '';
+        return `<span class="table-badge" style="background:${color}">${escapeHtml(name)}</span>`;
+    }
+
+    function renderTable() {
+        const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+        page = Math.min(page, totalPages - 1);
+        const start = page * TABLE_PAGE_SIZE;
+        const visible = rows.slice(start, start + TABLE_PAGE_SIZE);
+
+        if (!tableEl) return;
+        if (visible.length === 0) {
+            tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>No samples match the current filters.</td></tr></tbody></table></div>';
+        } else {
+            const body = visible.map(r => {
+                const placeParts = r.place_name;
+                const place = Array.isArray(placeParts) && placeParts.length > 0
+                    ? placeParts.filter(Boolean).join(' › ')
+                    : '';
+                const lat = r.latitude != null ? Number(r.latitude).toFixed(5) : '';
+                const lng = r.longitude != null ? Number(r.longitude).toFixed(5) : '';
+                const label = r.label || r.pid || '';
+                const url = sourceUrl(r.pid);
+                const labelHtml = url
+                    ? `<a class="table-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
+                    : escapeHtml(label);
+                return `<tr>
+                    <td>${tableSourceBadge(r.source)}</td>
+                    <td>${labelHtml}</td>
+                    <td>${escapeHtml(place)}</td>
+                    <td>${escapeHtml(r.result_time || '')}</td>
+                    <td>${escapeHtml(lat)}</td>
+                    <td>${escapeHtml(lng)}</td>
+                </tr>`;
+            }).join('');
+            tableEl.innerHTML = `<div class="table-scroll">
+                <table class="samples-table">
+                    <thead><tr><th>Source</th><th>Label</th><th>Place</th><th>Date</th><th>Lat</th><th>Lon</th></tr></thead>
+                    <tbody>${body}</tbody>
+                </table>
+            </div>`;
+        }
+
+        if (pageInfoEl) {
+            const first = rows.length === 0 ? 0 : start + 1;
+            const last = Math.min(rows.length, start + visible.length);
+            pageInfoEl.textContent = rows.length === 0
+                ? 'Page 0 of 0'
+                : `Page ${page + 1} of ${totalPages} (${first.toLocaleString()}-${last.toLocaleString()} of ${rows.length.toLocaleString()})`;
+        }
+        if (prevBtn) prevBtn.disabled = page <= 0;
+        if (nextBtn) nextBtn.disabled = page >= totalPages - 1;
+    }
+
+    async function refreshTable() {
+        const myReq = ++requestId;
+        loadedMax = getTableMaxSamples();
+        page = 0;
+        setMeta(`Loading up to ${loadedMax.toLocaleString()} samples matching filters...`, true);
+
+        try {
+            const data = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name, result_time
+                FROM read_parquet('${lite_url}')
+                WHERE 1=1
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                LIMIT ${loadedMax}
+            `);
+            if (myReq !== requestId) return;
+            const arr = Array.from(data);
+            hitHardCap = arr.length === loadedMax;
+            rows = arr;
+            renderTable();
+            const capText = hitHardCap
+                ? (loadedMax < TABLE_MAX_MAX
+                    ? ` Max samples cap reached; raise it to inspect more rows.`
+                    : ` Maximum table cap reached.`)
+                : '';
+            setMeta(`Loaded ${rows.length.toLocaleString()} sample rows.${capText}`, false);
+        } catch (err) {
+            if (myReq !== requestId) return;
+            console.error('Table query failed:', err);
+            rows = [];
+            renderTable();
+            setMeta('Table query failed; adjust filters and try again.', false);
+        }
+    }
+
+    function setView(mode, updateUrl) {
+        const tableMode = mode === 'table';
+        document.body.classList.toggle('table-view-active', tableMode);
+        if (globeLayout) globeLayout.style.display = tableMode ? 'none' : '';
+        if (tableContainer) tableContainer.style.display = tableMode ? 'block' : 'none';
+        if (tableControls) tableControls.style.display = tableMode ? 'flex' : 'none';
+        if (globeBtn) {
+            globeBtn.classList.toggle('active', !tableMode);
+            globeBtn.setAttribute('aria-pressed', String(!tableMode));
+        }
+        if (tableBtn) {
+            tableBtn.classList.toggle('active', tableMode);
+            tableBtn.setAttribute('aria-pressed', String(tableMode));
+        }
+        if (updateUrl) setSearchParam('view', tableMode ? 'table' : null);
+        if (tableMode && rows.length === 0) refreshTable();
+        if (!tableMode && typeof viewer !== 'undefined') {
+            setTimeout(() => viewer.resize(), 0);
+        }
+    }
+
+    if (globeBtn) globeBtn.addEventListener('click', () => setView('globe', true));
+    if (tableBtn) tableBtn.addEventListener('click', () => setView('table', true));
+    if (prevBtn) prevBtn.addEventListener('click', () => { page = Math.max(0, page - 1); renderTable(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { page += 1; renderTable(); });
+    if (maxInput) {
+        maxInput.addEventListener('change', () => {
+            maxInput.value = getTableMaxSamples();
+            if (isTableViewActive()) refreshTable();
+        });
+    }
+
+    document.getElementById('sourceFilter')?.addEventListener('change', () => {
+        if (isTableViewActive()) refreshTable();
+    });
+    document.getElementById('materialFilterBody')?.addEventListener('change', () => {
+        if (isTableViewActive()) refreshTable();
+    });
+    document.getElementById('contextFilterBody')?.addEventListener('change', () => {
+        if (isTableViewActive()) refreshTable();
+    });
+    document.getElementById('objectTypeFilterBody')?.addEventListener('change', () => {
+        if (isTableViewActive()) refreshTable();
+    });
+
+    window.refreshSamplesTable = refreshTable;
+    const params = new URLSearchParams(location.search);
+    setView(params.get('view') === 'table' ? 'table' : 'globe', false);
+
+    return "active";
 }
 ```
 
