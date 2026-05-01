@@ -116,6 +116,12 @@ format:
     .filter-body label:hover { color: #1565c0; }
     /* Results table below the globe */
     #resultsTableWrap { margin-top: 16px; }
+    #resultsTable {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 6px;
+    }
     .results-table {
         width: 100%;
         border-collapse: collapse;
@@ -179,10 +185,10 @@ Circle size = log(sample count). Color = dominant data source.
 </div>
 <div style="margin-top: 8px;">
 <div class="legend" id="sourceFilter">
-<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR</label>
-<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext</label>
-<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME</label>
-<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian</label>
+<label class="legend-item"><input type="checkbox" value="SESAR" checked><span class="legend-dot" style="background:#3366CC"></span> SESAR <span class="src-count" data-source="SESAR" style="color:#888"></span></label>
+<label class="legend-item"><input type="checkbox" value="OPENCONTEXT" checked><span class="legend-dot" style="background:#DC3912"></span> OpenContext <span class="src-count" data-source="OPENCONTEXT" style="color:#888"></span></label>
+<label class="legend-item"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="src-count" data-source="GEOME" style="color:#888"></span></label>
+<label class="legend-item"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="src-count" data-source="SMITHSONIAN" style="color:#888"></span></label>
 </div>
 </div>
 <div class="filter-section" id="materialFilter">
@@ -212,8 +218,15 @@ Specimen Type <span>▾</span>
 <div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
 Material / feature / specimen filters apply at sample zoom level
 </div>
-<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+<div class="filter-section" id="maxSamplesSection">
+<label style="font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px;">
+Max Samples: <span id="maxSamplesValue" style="font-weight: 400; color: #1565c0; font-variant-numeric: tabular-nums;">25,000</span>
+</label>
+<input type="range" id="maxSamples" min="1000" max="100000" step="1000" value="25000" style="width: 100%;">
+</div>
+<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
 <button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
+<button id="clearFiltersBtn" class="share-btn" style="background:#666;" title="Reset filters and reload page">Clear Filters</button>
 <span id="shareToast" class="share-toast">Link copied!</span>
 </div>
 <div id="phaseMsg" class="phase-msg" style="margin-top: 8px; background: #e3f2fd; color: #1565c0;">
@@ -255,6 +268,9 @@ wide_url = `${R2_BASE}/current/wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
 facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+// SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
+// ~60 KB lookup; falls back to URI tail if a URI isn't covered.
+vocab_labels_url = `${R2_BASE}/vocab_labels.parquet`
 
 // Canonical palette — see issue #113. Path-relative so this works under
 // both isamples.org (custom domain at root) and project-pages fork
@@ -292,44 +308,31 @@ function getCheckedValues(containerId) {
     return Array.from(checks).filter(c => c.checked).map(c => c.value);
 }
 
+// Semantics (matches the prior explorer): empty = no filter, show all.
+// Selecting one or more items = include only those. Reduces visual noise
+// at startup (you don't see hundreds of pre-checked rows).
 function hasFacetFilters() {
-    const mat = getCheckedValues('materialFilterBody');
-    const ctx = getCheckedValues('contextFilterBody');
-    const ot = getCheckedValues('objectTypeFilterBody');
-    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
-    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
-    const otTotal = document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]').length;
-    // Active if some (but not all) are checked, or if none are checked
-    return (mat.length > 0 && mat.length < matTotal)
-        || (ctx.length > 0 && ctx.length < ctxTotal)
-        || (ot.length > 0 && ot.length < otTotal);
+    return getCheckedValues('materialFilterBody').length > 0
+        || getCheckedValues('contextFilterBody').length > 0
+        || getCheckedValues('objectTypeFilterBody').length > 0;
 }
 
 function facetFilterSQL() {
     let sql = '';
     const mat = getCheckedValues('materialFilterBody');
-    const matTotal = document.querySelectorAll('#materialFilterBody input[type="checkbox"]').length;
-    if (mat.length > 0 && mat.length < matTotal) {
-        const list = mat.map(s => `'${s}'`).join(',');
+    if (mat.length > 0) {
+        const list = mat.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
         sql += ` AND f.material IN (${list})`;
-    } else if (mat.length === 0 && matTotal > 0) {
-        sql += ' AND 1=0';
     }
     const ctx = getCheckedValues('contextFilterBody');
-    const ctxTotal = document.querySelectorAll('#contextFilterBody input[type="checkbox"]').length;
-    if (ctx.length > 0 && ctx.length < ctxTotal) {
-        const list = ctx.map(s => `'${s}'`).join(',');
+    if (ctx.length > 0) {
+        const list = ctx.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
         sql += ` AND f.context IN (${list})`;
-    } else if (ctx.length === 0 && ctxTotal > 0) {
-        sql += ' AND 1=0';
     }
     const ot = getCheckedValues('objectTypeFilterBody');
-    const otTotal = document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]').length;
-    if (ot.length > 0 && ot.length < otTotal) {
-        const list = ot.map(s => `'${s}'`).join(',');
+    if (ot.length > 0) {
+        const list = ot.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
         sql += ` AND f.object_type IN (${list})`;
-    } else if (ot.length === 0 && otTotal > 0) {
-        sql += ' AND 1=0';
     }
     return sql;
 }
@@ -782,9 +785,38 @@ phase1 = {
 //| echo: false
 //| output: false
 
-// === Load facet summaries and populate filter checkboxes ===
+// === Load facet summaries + SKOS prefLabels, populate filter checkboxes ===
+//
+// Checkbox semantics: start UNCHECKED (no filter; show everything). User
+// checks items to *include only those*. Empty = no filter. This matches the
+// prior explorer's UX and keeps the side panel compact at startup.
+//
+// Checkbox value = full URI (matches the URI strings stored in
+// sample_facets_v2.parquet's material / context / object_type columns).
+// Display label = SKOS prefLabel (en) when available, URI tail otherwise.
 facetFilters = {
     if (!phase1) return;
+
+    // Tiny URI → prefLabel lookup. ~60 KB. Best-effort: fallback to URI tail.
+    const vocabMap = new Map();
+    try {
+        const vocab = await db.query(
+            `SELECT uri, pref_label FROM read_parquet('${vocab_labels_url}') WHERE lang = 'en'`
+        );
+        for (const r of vocab) vocabMap.set(r.uri, r.pref_label);
+    } catch (err) {
+        console.warn("vocab_labels load failed; falling back to URI tails:", err);
+    }
+    const prettyLabel = (uri) => {
+        if (uri == null) return "";
+        const hit = vocabMap.get(uri);
+        if (hit) return hit;
+        const s = String(uri);
+        if (!/^https?:\/\//.test(s)) return s;
+        const parts = s.replace(/[#?].*$/, "").split("/").filter(Boolean);
+        return parts.length ? parts[parts.length - 1] : s;
+    };
+
     try {
         const summaries = await db.query(`
             SELECT facet_type, facet_value, count
@@ -792,29 +824,45 @@ facetFilters = {
             ORDER BY facet_type, count DESC
         `);
 
-        const grouped = { material: [], context: [], object_type: [] };
+        const grouped = { source: [], material: [], context: [], object_type: [] };
         for (const row of summaries) {
             if (grouped[row.facet_type]) {
-                // Extract short label from URI
-                const shortLabel = row.facet_value.split('/').pop() || row.facet_value;
-                grouped[row.facet_type].push({ value: shortLabel, fullUri: row.facet_value, count: row.count });
+                grouped[row.facet_type].push({
+                    uri: row.facet_value,
+                    label: prettyLabel(row.facet_value),
+                    count: row.count
+                });
             }
         }
 
+        // Update source count badges in the (hardcoded) legend.
+        const srcCountMap = new Map(grouped.source.map(s => [s.uri, s.count]));
+        document.querySelectorAll('#sourceFilter .src-count').forEach(el => {
+            const key = el.getAttribute('data-source');
+            const c = srcCountMap.get(key);
+            if (c != null) el.textContent = `(${Number(c).toLocaleString()})`;
+        });
+
+        const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
         const renderFilter = (bodyId, items) => {
             const body = document.getElementById(bodyId);
-            if (body && items.length > 0) {
-                body.innerHTML = items.map(it =>
-                    `<label><input type="checkbox" value="${it.value}" checked> ${it.value} <span style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
-                ).join('');
+            if (!body) return;
+            if (items.length === 0) {
+                body.innerHTML = '<em style="font-size: 11px; color: #999;">No values</em>';
+                return;
             }
+            body.innerHTML = items.map(it =>
+                `<label title="${escAttr(it.uri)}"><input type="checkbox" value="${escAttr(it.uri)}"> ${escText(it.label)} <span style="color:#999">(${Number(it.count).toLocaleString()})</span></label>`
+            ).join('');
         };
 
         renderFilter('materialFilterBody', grouped.material);
         renderFilter('contextFilterBody', grouped.context);
         renderFilter('objectTypeFilterBody', grouped.object_type);
 
-        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types`);
+        console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
         console.warn("Facet summaries failed to load:", err);
     }
@@ -841,7 +889,12 @@ zoomWatcher = {
     // Hysteresis thresholds to avoid flicker
     const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
-    const POINT_BUDGET = 5000;
+    // Sample budget is driven by the Max Samples slider; reads at query time.
+    const getMaxSamples = () => {
+        const el = document.getElementById('maxSamples');
+        const v = el ? parseInt(el.value, 10) : NaN;
+        return Number.isFinite(v) && v > 0 ? v : 5000;
+    };
 
     // Viewport cache: avoid re-querying same area
     let cachedBounds = null;  // { south, north, west, east }
@@ -980,7 +1033,7 @@ zoomWatcher = {
                       AND l.longitude BETWEEN ${padded.west} AND ${padded.east}
                       ${sourceFilterSQL('l.source')}
                       ${facetSQL}
-                    LIMIT ${POINT_BUDGET}
+                    LIMIT ${getMaxSamples()}
                 `;
             } else {
                 query = `
@@ -990,7 +1043,7 @@ zoomWatcher = {
                     WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
                       AND longitude BETWEEN ${padded.west} AND ${padded.east}
                       ${sourceFilterSQL('source')}
-                    LIMIT ${POINT_BUDGET}
+                    LIMIT ${getMaxSamples()}
                 `;
             }
             const data = await db.query(query);
@@ -1082,11 +1135,16 @@ zoomWatcher = {
     }
 
     // --- Results table refresh (below globe) ---
-    // Independent of globe mode — always shows top-N samples matching filters.
-    const RESULTS_TABLE_LIMIT = 200;
+    // Independent of globe mode — always shows up to maxSamples rows matching
+    // filters. Cap rendered rows at TABLE_RENDER_CAP to keep DOM tractable
+    // (the slider can go up to 100K which is fine for the globe but jank for
+    // a flat HTML table).
+    const TABLE_RENDER_CAP = 200;
     let tableReqId = 0;
     async function refreshResultsTable() {
         const myReq = ++tableReqId;
+        const limit = getMaxSamples();
+        const renderLimit = Math.min(limit, TABLE_RENDER_CAP);
         updateResultsTableMeta('Loading samples matching filters…', true);
         try {
             const facetActive = hasFacetFilters();
@@ -1100,7 +1158,7 @@ zoomWatcher = {
                     WHERE 1=1
                       ${sourceFilterSQL('l.source')}
                       ${facetSQL}
-                    LIMIT ${RESULTS_TABLE_LIMIT}
+                    LIMIT ${limit}
                 `;
             } else {
                 query = `
@@ -1108,15 +1166,21 @@ zoomWatcher = {
                     FROM read_parquet('${lite_url}')
                     WHERE 1=1
                       ${sourceFilterSQL('source')}
-                    LIMIT ${RESULTS_TABLE_LIMIT}
+                    LIMIT ${limit}
                 `;
             }
             const data = await db.query(query);
             if (myReq !== tableReqId) return;  // stale
-            renderResultsTable(data);
-            const note = data.length === RESULTS_TABLE_LIMIT
-                ? `Showing first ${RESULTS_TABLE_LIMIT} samples matching filters (more exist).`
-                : `Showing ${data.length.toLocaleString()} samples matching filters.`;
+            const visible = data.slice(0, renderLimit);
+            renderResultsTable(visible);
+            let note;
+            if (data.length === limit) {
+                note = `Showing first ${visible.length.toLocaleString()} of ${limit.toLocaleString()}+ samples matching filters.`;
+            } else if (visible.length < data.length) {
+                note = `Showing first ${visible.length.toLocaleString()} of ${data.length.toLocaleString()} samples matching filters.`;
+            } else {
+                note = `Showing ${data.length.toLocaleString()} samples matching filters.`;
+            }
             updateResultsTableMeta(note, false);
         } catch (err) {
             if (myReq !== tableReqId) return;
@@ -1171,6 +1235,36 @@ zoomWatcher = {
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
+
+    // --- Max Samples slider ---
+    const maxSamplesEl = document.getElementById('maxSamples');
+    const maxSamplesValueEl = document.getElementById('maxSamplesValue');
+    if (maxSamplesEl && maxSamplesValueEl) {
+        // Live label while dragging, debounced query on release.
+        let sliderDebounce = null;
+        maxSamplesEl.addEventListener('input', () => {
+            const v = parseInt(maxSamplesEl.value, 10);
+            maxSamplesValueEl.textContent = Number(v).toLocaleString();
+            clearTimeout(sliderDebounce);
+            sliderDebounce = setTimeout(() => {
+                if (mode === 'point') {
+                    cachedBounds = null;
+                    loadViewportSamples();
+                }
+                refreshResultsTable();
+            }, 300);
+        });
+    }
+
+    // --- Clear Filters button ---
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            // Strip query string and hash, reload to a clean state. Simplest
+            // and matches the prior explorer's "<a href='?'>" behavior.
+            location.href = location.pathname;
+        });
+    }
 
     // Initial table load
     refreshResultsTable();
