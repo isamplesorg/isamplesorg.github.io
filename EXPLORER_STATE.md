@@ -254,7 +254,7 @@ These are not negotiable defaults during implementation:
 
 | concern | rule |
 |---------|------|
-| **Pin count cap** | maximum **50** pins (matches the existing search result `LIMIT 50`). Never render more, never render fewer than the result set size |
+| **Pin count cap** | maximum **50** pins, matching the existing search result `LIMIT 50` (the *displayed* result set size). The full match set may exceed 50; the substrate query truncates to top-K before pin rendering. Pin count therefore equals `min(50, total_matches)`, never more, never fewer |
 | **Z-order** | search-result pins render **above** both H3 cluster points and sample-mode points. Implementation: add `searchResultPoints` to `scene.primitives` *after* `h3Points` and `samplePoints` |
 | **Pin styling** | hollow ring with bright outline (distinct from cluster filled-dot and sample-mode small filled-dot). Color follows the source palette (`SOURCE_COLORS`) so a glance still tells you which source matched. Pixel size larger than sample-mode pins (e.g., `8` vs `6`) so the overlay reads as primary |
 | **Hover label** | identical pattern to existing pointLabel handler — `meta.label \|\| meta.pid`, source badge color |
