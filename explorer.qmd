@@ -1779,6 +1779,8 @@ zoomWatcher = {
     const searchInput = document.getElementById('sampleSearch');
     const searchResults = document.getElementById('searchResults');
 
+    let _searchSeq = 0;
+
     async function doSearch() {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
@@ -1788,8 +1790,21 @@ zoomWatcher = {
         }
         writeQueryState();
         searchResults.textContent = 'Searching...';
+
+        // Per-search perf instrumentation (#167). Captures cold/warm latency,
+        // result count, and bytes transferred from data.isamples.org during
+        // the search window. transferSize is 0 for cross-origin responses
+        // missing Timing-Allow-Origin; we fall back to encodedBodySize.
+        const searchId = ++_searchSeq;
+        const markStart = `search-${searchId}-start`;
+        const markEnd = `search-${searchId}-end`;
+        performance.mark(markStart);
+        const tStart = performance.now();
+        const terms = searchTerms(term);
+        let resultsCount = 0;
+        let errorMessage = null;
+
         try {
-            const terms = searchTerms(term);
             const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
             const score = textSearchScore(terms, [
                 { col: 'label', weight: 3 },
@@ -1805,6 +1820,7 @@ zoomWatcher = {
                 ORDER BY relevance_score DESC, label
                 LIMIT 50
             `);
+            resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
                 return;
@@ -1855,6 +1871,43 @@ zoomWatcher = {
         } catch(err) {
             console.error("Search failed:", err);
             searchResults.textContent = `Search error: ${err.message}`;
+            errorMessage = err.message || String(err);
+        } finally {
+            performance.mark(markEnd);
+            try { performance.measure(`search-${searchId}`, markStart, markEnd); } catch (e) {}
+            const elapsedMs = performance.now() - tStart;
+
+            // Sum bytes transferred from data.isamples.org during the search
+            // window. transferSize is 0 cross-origin without Timing-Allow-Origin;
+            // fall back to encodedBodySize so we still report something.
+            let transferBytes = 0;
+            let bodyBytes = 0;
+            try {
+                const entries = performance.getEntriesByType('resource');
+                for (const e of entries) {
+                    if (!e.name.startsWith(R2_BASE)) continue;
+                    if (e.startTime < tStart || e.startTime > tStart + elapsedMs) continue;
+                    transferBytes += (e.transferSize || 0);
+                    bodyBytes += (e.encodedBodySize || 0);
+                }
+            } catch (e) {}
+
+            // Structured log for Playwright capture (#167).
+            try {
+                console.log(JSON.stringify({
+                    event: 'isamples.search',
+                    id: searchId,
+                    term: term,
+                    terms_count: terms.length,
+                    results_count: resultsCount,
+                    elapsed_ms: Math.round(elapsedMs),
+                    bytes_transfer: transferBytes,
+                    bytes_body: bodyBytes,
+                    has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
+                    has_facet_filter: hasFacetFilters(),
+                    error: errorMessage,
+                }));
+            } catch (e) {}
         }
     }
 
@@ -1950,6 +2003,15 @@ perfPanel = {
         ['nav → phase 1 complete',        mark('p1-end')],
         ['nav → first globe frame',       mark('first-globe-frame')],
     ].filter(([, v]) => v != null);
+
+    // Append search timings if any have run by the time the panel renders
+    // (#167). Each search emits a structured console.log; the panel surface
+    // is purely informational here.
+    const searchMeasures = performance.getEntriesByType('measure')
+        .filter(e => e.name.startsWith('search-'));
+    for (const m of searchMeasures) {
+        rows.push([`search ${m.name.replace(/^search-/, '#')}`, m.duration]);
+    }
 
     // Console table for CI / offline capture
     console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));
