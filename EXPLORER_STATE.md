@@ -162,7 +162,12 @@ single most "magical" coupling in the file — touch with care.
 
 ## 6. Search-semantics decision
 
-The issue presents two options. **We commit to (B) side-panel lookup.**
+The issue originally presented two options (A) global filter and (B) side-panel
+lookup. After Codex review on #165, we committed to a sharper third framing:
+**(C) side-panel lookup with result-pin overlay**, which is a refinement of
+(B) — the *backend* is unchanged (search does not alter cluster/sample/facet
+data sources), but the *UI surface* gains a temporary point-overlay
+visualization of the matching samples.
 
 ### What "search" does today (`doSearch` at `:1782-1859`)
 
@@ -177,44 +182,95 @@ param is written via `writeQueryState()` (`:1786`, `:1789`).
 That is option (B) verbatim, and it matches the facet-count fix Codex landed
 in [#158](https://github.com/isamplesorg/isamplesorg.github.io/pull/158).
 
-### Decision: (B) side-panel lookup
+### The three options
 
-**Rationale.**
+- **(A) Global filter.** Active search restricts the map layer, table, and
+  facet counts to the matching subset. Forces cluster mode to drop to point
+  mode whenever a search is active (H3 summaries are not text-indexable).
+  Couples search semantics to camera/mode state. **Rejected.**
+- **(B) Side-panel lookup.** Search populates the side panel only; map +
+  facet counts ignore it. Today's behavior. Leaves [#163 item 4](https://github.com/isamplesorg/isamplesorg.github.io/issues/163)
+  as a UX wart (zero results + populated map). **Insufficient.**
+- **(C) Side-panel lookup with result-pin overlay.** Search populates the
+  side panel **and** renders a temporary point-overlay of the matching
+  samples on the globe — independent of the H3 cluster layer and the facet
+  counts. The cluster layer remains accurate (no facet-aware text indexing
+  required); the overlay visualizes "your search matched these samples,
+  here are their locations." Cleared when the user clears the search. **Adopted.**
 
-1. **Cluster mode can't text-search.** The H3 summary parquets carry only
-   `dominant_source`, `sample_count`, and centroid coords — no `label` or
-   `place_name`. Option (A) (global filter) would force cluster mode to drop
-   to point mode whenever a search is active, which adds a second mode-switch
-   trigger orthogonal to camera altitude and complicates the hysteresis logic
-   already living in `zoomWatcher` (`:1660-1687`).
-2. **Consistency with Codex's recent fix.** The cross-filter facet-count
-   contract landed in #158 already excludes search from the count predicate.
-   (A) would require re-opening that contract.
-3. **Search is a power-user "find me this sample" operation.** The map +
-   facets are the orienting controls. Conflating them risks the very
-   "imperative globe disappears under reactive search" pathology that
-   prompted #163 in the first place.
+### Decision: (C) side-panel lookup with result-pin overlay
 
-**The cost.** [#163 item 4](https://github.com/isamplesorg/isamplesorg.github.io/issues/163)
-("zero search results + populated map looks broken") remains a UX wart. We
-mitigate, not solve, it in this contract:
+**What stays the same as (B).** The backend / data-source contract is
+unchanged from option (B):
 
-- Search-result panel must always be reachable when `?search=` is non-empty,
-  with explicit "no matches" copy and a one-click "clear search" affordance.
-- Search-result rows must remain individually clickable to fly the camera —
-  so the population on the map is *useful context*, not noise, when a search
-  has results.
-- A future task may revisit (A) once H3 summaries carry text-indexable
-  attributes (e.g., dominant material). That is out of scope for #164.
+1. The H3 summary parquets carry only `dominant_source`, `sample_count`,
+   and centroid coords. Cluster mode is **not** text-aware.
+2. The cross-filter facet-count contract landed in #158 still excludes
+   search from the count predicate.
+3. `viewer._globeState` does not gain a search-active mode; the cluster
+   primitive collection is unaffected.
 
-**Note for parallel investigation.** A separate workstream (Codex, May 8)
-is auditing full-text-search status, indexing options, and speed. If that
-investigation produces a fundamentally different search backend (e.g.,
-DuckDB FTS index, server-side search service), the *backend* changes are
-compatible with this contract: option (B) cares only about *which UI surface
-displays the results*, not how the matches are computed. If the investigation
-recommends switching to (A), this doc gets revised; the inventory above does
-not.
+**What's new in (C).** A *third* primitive collection on the viewer:
+`viewer.searchResultPoints` (Cesium `PointPrimitiveCollection`), styled
+distinctly from cluster and sample-mode points (e.g., outlined ring rather
+than filled dot, distinct color). Owned by `zoomWatcher`'s search handler,
+not the cluster/sample-mode handlers. Lifecycle:
+
+- Populated by `doSearch()` after results are computed. One pin per result,
+  positioned at `(longitude, latitude, 0)`. Opt-in to picking (clicking a
+  pin behaves like clicking a sample-mode point: `updateSampleCard()` +
+  `pid` hash write).
+- Cleared by:
+  - User clears the search input (or `?search=` is removed from URL).
+  - User triggers a new search (overlay is replaced with new results).
+- Shown in both globe cluster mode and point mode. The cluster layer
+  remains accurate; the overlay is layered above as visual answer to
+  "where did my search land geographically."
+
+**Why (C) over (B).**
+
+- Solves [#163 item 4](https://github.com/isamplesorg/isamplesorg.github.io/issues/163)
+  cleanly: zero results render zero pins (and the populated map clusters
+  remain visibly *not* the search results, distinguishable by styling).
+  Non-zero results show a coherent visual answer.
+- Preserves the "imperative globe; URL-canonical state" framing — cluster
+  and facet behavior is unaffected, no reactive cascade.
+- Doesn't conflate "search matched these samples" with "active filter"
+  (which is what option A does); the user retains source/facet/view as
+  independent orienting controls.
+
+**Costs of (C) we accept.**
+
+- One additional Cesium primitive collection. The viewer cell at `:773`
+  needs a `v.searchResultPoints = new Cesium.PointPrimitiveCollection()`
+  alongside the existing `h3Points` and `samplePoints`.
+- One additional `data-pid` data path: the search-result pin click handler
+  duplicates the sample-mode click handler. Acceptable; both paths are
+  small.
+- Zooming behavior: today, search auto-flies to the first result. With
+  result-pin overlay, the right behavior is probably **fit-to-bounds** of
+  the result set (computeBoundingSphere of all pins) rather than zoom-to-
+  first. UX call to confirm during implementation.
+
+### State-inventory addendum for (C)
+
+The state contract grows a small amount:
+
+| location                          | role                              | written by                             | read by                            | notes                                                  |
+|-----------------------------------|-----------------------------------|----------------------------------------|------------------------------------|--------------------------------------------------------|
+| `viewer.searchResultPoints`       | Cesium `PointPrimitiveCollection` for search-result pins | `zoomWatcher` (search handler) | mouse-move + click handlers | new collection; lifecycle tied to `?search=` non-empty |
+| `viewer._searchResults` (Array)   | array of result rows currently rendered as pins | `zoomWatcher` (search handler) | future "fit-to-bounds" logic | optional cache; can be dropped if not needed |
+
+URL/hash params are unchanged from (B). The DOM-as-state inventory is
+unchanged.
+
+**Note for parallel investigation.** A separate workstream (Codex, May 8) is
+auditing full-text-search status, indexing options, and speed. The (C)
+decision is intentionally orthogonal to the backend — *which UI surface
+displays the matches* is independent of *how the matches are computed*. If
+that investigation recommends switching the backend (e.g., from in-browser
+ILIKE → static-Parquet inverted index → hosted-search service), (C) is
+compatible with all of them.
 
 ---
 
@@ -226,7 +282,7 @@ The cross-filter rule (codified by Codex in #158, restated here):
 |-----------|--------------------|-----------|
 | other facet selections | **YES** | counts answer "if I add this value, how many samples would match all OTHER active filters plus this one"; that's the drill-out signal users want |
 | viewport (camera bounds) | **NO** | counts are global. Viewport-scoped counts would couple facet UI to camera state, contradict the "facets describe the dataset" reading, and require re-querying on every camera change |
-| `?search=` text query | **NO** | option (B); search is a side panel, not a filter |
+| `?search=` text query | **NO** | option (C); search renders a side panel + result-pin overlay, but does not alter facet counts |
 | view mode (globe vs table) | **NO** | the same dataset underlies both; facet counts should not flip when the user toggles view |
 
 Exposed via `applyFacetCounts(facetKey, countsMap)` (`:551-567`):
