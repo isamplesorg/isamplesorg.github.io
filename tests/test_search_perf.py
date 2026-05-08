@@ -86,13 +86,28 @@ def _wait_for_explorer_ready(page, timeout_ms: int = 90_000) -> None:
 
 
 def _wait_for_facet_settle(page, timeout_ms: int = 30_000) -> None:
-    """Block until no .facet-count is in the .recomputing transient state.
+    """Block until all change-triggered async work has fully settled.
 
-    The cross-filter handler debounces 250ms before issuing the query
-    (explorer.qmd:1610-1612), and the H3 cluster reload triggered by source
-    filter changes is async and can exceed 1 s cold. Polling the DOM for
-    "no recomputing class" is more reliable than a fixed wait.
+    Two-phase wait, matching the app's two-stage settle (#173 review):
+
+      1. body.classList.contains('explorer-busy') is set by the source /
+         material / context / object_type change handlers around their
+         async work. We wait for it to clear — guarantees that loadRes,
+         loadViewportSamples, and the 250 ms refreshFacetCounts debounce
+         have all fired.
+      2. .facet-count.recomputing is set during the actual cross-filter
+         query and cleared as each dimension's results arrive. We wait
+         for it to clear — guarantees the in-flight count queries are
+         done.
+
+    Polling either signal alone races: just-recomputing because the
+    debounce hasn't fired yet, just-busy because the change handler
+    chose a different work path.
     """
+    page.wait_for_function(
+        """() => !document.body.classList.contains('explorer-busy')""",
+        timeout=timeout_ms,
+    )
     page.wait_for_function(
         """() => {
             const recomputing = document.querySelectorAll('.facet-count.recomputing');
@@ -181,26 +196,34 @@ def _collect_search_logs(page, captured: list) -> None:
 
 
 def _measure_one_query(browser, query: dict) -> dict:
-    """Open fresh context, run cold + warm, return aggregated record."""
+    """Open fresh context, run cold + warm, return aggregated record.
+
+    try/finally on context.close() so a timeout in _run_search (or any
+    intermediate step) does not leak the browser context, which would
+    skew later measurements (#173 review).
+    """
     context = browser.new_context(viewport={"width": 1280, "height": 900})
-    page = context.new_page()
-    captured: list = []
-    _collect_search_logs(page, captured)
-    page.goto(EXPLORER_URL, wait_until="domcontentloaded", timeout=60_000)
-    _wait_for_explorer_ready(page)
+    try:
+        page = context.new_page()
+        captured: list = []
+        _collect_search_logs(page, captured)
+        page.goto(EXPLORER_URL, wait_until="domcontentloaded", timeout=60_000)
+        _wait_for_explorer_ready(page)
 
-    filters = query["filters"]
-    if "source_only" in filters:
-        _apply_source_filter(page, filters["source_only"])
-    if "material_first_n" in filters:
-        _apply_material_first_n(page, filters["material_first_n"])
+        filters = query["filters"]
+        if "source_only" in filters:
+            _apply_source_filter(page, filters["source_only"])
+        if "material_first_n" in filters:
+            _apply_material_first_n(page, filters["material_first_n"])
 
-    cold = _run_search(page, query["term"], captured=captured, expected_id_after=0)
-    warm = _run_search(
-        page, query["term"], captured=captured, expected_id_after=cold["id"]
-    )
-
-    context.close()
+        cold = _run_search(
+            page, query["term"], captured=captured, expected_id_after=0
+        )
+        warm = _run_search(
+            page, query["term"], captured=captured, expected_id_after=cold["id"]
+        )
+    finally:
+        context.close()
     return {
         "label": query["label"],
         "term": query["term"],
