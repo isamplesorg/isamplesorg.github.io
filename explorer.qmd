@@ -1612,20 +1612,52 @@ zoomWatcher = {
         }, 250);
     }
 
+    // --- Busy-flag depth counter (#173 review round 2) ---
+    //
+    // body.classList 'explorer-busy' tracks "any change-triggered async
+    // work in flight." Without depth counting, overlapping handlers race:
+    // a fast handler's `finally` removes the class while a slower
+    // handler's loadRes / facet recompute is still running, defeating the
+    // whole point of the flag. Depth-counted: class is added on the
+    // 0 → 1 transition and removed on the 1 → 0 transition.
+    let _busyDepth = 0;
+    function busyAcquire() {
+        if (_busyDepth === 0) document.body.classList.add('explorer-busy');
+        _busyDepth++;
+    }
+    function busyRelease() {
+        _busyDepth = Math.max(0, _busyDepth - 1);
+        if (_busyDepth === 0) document.body.classList.remove('explorer-busy');
+    }
+
     // --- Source filter change handler ---
+    //
+    // The body.classList 'explorer-busy' flag wraps every async work path
+    // out of this handler so external observers (Playwright tests,
+    // perf-smoke harnesses) can wait for "all triggered work has settled"
+    // without race conditions against the debounced facet recompute. The
+    // 300ms post-refreshFacetCounts wait is intentional: refreshFacetCounts
+    // schedules a 250ms debounce that THEN sets the .recomputing class on
+    // facet count spans; we hold the busy flag until that has fired so the
+    // .recomputing-clear poll downstream is meaningful. See #173 review.
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
-        // Toggle visual state on labels
-        updateSourceLegendState();
-        writeQueryState();
-        if (mode === 'cluster') {
-            loading = false;  // allow loadRes to run (gen counter discards stale results)
-            await loadRes(currentRes, resUrls[currentRes]);
-        } else {
-            cachedBounds = null;  // force re-query
-            await loadViewportSamples();
+        busyAcquire();
+        try {
+            updateSourceLegendState();
+            writeQueryState();
+            if (mode === 'cluster') {
+                loading = false;
+                await loadRes(currentRes, resUrls[currentRes]);
+            } else {
+                cachedBounds = null;
+                await loadViewportSamples();
+            }
+            refreshFacetCounts();
+            await new Promise(r => setTimeout(r, 300));
+        } finally {
+            busyRelease();
         }
-        refreshFacetCounts();
     });
 
     // --- Material / Context / Specimen Type filter change handler ---
@@ -1636,15 +1668,21 @@ zoomWatcher = {
     // surface the explanatory `#facetNote` so users understand the filter
     // takes effect at neighborhood zoom. See issue #156, Phase 1.
     const facetNote = document.getElementById('facetNote');
-    function handleFacetFilterChange() {
-        const active = hasFacetFilters();
-        if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
-        writeQueryState();
-        if (mode === 'point') {
-            cachedBounds = null;
-            loadViewportSamples();
+    async function handleFacetFilterChange() {
+        busyAcquire();
+        try {
+            const active = hasFacetFilters();
+            if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
+            writeQueryState();
+            if (mode === 'point') {
+                cachedBounds = null;
+                await loadViewportSamples();
+            }
+            refreshFacetCounts();
+            await new Promise(r => setTimeout(r, 300));
+        } finally {
+            busyRelease();
         }
-        refreshFacetCounts();
     }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
@@ -1779,6 +1817,8 @@ zoomWatcher = {
     const searchInput = document.getElementById('sampleSearch');
     const searchResults = document.getElementById('searchResults');
 
+    let _searchSeq = 0;
+
     async function doSearch() {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
@@ -1788,8 +1828,21 @@ zoomWatcher = {
         }
         writeQueryState();
         searchResults.textContent = 'Searching...';
+
+        // Per-search perf instrumentation (#167). Captures cold/warm latency,
+        // result count, and bytes transferred from data.isamples.org during
+        // the search window. transferSize is 0 for cross-origin responses
+        // missing Timing-Allow-Origin; we fall back to encodedBodySize.
+        const searchId = ++_searchSeq;
+        const markStart = `search-${searchId}-start`;
+        const markEnd = `search-${searchId}-end`;
+        performance.mark(markStart);
+        const tStart = performance.now();
+        const terms = searchTerms(term);
+        let resultsCount = 0;
+        let errorMessage = null;
+
         try {
-            const terms = searchTerms(term);
             const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
             const score = textSearchScore(terms, [
                 { col: 'label', weight: 3 },
@@ -1805,6 +1858,7 @@ zoomWatcher = {
                 ORDER BY relevance_score DESC, label
                 LIMIT 50
             `);
+            resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
                 return;
@@ -1855,6 +1909,78 @@ zoomWatcher = {
         } catch(err) {
             console.error("Search failed:", err);
             searchResults.textContent = `Search error: ${err.message}`;
+            errorMessage = err.message || String(err);
+        } finally {
+            performance.mark(markEnd);
+            try { performance.measure(`search-${searchId}`, markStart, markEnd); } catch (e) {}
+            const elapsedMs = performance.now() - tStart;
+
+            // Per-URL byte data from data.isamples.org during the search
+            // window. transferSize is 0 cross-origin without Timing-Allow-Origin;
+            // encodedBodySize is reported as a fallback. Per-URL detail (rather
+            // than just summed bytes) lets analysis post-hoc-filter concurrent
+            // fetches that are not actually attributable to the search.
+            const seenUrls = [];
+            let transferBytes = 0;
+            let bodyBytes = 0;
+            try {
+                const entries = performance.getEntriesByType('resource');
+                for (const e of entries) {
+                    if (!e.name.startsWith(R2_BASE)) continue;
+                    if (e.startTime < tStart || e.startTime > tStart + elapsedMs) continue;
+                    seenUrls.push({
+                        name: e.name,
+                        transfer_size: e.transferSize || 0,
+                        body_size: e.encodedBodySize || 0,
+                    });
+                    transferBytes += (e.transferSize || 0);
+                    bodyBytes += (e.encodedBodySize || 0);
+                }
+            } catch (e) {}
+
+            // Structured log for Playwright capture (#167).
+            try {
+                console.log(JSON.stringify({
+                    event: 'isamples.search',
+                    id: searchId,
+                    term: term,
+                    terms_count: terms.length,
+                    results_count: resultsCount,
+                    elapsed_ms: Math.round(elapsedMs),
+                    bytes_transfer: transferBytes,
+                    bytes_body: bodyBytes,
+                    seen_urls: seenUrls,
+                    has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
+                    has_facet_filter: hasFacetFilters(),
+                    error: errorMessage,
+                }));
+            } catch (e) {}
+
+            // Append a row to the ?perf=1 panel if it's open. The panel
+            // renders once at boot from existing performance.measure entries
+            // (perfPanel cell, ~:2010); this hooks each subsequent search
+            // so the panel stays current per the #173 review.
+            try {
+                const panel = document.getElementById('perfPanel');
+                if (panel) {
+                    const tbl = panel.querySelector('table');
+                    if (tbl) {
+                        const fmt = (ms) => ms >= 1000
+                            ? (ms / 1000).toFixed(2) + ' s'
+                            : Math.round(ms) + ' ms';
+                        const tr = document.createElement('tr');
+                        const labelCell = document.createElement('td');
+                        labelCell.style.cssText = 'padding:1px 8px 1px 0;color:#bbb;';
+                        labelCell.textContent = `search #${searchId}: "${term}" (${resultsCount})`;
+                        const valCell = document.createElement('td');
+                        valCell.style.cssText = 'padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;';
+                        valCell.textContent = fmt(elapsedMs);
+                        tr.appendChild(labelCell);
+                        tr.appendChild(valCell);
+                        tbl.appendChild(tr);
+                    }
+                }
+            } catch (e) {}
         }
     }
 
@@ -1950,6 +2076,15 @@ perfPanel = {
         ['nav → phase 1 complete',        mark('p1-end')],
         ['nav → first globe frame',       mark('first-globe-frame')],
     ].filter(([, v]) => v != null);
+
+    // Append search timings if any have run by the time the panel renders
+    // (#167). Each search emits a structured console.log; the panel surface
+    // is purely informational here.
+    const searchMeasures = performance.getEntriesByType('measure')
+        .filter(e => e.name.startsWith('search-'));
+    for (const m of searchMeasures) {
+        rows.push([`search ${m.name.replace(/^search-/, '#')}`, m.duration]);
+    }
 
     // Console table for CI / offline capture
     console.table(Object.fromEntries(rows.map(([k, v]) => [k, `${v.toFixed(0)} ms`])));

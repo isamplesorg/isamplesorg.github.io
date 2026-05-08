@@ -1,0 +1,314 @@
+{
+  "site_url": "http://localhost:5860",
+  "captured_at_utc": "2026-05-08T14:47:22.699069+00:00",
+  "schema_version": 1,
+  "field_subset": "label+place_name (samples_map_lite.parquet)",
+  "queries": [
+    {
+      "label": "single-common",
+      "term": "pottery",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 8683,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 1940,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "single-rare",
+      "term": "basalt",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "basalt",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 11824,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "basalt",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 2400,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "multi-term",
+      "term": "pottery Cyprus",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "pottery Cyprus",
+        "terms_count": 2,
+        "results_count": 0,
+        "elapsed_ms": 5071,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "pottery Cyprus",
+        "terms_count": 2,
+        "results_count": 0,
+        "elapsed_ms": 2560,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "no-hit",
+      "term": "xyzzyqqqplugh",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "xyzzyqqqplugh",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 4870,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "xyzzyqqqplugh",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 2554,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "wildcard-pct",
+      "term": "100%",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "100%",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 5178,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "100%",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 2574,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "wildcard-under",
+      "term": "_test",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "_test",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 18520,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "_test",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 2529,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "diacritic",
+      "term": "\u00c7atalh\u00f6y\u00fck",
+      "filters": {},
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "\u00c7atalh\u00f6y\u00fck",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 4415,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "\u00c7atalh\u00f6y\u00fck",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 2592,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": false,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "composed-source",
+      "term": "pottery",
+      "filters": {
+        "source_only": [
+          "OPENCONTEXT"
+        ]
+      },
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 4964,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": true,
+        "has_facet_filter": false,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 50,
+        "elapsed_ms": 1368,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": true,
+        "has_facet_filter": false,
+        "error": null
+      }
+    },
+    {
+      "label": "composed-source-material",
+      "term": "pottery",
+      "filters": {
+        "source_only": [
+          "OPENCONTEXT"
+        ],
+        "material_first_n": 1
+      },
+      "cold": {
+        "event": "isamples.search",
+        "id": 1,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 4331,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": true,
+        "has_facet_filter": true,
+        "error": null
+      },
+      "warm": {
+        "event": "isamples.search",
+        "id": 2,
+        "term": "pottery",
+        "terms_count": 1,
+        "results_count": 0,
+        "elapsed_ms": 2106,
+        "bytes_transfer": 0,
+        "bytes_body": 0,
+        "seen_urls": [],
+        "has_source_filter": true,
+        "has_facet_filter": true,
+        "error": null
+      }
+    }
+  ]
+}
