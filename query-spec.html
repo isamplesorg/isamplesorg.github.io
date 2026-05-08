@@ -724,7 +724,7 @@ TemporalFilter
 <li><code>registrant</code>, <code>samplingPurpose</code></li>
 <li><code>curation_label</code>, <code>curation_description</code>, <code>curation_location</code></li>
 </ul>
-<p>Substrates that can’t index all 15 fields MUST document which subset they cover and surface the limitation in UI. (The current web Explorer covers <code>label</code> + <code>description</code> + <code>place_name</code> only — a known gap.)</p>
+<p>Substrates that can’t index all 15 fields MUST document which subset they cover and surface the limitation in UI. (As of 2026-05-08, the current web Explorer covers <code>label</code> + <code>place_name</code> only against <code>samples_map_lite.parquet</code>, which does not carry <code>description</code> — a known gap that broke <code>pottery Cyprus</code> and similar queries in the #167 baseline. The substrate work in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a> will lift this by adding <code>description</code> <em>and</em> dereferenced concept labels in the v1 minimum field set.)</p>
 <p>Multi-term queries default to <strong>AND</strong> with relevance ranking where the substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS work.</p>
 </section>
 <section id="cross-filter-counts" class="level3" data-number="3.3">
