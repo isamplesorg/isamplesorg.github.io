@@ -299,7 +299,7 @@ def test_record_search_baseline(browser, benchmark_run_started_at, baseline_outp
         "site_url": SITE_URL,
         "captured_at_utc": benchmark_run_started_at.isoformat(),
         "schema_version": 1,
-        "field_subset": "label+place_name (samples_map_lite.parquet)",
+        "field_subset": "label+description+place_name (sample_facets_v2 + lite for coords; world via LEFT JOIN, area via INNER JOIN with viewport predicate inside CTE)",
         "queries": results,
     }
     baseline_output_path.write_text(json.dumps(payload, indent=2) + "\n")
