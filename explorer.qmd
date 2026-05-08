@@ -239,8 +239,12 @@ Circle size = log(sample count). Color = dominant data source.
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
 <div class="search-bar">
-<input type="text" id="sampleSearch" placeholder="Search samples - multiple words narrow results (e.g., pottery Cyprus)" />
+<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., basalt California)" />
 <button id="searchBtn">Search</button>
+</div>
+<div class="search-help" style="font-size: 11px; color: #888; padding: 2px 0 6px 0; line-height: 1.3;">
+Searches sample labels and place names only — descriptions are not yet indexed.
+<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: substrate FTS will lift this</a>.
 </div>
 <div id="searchResults" class="search-results"></div>
 
