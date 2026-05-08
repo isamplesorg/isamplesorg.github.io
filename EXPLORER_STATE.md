@@ -293,6 +293,35 @@ that investigation recommends switching the backend (e.g., from in-browser
 ILIKE → static-Parquet inverted index → hosted-search service), (C) is
 compatible with all of them.
 
+### Light-path addendum: two-button scope selection ([#178](https://github.com/isamplesorg/isamplesorg.github.io/issues/178), 2026-05-08)
+
+Hana's mockup ([Figma 213:394](https://www.figma.com/design/Nqkuqh3Z4aqVh0nmwUAgKg/iSamples-Wireframe-1.0?node-id=213-394))
+proposed a two-button search UI: "Search Selected Areas" (viewport-scoped)
+and "Search Entire World" (full-corpus). Implemented as a Light extension
+of (C), not a revisit of the A/B/C decision:
+
+- "Search Entire World" runs the existing (C) full-corpus side-panel
+  lookup with result-pin overlay. Behavior unchanged from the contract above.
+- "Search Selected Areas" runs the same query plus an outer-query
+  `latitude/longitude BETWEEN` predicate derived from
+  `viewer.camera.computeViewRectangle(...)`. Dateline-crossing is split
+  into two longitude ranges.
+- URL state gains `?search_scope=area|world`; default `world`, omitted
+  from URL when default. Hydrated on boot; written by `persistSearchScope()`.
+- Result-pin overlay still applies in both modes — pin coordinates
+  reflect what was found, viewport-scope just narrows the candidate set.
+- Auto-fly to the first result is suppressed in area mode (the user is
+  already at the area they care about; flying would zoom in and disorient).
+- The inner CTE's `LIMIT 50` runs *before* the viewport predicate (because
+  lat/lng live in `samples_map_lite`, not `sample_facets_v2`). Implication:
+  area-scoped searches can return < 50 results — users widen by panning.
+  Acceptable for v1; future tuning could increase the inner LIMIT in
+  area mode if needed.
+
+A future Heavy revisit may rethink (A) global-filter semantics if usage
+data shows users *expect* the map and facets to update with search.
+That decision is deferred until #170-#172 land.
+
 ---
 
 ## 7. Facet-count contract

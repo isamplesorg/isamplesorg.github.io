@@ -69,6 +69,16 @@ CANONICAL_QUERIES = [
             "material_first_n": 1,
         },
     },
+    {
+        # Viewport-scoped search per #178 Light path. Camera position is
+        # set via the URL hash (Mediterranean / Cyprus area) so the
+        # area-scope predicate has a meaningful rect. Clicks the
+        # "Search Selected Areas" button instead of "Search Entire World".
+        "label": "area-scope",
+        "term": "pottery",
+        "filters": {"scope": "area"},
+        "url_hash": "v=1&lat=35&lng=33&alt=2000000",
+    },
 ]
 
 
@@ -156,15 +166,23 @@ def _apply_material_first_n(page, n: int) -> None:
     _wait_for_facet_settle(page)
 
 
-def _run_search(page, term: str, *, captured: list, expected_id_after: int) -> dict:
-    """Type term, click search, wait for the corresponding console event."""
+def _run_search(
+    page,
+    term: str,
+    *,
+    captured: list,
+    expected_id_after: int,
+    scope: str = "world",
+) -> dict:
+    """Type term, click the appropriate scope button, wait for the console event."""
     search_input = page.locator("#sampleSearch")
     search_input.click()
     # Clear via select-all + delete (faster + works around platform shortcuts).
     search_input.press("ControlOrMeta+a")
     search_input.press("Delete")
     search_input.fill(term)
-    page.locator("#searchBtn").click()
+    button_id = "#searchAreaBtn" if scope == "area" else "#searchWorldBtn"
+    page.locator(button_id).click()
 
     # Wait for an isamples.search log whose id is strictly greater than the
     # last one we observed. Polling is simpler than promise-based waits here.
@@ -207,7 +225,12 @@ def _measure_one_query(browser, query: dict) -> dict:
         page = context.new_page()
         captured: list = []
         _collect_search_logs(page, captured)
-        page.goto(EXPLORER_URL, wait_until="domcontentloaded", timeout=60_000)
+
+        # Optional URL hash for area-scope cases (#178) — sets the camera
+        # before the search runs so the area predicate has a meaningful rect.
+        url_hash = query.get("url_hash")
+        target_url = EXPLORER_URL + (f"#{url_hash}" if url_hash else "")
+        page.goto(target_url, wait_until="domcontentloaded", timeout=60_000)
         _wait_for_explorer_ready(page)
 
         filters = query["filters"]
@@ -215,12 +238,15 @@ def _measure_one_query(browser, query: dict) -> dict:
             _apply_source_filter(page, filters["source_only"])
         if "material_first_n" in filters:
             _apply_material_first_n(page, filters["material_first_n"])
+        scope = filters.get("scope", "world")
 
         cold = _run_search(
-            page, query["term"], captured=captured, expected_id_after=0
+            page, query["term"], captured=captured, expected_id_after=0,
+            scope=scope,
         )
         warm = _run_search(
-            page, query["term"], captured=captured, expected_id_after=cold["id"]
+            page, query["term"], captured=captured, expected_id_after=cold["id"],
+            scope=scope,
         )
     finally:
         context.close()
