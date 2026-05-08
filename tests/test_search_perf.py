@@ -118,11 +118,21 @@ def _apply_source_filter(page, sources_to_keep_checked: list[str]) -> None:
 
 
 def _apply_material_first_n(page, n: int) -> None:
-    """Check the first n material-facet checkboxes (avoids hard-coding URIs)."""
+    """Check the first n material-facet checkboxes (avoids hard-coding URIs).
+
+    The material filter section ships with `display: none` on the body
+    (explorer.qmd:280); the header click handler toggles it. Expand the
+    section before attempting to click any checkbox inside it.
+    """
     if n <= 0:
         return
     boxes = page.locator("#materialFilterBody input[type='checkbox']")
     boxes.first.wait_for(state="attached", timeout=15_000)
+    body_hidden = page.evaluate(
+        "() => document.getElementById('materialFilterBody').style.display === 'none'"
+    )
+    if body_hidden:
+        page.locator("#materialFilter .filter-header").click()
     total = boxes.count()
     for i in range(min(n, total)):
         cb = boxes.nth(i)
