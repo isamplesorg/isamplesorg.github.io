@@ -245,6 +245,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#implementation-rules-for-option-c" id="toc-implementation-rules-for-option-c" class="nav-link" data-scroll-target="#implementation-rules-for-option-c"><span class="header-section-number">1.6.4</span> Implementation rules for option (C)</a></li>
   <li><a href="#result-set-shape-acceptance-cases" id="toc-result-set-shape-acceptance-cases" class="nav-link" data-scroll-target="#result-set-shape-acceptance-cases"><span class="header-section-number">1.6.5</span> Result-set shape acceptance cases</a></li>
   <li><a href="#state-inventory-addendum-for-c" id="toc-state-inventory-addendum-for-c" class="nav-link" data-scroll-target="#state-inventory-addendum-for-c"><span class="header-section-number">1.6.6</span> State-inventory addendum for (C)</a></li>
+  <li><a href="#light-path-addendum-two-button-scope-selection-178-2026-05-08" id="toc-light-path-addendum-two-button-scope-selection-178-2026-05-08" class="nav-link" data-scroll-target="#light-path-addendum-two-button-scope-selection-178-2026-05-08"><span class="header-section-number">1.6.7</span> Light-path addendum: two-button scope selection (#178, 2026-05-08)</a></li>
   </ul></li>
   <li><a href="#facet-count-contract" id="toc-facet-count-contract" class="nav-link" data-scroll-target="#facet-count-contract"><span class="header-section-number">1.7</span> 7. Facet-count contract</a></li>
   <li><a href="#out-of-scope" id="toc-out-of-scope" class="nav-link" data-scroll-target="#out-of-scope"><span class="header-section-number">1.8</span> 8. Out of scope</a></li>
@@ -952,6 +953,19 @@ viewer             [creates Cesium viewer; reads readHash() once]
 </table>
 <p>URL/hash params are unchanged from (B). The DOM-as-state inventory is unchanged.</p>
 <p><strong>Note for parallel investigation.</strong> A separate workstream (Codex, May 8) is auditing full-text-search status, indexing options, and speed. The (C) decision is intentionally orthogonal to the backend — <em>which UI surface displays the matches</em> is independent of <em>how the matches are computed</em>. If that investigation recommends switching the backend (e.g., from in-browser ILIKE → static-Parquet inverted index → hosted-search service), (C) is compatible with all of them.</p>
+</section>
+<section id="light-path-addendum-two-button-scope-selection-178-2026-05-08" class="level3" data-number="1.6.7">
+<h3 data-number="1.6.7" data-anchor-id="light-path-addendum-two-button-scope-selection-178-2026-05-08"><span class="header-section-number">1.6.7</span> Light-path addendum: two-button scope selection (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/178">#178</a>, 2026-05-08)</h3>
+<p>Hana’s mockup (<a href="https://www.figma.com/design/Nqkuqh3Z4aqVh0nmwUAgKg/iSamples-Wireframe-1.0?node-id=213-394">Figma 213:394</a>) proposed a two-button search UI: “Search Selected Areas” (viewport-scoped) and “Search Entire World” (full-corpus). Implemented as a Light extension of (C), not a revisit of the A/B/C decision:</p>
+<ul>
+<li>“Search Entire World” runs the existing (C) full-corpus side-panel lookup with result-pin overlay. Behavior unchanged from the contract above. SQL shape: CTE over <code>sample_facets_v2</code> → top-50 → <code>LEFT JOIN</code> to <code>samples_map_lite</code> for display coords (samples without coords still appear; lat/lng are null).</li>
+<li>“Search Selected Areas” runs the same text predicate but with a different SQL shape: <code>INNER JOIN</code> <code>samples_map_lite</code> inside the candidate selection, viewport <code>BETWEEN</code> predicate applied <strong>before</strong> <code>ORDER BY ... LIMIT 50</code>. This is critical — applying viewport after the global top-50 produces false zeroes (the global top-50 is concentrated in a few hot regions; a Sudan-area <code>pottery</code> query would return zero even though Sudan has plenty of pottery hits). Dateline-crossing is split into two longitude ranges.</li>
+<li>URL state gains <code>?search_scope=area|world</code>; default <code>world</code>, omitted from URL when default. Hydrated on boot; written by <code>persistSearchScope()</code>.</li>
+<li>Result-pin overlay still applies in both modes — pin coordinates reflect what was found, viewport-scope just narrows the candidate set.</li>
+<li>Auto-fly to the first result is suppressed in area mode (the user is already at the area they care about; flying would zoom in and disorient).</li>
+<li>Area mode requires coordinates by definition, so the <code>INNER JOIN</code> drops samples that have facets but no <code>samples_map_lite</code> row. World mode keeps them (via <code>LEFT JOIN</code>) since coord-less samples are still legitimate text matches.</li>
+</ul>
+<p>A future Heavy revisit may rethink (A) global-filter semantics if usage data shows users <em>expect</em> the map and facets to update with search. That decision is deferred until #170-#172 land.</p>
 <hr>
 </section>
 </section>
