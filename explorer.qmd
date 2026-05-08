@@ -239,12 +239,12 @@ Circle size = log(sample count). Color = dominant data source.
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
 <div class="search-bar">
-<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., basalt California)" />
+<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
 <button id="searchBtn">Search</button>
 </div>
 <div class="search-help" style="font-size: 11px; color: #888; padding: 2px 0 6px 0; line-height: 1.3;">
-Searches sample labels and place names only — descriptions are not yet indexed.
-<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: substrate FTS will lift this</a>.
+Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
+<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
 </div>
 <div id="searchResults" class="search-results"></div>
 
@@ -1847,20 +1847,51 @@ zoomWatcher = {
         let errorMessage = null;
 
         try {
-            const searchWhere = textSearchWhere(terms, ['label', 'CAST(place_name AS VARCHAR)']);
+            // INTERIM RECALL FIX (#168 Direction A) — knowingly accepts the
+            // latency regression in exchange for fixing false-zero results.
+            //
+            // Background: the previous query searched samples_map_lite over
+            // label + place_name only; samples_map_lite does not carry
+            // description, so queries like `pottery Cyprus` returned zero
+            // even when ~7,124 samples actually match (Cyprus appears only
+            // in description). This is a *broken* user experience even
+            // though it's fast.
+            //
+            // This is NOT the FTS solution. The proper substrate work in
+            // #169-#172 builds a sample-centric document projection with
+            // hash-partitioned BM25 indexes that fixes both recall AND
+            // latency. This code path goes away when #171 lands.
+            //
+            // CTE-then-keyed-join shape (NOT a naive LEFT JOIN). Native
+            // DuckDB benchmark: naive 4.2 s vs CTE 0.5 s for `pottery`.
+            // The browser DuckDB-WASM penalty makes the difference even
+            // more pronounced; the naive form times out on `pottery` cold.
+            const searchWhere = textSearchWhere(terms, [
+                'label',
+                'description',
+                'CAST(place_name AS VARCHAR)',
+            ]);
             const score = textSearchScore(terms, [
-                { col: 'label', weight: 3 },
+                { col: 'label',                       weight: 3 },
+                { col: 'description',                 weight: 1 },
                 { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
             ]);
             const results = await db.query(`
-                SELECT pid, label, source, latitude, longitude, place_name,
-                       (${score}) AS relevance_score
-                FROM read_parquet('${lite_url}')
-                WHERE ${searchWhere}
-                ${sourceFilterSQL('source')}
-                ${facetFilterSQL()}
-                ORDER BY relevance_score DESC, label
-                LIMIT 50
+                WITH matches AS (
+                    SELECT pid, label, source, place_name,
+                           (${score}) AS relevance_score
+                    FROM read_parquet('${facets_url}')
+                    WHERE ${searchWhere}
+                    ${sourceFilterSQL('source')}
+                    ${facetFilterSQL()}
+                    ORDER BY relevance_score DESC
+                    LIMIT 50
+                )
+                SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
+                       m.place_name, m.relevance_score
+                FROM matches m
+                LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                ORDER BY m.relevance_score DESC, m.label
             `);
             resultsCount = results.length;
             if (results.length === 0) {

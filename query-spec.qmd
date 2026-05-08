@@ -222,13 +222,14 @@ Solr `searchText` copy-field target, canonical list):
 
 Substrates that can't index all 15 fields MUST document which subset
 they cover and surface the limitation in UI. (As of 2026-05-08, the
-current web Explorer covers `label` + `place_name` only against
-`samples_map_lite.parquet`, which does not carry `description` —
-a known gap that broke `pottery Cyprus` and similar queries in the
-#167 baseline. The substrate work in
+current web Explorer covers `label` + `description` + `place_name`
+against `sample_facets_v2.parquet` (joined to `samples_map_lite.parquet`
+for display coordinates) — a deliberate **interim recall fix** that
+trades latency for honest coverage; cold first searches take ~10-15 s
+while DuckDB-WASM warms up. The proper substrate work in
 [#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169)
-will lift this by adding `description` *and* dereferenced concept
-labels in the v1 minimum field set.)
+adds dereferenced concept labels and partitioned BM25 indexes that
+fix both the field gap and the latency regression.)
 
 Multi-term queries default to **AND** with relevance ranking where the
 substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS
@@ -293,7 +294,7 @@ missing values gracefully.
 |---|---|
 | `source IN (…)` | `n IN (…)` on wide / narrow (column is `n` per PQG); `source IN (…)` on lite / sample_facets_v2 (alias exposed) |
 | `material IN (…)` | `pid IN (SELECT pid FROM sample_facets WHERE material IN (…))` |
-| `text MATCHES "q"` | `(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')` — currently a subset of §3.2 |
+| `text MATCHES "q"` | `(label ILIKE '%q%' OR description ILIKE '%q%' OR CAST(place_name AS VARCHAR) ILIKE '%q%')` over `sample_facets_v2.parquet`, joined back to `samples_map_lite.parquet` for display coordinates — currently a subset of §3.2; substrate-backed FTS in [#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169) extends to dereferenced concept labels in v1 |
 | `bbox WITHIN (…)` | `latitude BETWEEN … AND … AND longitude BETWEEN … AND …` |
 | `h3 AT RES 6 IN (…)` | `h3_res6 IN (…)` on `wide_h3`; OR `h3_cell IN (…) AND resolution = 6` on `h3_summary_res6` (see §2.4 note) |
 | `time BETWEEN …` | `TRY_CAST(result_time AS TIMESTAMP) BETWEEN t1 AND t2` — `result_time` ships as VARCHAR in `lite`, `wide`, and `narrow` |
