@@ -724,7 +724,7 @@ TemporalFilter
 <li><code>registrant</code>, <code>samplingPurpose</code></li>
 <li><code>curation_label</code>, <code>curation_description</code>, <code>curation_location</code></li>
 </ul>
-<p>Substrates that can’t index all 15 fields MUST document which subset they cover and surface the limitation in UI. (As of 2026-05-08, the current web Explorer covers <code>label</code> + <code>place_name</code> only against <code>samples_map_lite.parquet</code>, which does not carry <code>description</code> — a known gap that broke <code>pottery Cyprus</code> and similar queries in the #167 baseline. The substrate work in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a> will lift this by adding <code>description</code> <em>and</em> dereferenced concept labels in the v1 minimum field set.)</p>
+<p>Substrates that can’t index all 15 fields MUST document which subset they cover and surface the limitation in UI. (As of 2026-05-08, the current web Explorer covers <code>label</code> + <code>description</code> + <code>place_name</code> against <code>sample_facets_v2.parquet</code> (joined to <code>samples_map_lite.parquet</code> for display coordinates) — a deliberate <strong>interim recall fix</strong> that trades latency for honest coverage; cold first searches take ~10-15 s while DuckDB-WASM warms up. The proper substrate work in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a> adds dereferenced concept labels and partitioned BM25 indexes that fix both the field gap and the latency regression.)</p>
 <p>Multi-term queries default to <strong>AND</strong> with relevance ranking where the substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS work.</p>
 </section>
 <section id="cross-filter-counts" class="level3" data-number="3.3">
@@ -768,10 +768,6 @@ TemporalFilter
 <section id="duckdb-wasm-on-parquet-web" class="level3" data-number="5.1">
 <h3 data-number="5.1" data-anchor-id="duckdb-wasm-on-parquet-web"><span class="header-section-number">5.1</span> 5.1 DuckDB-WASM on parquet (web)</h3>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Spec</th>
@@ -789,7 +785,7 @@ TemporalFilter
 </tr>
 <tr class="odd">
 <td><code>text MATCHES "q"</code></td>
-<td><code>(label ILIKE '%q%' OR description ILIKE '%q%' OR place_name ILIKE '%q%')</code> — currently a subset of §3.2</td>
+<td><code>(label ILIKE '%q%' OR description ILIKE '%q%' OR CAST(place_name AS VARCHAR) ILIKE '%q%')</code> over <code>sample_facets_v2.parquet</code>, joined back to <code>samples_map_lite.parquet</code> for display coordinates — currently a subset of §3.2; substrate-backed FTS in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a> extends to dereferenced concept labels in v1</td>
 </tr>
 <tr class="even">
 <td><code>bbox WITHIN (…)</code></td>
