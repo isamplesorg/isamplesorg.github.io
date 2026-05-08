@@ -88,11 +88,29 @@ format:
     .detail-link { color: #1565c0; text-decoration: none; font-size: 12px; }
     .detail-link:hover { text-decoration: underline; }
     .share-btn {
-        background: #1565c0; color: white; border: none; padding: 4px 12px;
-        border-radius: 4px; font-size: 12px; cursor: pointer;
+        background: #1565c0; color: white; border: none;
+        padding: 10px 16px; border-radius: 6px;
+        font-size: 14px; font-weight: 500; cursor: pointer;
+        width: 100%;
     }
     .share-btn:hover { background: #0d47a1; }
-    .share-toast { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
+    .share-toast { display: block; font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; margin-top: 4px; text-align: center; }
+    /* Cesium toolbar — relocate to top-left of globe (Hana mockup, #178) */
+    .cesium-viewer-toolbar {
+        top: 5px;
+        left: 5px;
+        right: auto !important;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+    }
+    .cesium-viewer-toolbar > * { margin-left: 0 !important; }
+    /* Open baseLayerPicker dropdown to the right since we're left-anchored */
+    .cesium-baseLayerPicker-dropDown {
+        left: 36px;
+        right: auto;
+    }
     .search-bar { display: flex; gap: 6px; margin-bottom: 6px; }
     .search-bar input {
         flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
@@ -314,8 +332,8 @@ Specimen Type <span>▾</span>
 <div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
 Material / feature / specimen filters apply at sample zoom level — zoom in or click a cluster.
 </div>
-<div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
-<button id="shareBtn" class="share-btn" title="Copy link to current view">Share View</button>
+<div style="margin-top: 12px;">
+<button id="shareBtn" class="share-btn" title="Copy link to current view">Copy Link to Current View</button>
 <span id="shareToast" class="share-toast">Link copied!</span>
 </div>
 <div id="phaseMsg" class="phase-msg" style="margin-top: 8px; background: #e3f2fd; color: #1565c0;">
@@ -794,7 +812,7 @@ viewer = {
     const v = new Cesium.Viewer("cesiumContainer", {
         timeline: false,
         animation: false,
-        baseLayerPicker: false,
+        baseLayerPicker: true,
         fullscreenElement: "cesiumContainer",
         terrain: Cesium.Terrain.fromWorldTerrain()
     });
@@ -970,6 +988,8 @@ phase1 = {
             position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
             pixelSize: size,
             color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.8),
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 1.5,
             scaleByDistance: scalar,
         });
     }
@@ -1311,6 +1331,8 @@ zoomWatcher = {
                     position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
                     pixelSize: size,
                     color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.85),
+                    outlineColor: Cesium.Color.WHITE,
+                    outlineWidth: 1.5,
                     scaleByDistance: scalar,
                 });
             }
@@ -1463,6 +1485,8 @@ zoomWatcher = {
                 position: Cesium.Cartesian3.fromDegrees(row.longitude, row.latitude, 0),
                 pixelSize: 6,
                 color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 1.5,
                 scaleByDistance: scalar,
             });
         }
