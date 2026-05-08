@@ -221,8 +221,14 @@ Solr `searchText` copy-field target, canonical list):
 - `curation_label`, `curation_description`, `curation_location`
 
 Substrates that can't index all 15 fields MUST document which subset
-they cover and surface the limitation in UI. (The current web Explorer
-covers `label` + `description` + `place_name` only — a known gap.)
+they cover and surface the limitation in UI. (As of 2026-05-08, the
+current web Explorer covers `label` + `place_name` only against
+`samples_map_lite.parquet`, which does not carry `description` —
+a known gap that broke `pottery Cyprus` and similar queries in the
+#167 baseline. The substrate work in
+[#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169)
+will lift this by adding `description` *and* dereferenced concept
+labels in the v1 minimum field set.)
 
 Multi-term queries default to **AND** with relevance ranking where the
 substrate supports it (Solr, DuckDB FTS). See PR #95 for web-side FTS
