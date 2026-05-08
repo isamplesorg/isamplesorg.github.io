@@ -247,10 +247,31 @@ not the cluster/sample-mode handlers. Lifecycle:
 - One additional `data-pid` data path: the search-result pin click handler
   duplicates the sample-mode click handler. Acceptable; both paths are
   small.
-- Zooming behavior: today, search auto-flies to the first result. With
-  result-pin overlay, the right behavior is probably **fit-to-bounds** of
-  the result set (computeBoundingSphere of all pins) rather than zoom-to-
-  first. UX call to confirm during implementation.
+
+### Implementation rules for option (C)
+
+These are not negotiable defaults during implementation:
+
+| concern | rule |
+|---------|------|
+| **Pin count cap** | maximum **50** pins (matches the existing search result `LIMIT 50`). Never render more, never render fewer than the result set size |
+| **Z-order** | search-result pins render **above** both H3 cluster points and sample-mode points. Implementation: add `searchResultPoints` to `scene.primitives` *after* `h3Points` and `samplePoints` |
+| **Pin styling** | hollow ring with bright outline (distinct from cluster filled-dot and sample-mode small filled-dot). Color follows the source palette (`SOURCE_COLORS`) so a glance still tells you which source matched. Pixel size larger than sample-mode pins (e.g., `8` vs `6`) so the overlay reads as primary |
+| **Hover label** | identical pattern to existing pointLabel handler — `meta.label \|\| meta.pid`, source badge color |
+| **Click behavior** | identical to sample-mode click: `updateSampleCard()` + `pid` hash write. Single click handler can dispatch on `meta.type === 'searchResult'` vs `'sample'` |
+| **Camera fit-to-bounds** | only fit-to-bounds when the result-set lat/lng extent **< 30° × 30°**. Otherwise: fly to top-1 result at altitude `200000` (same as today's first-result behavior). The 30° rule prevents a globally distributed result set from triggering a zoom-out to a near-globe view, which would be disorienting and wash out the cluster context |
+| **Lifecycle** | populated immediately after results return; cleared on (a) search input cleared by user, (b) `?search=` removed from URL, (c) new search submitted (replaces the old overlay) |
+
+### Result-set shape acceptance cases
+
+Implementation must visually verify the four shape cases:
+
+| case | description | expected behavior |
+|------|-------------|-------------------|
+| **zero** | `xyzzyqqqplugh` | no pins; side-panel says "No results"; cluster layer + facets unaffected; camera not flown |
+| **one** | a `pid`-specific search that hits exactly one sample | one pin; fly-to-result at standard altitude; side panel shows the single result |
+| **local-many** | `pottery Cyprus` (results clustered in one region) | up to 50 pins, lat/lng extent < 30°×30° → fit-to-bounds zoom |
+| **global-many** | `basalt` (results spread across multiple continents) | up to 50 pins, extent ≥ 30°×30° → fly to top-1 at standard altitude; pins remain visible at multiple zoom levels via the cluster-overlay `scaleByDistance` |
 
 ### State-inventory addendum for (C)
 
@@ -316,11 +337,13 @@ active values from the WHERE.
 ## 9. Acceptance signals
 
 - ✅ Inventory tables populated from current `explorer.qmd`.
-- ✅ Search-semantics decision recorded with rationale (option B).
+- ✅ Search-semantics decision recorded with rationale (option C, side-panel + result-pin overlay).
 - ✅ Facet-count contract restated.
 - ⏭ #163 items can now be re-scoped against this doc:
-  - **#163 item 4** (zero search results UX) is now framed as a
-    side-panel-copy fix, not a search-semantics rethink.
+  - **#163 item 4** (zero search results + populated map looks broken) is
+    resolved by option C, not by side-panel copy alone. Implementation
+    must verify all four result-set shape cases (zero, one, local-many,
+    global-many) per the table in §6.
   - **#163 item 6** (page in URL) gets a clear contract slot to plug into
     (a `page` query param participating in the same `writeQueryState`/
     hydration cycle as `view`).
