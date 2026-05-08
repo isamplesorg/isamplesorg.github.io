@@ -293,6 +293,41 @@ that investigation recommends switching the backend (e.g., from in-browser
 ILIKE → static-Parquet inverted index → hosted-search service), (C) is
 compatible with all of them.
 
+### Light-path addendum: two-button scope selection ([#178](https://github.com/isamplesorg/isamplesorg.github.io/issues/178), 2026-05-08)
+
+Hana's mockup ([Figma 213:394](https://www.figma.com/design/Nqkuqh3Z4aqVh0nmwUAgKg/iSamples-Wireframe-1.0?node-id=213-394))
+proposed a two-button search UI: "Search Selected Areas" (viewport-scoped)
+and "Search Entire World" (full-corpus). Implemented as a Light extension
+of (C), not a revisit of the A/B/C decision:
+
+- "Search Entire World" runs the existing (C) full-corpus side-panel
+  lookup with result-pin overlay. Behavior unchanged from the contract above.
+  SQL shape: CTE over `sample_facets_v2` → top-50 → `LEFT JOIN` to
+  `samples_map_lite` for display coords (samples without coords still
+  appear; lat/lng are null).
+- "Search Selected Areas" runs the same text predicate but with a
+  different SQL shape: `INNER JOIN` `samples_map_lite` inside the
+  candidate selection, viewport `BETWEEN` predicate applied **before**
+  `ORDER BY ... LIMIT 50`. This is critical — applying viewport after
+  the global top-50 produces false zeroes (the global top-50 is
+  concentrated in a few hot regions; a Sudan-area `pottery` query
+  would return zero even though Sudan has plenty of pottery hits).
+  Dateline-crossing is split into two longitude ranges.
+- URL state gains `?search_scope=area|world`; default `world`, omitted
+  from URL when default. Hydrated on boot; written by `persistSearchScope()`.
+- Result-pin overlay still applies in both modes — pin coordinates
+  reflect what was found, viewport-scope just narrows the candidate set.
+- Auto-fly to the first result is suppressed in area mode (the user is
+  already at the area they care about; flying would zoom in and disorient).
+- Area mode requires coordinates by definition, so the `INNER JOIN`
+  drops samples that have facets but no `samples_map_lite` row. World
+  mode keeps them (via `LEFT JOIN`) since coord-less samples are still
+  legitimate text matches.
+
+A future Heavy revisit may rethink (A) global-filter semantics if usage
+data shows users *expect* the map and facets to update with search.
+That decision is deferred until #170-#172 land.
+
 ---
 
 ## 7. Facet-count contract

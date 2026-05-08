@@ -93,17 +93,24 @@ format:
     }
     .share-btn:hover { background: #0d47a1; }
     .share-toast { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
-    .search-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .search-bar { display: flex; gap: 6px; margin-bottom: 6px; }
     .search-bar input {
         flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
         font-size: 14px; outline: none;
     }
     .search-bar input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
-    .search-bar button {
-        background: #1565c0; color: white; border: none; padding: 8px 16px;
-        border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap;
+    .search-actions {
+        display: flex; gap: 6px; margin-bottom: 8px;
     }
-    .search-bar button:hover { background: #0d47a1; }
+    .search-actions button {
+        flex: 1; border: none; padding: 8px 12px; border-radius: 4px;
+        cursor: pointer; font-size: 13px; font-weight: 500; color: white;
+        white-space: nowrap;
+    }
+    .search-actions #searchAreaBtn { background: #ef6c00; }
+    .search-actions #searchAreaBtn:hover { background: #e65100; }
+    .search-actions #searchWorldBtn { background: #1565c0; }
+    .search-actions #searchWorldBtn:hover { background: #0d47a1; }
     .search-results { font-size: 12px; color: #666; padding: 4px 0; }
     .view-toolbar {
         display: flex;
@@ -240,7 +247,10 @@ Circle size = log(sample count). Color = dominant data source.
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
 <div class="search-bar">
 <input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
-<button id="searchBtn">Search</button>
+</div>
+<div class="search-actions">
+<button id="searchAreaBtn" type="button" title="Limit results to samples within the current map view">Search Selected Areas</button>
+<button id="searchWorldBtn" type="button" title="Search all samples globally">Search Entire World</button>
 </div>
 <div class="search-help" style="font-size: 11px; color: #888; padding: 2px 0 6px 0; line-height: 1.3;">
 Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
@@ -1817,21 +1827,47 @@ zoomWatcher = {
     }
 
     // --- Search handler ---
-    const searchBtn = document.getElementById('searchBtn');
+    const searchAreaBtn = document.getElementById('searchAreaBtn');
+    const searchWorldBtn = document.getElementById('searchWorldBtn');
     const searchInput = document.getElementById('sampleSearch');
     const searchResults = document.getElementById('searchResults');
 
     let _searchSeq = 0;
+    // Initial scope hydrated from URL; default 'world' on missing/unknown.
+    let _searchScope = (
+        new URLSearchParams(location.search).get('search_scope') === 'area'
+    ) ? 'area' : 'world';
 
-    async function doSearch() {
+    function persistSearchScope(scope) {
+        // writeQueryState() doesn't know about scope; keep the URL param
+        // honest by manipulating directly. 'world' is default, omitted from
+        // URL.
+        const params = new URLSearchParams(location.search);
+        if (scope === 'area') params.set('search_scope', 'area');
+        else params.delete('search_scope');
+        const qs = params.toString();
+        const url = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
+        if (url !== `${location.pathname}${location.search}${location.hash}`) {
+            history.replaceState(null, '', url);
+        }
+    }
+
+    async function doSearch(scope) {
+        if (scope === 'area' || scope === 'world') _searchScope = scope;
+        const effectiveScope = _searchScope;
+
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
             writeQueryState();
+            persistSearchScope(effectiveScope);
             return;
         }
         writeQueryState();
-        searchResults.textContent = 'Searching...';
+        persistSearchScope(effectiveScope);
+        searchResults.textContent = effectiveScope === 'area'
+            ? 'Searching selected areas...'
+            : 'Searching entire world...';
 
         // Per-search perf instrumentation (#167). Captures cold/warm latency,
         // result count, and bytes transferred from data.isamples.org during
@@ -1866,33 +1902,94 @@ zoomWatcher = {
             // DuckDB benchmark: naive 4.2 s vs CTE 0.5 s for `pottery`.
             // The browser DuckDB-WASM penalty makes the difference even
             // more pronounced; the naive form times out on `pottery` cold.
+            // Use `f.`-qualified columns so the same searchWhere/score
+            // strings work for both the world-mode CTE (single table aliased
+            // f) and the area-mode INNER JOIN (f + l, both via USING (pid)).
             const searchWhere = textSearchWhere(terms, [
-                'label',
-                'description',
-                'CAST(place_name AS VARCHAR)',
+                'f.label',
+                'f.description',
+                'CAST(f.place_name AS VARCHAR)',
             ]);
             const score = textSearchScore(terms, [
-                { col: 'label',                       weight: 3 },
-                { col: 'description',                 weight: 1 },
-                { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
+                { col: 'f.label',                       weight: 3 },
+                { col: 'f.description',                 weight: 1 },
+                { col: 'CAST(f.place_name AS VARCHAR)', weight: 2 },
             ]);
-            const results = await db.query(`
-                WITH matches AS (
-                    SELECT pid, label, source, place_name,
-                           (${score}) AS relevance_score
-                    FROM read_parquet('${facets_url}')
-                    WHERE ${searchWhere}
-                    ${sourceFilterSQL('source')}
-                    ${facetFilterSQL()}
-                    ORDER BY relevance_score DESC
-                    LIMIT 50
-                )
-                SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
-                       m.place_name, m.relevance_score
-                FROM matches m
-                LEFT JOIN read_parquet('${lite_url}') l USING (pid)
-                ORDER BY m.relevance_score DESC, m.label
-            `);
+
+            // Two SQL shapes — one per scope. The fix per #179 round-2
+            // review: in area mode, the viewport predicate MUST run BEFORE
+            // the top-50 selection, otherwise we're searching only the
+            // global top-50 within the area ("current viewport among the
+            // global top 50") rather than "top 50 within the current
+            // viewport." For broad terms like `pottery`, the global top-50
+            // is concentrated in a few hot regions, so a Sudan-area query
+            // would return zero even though Sudan has plenty of pottery.
+            //
+            // World mode keeps the original CTE-then-LEFT-JOIN shape so
+            // samples that have facets but no `samples_map_lite` row
+            // (i.e., no coordinates) still appear in the results, with
+            // null lat/lng. The click-to-fly handler already guards on
+            // isNaN(lat).
+            //
+            // Area mode uses INNER JOIN inside the candidate selection
+            // because area-scoped search by definition requires
+            // coordinates. Drop coord-less samples before ranking; apply
+            // the viewport predicate; THEN top-50.
+            let results;
+            if (effectiveScope === 'area') {
+                const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+                if (!rect) {
+                    // Camera couldn't produce a view rectangle (shouldn't
+                    // happen in practice; defensive). Fall through to the
+                    // world query so the user gets results, with a console
+                    // hint for diagnostics.
+                    console.warn('Area scope requested but no view rectangle; falling back to world.');
+                    results = await runWorldQuery();
+                } else {
+                    const south = Cesium.Math.toDegrees(rect.south);
+                    const north = Cesium.Math.toDegrees(rect.north);
+                    const west = Cesium.Math.toDegrees(rect.west);
+                    const east = Cesium.Math.toDegrees(rect.east);
+                    const lngClause = (west > east)
+                        ? `(l.longitude BETWEEN ${west} AND 180 OR l.longitude BETWEEN -180 AND ${east})`
+                        : `l.longitude BETWEEN ${west} AND ${east}`;
+                    results = await db.query(`
+                        SELECT f.pid, f.label, f.source, l.latitude, l.longitude,
+                               f.place_name, (${score}) AS relevance_score
+                        FROM read_parquet('${facets_url}') f
+                        INNER JOIN read_parquet('${lite_url}') l USING (pid)
+                        WHERE ${searchWhere}
+                          AND l.latitude BETWEEN ${south} AND ${north}
+                          AND ${lngClause}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                        ORDER BY relevance_score DESC, f.label
+                        LIMIT 50
+                    `);
+                }
+            } else {
+                results = await runWorldQuery();
+            }
+
+            async function runWorldQuery() {
+                return db.query(`
+                    WITH matches AS (
+                        SELECT f.pid, f.label, f.source, f.place_name,
+                               (${score}) AS relevance_score
+                        FROM read_parquet('${facets_url}') f
+                        WHERE ${searchWhere}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                        ORDER BY relevance_score DESC
+                        LIMIT 50
+                    )
+                    SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
+                           m.place_name, m.relevance_score
+                    FROM matches m
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    ORDER BY m.relevance_score DESC, m.label
+                `);
+            }
             resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
@@ -1934,8 +2031,10 @@ zoomWatcher = {
                 });
             }
 
-            // Fly to the first result
-            if (results[0].latitude && results[0].longitude) {
+            // Fly to the first result. Skip for area-scoped searches —
+            // the user is already at the area they care about; flying
+            // would zoom in and disorient.
+            if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
                     duration: 1.5
@@ -1980,6 +2079,7 @@ zoomWatcher = {
                     id: searchId,
                     term: term,
                     terms_count: terms.length,
+                    scope: effectiveScope,
                     results_count: resultsCount,
                     elapsed_ms: Math.round(elapsedMs),
                     bytes_transfer: transferBytes,
@@ -2006,7 +2106,7 @@ zoomWatcher = {
                         const tr = document.createElement('tr');
                         const labelCell = document.createElement('td');
                         labelCell.style.cssText = 'padding:1px 8px 1px 0;color:#bbb;';
-                        labelCell.textContent = `search #${searchId}: "${term}" (${resultsCount})`;
+                        labelCell.textContent = `search #${searchId} ${effectiveScope}: "${term}" (${resultsCount})`;
                         const valCell = document.createElement('td');
                         valCell.style.cssText = 'padding:1px 0;text-align:right;color:#a5d6a7;font-variant-numeric:tabular-nums;';
                         valCell.textContent = fmt(elapsedMs);
@@ -2019,13 +2119,17 @@ zoomWatcher = {
         }
     }
 
-    if (searchBtn) searchBtn.addEventListener('click', doSearch);
+    if (searchAreaBtn) searchAreaBtn.addEventListener('click', () => doSearch('area'));
+    if (searchWorldBtn) searchWorldBtn.addEventListener('click', () => doSearch('world'));
+    // Enter key uses the last-clicked scope (or the URL-hydrated scope if
+    // no button has been clicked yet). Defaults to 'world' for keyboard-only
+    // users on first invocation.
     if (searchInput) searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doSearch();
+        if (e.key === 'Enter') doSearch(_searchScope);
     });
 
     if (searchInput && searchInput.value.trim().length >= 2) {
-        doSearch();
+        doSearch(_searchScope);
     }
 
     refreshFacetCounts();
