@@ -56,6 +56,19 @@ CANONICAL_QUERIES = [
         "term": "pottery",
         "filters": {"source_only": ["OPENCONTEXT"]},
     },
+    {
+        # Pairs source restriction with a material-facet selection so the
+        # benchmark exercises the facetFilterSQL() pid-IN-subquery path,
+        # not just sourceFilterSQL(). The first material checkbox is used
+        # to keep the test stable across data refreshes (don't hard-code a
+        # URI that may disappear between snapshots).
+        "label": "composed-source-material",
+        "term": "pottery",
+        "filters": {
+            "source_only": ["OPENCONTEXT"],
+            "material_first_n": 1,
+        },
+    },
 ]
 
 
@@ -72,17 +85,50 @@ def _wait_for_explorer_ready(page, timeout_ms: int = 90_000) -> None:
     )
 
 
+def _wait_for_facet_settle(page, timeout_ms: int = 30_000) -> None:
+    """Block until no .facet-count is in the .recomputing transient state.
+
+    The cross-filter handler debounces 250ms before issuing the query
+    (explorer.qmd:1610-1612), and the H3 cluster reload triggered by source
+    filter changes is async and can exceed 1 s cold. Polling the DOM for
+    "no recomputing class" is more reliable than a fixed wait.
+    """
+    page.wait_for_function(
+        """() => {
+            const recomputing = document.querySelectorAll('.facet-count.recomputing');
+            return recomputing.length === 0;
+        }""",
+        timeout=timeout_ms,
+    )
+
+
 def _apply_source_filter(page, sources_to_keep_checked: list[str]) -> None:
     """Uncheck source checkboxes that aren't in the keep list."""
     all_sources = ["SESAR", "OPENCONTEXT", "GEOME", "SMITHSONIAN"]
+    changed = False
     for src in all_sources:
         cb = page.locator(f"#sourceFilter input[type='checkbox'][value='{src}']")
         is_checked = cb.is_checked()
         should_be_checked = src in sources_to_keep_checked
         if is_checked != should_be_checked:
             cb.click()
-    # Let the change handler debounce settle.
-    page.wait_for_timeout(800)
+            changed = True
+    if changed:
+        _wait_for_facet_settle(page)
+
+
+def _apply_material_first_n(page, n: int) -> None:
+    """Check the first n material-facet checkboxes (avoids hard-coding URIs)."""
+    if n <= 0:
+        return
+    boxes = page.locator("#materialFilterBody input[type='checkbox']")
+    boxes.first.wait_for(state="attached", timeout=15_000)
+    total = boxes.count()
+    for i in range(min(n, total)):
+        cb = boxes.nth(i)
+        if not cb.is_checked():
+            cb.click()
+    _wait_for_facet_settle(page)
 
 
 def _run_search(page, term: str, *, captured: list, expected_id_after: int) -> dict:
@@ -133,8 +179,11 @@ def _measure_one_query(browser, query: dict) -> dict:
     page.goto(EXPLORER_URL, wait_until="domcontentloaded", timeout=60_000)
     _wait_for_explorer_ready(page)
 
-    if "source_only" in query["filters"]:
-        _apply_source_filter(page, query["filters"]["source_only"])
+    filters = query["filters"]
+    if "source_only" in filters:
+        _apply_source_filter(page, filters["source_only"])
+    if "material_first_n" in filters:
+        _apply_material_first_n(page, filters["material_first_n"])
 
     cold = _run_search(page, query["term"], captured=captured, expected_id_after=0)
     warm = _run_search(
@@ -151,16 +200,27 @@ def _measure_one_query(browser, query: dict) -> dict:
     }
 
 
+def _utc_now() -> dt.datetime:
+    """Aware UTC datetime; replaces the deprecated dt.datetime.utcnow()."""
+    return dt.datetime.now(dt.timezone.utc)
+
+
 @pytest.fixture(scope="session")
-def baseline_output_path() -> pathlib.Path:
-    today = dt.datetime.utcnow().strftime("%Y-%m-%d")
-    path = pathlib.Path(__file__).parent / f"search_baseline_{today}.json"
+def benchmark_run_started_at() -> dt.datetime:
+    return _utc_now()
+
+
+@pytest.fixture(scope="session")
+def baseline_output_path(benchmark_run_started_at) -> pathlib.Path:
+    stamp = benchmark_run_started_at.strftime("%Y-%m-%d")
+    path = pathlib.Path(__file__).parent / f"search_baseline_{stamp}.json"
     return path
 
 
-def test_record_search_baseline(browser, baseline_output_path):
+def test_record_search_baseline(browser, benchmark_run_started_at, baseline_output_path):
     """Run the canonical query set, dump JSON. Single test = one benchmark run."""
     results = []
+    failures = []
     for query in CANONICAL_QUERIES:
         try:
             record = _measure_one_query(browser, query)
@@ -171,13 +231,14 @@ def test_record_search_baseline(browser, baseline_output_path):
                 "filters": query["filters"],
                 "error": f"{type(exc).__name__}: {exc}",
             }
+            failures.append(record)
         results.append(record)
         # Stream to stdout so partial runs are still useful.
         print(json.dumps(record, indent=2))
 
     payload = {
         "site_url": SITE_URL,
-        "captured_at_utc": dt.datetime.utcnow().isoformat() + "Z",
+        "captured_at_utc": benchmark_run_started_at.isoformat(),
         "schema_version": 1,
         "field_subset": "label+place_name (samples_map_lite.parquet)",
         "queries": results,
@@ -185,12 +246,18 @@ def test_record_search_baseline(browser, baseline_output_path):
     baseline_output_path.write_text(json.dumps(payload, indent=2) + "\n")
     print(f"\nWrote baseline to {baseline_output_path}")
 
-    # Light sanity check: at least half the queries produced a usable cold record.
-    completed = sum(
-        1 for r in results
-        if "cold" in r and r["cold"].get("elapsed_ms") is not None
-    )
-    assert completed >= len(CANONICAL_QUERIES) // 2, (
-        f"Only {completed}/{len(CANONICAL_QUERIES)} queries completed cleanly; "
-        f"see {baseline_output_path} for partial data"
+    # A benchmark with silent failures is a poisoned baseline — refuse to
+    # treat it as valid. Partial data is still on disk for diagnosis.
+    incomplete = [
+        r for r in results
+        if "error" in r
+        or "cold" not in r
+        or r.get("cold", {}).get("elapsed_ms") is None
+        or "warm" not in r
+        or r.get("warm", {}).get("elapsed_ms") is None
+    ]
+    assert not incomplete, (
+        f"{len(incomplete)}/{len(CANONICAL_QUERIES)} queries did not complete cleanly. "
+        f"Failed labels: {[r['label'] for r in incomplete]}. "
+        f"Partial data at {baseline_output_path}."
     )

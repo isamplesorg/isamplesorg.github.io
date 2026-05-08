@@ -1877,9 +1877,12 @@ zoomWatcher = {
             try { performance.measure(`search-${searchId}`, markStart, markEnd); } catch (e) {}
             const elapsedMs = performance.now() - tStart;
 
-            // Sum bytes transferred from data.isamples.org during the search
+            // Per-URL byte data from data.isamples.org during the search
             // window. transferSize is 0 cross-origin without Timing-Allow-Origin;
-            // fall back to encodedBodySize so we still report something.
+            // encodedBodySize is reported as a fallback. Per-URL detail (rather
+            // than just summed bytes) lets analysis post-hoc-filter concurrent
+            // fetches that are not actually attributable to the search.
+            const seenUrls = [];
             let transferBytes = 0;
             let bodyBytes = 0;
             try {
@@ -1887,6 +1890,11 @@ zoomWatcher = {
                 for (const e of entries) {
                     if (!e.name.startsWith(R2_BASE)) continue;
                     if (e.startTime < tStart || e.startTime > tStart + elapsedMs) continue;
+                    seenUrls.push({
+                        name: e.name,
+                        transfer_size: e.transferSize || 0,
+                        body_size: e.encodedBodySize || 0,
+                    });
                     transferBytes += (e.transferSize || 0);
                     bodyBytes += (e.encodedBodySize || 0);
                 }
@@ -1903,6 +1911,7 @@ zoomWatcher = {
                     elapsed_ms: Math.round(elapsedMs),
                     bytes_transfer: transferBytes,
                     bytes_body: bodyBytes,
+                    seen_urls: seenUrls,
                     has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
                     has_facet_filter: hasFacetFilters(),
                     error: errorMessage,
