@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>explorer_state – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-84244d6014897f94eda7509784684fcb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#explorer-state-contract" id="toc-explorer-state-contract" class="nav-link active" data-scroll-target="#explorer-state-contract"><span class="header-section-number">1</span> Explorer State Contract</a>
+  <ul>
+  <li><a href="#url-query-params-location.search" id="toc-url-query-params-location.search" class="nav-link" data-scroll-target="#url-query-params-location.search"><span class="header-section-number">1.1</span> 1. URL query params (<code>location.search</code>)</a>
+  <ul class="collapse">
+  <li><a href="#quarto-site-search-collision" id="toc-quarto-site-search-collision" class="nav-link" data-scroll-target="#quarto-site-search-collision"><span class="header-section-number">1.1.1</span> Quarto site-search collision</a></li>
+  </ul></li>
+  <li><a href="#url-hash-params-location.hash" id="toc-url-hash-params-location.hash" class="nav-link" data-scroll-target="#url-hash-params-location.hash"><span class="header-section-number">1.2</span> 2. URL hash params (<code>location.hash</code>)</a>
+  <ul class="collapse">
+  <li><a href="#hash-write-vs-read-coordination" id="toc-hash-write-vs-read-coordination" class="nav-link" data-scroll-target="#hash-write-vs-read-coordination"><span class="header-section-number">1.2.1</span> Hash write-vs-read coordination</a></li>
+  <li><a href="#backforward-listener" id="toc-backforward-listener" class="nav-link" data-scroll-target="#backforward-listener"><span class="header-section-number">1.2.2</span> <code>back/forward</code> listener</a></li>
+  </ul></li>
+  <li><a href="#dom-as-state" id="toc-dom-as-state" class="nav-link" data-scroll-target="#dom-as-state"><span class="header-section-number">1.3</span> 3. DOM-as-state</a></li>
+  <li><a href="#widget-internal-state-viewer.-window." id="toc-widget-internal-state-viewer.-window." class="nav-link" data-scroll-target="#widget-internal-state-viewer.-window."><span class="header-section-number">1.4</span> 4. Widget-internal state (<code>viewer.*</code> / <code>window.*</code>)</a>
+  <ul class="collapse">
+  <li><a href="#urlparamshydrated-confirmed-gone" id="toc-urlparamshydrated-confirmed-gone" class="nav-link" data-scroll-target="#urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.1</span> <code>_urlParamsHydrated</code> — confirmed gone</a></li>
+  </ul></li>
+  <li><a href="#ojs-cell-graph" id="toc-ojs-cell-graph" class="nav-link" data-scroll-target="#ojs-cell-graph"><span class="header-section-number">1.5</span> 5. OJS cell graph</a></li>
+  <li><a href="#search-semantics-decision" id="toc-search-semantics-decision" class="nav-link" data-scroll-target="#search-semantics-decision"><span class="header-section-number">1.6</span> 6. Search-semantics decision</a>
+  <ul class="collapse">
+  <li><a href="#what-search-does-today-dosearch-at-1782-1859" id="toc-what-search-does-today-dosearch-at-1782-1859" class="nav-link" data-scroll-target="#what-search-does-today-dosearch-at-1782-1859"><span class="header-section-number">1.6.1</span> What “search” does today (<code>doSearch</code> at <code>:1782-1859</code>)</a></li>
+  <li><a href="#the-three-options" id="toc-the-three-options" class="nav-link" data-scroll-target="#the-three-options"><span class="header-section-number">1.6.2</span> The three options</a></li>
+  <li><a href="#decision-c-side-panel-lookup-with-result-pin-overlay" id="toc-decision-c-side-panel-lookup-with-result-pin-overlay" class="nav-link" data-scroll-target="#decision-c-side-panel-lookup-with-result-pin-overlay"><span class="header-section-number">1.6.3</span> Decision: (C) side-panel lookup with result-pin overlay</a></li>
+  <li><a href="#implementation-rules-for-option-c" id="toc-implementation-rules-for-option-c" class="nav-link" data-scroll-target="#implementation-rules-for-option-c"><span class="header-section-number">1.6.4</span> Implementation rules for option (C)</a></li>
+  <li><a href="#result-set-shape-acceptance-cases" id="toc-result-set-shape-acceptance-cases" class="nav-link" data-scroll-target="#result-set-shape-acceptance-cases"><span class="header-section-number">1.6.5</span> Result-set shape acceptance cases</a></li>
+  <li><a href="#state-inventory-addendum-for-c" id="toc-state-inventory-addendum-for-c" class="nav-link" data-scroll-target="#state-inventory-addendum-for-c"><span class="header-section-number">1.6.6</span> State-inventory addendum for (C)</a></li>
+  </ul></li>
+  <li><a href="#facet-count-contract" id="toc-facet-count-contract" class="nav-link" data-scroll-target="#facet-count-contract"><span class="header-section-number">1.7</span> 7. Facet-count contract</a></li>
+  <li><a href="#out-of-scope" id="toc-out-of-scope" class="nav-link" data-scroll-target="#out-of-scope"><span class="header-section-number">1.8</span> 8. Out of scope</a></li>
+  <li><a href="#acceptance-signals" id="toc-acceptance-signals" class="nav-link" data-scroll-target="#acceptance-signals"><span class="header-section-number">1.9</span> 9. Acceptance signals</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_STATE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="explorer-state-contract" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Explorer State Contract</h1>
+<p>Doc-only contract for <code>explorer.qmd</code>. Locks down where every piece of explorer state lives, who owns it, when it gets written, and what the cross-filter rules are. Resolves <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/164">#164</a>; unblocks the items in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/163">#163</a>.</p>
+<p><strong>Direction</strong>: imperative + URL-as-canonical-state. OJS cells are used as a DAG-aware bootstrap (run viewer once, run phase1 after viewer is ready, etc.), not as a reactive UI runtime. All user-driven UI updates go through <code>writeQueryState()</code> → <code>history.replaceState</code> and direct DOM mutation. Reading DOM checkboxes is the source of truth for facet state inside SQL builders; the URL is the source of truth across reloads.</p>
+<p>All file:line references below are against <code>explorer.qmd</code> at commit <code>94e7674</code> (the tree this doc is being written against).</p>
+<hr>
+<section id="url-query-params-location.search" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="url-query-params-location.search"><span class="header-section-number">1.1</span> 1. URL query params (<code>location.search</code>)</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 18%">
+<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>field</th>
+<th>owner</th>
+<th>default</th>
+<th>URL repr</th>
+<th>hydration site</th>
+<th>write-back trigger</th>
+<th>validation</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>search</code></td>
+<td>DOM <code>#sampleSearch</code> value</td>
+<td>omitted</td>
+<td>raw string</td>
+<td><code>applyQueryToSearch()</code> at start of <code>phase1</code> (<code>:937</code>)</td>
+<td><code>writeQueryState()</code> (<code>:445-446</code>) called from <code>doSearch()</code> (<code>:1789</code>) and from globe/table toggle</td>
+<td>trim only; min 2 chars enforced at search time, not in URL</td>
+<td>written even on no-result searches</td>
+</tr>
+<tr class="even">
+<td><code>sources</code></td>
+<td>DOM <code>#sourceFilter</code> checkboxes</td>
+<td>omitted (= all 4 checked)</td>
+<td>CSV of <code>SOURCE_VALUES</code> ∩ user-checked</td>
+<td><code>applyQueryToSourceFilter()</code> at start of <code>phase1</code> (<code>:938</code>)</td>
+<td><code>writeQueryState()</code> from source filter <code>change</code> (<code>:1620</code>)</td>
+<td>filtered by <code>SOURCE_VALUES</code> allowlist (<code>:407</code>); param removed when all 4 checked (<code>:449</code>)</td>
+<td>empty (zero checked) renders as <code>&amp;sources=</code> and yields <code>1=0</code> predicate (<code>:379</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>material</code></td>
+<td>DOM <code>#materialFilterBody</code> checkboxes</td>
+<td>omitted (= no filter)</td>
+<td>CSV of full URIs</td>
+<td><code>applyQueryToFacetFilters()</code> at end of <code>facetFilters</code> (<code>:1061</code>)</td>
+<td><code>writeQueryState()</code> from <code>handleFacetFilterChange</code> (<code>:1642</code>)</td>
+<td>none — checkbox <code>value</code> already constrained by render</td>
+<td>empty checked set ⇒ param removed (<code>:459</code>)</td>
+</tr>
+<tr class="even">
+<td><code>context</code></td>
+<td>DOM <code>#contextFilterBody</code> checkboxes</td>
+<td>omitted</td>
+<td>CSV of full URIs</td>
+<td>same as <code>material</code></td>
+<td>same as <code>material</code></td>
+<td>none</td>
+<td>same</td>
+</tr>
+<tr class="odd">
+<td><code>object_type</code></td>
+<td>DOM <code>#objectTypeFilterBody</code> checkboxes</td>
+<td>omitted</td>
+<td>CSV of full URIs</td>
+<td>same as <code>material</code></td>
+<td>same as <code>material</code></td>
+<td>none</td>
+<td>same</td>
+</tr>
+<tr class="even">
+<td><code>view</code></td>
+<td><code>body.classList.contains('table-view-active')</code></td>
+<td>omitted (= globe)</td>
+<td><code>table</code> only; absent ⇒ globe</td>
+<td><code>tableView</code> cell reads <code>params.get('view')</code> (<code>:1239-1240</code>) and calls <code>setView(...)</code> with <code>updateUrl=false</code></td>
+<td><code>writeQueryState()</code> from <code>setView(mode, true)</code> via globe/table button clicks (<code>:1217-1218</code>, <code>:1210</code>)</td>
+<td>only <code>table</code> is honored (<code>:1240</code>)</td>
+<td><code>writeQueryState()</code> reads body class, not <code>viewer.*</code></td>
+</tr>
+<tr class="odd">
+<td><code>page</code></td>
+<td>inner closure <code>let page = 0</code> in <code>tableView</code> (<code>:1080</code>)</td>
+<td>not in URL</td>
+<td>—</td>
+<td>—</td>
+<td>resets to 0 on <code>refreshTable()</code> (<code>:1163</code>); ±1 on prev/next (<code>:1219-1220</code>)</td>
+<td>clamped to <code>[0, totalPages-1]</code> (<code>:1112</code>)</td>
+<td><strong>#163 item 6</strong> — table page is intentionally not URL state today; if/when added, must coexist with the cross-filter contract below</td>
+</tr>
+<tr class="even">
+<td><code>perf</code></td>
+<td>— (read-only feature flag)</td>
+<td>omitted</td>
+<td><code>1</code> to enable</td>
+<td><code>perfPanel</code> cell reads (<code>:1921-1922</code>)</td>
+<td>never written</td>
+<td><code>=== '1'</code> exact match</td>
+<td>never round-tripped; safe to add other tail params</td>
+</tr>
+</tbody>
+</table>
+<section id="quarto-site-search-collision" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="quarto-site-search-collision"><span class="header-section-number">1.1.1</span> Quarto site-search collision</h3>
+<p><code>?q=</code> is hijacked by Quarto’s site-wide search and stripped via <code>replaceState</code> (see comment at <code>:414-416</code>). That is why the explorer uses <code>?search=</code> for the sample text query. Don’t migrate to <code>q</code>.</p>
+<hr>
+</section>
+</section>
+<section id="url-hash-params-location.hash" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="url-hash-params-location.hash"><span class="header-section-number">1.2</span> 2. URL hash params (<code>location.hash</code>)</h2>
+<p>The hash is the camera/deep-link channel. Always written together by <code>buildHash(viewer)</code> (<code>:597-613</code>), always read together by <code>readHash()</code> (<code>:583-595</code>).</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 17%">
+<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>field</th>
+<th>owner</th>
+<th>default</th>
+<th>hash repr</th>
+<th>hydration site</th>
+<th>write-back trigger</th>
+<th>validation</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>v</code></td>
+<td>constant</td>
+<td><code>'1'</code> (always written)</td>
+<td><code>v=1</code></td>
+<td><code>readHash()</code> returns <code>parseInt() || 0</code> (<code>:586</code>)</td>
+<td><code>buildHash</code> always sets <code>'1'</code> (<code>:601</code>)</td>
+<td><code>parseInt</code>; non-numeric ⇒ 0</td>
+<td>reserved for future schema bump</td>
+</tr>
+<tr class="even">
+<td><code>lat</code></td>
+<td><code>viewer.camera.positionCartographic</code></td>
+<td>absent</td>
+<td>4-decimal degrees</td>
+<td><code>readHash()</code> (<code>:587</code>); applied in viewer <code>once</code> postRender (<code>:797-812</code>)</td>
+<td>camera-change debounced 600ms (<code>:1700-1702</code>, <code>replaceState</code>); enter/exit point mode (<code>:1463</code>, <code>:1474</code>, <code>pushState</code>); sample/cluster click (<code>:861</code>, <code>:888</code>, <code>pushState</code>); share button (<code>:1763</code>, <code>replaceState</code>)</td>
+<td>clamped <code>[-90, 90]</code> (<code>:587</code>)</td>
+<td>written together with <code>lng</code>, <code>alt</code></td>
+</tr>
+<tr class="odd">
+<td><code>lng</code></td>
+<td>same</td>
+<td>absent</td>
+<td>4-decimal degrees</td>
+<td>same</td>
+<td>same</td>
+<td>clamped <code>[-180, 180]</code> (<code>:588</code>)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>alt</code></td>
+<td>same</td>
+<td><code>null</code> ⇒ falls back to <code>20000000</code> (<code>:801</code>)</td>
+<td>integer meters</td>
+<td>same</td>
+<td>same</td>
+<td>clamped <code>[100, 40_000_000]</code> (<code>:589</code>)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>heading</code></td>
+<td><code>viewer.camera.heading</code></td>
+<td><code>0</code></td>
+<td>degrees, 1-decimal</td>
+<td>same</td>
+<td>same; only written if <code>\|heading\| &gt; 1</code> (<code>:607</code>)</td>
+<td>clamped <code>[0, 360]</code> (<code>:590</code>)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>pitch</code></td>
+<td><code>viewer.camera.pitch</code></td>
+<td><code>-90</code></td>
+<td>degrees, 1-decimal</td>
+<td>same</td>
+<td>same; only written if <code>\|pitch + 90\| &gt; 1</code> (<code>:608</code>)</td>
+<td>clamped <code>[-90, 0]</code> (<code>:591</code>)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>mode</code></td>
+<td><code>viewer._globeState.mode</code></td>
+<td>omitted (= <code>cluster</code>)</td>
+<td><code>point</code> only</td>
+<td><code>readHash()</code> (<code>:592</code>); applied after camera flight in <code>hashchange</code> handler (<code>:1727-1729</code>); also restored from <code>_initialHash</code> after zoomWatcher init</td>
+<td><code>buildHash</code> only writes if <code>'point'</code> (<code>:610</code>); push triggers as above</td>
+<td>exact-match <code>'point'</code></td>
+<td>absence ⇒ cluster</td>
+</tr>
+<tr class="even">
+<td><code>pid</code></td>
+<td><code>viewer._globeState.selectedPid</code></td>
+<td>omitted</td>
+<td>sample pid string (URL-encoded)</td>
+<td><code>readHash()</code> (<code>:593</code>); applied at end of <code>zoomWatcher</code> (<code>:1873-1901</code>) and on <code>hashchange</code> (<code>:1733-1756</code>)</td>
+<td>sample-click sets it (<code>:860</code>); cluster-click clears it (<code>:887</code>); written in <code>buildHash</code> if non-null (<code>:611</code>)</td>
+<td>none beyond <code>null</code> check</td>
+<td>drives a <code>lite_url</code> lookup + lazy <code>wide_url</code> description fetch</td>
+</tr>
+</tbody>
+</table>
+<section id="hash-write-vs-read-coordination" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" data-anchor-id="hash-write-vs-read-coordination"><span class="header-section-number">1.2.1</span> Hash write-vs-read coordination</h3>
+<p><code>viewer._suppressHashWrite</code> (boot at <code>true</code> at <code>:791</code>, cleared at <code>:1904</code>) prevents the camera-change handler from rewriting the hash while the <code>hashchange</code> handler is mid-flight. The <code>_suppressTimer</code> (<code>:792</code>, <code>:1725</code>) re-arms after a 2-second flight settles. <strong>Do not remove this flag</strong> without re-deriving the camera→hash→camera echo prevention.</p>
+</section>
+<section id="backforward-listener" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" data-anchor-id="backforward-listener"><span class="header-section-number">1.2.2</span> <code>back/forward</code> listener</h3>
+<p><code>window.addEventListener('hashchange', ...)</code> at <code>:1708</code> does the inverse of <code>buildHash</code>: flies the camera, restores the selected pid, and toggles <code>enterPointMode(false)</code> / <code>exitPointMode(false)</code> (the <code>false</code> suppresses a nested <code>pushState</code>).</p>
+<hr>
+</section>
+</section>
+<section id="dom-as-state" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="dom-as-state"><span class="header-section-number">1.3</span> 3. DOM-as-state</h2>
+<p>State that lives only on the page tree. Authoritative because some of it predates the store-on-<code>viewer</code> pattern and isn’t worth migrating.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 27%">
+<col style="width: 20%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>location</th>
+<th>role</th>
+<th>written by</th>
+<th>read by</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>document.body.classList['table-view-active']</code></td>
+<td>view marker (table vs globe)</td>
+<td><code>setView()</code> in <code>tableView</code> (<code>:1198</code>)</td>
+<td><code>writeQueryState()</code> (<code>:462</code>); <code>isTableViewActive()</code> (<code>:755</code>)</td>
+<td>URL <code>view</code> param is <strong>derived</strong> from this class, not the other way around</td>
+</tr>
+<tr class="even">
+<td><code>data-facet</code>, <code>data-value</code> on <code>.facet-row</code> and <code>.facet-count</code></td>
+<td>facet selectors for in-place count mutation</td>
+<td>rendered in <code>renderFilter</code> (<code>:1053</code>) and the static source legend (<code>:270-273</code>)</td>
+<td><code>applyFacetCounts()</code> (<code>:553-565</code>)</td>
+<td>rebuilding the HTML would lose mid-interaction selections; <code>data-*</code> attrs are why we mutate counts in place</td>
+</tr>
+<tr class="odd">
+<td><code>data-lat</code>, <code>data-lng</code>, <code>data-pid</code> on <code>.sample-row</code></td>
+<td>click-to-fly payload for search/nearby results</td>
+<td>rendered in <code>doSearch()</code> (<code>:1822</code>) and <code>updateSamples()</code> not currently using data-* (only the search list does)</td>
+<td>search-row click handler (<code>:1832-1845</code>)</td>
+<td>the nearby-samples list does not have data-* today; click-to-fly only works from the search list</td>
+</tr>
+<tr class="even">
+<td><code>.recomputing</code> on <code>.facet-count</code></td>
+<td>transient “loading” styling during cross-filter recompute</td>
+<td><code>markFacetCountsRecomputing()</code> (<code>:570</code>)</td>
+<td><code>applyFacetCounts()</code> clears it (<code>:562</code>)</td>
+<td>UI-only; not state in the persistence sense</td>
+</tr>
+<tr class="odd">
+<td><code>.zero</code> on <code>.facet-row</code></td>
+<td>“value has zero count under current filters” styling</td>
+<td><code>applyFacetCounts()</code> (<code>:565</code>)</td>
+<td>CSS only</td>
+<td>derived; do not read</td>
+</tr>
+<tr class="even">
+<td><code>.disabled</code> on <code>#sourceFilter .legend-item</code></td>
+<td>unchecked source visual</td>
+<td><code>updateSourceLegendState()</code> (<code>:395-400</code>)</td>
+<td>CSS only</td>
+<td>derived from checkbox <code>checked</code>; do not read</td>
+</tr>
+</tbody>
+</table>
+<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#maxSamples</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, <code>getTableMaxSamples()</code>, and the search input. SQL builders read these directly each call.</p>
+<hr>
+</section>
+<section id="widget-internal-state-viewer.-window." class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="widget-internal-state-viewer.-window."><span class="header-section-number">1.4</span> 4. Widget-internal state (<code>viewer.*</code> / <code>window.*</code>)</h2>
+<p>Set on the Cesium <code>Viewer</code> instance during the <code>viewer</code> cell so it survives across cells without becoming a separate OJS reactive value.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 16%">
+<col style="width: 22%">
+<col style="width: 25%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>field</th>
+<th>type</th>
+<th>set at</th>
+<th>read at</th>
+<th>role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>viewer._globeState</code></td>
+<td><code>{ mode: 'cluster'|'point', selectedPid: string|null }</code></td>
+<td>init <code>:789</code>; mutated <code>:860, :887, :1460, :1470, :1734, :1754, :1875</code></td>
+<td><code>buildHash</code> (<code>:609-611</code>)</td>
+<td>authoritative client-side mode + selection; the URL hash is its serialization</td>
+</tr>
+<tr class="even">
+<td><code>viewer._initialHash</code></td>
+<td><code>readHash()</code> snapshot</td>
+<td>init <code>:790</code></td>
+<td>viewer first-frame <code>once</code> (<code>:797</code>); zoomWatcher boot deep-link (<code>:1873</code>)</td>
+<td>preserves boot-time hash for late hydration</td>
+</tr>
+<tr class="odd">
+<td><code>viewer._suppressHashWrite</code></td>
+<td>bool</td>
+<td>init <code>true</code> <code>:791</code>; cleared <code>:1904</code>; re-set/cleared in <code>hashchange</code> (<code>:1712</code>, <code>:1725</code>)</td>
+<td>camera-change handler (<code>:1700</code>)</td>
+<td>echo-loop guard</td>
+</tr>
+<tr class="even">
+<td><code>viewer._suppressTimer</code></td>
+<td>timer handle</td>
+<td><code>:792</code>, <code>:1713</code>, <code>:1725</code></td>
+<td>cleared in <code>:1713</code></td>
+<td>re-arms <code>_suppressHashWrite</code> after camera flight</td>
+</tr>
+<tr class="odd">
+<td><code>viewer._clusterData</code></td>
+<td><code>Array&lt;row&gt;</code></td>
+<td><code>:964</code> (phase1), <code>:1305</code> (loadRes)</td>
+<td><code>countInViewport</code> (<code>:1342</code>); zoom recompute (<code>:1690</code>)</td>
+<td>viewport count cache</td>
+</tr>
+<tr class="even">
+<td><code>viewer._clusterTotal</code></td>
+<td><code>{ clusters, samples }</code></td>
+<td><code>:965</code>, <code>:1306</code></td>
+<td>exitPointMode (<code>:1481</code>); zoom recompute (<code>:1693</code>)</td>
+<td>totals for the “in view / loaded” stat</td>
+</tr>
+<tr class="odd">
+<td><code>viewer._baselineCounts</code></td>
+<td><code>{ source: Map, material: Map, context: Map, object_type: Map }</code></td>
+<td><code>:1030-1035</code></td>
+<td><code>applyFacetCounts()</code> (<code>:552</code>)</td>
+<td>unfiltered facet counts; rendered when no cross-filter is active</td>
+</tr>
+<tr class="even">
+<td><code>viewer.h3Points</code></td>
+<td>Cesium <code>PointPrimitiveCollection</code></td>
+<td><code>:815</code></td>
+<td>cluster mode rendering</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>viewer.samplePoints</code></td>
+<td>Cesium <code>PointPrimitiveCollection</code></td>
+<td><code>:818</code></td>
+<td>point mode rendering</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>viewer.pointLabel</code></td>
+<td>Cesium label entity</td>
+<td><code>:823</code></td>
+<td>mouse-move handler (<code>:836-848</code>)</td>
+<td>hover tooltip</td>
+</tr>
+<tr class="odd">
+<td><code>window.refreshSamplesTable</code></td>
+<td><code>() =&gt; Promise&lt;void&gt;</code></td>
+<td><code>:1238</code></td>
+<td>external (debug / Playwright)</td>
+<td>not used by other cells; safe to keep or remove</td>
+</tr>
+</tbody>
+</table>
+<section id="urlparamshydrated-confirmed-gone" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.1</span> <code>_urlParamsHydrated</code> — confirmed gone</h3>
+<p>Grep for <code>_urlParamsHydrated</code> in <code>explorer.qmd</code> returns no hits. The flag from PR #159’s first cut was removed; the new contract is “URL → DOM hydration runs exactly once per cell that owns the corresponding DOM, gated only by the OJS DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration; tableView ⇒ view hydration).”</p>
+<hr>
+</section>
+</section>
+<section id="ojs-cell-graph" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="ojs-cell-graph"><span class="header-section-number">1.5</span> 5. OJS cell graph</h2>
+<p>Document order, with declared dependencies and side effects. The cells form a fan-out from <code>viewer</code> + <code>db</code>:</p>
+<pre><code>Cesium-token    [pure global mutation]
+constants/helpers  [pure; defines URLs, palettes, ~40 helper functions]
+db                 [DuckDBClient.of()]
+viewer             [creates Cesium viewer; reads readHash() once]
+  └── phase1       [needs viewer + db; runs URL→DOM hydration for search + sources]
+        └── facetFilters    [needs phase1; loads vocab + summaries; sets _baselineCounts; runs URL→DOM hydration for facet checkboxes]
+              ├── tableView    [needs facetFilters; reads view from URL once]
+              └── zoomWatcher  [needs facetFilters; registers ALL change handlers; runs deep-link pid restore]
+                    └── perfPanel  [opt-in; needs phase1; renders perf panel if ?perf=1]</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 19%">
+<col style="width: 17%">
+<col style="width: 34%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>cell</th>
+<th>line</th>
+<th>implicit deps</th>
+<th>DOM mutation</th>
+<th>event listeners registered</th>
+<th>URL writes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cesium token</td>
+<td><code>:328</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>constants/helpers</td>
+<td><code>:333</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><code>db</code></td>
+<td><code>:759</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>viewer</code></td>
+<td><code>:773</code></td>
+<td>—</td>
+<td><code>#cesiumContainer</code> mounts globe</td>
+<td><code>scene.postRender</code>×2; mouse-move; left-click</td>
+<td><code>pushState</code> (sample/cluster click)</td>
+</tr>
+<tr class="odd">
+<td><code>phase1</code></td>
+<td><code>:930</code></td>
+<td><code>viewer</code>, <code>db</code></td>
+<td><code>#sourceFilter</code> (via hydration); stats DOM</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>facetFilters</code></td>
+<td><code>:979</code></td>
+<td><code>phase1</code>, <code>db</code></td>
+<td><code>#materialFilterBody</code>, <code>#contextFilterBody</code>, <code>#objectTypeFilterBody</code>; facet count text</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><code>tableView</code></td>
+<td><code>:1071</code></td>
+<td><code>facetFilters</code></td>
+<td><code>#globe-layout</code>, <code>#tableContainer</code>, <code>#tableControls</code>, <code>#samplesTable</code>, <code>body.classList</code></td>
+<td>globe/table buttons; prev/next; max input; <strong>change</strong> on all four facet bodies</td>
+<td><code>replaceState</code> via <code>writeQueryState</code> (<code>view</code> flip)</td>
+</tr>
+<tr class="even">
+<td><code>zoomWatcher</code></td>
+<td><code>:1246</code></td>
+<td><code>phase1</code>, <code>facetFilters</code>, <code>db</code></td>
+<td>facet count text; stats; phase msg; sample card; samples list</td>
+<td>source filter <code>change</code>; material/context/object_type <code>change</code>; <code>camera.changed</code>; <code>window</code> <code>hashchange</code>; share button; search button; search input keydown</td>
+<td><code>pushState</code> and <code>replaceState</code> via <code>buildHash</code> (camera, mode flip, sample fly); <code>replaceState</code> via <code>writeQueryState</code> (filter changes, search submit, share)</td>
+</tr>
+<tr class="odd">
+<td><code>perfPanel</code></td>
+<td><code>:1910</code></td>
+<td><code>phase1</code></td>
+<td><code>#perfPanel</code> floating div</td>
+<td>close button</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Note that <strong>two cells register <code>change</code> listeners on the four facet container elements</strong>: <code>tableView</code> (<code>:1233-1236</code>) marks the table dirty and refreshes if visible, and <code>zoomWatcher</code> (<code>:1617</code>, <code>:1649-1651</code>) reloads the globe and debounces the cross-filter count refresh. Both listeners fire on every facet change; this is intentional (each cell handles its own concerns) but is the single most “magical” coupling in the file — touch with care.</p>
+<hr>
+</section>
+<section id="search-semantics-decision" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="search-semantics-decision"><span class="header-section-number">1.6</span> 6. Search-semantics decision</h2>
+<p>The issue originally presented two options (A) global filter and (B) side-panel lookup. After Codex review on #165, we committed to a sharper third framing: <strong>(C) side-panel lookup with result-pin overlay</strong>, which is a refinement of (B) — the <em>backend</em> is unchanged (search does not alter cluster/sample/facet data sources), but the <em>UI surface</em> gains a temporary point-overlay visualization of the matching samples.</p>
+<section id="what-search-does-today-dosearch-at-1782-1859" class="level3" data-number="1.6.1">
+<h3 data-number="1.6.1" data-anchor-id="what-search-does-today-dosearch-at-1782-1859"><span class="header-section-number">1.6.1</span> What “search” does today (<code>doSearch</code> at <code>:1782-1859</code>)</h3>
+<p>Reads <code>#sampleSearch.value</code>. Runs an ILIKE-based DuckDB query against <code>lite_url</code> over <code>label</code> and <code>place_name</code>, with <code>sourceFilterSQL()</code> and <code>facetFilterSQL()</code> AND’d in. Renders up to 50 ranked results into <code>#searchResults</code> (count) and <code>#samplesSection</code> (list). Click a result row to fly the camera. <strong>The map clusters/samples are not filtered by the search text. Facet counts are not filtered by the search text.</strong> The URL <code>search</code> param is written via <code>writeQueryState()</code> (<code>:1786</code>, <code>:1789</code>).</p>
+<p>That is option (B) verbatim, and it matches the facet-count fix Codex landed in <a href="https://github.com/isamplesorg/isamplesorg.github.io/pull/158">#158</a>.</p>
+</section>
+<section id="the-three-options" class="level3" data-number="1.6.2">
+<h3 data-number="1.6.2" data-anchor-id="the-three-options"><span class="header-section-number">1.6.2</span> The three options</h3>
+<ul>
+<li><strong>(A) Global filter.</strong> Active search restricts the map layer, table, and facet counts to the matching subset. Forces cluster mode to drop to point mode whenever a search is active (H3 summaries are not text-indexable). Couples search semantics to camera/mode state. <strong>Rejected.</strong></li>
+<li><strong>(B) Side-panel lookup.</strong> Search populates the side panel only; map + facet counts ignore it. Today’s behavior. Leaves <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/163">#163 item 4</a> as a UX wart (zero results + populated map). <strong>Insufficient.</strong></li>
+<li><strong>(C) Side-panel lookup with result-pin overlay.</strong> Search populates the side panel <strong>and</strong> renders a temporary point-overlay of the matching samples on the globe — independent of the H3 cluster layer and the facet counts. The cluster layer remains accurate (no facet-aware text indexing required); the overlay visualizes “your search matched these samples, here are their locations.” Cleared when the user clears the search. <strong>Adopted.</strong></li>
+</ul>
+</section>
+<section id="decision-c-side-panel-lookup-with-result-pin-overlay" class="level3" data-number="1.6.3">
+<h3 data-number="1.6.3" data-anchor-id="decision-c-side-panel-lookup-with-result-pin-overlay"><span class="header-section-number">1.6.3</span> Decision: (C) side-panel lookup with result-pin overlay</h3>
+<p><strong>What stays the same as (B).</strong> The backend / data-source contract is unchanged from option (B):</p>
+<ol type="1">
+<li>The H3 summary parquets carry only <code>dominant_source</code>, <code>sample_count</code>, and centroid coords. Cluster mode is <strong>not</strong> text-aware.</li>
+<li>The cross-filter facet-count contract landed in #158 still excludes search from the count predicate.</li>
+<li><code>viewer._globeState</code> does not gain a search-active mode; the cluster primitive collection is unaffected.</li>
+</ol>
+<p><strong>What’s new in (C).</strong> A <em>third</em> primitive collection on the viewer: <code>viewer.searchResultPoints</code> (Cesium <code>PointPrimitiveCollection</code>), styled distinctly from cluster and sample-mode points (e.g., outlined ring rather than filled dot, distinct color). Owned by <code>zoomWatcher</code>’s search handler, not the cluster/sample-mode handlers. Lifecycle:</p>
+<ul>
+<li>Populated by <code>doSearch()</code> after results are computed. One pin per result, positioned at <code>(longitude, latitude, 0)</code>. Opt-in to picking (clicking a pin behaves like clicking a sample-mode point: <code>updateSampleCard()</code> + <code>pid</code> hash write).</li>
+<li>Cleared by:
+<ul>
+<li>User clears the search input (or <code>?search=</code> is removed from URL).</li>
+<li>User triggers a new search (overlay is replaced with new results).</li>
+</ul></li>
+<li>Shown in both globe cluster mode and point mode. The cluster layer remains accurate; the overlay is layered above as visual answer to “where did my search land geographically.”</li>
+</ul>
+<p><strong>Why (C) over (B).</strong></p>
+<ul>
+<li>Solves <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/163">#163 item 4</a> cleanly: zero results render zero pins (and the populated map clusters remain visibly <em>not</em> the search results, distinguishable by styling). Non-zero results show a coherent visual answer.</li>
+<li>Preserves the “imperative globe; URL-canonical state” framing — cluster and facet behavior is unaffected, no reactive cascade.</li>
+<li>Doesn’t conflate “search matched these samples” with “active filter” (which is what option A does); the user retains source/facet/view as independent orienting controls.</li>
+</ul>
+<p><strong>Costs of (C) we accept.</strong></p>
+<ul>
+<li>One additional Cesium primitive collection. The viewer cell at <code>:773</code> needs a <code>v.searchResultPoints = new Cesium.PointPrimitiveCollection()</code> alongside the existing <code>h3Points</code> and <code>samplePoints</code>.</li>
+<li>One additional <code>data-pid</code> data path: the search-result pin click handler duplicates the sample-mode click handler. Acceptable; both paths are small.</li>
+</ul>
+</section>
+<section id="implementation-rules-for-option-c" class="level3" data-number="1.6.4">
+<h3 data-number="1.6.4" data-anchor-id="implementation-rules-for-option-c"><span class="header-section-number">1.6.4</span> Implementation rules for option (C)</h3>
+<p>These are not negotiable defaults during implementation:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 60%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>concern</th>
+<th>rule</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Pin count cap</strong></td>
+<td>maximum <strong>50</strong> pins, matching the existing search result <code>LIMIT 50</code> (the <em>displayed</em> result set size). The full match set may exceed 50; the substrate query truncates to top-K before pin rendering. Pin count therefore equals <code>min(50, total_matches)</code>, never more, never fewer</td>
+</tr>
+<tr class="even">
+<td><strong>Z-order</strong></td>
+<td>search-result pins render <strong>above</strong> both H3 cluster points and sample-mode points. Implementation: add <code>searchResultPoints</code> to <code>scene.primitives</code> <em>after</em> <code>h3Points</code> and <code>samplePoints</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Pin styling</strong></td>
+<td>hollow ring with bright outline (distinct from cluster filled-dot and sample-mode small filled-dot). Color follows the source palette (<code>SOURCE_COLORS</code>) so a glance still tells you which source matched. Pixel size larger than sample-mode pins (e.g., <code>8</code> vs <code>6</code>) so the overlay reads as primary</td>
+</tr>
+<tr class="even">
+<td><strong>Hover label</strong></td>
+<td>identical pattern to existing pointLabel handler — <code>meta.label \|\| meta.pid</code>, source badge color</td>
+</tr>
+<tr class="odd">
+<td><strong>Click behavior</strong></td>
+<td>identical to sample-mode click: <code>updateSampleCard()</code> + <code>pid</code> hash write. Single click handler can dispatch on <code>meta.type === 'searchResult'</code> vs <code>'sample'</code></td>
+</tr>
+<tr class="even">
+<td><strong>Camera fit-to-bounds</strong></td>
+<td>only fit-to-bounds when the result-set lat/lng extent <strong>&lt; 30° × 30°</strong>. Otherwise: fly to top-1 result at altitude <code>200000</code> (same as today’s first-result behavior). The 30° rule prevents a globally distributed result set from triggering a zoom-out to a near-globe view, which would be disorienting and wash out the cluster context</td>
+</tr>
+<tr class="odd">
+<td><strong>Lifecycle</strong></td>
+<td>populated immediately after results return; cleared on (a) search input cleared by user, (b) <code>?search=</code> removed from URL, (c) new search submitted (replaces the old overlay)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="result-set-shape-acceptance-cases" class="level3" data-number="1.6.5">
+<h3 data-number="1.6.5" data-anchor-id="result-set-shape-acceptance-cases"><span class="header-section-number">1.6.5</span> Result-set shape acceptance cases</h3>
+<p>Implementation must visually verify the four shape cases:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 34%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>case</th>
+<th>description</th>
+<th>expected behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>zero</strong></td>
+<td><code>xyzzyqqqplugh</code></td>
+<td>no pins; side-panel says “No results”; cluster layer + facets unaffected; camera not flown</td>
+</tr>
+<tr class="even">
+<td><strong>one</strong></td>
+<td>a <code>pid</code>-specific search that hits exactly one sample</td>
+<td>one pin; fly-to-result at standard altitude; side panel shows the single result</td>
+</tr>
+<tr class="odd">
+<td><strong>local-many</strong></td>
+<td><code>pottery Cyprus</code> (results clustered in one region)</td>
+<td>up to 50 pins, lat/lng extent &lt; 30°×30° → fit-to-bounds zoom</td>
+</tr>
+<tr class="even">
+<td><strong>global-many</strong></td>
+<td><code>basalt</code> (results spread across multiple continents)</td>
+<td>up to 50 pins, extent ≥ 30°×30° → fly to top-1 at standard altitude; pins remain visible at multiple zoom levels via the cluster-overlay <code>scaleByDistance</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="state-inventory-addendum-for-c" class="level3" data-number="1.6.6">
+<h3 data-number="1.6.6" data-anchor-id="state-inventory-addendum-for-c"><span class="header-section-number">1.6.6</span> State-inventory addendum for (C)</h3>
+<p>The state contract grows a small amount:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 19%">
+<col style="width: 17%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>location</th>
+<th>role</th>
+<th>written by</th>
+<th>read by</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>viewer.searchResultPoints</code></td>
+<td>Cesium <code>PointPrimitiveCollection</code> for search-result pins</td>
+<td><code>zoomWatcher</code> (search handler)</td>
+<td>mouse-move + click handlers</td>
+<td>new collection; lifecycle tied to <code>?search=</code> non-empty</td>
+</tr>
+<tr class="even">
+<td><code>viewer._searchResults</code> (Array)</td>
+<td>array of result rows currently rendered as pins</td>
+<td><code>zoomWatcher</code> (search handler)</td>
+<td>future “fit-to-bounds” logic</td>
+<td>optional cache; can be dropped if not needed</td>
+</tr>
+</tbody>
+</table>
+<p>URL/hash params are unchanged from (B). The DOM-as-state inventory is unchanged.</p>
+<p><strong>Note for parallel investigation.</strong> A separate workstream (Codex, May 8) is auditing full-text-search status, indexing options, and speed. The (C) decision is intentionally orthogonal to the backend — <em>which UI surface displays the matches</em> is independent of <em>how the matches are computed</em>. If that investigation recommends switching the backend (e.g., from in-browser ILIKE → static-Parquet inverted index → hosted-search service), (C) is compatible with all of them.</p>
+<hr>
+</section>
+</section>
+<section id="facet-count-contract" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="facet-count-contract"><span class="header-section-number">1.7</span> 7. Facet-count contract</h2>
+<p>The cross-filter rule (codified by Codex in #158, restated here):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 26%">
+<col style="width: 47%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>dimension</th>
+<th>counts respect it?</th>
+<th>rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>other facet selections</td>
+<td><strong>YES</strong></td>
+<td>counts answer “if I add this value, how many samples would match all OTHER active filters plus this one”; that’s the drill-out signal users want</td>
+</tr>
+<tr class="even">
+<td>viewport (camera bounds)</td>
+<td><strong>NO</strong></td>
+<td>counts are global. Viewport-scoped counts would couple facet UI to camera state, contradict the “facets describe the dataset” reading, and require re-querying on every camera change</td>
+</tr>
+<tr class="odd">
+<td><code>?search=</code> text query</td>
+<td><strong>NO</strong></td>
+<td>option (C); search renders a side panel + result-pin overlay, but does not alter facet counts</td>
+</tr>
+<tr class="even">
+<td>view mode (globe vs table)</td>
+<td><strong>NO</strong></td>
+<td>the same dataset underlies both; facet counts should not flip when the user toggles view</td>
+</tr>
+</tbody>
+</table>
+<p>Exposed via <code>applyFacetCounts(facetKey, countsMap)</code> (<code>:551-567</code>):</p>
+<ul>
+<li><code>countsMap = null</code> ⇒ render the baseline counts from <code>viewer._baselineCounts</code>.</li>
+<li><code>countsMap = Map&lt;value, count&gt;</code> ⇒ render the cross-filtered counts; missing keys render as <code>0</code> (and pick up the <code>.zero</code> class).</li>
+</ul>
+<p>The “single active dim” fast path (<code>:1548-1584</code>) reads from a pre-aggregated <code>cross_filter_url</code> parquet for instant response when exactly one facet value is selected; the general path (<code>:1586-1604</code>) issues four parallel <code>GROUP BY</code> queries against <code>facets_url</code>, one per dimension, each excluding its own active values from the WHERE.</p>
+<hr>
+</section>
+<section id="out-of-scope" class="level2" data-number="1.8">
+<h2 data-number="1.8" data-anchor-id="out-of-scope"><span class="header-section-number">1.8</span> 8. Out of scope</h2>
+<ul>
+<li>Refactoring into modules (<code>urlState</code>, <code>globeView</code>, <code>facetCounts</code>, <code>tableView</code>, <code>sampleCard</code>, <code>search</code>). Once this contract is stable, the modular rewrite is a follow-up — not a prerequisite.</li>
+<li>Pure-OJS-reactive vs pure-imperative migration. We commit to imperative + URL-canonical here; the mechanical rewrite is separate.</li>
+<li>UX/copy items 1, 2, 3, 5, 6 from #163. They unblock against this contract but don’t belong in it.</li>
+<li>Backend changes to the search query (FTS index, server-side service). See the parallel Codex investigation.</li>
+</ul>
+<hr>
+</section>
+<section id="acceptance-signals" class="level2" data-number="1.9">
+<h2 data-number="1.9" data-anchor-id="acceptance-signals"><span class="header-section-number">1.9</span> 9. Acceptance signals</h2>
+<ul>
+<li>✅ Inventory tables populated from current <code>explorer.qmd</code>.</li>
+<li>✅ Search-semantics decision recorded with rationale (option C, side-panel + result-pin overlay).</li>
+<li>✅ Facet-count contract restated.</li>
+<li>⏭ #163 items can now be re-scoped against this doc:
+<ul>
+<li><strong>#163 item 4</strong> (zero search results + populated map looks broken) is resolved by option C, not by side-panel copy alone. Implementation must verify all four result-set shape cases (zero, one, local-many, global-many) per the table in §6.</li>
+<li><strong>#163 item 6</strong> (page in URL) gets a clear contract slot to plug into (a <code>page</code> query param participating in the same <code>writeQueryState</code>/ hydration cycle as <code>view</code>).</li>
+<li>The remaining items (1, 2, 3, 5, 7) are state-preserving UI fixes that don’t perturb this contract.</li>
+</ul></li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_STATE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
