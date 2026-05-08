@@ -1902,65 +1902,94 @@ zoomWatcher = {
             // DuckDB benchmark: naive 4.2 s vs CTE 0.5 s for `pottery`.
             // The browser DuckDB-WASM penalty makes the difference even
             // more pronounced; the naive form times out on `pottery` cold.
+            // Use `f.`-qualified columns so the same searchWhere/score
+            // strings work for both the world-mode CTE (single table aliased
+            // f) and the area-mode INNER JOIN (f + l, both via USING (pid)).
             const searchWhere = textSearchWhere(terms, [
-                'label',
-                'description',
-                'CAST(place_name AS VARCHAR)',
+                'f.label',
+                'f.description',
+                'CAST(f.place_name AS VARCHAR)',
             ]);
             const score = textSearchScore(terms, [
-                { col: 'label',                       weight: 3 },
-                { col: 'description',                 weight: 1 },
-                { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
+                { col: 'f.label',                       weight: 3 },
+                { col: 'f.description',                 weight: 1 },
+                { col: 'CAST(f.place_name AS VARCHAR)', weight: 2 },
             ]);
 
-            // Viewport predicate (#178 Light path). Goes on the OUTER query
-            // (post-join) because lat/lng live in samples_map_lite, not
-            // sample_facets_v2. Implication: the inner CTE's LIMIT 50 may
-            // contain hits that fail the viewport, so area-scoped searches
-            // can return < 50 results — users widen by panning.
-            // Dateline-crossing: split into two longitude ranges when the
-            // viewer's view rectangle wraps (west > east).
-            let viewportPredicate = '';
+            // Two SQL shapes — one per scope. The fix per #179 round-2
+            // review: in area mode, the viewport predicate MUST run BEFORE
+            // the top-50 selection, otherwise we're searching only the
+            // global top-50 within the area ("current viewport among the
+            // global top 50") rather than "top 50 within the current
+            // viewport." For broad terms like `pottery`, the global top-50
+            // is concentrated in a few hot regions, so a Sudan-area query
+            // would return zero even though Sudan has plenty of pottery.
+            //
+            // World mode keeps the original CTE-then-LEFT-JOIN shape so
+            // samples that have facets but no `samples_map_lite` row
+            // (i.e., no coordinates) still appear in the results, with
+            // null lat/lng. The click-to-fly handler already guards on
+            // isNaN(lat).
+            //
+            // Area mode uses INNER JOIN inside the candidate selection
+            // because area-scoped search by definition requires
+            // coordinates. Drop coord-less samples before ranking; apply
+            // the viewport predicate; THEN top-50.
+            let results;
             if (effectiveScope === 'area') {
                 const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
-                if (rect) {
+                if (!rect) {
+                    // Camera couldn't produce a view rectangle (shouldn't
+                    // happen in practice; defensive). Fall through to the
+                    // world query so the user gets results, with a console
+                    // hint for diagnostics.
+                    console.warn('Area scope requested but no view rectangle; falling back to world.');
+                    results = await runWorldQuery();
+                } else {
                     const south = Cesium.Math.toDegrees(rect.south);
                     const north = Cesium.Math.toDegrees(rect.north);
                     const west = Cesium.Math.toDegrees(rect.west);
                     const east = Cesium.Math.toDegrees(rect.east);
-                    if (west > east) {
-                        viewportPredicate = `
-                            AND l.latitude BETWEEN ${south} AND ${north}
-                            AND (l.longitude BETWEEN ${west} AND 180
-                              OR l.longitude BETWEEN -180 AND ${east})
-                        `;
-                    } else {
-                        viewportPredicate = `
-                            AND l.latitude BETWEEN ${south} AND ${north}
-                            AND l.longitude BETWEEN ${west} AND ${east}
-                        `;
-                    }
+                    const lngClause = (west > east)
+                        ? `(l.longitude BETWEEN ${west} AND 180 OR l.longitude BETWEEN -180 AND ${east})`
+                        : `l.longitude BETWEEN ${west} AND ${east}`;
+                    results = await db.query(`
+                        SELECT f.pid, f.label, f.source, l.latitude, l.longitude,
+                               f.place_name, (${score}) AS relevance_score
+                        FROM read_parquet('${facets_url}') f
+                        INNER JOIN read_parquet('${lite_url}') l USING (pid)
+                        WHERE ${searchWhere}
+                          AND l.latitude BETWEEN ${south} AND ${north}
+                          AND ${lngClause}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                        ORDER BY relevance_score DESC, f.label
+                        LIMIT 50
+                    `);
                 }
+            } else {
+                results = await runWorldQuery();
             }
 
-            const results = await db.query(`
-                WITH matches AS (
-                    SELECT pid, label, source, place_name,
-                           (${score}) AS relevance_score
-                    FROM read_parquet('${facets_url}')
-                    WHERE ${searchWhere}
-                    ${sourceFilterSQL('source')}
-                    ${facetFilterSQL()}
-                    ORDER BY relevance_score DESC
-                    LIMIT 50
-                )
-                SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
-                       m.place_name, m.relevance_score
-                FROM matches m
-                LEFT JOIN read_parquet('${lite_url}') l USING (pid)
-                WHERE 1=1 ${viewportPredicate}
-                ORDER BY m.relevance_score DESC, m.label
-            `);
+            async function runWorldQuery() {
+                return db.query(`
+                    WITH matches AS (
+                        SELECT f.pid, f.label, f.source, f.place_name,
+                               (${score}) AS relevance_score
+                        FROM read_parquet('${facets_url}') f
+                        WHERE ${searchWhere}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                        ORDER BY relevance_score DESC
+                        LIMIT 50
+                    )
+                    SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
+                           m.place_name, m.relevance_score
+                    FROM matches m
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    ORDER BY m.relevance_score DESC, m.label
+                `);
+            }
             resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;

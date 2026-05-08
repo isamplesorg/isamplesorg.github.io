@@ -302,21 +302,27 @@ of (C), not a revisit of the A/B/C decision:
 
 - "Search Entire World" runs the existing (C) full-corpus side-panel
   lookup with result-pin overlay. Behavior unchanged from the contract above.
-- "Search Selected Areas" runs the same query plus an outer-query
-  `latitude/longitude BETWEEN` predicate derived from
-  `viewer.camera.computeViewRectangle(...)`. Dateline-crossing is split
-  into two longitude ranges.
+  SQL shape: CTE over `sample_facets_v2` → top-50 → `LEFT JOIN` to
+  `samples_map_lite` for display coords (samples without coords still
+  appear; lat/lng are null).
+- "Search Selected Areas" runs the same text predicate but with a
+  different SQL shape: `INNER JOIN` `samples_map_lite` inside the
+  candidate selection, viewport `BETWEEN` predicate applied **before**
+  `ORDER BY ... LIMIT 50`. This is critical — applying viewport after
+  the global top-50 produces false zeroes (the global top-50 is
+  concentrated in a few hot regions; a Sudan-area `pottery` query
+  would return zero even though Sudan has plenty of pottery hits).
+  Dateline-crossing is split into two longitude ranges.
 - URL state gains `?search_scope=area|world`; default `world`, omitted
   from URL when default. Hydrated on boot; written by `persistSearchScope()`.
 - Result-pin overlay still applies in both modes — pin coordinates
   reflect what was found, viewport-scope just narrows the candidate set.
 - Auto-fly to the first result is suppressed in area mode (the user is
   already at the area they care about; flying would zoom in and disorient).
-- The inner CTE's `LIMIT 50` runs *before* the viewport predicate (because
-  lat/lng live in `samples_map_lite`, not `sample_facets_v2`). Implication:
-  area-scoped searches can return < 50 results — users widen by panning.
-  Acceptable for v1; future tuning could increase the inner LIMIT in
-  area mode if needed.
+- Area mode requires coordinates by definition, so the `INNER JOIN`
+  drops samples that have facets but no `samples_map_lite` row. World
+  mode keeps them (via `LEFT JOIN`) since coord-less samples are still
+  legitimate text matches.
 
 A future Heavy revisit may rethink (A) global-filter semantics if usage
 data shows users *expect* the map and facets to update with search.
