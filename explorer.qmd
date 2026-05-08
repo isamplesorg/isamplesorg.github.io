@@ -1612,6 +1612,24 @@ zoomWatcher = {
         }, 250);
     }
 
+    // --- Busy-flag depth counter (#173 review round 2) ---
+    //
+    // body.classList 'explorer-busy' tracks "any change-triggered async
+    // work in flight." Without depth counting, overlapping handlers race:
+    // a fast handler's `finally` removes the class while a slower
+    // handler's loadRes / facet recompute is still running, defeating the
+    // whole point of the flag. Depth-counted: class is added on the
+    // 0 → 1 transition and removed on the 1 → 0 transition.
+    let _busyDepth = 0;
+    function busyAcquire() {
+        if (_busyDepth === 0) document.body.classList.add('explorer-busy');
+        _busyDepth++;
+    }
+    function busyRelease() {
+        _busyDepth = Math.max(0, _busyDepth - 1);
+        if (_busyDepth === 0) document.body.classList.remove('explorer-busy');
+    }
+
     // --- Source filter change handler ---
     //
     // The body.classList 'explorer-busy' flag wraps every async work path
@@ -1624,7 +1642,7 @@ zoomWatcher = {
     // .recomputing-clear poll downstream is meaningful. See #173 review.
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
-        document.body.classList.add('explorer-busy');
+        busyAcquire();
         try {
             updateSourceLegendState();
             writeQueryState();
@@ -1638,7 +1656,7 @@ zoomWatcher = {
             refreshFacetCounts();
             await new Promise(r => setTimeout(r, 300));
         } finally {
-            document.body.classList.remove('explorer-busy');
+            busyRelease();
         }
     });
 
@@ -1651,7 +1669,7 @@ zoomWatcher = {
     // takes effect at neighborhood zoom. See issue #156, Phase 1.
     const facetNote = document.getElementById('facetNote');
     async function handleFacetFilterChange() {
-        document.body.classList.add('explorer-busy');
+        busyAcquire();
         try {
             const active = hasFacetFilters();
             if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
@@ -1663,7 +1681,7 @@ zoomWatcher = {
             refreshFacetCounts();
             await new Promise(r => setTimeout(r, 300));
         } finally {
-            document.body.classList.remove('explorer-busy');
+            busyRelease();
         }
     }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
