@@ -990,7 +990,6 @@ phase1 = {
             color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.8),
             outlineColor: Cesium.Color.WHITE,
             outlineWidth: 1.5,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scaleByDistance: scalar,
         });
     }
@@ -1334,7 +1333,6 @@ zoomWatcher = {
                     color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.85),
                     outlineColor: Cesium.Color.WHITE,
                     outlineWidth: 1.5,
-                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
                     scaleByDistance: scalar,
                 });
             }
@@ -1489,7 +1487,6 @@ zoomWatcher = {
                 color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
                 outlineColor: Cesium.Color.WHITE,
                 outlineWidth: 1.5,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY,
                 scaleByDistance: scalar,
             });
         }
