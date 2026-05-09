@@ -1811,10 +1811,17 @@ zoomWatcher = {
         try { decimal = BigInt('0x' + lower).toString(); }
         catch { return null; }
         try {
+            // Honor the active ?sources= filter — same predicate phase1/loadRes
+            // apply when rendering clusters (`:976`, `:1319`). A cluster whose
+            // dominant_source is currently unchecked wouldn't be visible on the
+            // globe, so hydrating its side panel would mismatch the user's view
+            // (and would inconsistently combine unfiltered cluster card with
+            // source-filtered nearby-samples in hydrateClusterUI).
             const result = await db.query(`
                 SELECT h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
                 FROM read_parquet('${url}')
                 WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
+                ${sourceFilterSQL('dominant_source')}
                 LIMIT 1
             `);
             if (!result || result.length === 0) return null;
@@ -2273,6 +2280,13 @@ zoomWatcher = {
 
     // --- Deep-link: restore selection from initial hash ---
     // Sample mode wins if both &pid= and &h3= are present (see EXPLORER_CLUSTER_URL_PROPOSAL §4).
+    // The boot path runs once, but the hashchange listener is already registered
+    // by this point — back/forward or a manual hash edit during the boot await
+    // could supersede this lookup. Use the same `_selGen` token the hashchange
+    // handler uses; bumping it here also invalidates any in-flight lookups.
+    viewer._selGen = (viewer._selGen || 0) + 1;
+    const bootSelGen = viewer._selGen;
+    const isBootStale = () => bootSelGen !== viewer._selGen;
     const ih = viewer._initialHash;
     if (ih.pid) {
         viewer._globeState.selectedPid = ih.pid;
@@ -2284,6 +2298,7 @@ zoomWatcher = {
                 WHERE pid = '${ih.pid.replace(/'/g, "''")}'
                 LIMIT 1
             `);
+            if (isBootStale()) return "active";
             if (sample && sample.length > 0) {
                 const s = sample[0];
                 updateSampleCard({
@@ -2296,6 +2311,7 @@ zoomWatcher = {
                     WHERE pid = '${ih.pid.replace(/'/g, "''")}'
                     LIMIT 1
                 `);
+                if (isBootStale()) return "active";
                 if (detail && detail.length > 0) updateSampleDetail(detail[0]);
                 else updateSampleDetail({ description: '' });
             }
@@ -2305,12 +2321,13 @@ zoomWatcher = {
     } else if (ih.h3) {
         viewer._globeState.selectedH3 = ih.h3.toLowerCase();
         const meta = await fetchClusterByH3(ih.h3);
+        if (isBootStale()) return "active";
         if (meta) {
             viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
-            await hydrateClusterUI(meta);
+            await hydrateClusterUI(meta, isBootStale);
         } else {
-            // Unknown / malformed h3 — drop it from runtime state so subsequent
-            // buildHash() calls don't keep emitting it.
+            // Unknown / malformed h3, OR filtered out by ?sources=. Drop it from
+            // runtime state so subsequent buildHash() calls don't keep emitting it.
             viewer._globeState.selectedH3 = null;
         }
     }
