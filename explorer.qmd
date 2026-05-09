@@ -977,7 +977,8 @@ phase1 = {
     applyQueryToSourceFilter();
 
     const data = await db.query(`
-        SELECT h3_cell, sample_count, center_lat, center_lng,
+        SELECT CAST(h3_cell AS VARCHAR) AS h3_cell_dec,
+               sample_count, center_lat, center_lng,
                dominant_source, source_count
         FROM read_parquet('${h3_res4_url}')
         WHERE 1=1${sourceFilterSQL('dominant_source')}
@@ -990,9 +991,12 @@ phase1 = {
         const count = row.sample_count;
         totalSamples += count;
         const size = Math.min(3 + Math.log10(count) * 4, 20);
+        // h3_cell is UBIGINT (>2^53 for typical H3 indices). DuckDB-WASM
+        // returns UBIGINT as a JS Number, losing precision in toString(16).
+        // SELECT casts to VARCHAR (decimal); convert to hex via BigInt here.
+        const h3Hex = BigInt(row.h3_cell_dec).toString(16);
         viewer.h3Points.add({
-            // h3_cell is UBIGINT in the parquet; carry as hex string (canonical H3 form).
-            id: { h3_cell: row.h3_cell.toString(16), count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: 4 },
+            id: { h3_cell: h3Hex, count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: 4 },
             position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
             pixelSize: size,
             color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.8),
@@ -1320,7 +1324,8 @@ zoomWatcher = {
         try {
             performance.mark(`r${res}-s`);
             const data = await db.query(`
-                SELECT h3_cell, sample_count, center_lat, center_lng,
+                SELECT CAST(h3_cell AS VARCHAR) AS h3_cell_dec,
+                       sample_count, center_lat, center_lng,
                        dominant_source, source_count
                 FROM read_parquet('${url}')
                 WHERE 1=1${sourceFilterSQL('dominant_source')}
@@ -1334,8 +1339,9 @@ zoomWatcher = {
             for (const row of data) {
                 total += row.sample_count;
                 const size = Math.min(3 + Math.log10(row.sample_count) * 3.5, 18);
+                const h3Hex = BigInt(row.h3_cell_dec).toString(16);
                 viewer.h3Points.add({
-                    id: { h3_cell: row.h3_cell.toString(16), count: row.sample_count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: res },
+                    id: { h3_cell: h3Hex, count: row.sample_count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: res },
                     position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
                     pixelSize: size,
                     color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.85),
@@ -1719,6 +1725,13 @@ zoomWatcher = {
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
                         history.replaceState(null, '', buildHash(viewer));
+                    } else {
+                        // Cluster's dominant_source still checked, but the
+                        // nearby-samples list inside hydrateClusterUI is
+                        // source-filtered too — re-run it under the new filter
+                        // so the panel doesn't show stale rows from unchecked
+                        // sources (or miss newly-checked ones).
+                        await hydrateClusterUI(meta, () => filterSelGen !== viewer._selGen);
                     }
                 } else if (sel.selectedPid) {
                     const safe = sel.selectedPid.replace(/'/g, "''");
@@ -1857,7 +1870,7 @@ zoomWatcher = {
             // (and would inconsistently combine unfiltered cluster card with
             // source-filtered nearby-samples in hydrateClusterUI).
             const result = await db.query(`
-                SELECT h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
+                SELECT sample_count, center_lat, center_lng, dominant_source, source_count
                 FROM read_parquet('${url}')
                 WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
                 ${sourceFilterSQL('dominant_source')}
@@ -1866,7 +1879,10 @@ zoomWatcher = {
             if (!result || result.length === 0) return null;
             const r = result[0];
             return {
-                h3_cell: r.h3_cell.toString(16),
+                // The validated input `lower` is the canonical hex; round-tripping
+                // r.h3_cell would lose precision (DuckDB-WASM returns UBIGINT as
+                // JS Number for values > 2^53).
+                h3_cell: lower,
                 count: r.sample_count,
                 source: r.dominant_source,
                 lat: r.center_lat,
