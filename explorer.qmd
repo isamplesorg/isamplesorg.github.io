@@ -1689,6 +1689,12 @@ zoomWatcher = {
     const resUrls = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     document.getElementById('sourceFilter').addEventListener('change', async () => {
         busyAcquire();
+        // Source filter affects which clusters / samples are visible. Invalidate
+        // any in-flight selection lookup AND re-validate the current selection
+        // (cluster or sample) under the new filter — if it's filtered out, drop
+        // it from runtime state and the URL so the side panel matches the globe.
+        viewer._selGen = (viewer._selGen || 0) + 1;
+        const filterSelGen = viewer._selGen;
         try {
             updateSourceLegendState();
             writeQueryState();
@@ -1700,6 +1706,39 @@ zoomWatcher = {
                 await loadViewportSamples();
             }
             refreshFacetCounts();
+
+            // Re-validate selection (only if no newer filter change has fired).
+            if (filterSelGen === viewer._selGen) {
+                const sel = viewer._globeState;
+                if (sel.selectedH3) {
+                    const meta = await fetchClusterByH3(sel.selectedH3);
+                    if (filterSelGen !== viewer._selGen) return;
+                    if (!meta) {
+                        sel.selectedH3 = null;
+                        updateClusterCard(null);
+                        const sampEl = document.getElementById('samplesSection');
+                        if (sampEl) sampEl.innerHTML = '';
+                        history.replaceState(null, '', buildHash(viewer));
+                    }
+                } else if (sel.selectedPid) {
+                    const safe = sel.selectedPid.replace(/'/g, "''");
+                    const stillVisible = await db.query(`
+                        SELECT 1 FROM read_parquet('${lite_url}')
+                        WHERE pid = '${safe}'
+                        ${sourceFilterSQL('source')}
+                        LIMIT 1
+                    `);
+                    if (filterSelGen !== viewer._selGen) return;
+                    if (!stillVisible || stillVisible.length === 0) {
+                        sel.selectedPid = null;
+                        updateClusterCard(null);
+                        const sampEl = document.getElementById('samplesSection');
+                        if (sampEl) sampEl.innerHTML = '';
+                        history.replaceState(null, '', buildHash(viewer));
+                    }
+                }
+            }
+
             await new Promise(r => setTimeout(r, 300));
         } finally {
             busyRelease();
@@ -2284,56 +2323,62 @@ zoomWatcher = {
     // by this point — back/forward or a manual hash edit during the boot await
     // could supersede this lookup. Use the same `_selGen` token the hashchange
     // handler uses; bumping it here also invalidates any in-flight lookups.
+    // Wrap in try/finally so `_suppressHashWrite = false` always runs even if
+    // a stale early-return aborts the deep-link work — otherwise a no-lat/lng
+    // hashchange during boot could leave hash writes suppressed forever.
     viewer._selGen = (viewer._selGen || 0) + 1;
     const bootSelGen = viewer._selGen;
     const isBootStale = () => bootSelGen !== viewer._selGen;
     const ih = viewer._initialHash;
-    if (ih.pid) {
-        viewer._globeState.selectedPid = ih.pid;
-        viewer._globeState.selectedH3 = null;
-        try {
-            const sample = await db.query(`
-                SELECT pid, label, source, latitude, longitude, place_name, result_time
-                FROM read_parquet('${lite_url}')
-                WHERE pid = '${ih.pid.replace(/'/g, "''")}'
-                LIMIT 1
-            `);
-            if (isBootStale()) return "active";
-            if (sample && sample.length > 0) {
-                const s = sample[0];
-                updateSampleCard({
-                    pid: s.pid, label: s.label, source: s.source,
-                    lat: s.latitude, lng: s.longitude,
-                    place_name: s.place_name, result_time: s.result_time
-                });
-                const detail = await db.query(`
-                    SELECT description FROM read_parquet('${wide_url}')
+    try {
+        if (ih.pid) {
+            viewer._globeState.selectedPid = ih.pid;
+            viewer._globeState.selectedH3 = null;
+            try {
+                const sample = await db.query(`
+                    SELECT pid, label, source, latitude, longitude, place_name, result_time
+                    FROM read_parquet('${lite_url}')
                     WHERE pid = '${ih.pid.replace(/'/g, "''")}'
                     LIMIT 1
                 `);
                 if (isBootStale()) return "active";
-                if (detail && detail.length > 0) updateSampleDetail(detail[0]);
-                else updateSampleDetail({ description: '' });
+                if (sample && sample.length > 0) {
+                    const s = sample[0];
+                    updateSampleCard({
+                        pid: s.pid, label: s.label, source: s.source,
+                        lat: s.latitude, lng: s.longitude,
+                        place_name: s.place_name, result_time: s.result_time
+                    });
+                    const detail = await db.query(`
+                        SELECT description FROM read_parquet('${wide_url}')
+                        WHERE pid = '${ih.pid.replace(/'/g, "''")}'
+                        LIMIT 1
+                    `);
+                    if (isBootStale()) return "active";
+                    if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                    else updateSampleDetail({ description: '' });
+                }
+            } catch(err) {
+                console.error("Deep-link pid query failed:", err);
             }
-        } catch(err) {
-            console.error("Deep-link pid query failed:", err);
+        } else if (ih.h3) {
+            viewer._globeState.selectedH3 = ih.h3.toLowerCase();
+            const meta = await fetchClusterByH3(ih.h3);
+            if (isBootStale()) return "active";
+            if (meta) {
+                viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
+                await hydrateClusterUI(meta, isBootStale);
+            } else {
+                // Unknown / malformed h3, OR filtered out by ?sources=. Drop it
+                // from runtime state so buildHash() doesn't keep emitting it.
+                viewer._globeState.selectedH3 = null;
+            }
         }
-    } else if (ih.h3) {
-        viewer._globeState.selectedH3 = ih.h3.toLowerCase();
-        const meta = await fetchClusterByH3(ih.h3);
-        if (isBootStale()) return "active";
-        if (meta) {
-            viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
-            await hydrateClusterUI(meta, isBootStale);
-        } else {
-            // Unknown / malformed h3, OR filtered out by ?sources=. Drop it from
-            // runtime state so subsequent buildHash() calls don't keep emitting it.
-            viewer._globeState.selectedH3 = null;
-        }
+    } finally {
+        // Enable hash writing now that everything is initialized — runs even on
+        // stale-abort early returns above.
+        viewer._suppressHashWrite = false;
     }
-
-    // Enable hash writing now that everything is initialized
-    viewer._suppressHashWrite = false;
 
     return "active";
 }
