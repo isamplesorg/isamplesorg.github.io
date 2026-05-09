@@ -641,8 +641,11 @@ function buildHash(v) {
     if (Math.abs(pitch + 90) > 1) params.set('pitch', pitch.toFixed(1));
     const gs = v._globeState;
     if (gs.mode === 'point') params.set('mode', 'point');
+    // pid and h3 are mutually exclusive at runtime; emit at most one. Sample
+    // selection (pid) wins if somehow both are set — matches the hydration
+    // priority in the hashchange handler.
     if (gs.selectedPid) params.set('pid', gs.selectedPid);
-    if (gs.selectedH3) params.set('h3', gs.selectedH3);
+    else if (gs.selectedH3) params.set('h3', gs.selectedH3);
     return '#' + params.toString();
 }
 
@@ -1785,28 +1788,29 @@ zoomWatcher = {
     });
     viewer.camera.percentageChanged = 0.1;
 
-    // --- Helper: hydrate cluster row from H3 cell index across all 3 resolution parquets ---
-    // Used by both the boot deep-link path and the back/forward hashchange handler.
-    // The cell only exists in one of res4/res6/res8; UNION ALL + LIMIT 1 picks it.
+    // --- Helper: hydrate cluster row from H3 cell index ---
+    // Canonical H3 cells encode resolution in the 2nd hex char (the leading-zero-
+    // stripped form is `8<res><...>` for cell-mode indices). We support res 4/6/8
+    // — the parquets we have. Reject malformed input rather than silently strip:
+    // a stray prefix (`xxx843f...`) would otherwise change which key we look up.
+    // h3_cell is UBIGINT in the parquet; DuckDB-WASM rejects `0x...` literals, so
+    // hex → decimal happens in JS via BigInt, then CAST to UBIGINT in SQL.
+    const RES_TO_H3_URL = { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url };
     async function fetchClusterByH3(cellHex) {
-        // h3_cell is stored as UBIGINT in the parquet; we receive a hex string
-        // (canonical H3 form). DuckDB-WASM doesn't accept `0x...` literals, so
-        // convert hex → decimal in JS via BigInt, then CAST to UBIGINT in SQL.
-        const safe = String(cellHex).replace(/[^0-9a-fA-F]/g, '');
-        if (!safe) return null;
+        if (typeof cellHex !== 'string') return null;
+        const lower = cellHex.toLowerCase();
+        if (!/^[0-9a-f]{15}$/.test(lower)) return null;
+        const res = parseInt(lower[1], 16);
+        const url = RES_TO_H3_URL[res];
+        if (!url) return null;
         let decimal;
-        try { decimal = BigInt('0x' + safe).toString(); }
+        try { decimal = BigInt('0x' + lower).toString(); }
         catch { return null; }
         try {
             const result = await db.query(`
-                SELECT 4 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
-                FROM read_parquet('${h3_res4_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
-                UNION ALL
-                SELECT 6 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
-                FROM read_parquet('${h3_res6_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
-                UNION ALL
-                SELECT 8 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
-                FROM read_parquet('${h3_res8_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
+                SELECT h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
+                FROM read_parquet('${url}')
+                WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
                 LIMIT 1
             `);
             if (!result || result.length === 0) return null;
@@ -1817,7 +1821,7 @@ zoomWatcher = {
                 source: r.dominant_source,
                 lat: r.center_lat,
                 lng: r.center_lng,
-                resolution: r.resolution,
+                resolution: res,
             };
         } catch(err) {
             console.error("fetchClusterByH3 query failed:", err);
@@ -1875,7 +1879,14 @@ zoomWatcher = {
             else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
         }, 2000);
 
-        // Handle pid selection (sample mode wins if both present — see EXPLORER_CLUSTER_URL_PROPOSAL §4)
+        // Handle pid / h3 selection (sample mode wins if both present — see
+        // EXPLORER_CLUSTER_URL_PROPOSAL §4). Both branches do an `await` against
+        // a remote parquet, so a fast back/forward could race: an older fetch
+        // resolves AFTER a newer hash has applied, and would otherwise repaint
+        // the side panel with stale data. `selGen` is bumped per hashchange and
+        // checked after each await to drop stale results.
+        viewer._selGen = (viewer._selGen || 0) + 1;
+        const selGen = viewer._selGen;
         if (state.pid) {
             viewer._globeState.selectedPid = state.pid;
             viewer._globeState.selectedH3 = null;
@@ -1886,6 +1897,7 @@ zoomWatcher = {
                     WHERE pid = '${state.pid.replace(/'/g, "''")}'
                     LIMIT 1
                 `);
+                if (selGen !== viewer._selGen) return;
                 if (sample && sample.length > 0) {
                     const s = sample[0];
                     updateSampleCard({
@@ -1899,13 +1911,26 @@ zoomWatcher = {
             }
         } else if (state.h3) {
             viewer._globeState.selectedPid = null;
-            viewer._globeState.selectedH3 = state.h3;
+            viewer._globeState.selectedH3 = state.h3.toLowerCase();
             const meta = await fetchClusterByH3(state.h3);
-            if (meta) await hydrateClusterUI(meta);
+            if (selGen !== viewer._selGen) return;
+            if (meta) {
+                viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
+                await hydrateClusterUI(meta);
+                if (selGen !== viewer._selGen) return;
+            } else {
+                // Unknown / malformed h3 — clear the side panel rather than
+                // leaving prior content stranded.
+                updateClusterCard(null);
+                const sampEl = document.getElementById('samplesSection');
+                if (sampEl) sampEl.innerHTML = '';
+            }
         } else {
             viewer._globeState.selectedPid = null;
             viewer._globeState.selectedH3 = null;
             updateClusterCard(null);
+            const sampEl = document.getElementById('samplesSection');
+            if (sampEl) sampEl.innerHTML = '';
         }
     });
 
@@ -2267,9 +2292,16 @@ zoomWatcher = {
             console.error("Deep-link pid query failed:", err);
         }
     } else if (ih.h3) {
-        viewer._globeState.selectedH3 = ih.h3;
+        viewer._globeState.selectedH3 = ih.h3.toLowerCase();
         const meta = await fetchClusterByH3(ih.h3);
-        if (meta) await hydrateClusterUI(meta);
+        if (meta) {
+            viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
+            await hydrateClusterUI(meta);
+        } else {
+            // Unknown / malformed h3 — drop it from runtime state so subsequent
+            // buildHash() calls don't keep emitting it.
+            viewer._globeState.selectedH3 = null;
+        }
     }
 
     // Enable hash writing now that everything is initialized
