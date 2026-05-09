@@ -111,7 +111,7 @@ across cells without becoming a separate OJS reactive value.
 | `viewer.h3Points` | Cesium `PointPrimitiveCollection` | `:815` | cluster mode rendering | |
 | `viewer.samplePoints` | Cesium `PointPrimitiveCollection` | `:818` | point mode rendering | |
 | `viewer.pointLabel` | Cesium label entity | `:823` | mouse-move handler (`:836-848`) | hover tooltip |
-| `viewer._selGen` | int | bumped by every `freshSelectionToken()` call (in zoomWatcher cell) | snapshot captured by each handler that mutates selection | freshness counter; see invariant below |
+| `viewer._selGen` | int | bumped by every `freshSelectionToken(viewer)` call (top-level helper, see invariant below) | snapshot captured by each handler that mutates selection | freshness counter; see invariant below |
 | `window.refreshSamplesTable` | `() => Promise<void>` | `:1238` | external (debug / Playwright) | not used by other cells; safe to keep or remove |
 
 ### Async-selection invariant
