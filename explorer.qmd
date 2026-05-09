@@ -1800,6 +1800,10 @@ zoomWatcher = {
         if (typeof cellHex !== 'string') return null;
         const lower = cellHex.toLowerCase();
         if (!/^[0-9a-f]{15}$/.test(lower)) return null;
+        // First nibble of the leading-zero-stripped 15-char form is the H3 mode
+        // (cells are mode 1 → '8' here). Reject non-cell modes (edges, vertices,
+        // etc.) so we don't issue spurious lookups for them.
+        if (lower[0] !== '8') return null;
         const res = parseInt(lower[1], 16);
         const url = RES_TO_H3_URL[res];
         if (!url) return null;
@@ -1831,7 +1835,11 @@ zoomWatcher = {
 
     // --- Helper: populate side panel + nearby-samples list from a cluster meta object ---
     // Mirrors the cluster-click handler at the LEFT_CLICK input action above.
-    async function hydrateClusterUI(meta) {
+    // The optional `isStale` predicate is consulted *after* the inner await so
+    // that a hashchange superseded by a newer one doesn't paint stale samples
+    // into the side panel. The cluster-click caller passes a no-op predicate
+    // because click selection is its own latest event.
+    async function hydrateClusterUI(meta, isStale) {
         if (!meta) return;
         updateClusterCard(meta);
         const sampEl = document.getElementById('samplesSection');
@@ -1847,8 +1855,10 @@ zoomWatcher = {
                   ${facetFilterSQL()}
                 LIMIT 30
             `);
+            if (isStale && isStale()) return;
             updateSamples(samples);
         } catch(err) {
+            if (isStale && isStale()) return;
             console.error("Cluster hydration nearby query failed:", err);
             if (sampEl) sampEl.innerHTML = '<div style="color: #c62828; padding: 12px;">Query failed — try again.</div>';
         }
@@ -1856,6 +1866,9 @@ zoomWatcher = {
 
     // --- Handle browser back/forward ---
     window.addEventListener('hashchange', async () => {
+        // Bump the selection generation BEFORE any early-return so even
+        // hashchanges that lack lat/lng invalidate stale async work.
+        viewer._selGen = (viewer._selGen || 0) + 1;
         const state = readHash();
         if (state.lat == null || state.lng == null) return;
 
@@ -1883,9 +1896,8 @@ zoomWatcher = {
         // EXPLORER_CLUSTER_URL_PROPOSAL §4). Both branches do an `await` against
         // a remote parquet, so a fast back/forward could race: an older fetch
         // resolves AFTER a newer hash has applied, and would otherwise repaint
-        // the side panel with stale data. `selGen` is bumped per hashchange and
-        // checked after each await to drop stale results.
-        viewer._selGen = (viewer._selGen || 0) + 1;
+        // the side panel with stale data. `_selGen` is bumped at the very top
+        // of this handler; we capture it here and check after each await.
         const selGen = viewer._selGen;
         if (state.pid) {
             viewer._globeState.selectedPid = state.pid;
@@ -1916,8 +1928,7 @@ zoomWatcher = {
             if (selGen !== viewer._selGen) return;
             if (meta) {
                 viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
-                await hydrateClusterUI(meta);
-                if (selGen !== viewer._selGen) return;
+                await hydrateClusterUI(meta, () => selGen !== viewer._selGen);
             } else {
                 // Unknown / malformed h3 — clear the side panel rather than
                 // leaving prior content stranded.
