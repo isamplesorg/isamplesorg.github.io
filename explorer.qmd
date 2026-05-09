@@ -817,6 +817,14 @@ viewer = {
         terrain: Cesium.Terrain.fromWorldTerrain()
     });
 
+    // Surface-marker primitives (h3 clusters, sample dots) sit at altitude=0;
+    // World Terrain elevation otherwise occludes them, producing crescent halos
+    // and disappearing dots over hills (#180 regression). Disabling terrain
+    // depth-test draws primitives over terrain while preserving globe-ellipsoid
+    // occlusion (back-side primitives stay hidden) and pick correctness — unlike
+    // per-primitive `disableDepthTestDistance: Infinity`, which broke both.
+    v.scene.globe.depthTestAgainstTerrain = false;
+
     // URL deep-link state (must be set before globalRect/once block reads it)
     v._globeState = { mode: 'cluster', selectedPid: null };
     v._initialHash = readHash();
