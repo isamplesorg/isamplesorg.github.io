@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>explorer_cluster_url_proposal – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-84244d6014897f94eda7509784684fcb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#explorer-selection-url-state-audit-cluster-proposal" id="toc-explorer-selection-url-state-audit-cluster-proposal" class="nav-link active" data-scroll-target="#explorer-selection-url-state-audit-cluster-proposal"><span class="header-section-number">1</span> Explorer Selection URL State — Audit + Cluster Proposal</a>
+  <ul>
+  <li><a href="#audit-whats-url-persisted-vs-in-memory-only" id="toc-audit-whats-url-persisted-vs-in-memory-only" class="nav-link" data-scroll-target="#audit-whats-url-persisted-vs-in-memory-only"><span class="header-section-number">1.1</span> 1. Audit: what’s URL-persisted vs in-memory only</a>
+  <ul class="collapse">
+  <li><a href="#already-url-persisted" id="toc-already-url-persisted" class="nav-link" data-scroll-target="#already-url-persisted"><span class="header-section-number">1.1.1</span> Already URL-persisted</a></li>
+  <li><a href="#not-url-persisted-in-memory-only" id="toc-not-url-persisted-in-memory-only" class="nav-link" data-scroll-target="#not-url-persisted-in-memory-only"><span class="header-section-number">1.1.2</span> NOT URL-persisted (in-memory only)</a></li>
+  </ul></li>
+  <li><a href="#the-cluster-identity-problem" id="toc-the-cluster-identity-problem" class="nav-link" data-scroll-target="#the-cluster-identity-problem"><span class="header-section-number">1.2</span> 2. The cluster identity problem</a></li>
+  <li><a href="#encoding-options" id="toc-encoding-options" class="nav-link" data-scroll-target="#encoding-options"><span class="header-section-number">1.3</span> 3. Encoding options</a>
+  <ul class="collapse">
+  <li><a href="#option-a-separate-cluster-fields" id="toc-option-a-separate-cluster-fields" class="nav-link" data-scroll-target="#option-a-separate-cluster-fields"><span class="header-section-number">1.3.1</span> Option A: separate cluster fields</a></li>
+  <li><a href="#option-b-single-packed-latlng-tuple-rejected" id="toc-option-b-single-packed-latlng-tuple-rejected" class="nav-link" data-scroll-target="#option-b-single-packed-latlng-tuple-rejected"><span class="header-section-number">1.3.2</span> Option B: single packed lat/lng tuple — REJECTED</a></li>
+  <li><a href="#option-c-h3-cell-index-recommended" id="toc-option-c-h3-cell-index-recommended" class="nav-link" data-scroll-target="#option-c-h3-cell-index-recommended"><span class="header-section-number">1.3.3</span> Option C: H3 cell index — RECOMMENDED</a></li>
+  <li><a href="#option-a-separate-cluster-fields-1" id="toc-option-a-separate-cluster-fields-1" class="nav-link" data-scroll-target="#option-a-separate-cluster-fields-1"><span class="header-section-number">1.3.4</span> Option A: separate cluster fields</a></li>
+  <li><a href="#option-d-unified-sel-field-with-type-prefix" id="toc-option-d-unified-sel-field-with-type-prefix" class="nav-link" data-scroll-target="#option-d-unified-sel-field-with-type-prefix"><span class="header-section-number">1.3.5</span> Option D: unified <code>&amp;sel=</code> field with type prefix</a></li>
+  </ul></li>
+  <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation"><span class="header-section-number">1.4</span> 4. Recommendation</a></li>
+  <li><a href="#open-questions" id="toc-open-questions" class="nav-link" data-scroll-target="#open-questions"><span class="header-section-number">1.5</span> 5. Open questions</a></li>
+  <li><a href="#phasing" id="toc-phasing" class="nav-link" data-scroll-target="#phasing"><span class="header-section-number">1.6</span> 6. Phasing</a></li>
+  <li><a href="#acceptance-for-phase-1" id="toc-acceptance-for-phase-1" class="nav-link" data-scroll-target="#acceptance-for-phase-1"><span class="header-section-number">1.7</span> 7. Acceptance for Phase 1</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_CLUSTER_URL_PROPOSAL.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="explorer-selection-url-state-audit-cluster-proposal" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Explorer Selection URL State — Audit + Cluster Proposal</h1>
+<p>Companion to <a href="./EXPLORER_STATE.html"><code>EXPLORER_STATE.md</code></a>. Audit of what selection state the Explorer URL captures today, and a proposal for adding cluster-selection state so a URL alone can replay “I clicked this dot and got these samples.”</p>
+<p><strong>Recommendation (revised after Codex review)</strong>: encode cluster selection as <code>&amp;h3=&lt;cell&gt;</code> in the URL hash, using the H3 cell index that the explorer already SELECTs from the parquet (<code>explorer.qmd:973</code>, <code>:1316</code>). Exact key join, no lossy lat/lng tuple, no data-pipeline change.</p>
+<p>All file:line references are against <code>explorer.qmd</code> at commit <code>e0043c8</code> (post-#180 polish PR).</p>
+<hr>
+<section id="audit-whats-url-persisted-vs-in-memory-only" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="audit-whats-url-persisted-vs-in-memory-only"><span class="header-section-number">1.1</span> 1. Audit: what’s URL-persisted vs in-memory only</h2>
+<section id="already-url-persisted" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="already-url-persisted"><span class="header-section-number">1.1.1</span> Already URL-persisted</h3>
+<p>These already round-trip through the URL today; no work needed.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>State</th>
+<th>URL token</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Camera position</td>
+<td><code>#lat</code>, <code>#lng</code>, <code>#alt</code>, <code>#heading</code>, <code>#pitch</code></td>
+<td>Hash; debounced 600 ms; <code>EXPLORER_STATE.md §2</code>.</td>
+</tr>
+<tr class="even">
+<td>Mode (cluster vs point)</td>
+<td><code>#mode=point</code> (absent ⇒ cluster)</td>
+<td>Hash. Pushed on <code>enter/exitPointMode</code>.</td>
+</tr>
+<tr class="odd">
+<td><strong>Selected sample</strong></td>
+<td><strong><code>#pid=&lt;urlencoded&gt;</code></strong></td>
+<td>Hash. <code>selectedPid</code> written by sample-click (<code>:892</code>), cleared by cluster-click (<code>:919</code>). Round-trips through <code>readHash</code> → <code>_globeState.selectedPid</code> → <code>updateSampleCard()</code> + lazy <code>wide_url</code> description fetch (<code>:1813</code>, <code>:2167</code>).</td>
+</tr>
+<tr class="even">
+<td>Search query</td>
+<td><code>?search=</code></td>
+<td>Query-string. <code>EXPLORER_STATE.md §1</code>.</td>
+</tr>
+<tr class="odd">
+<td>Search scope</td>
+<td><code>?search_scope=area\|world</code></td>
+<td>Query-string. From PR #179.</td>
+</tr>
+<tr class="even">
+<td>View mode (globe/table)</td>
+<td><code>?view=table</code> (absent ⇒ globe)</td>
+<td>Query-string.</td>
+</tr>
+<tr class="odd">
+<td>Source filter (4 source toggles)</td>
+<td><code>?sources=CSV</code></td>
+<td>Query-string.</td>
+</tr>
+<tr class="even">
+<td>Material / Sampled Feature / Specimen Type facet filters</td>
+<td><code>?material=</code>, <code>?context=</code>, <code>?object_type=</code></td>
+<td>Query-string. CSV of full URIs.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sample selection is solved.</strong> A URL like <code>#v=1&amp;lat=33.27&amp;lng=-86.24&amp;alt=311435&amp;pid=ark%3A%2F65665%2F...&amp;mode=point</code> drops a collaborator at the exact dot you clicked, with the side-panel sample card populated.</p>
+</section>
+<section id="not-url-persisted-in-memory-only" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="not-url-persisted-in-memory-only"><span class="header-section-number">1.1.2</span> NOT URL-persisted (in-memory only)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>State</th>
+<th>Where it lives</th>
+<th>Lost on reload?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Selected cluster</strong></td>
+<td><code>updateClusterCard()</code> writes the cluster card DOM only; <code>selectedPid</code> is <em>cleared</em> on cluster click (<code>:919</code>)</td>
+<td>✓</td>
+</tr>
+<tr class="even">
+<td>Nearby-samples panel (post-cluster-click result)</td>
+<td><code>samplesSection</code> DOM, populated from a <code>delta</code>-window query (<code>:925-960</code>)</td>
+<td>✓ — derivable from cluster identity if we had it</td>
+</tr>
+<tr class="odd">
+<td>Sample card detail (description)</td>
+<td><code>samplesSection</code> / sample-card DOM</td>
+<td>✗ — refetched on <code>pid</code> reload via <code>wide_url</code></td>
+</tr>
+<tr class="even">
+<td>Table page index</td>
+<td><code>let page = 0</code> closure in <code>tableView</code> (<code>:1080</code>)</td>
+<td>✓ — known intentional gap (<code>EXPLORER_STATE.md §1</code>, <code>#163</code> item 6)</td>
+</tr>
+<tr class="odd">
+<td>Hover label text</td>
+<td><code>viewer.pointLabel</code></td>
+<td>✗ ephemeral by design</td>
+</tr>
+<tr class="even">
+<td>Globe canvas zoom-watcher transient state</td>
+<td><code>viewer._clusterData</code>, <code>_clusterTotal</code>, <code>_baselineCounts</code></td>
+<td>✗ derived from filters + camera</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>selected cluster</strong> is the only meaningful selection-state gap.</p>
+<hr>
+</section>
+</section>
+<section id="the-cluster-identity-problem" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="the-cluster-identity-problem"><span class="header-section-number">1.2</span> 2. The cluster identity problem</h2>
+<p>A clicked cluster’s runtime identity (<code>:891</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{ count<span class="op">,</span> <span class="dt">source</span><span class="op">:</span> row<span class="op">.</span><span class="at">dominant_source</span><span class="op">,</span> <span class="dt">lat</span><span class="op">:</span> row<span class="op">.</span><span class="at">center_lat</span><span class="op">,</span> <span class="dt">lng</span><span class="op">:</span> row<span class="op">.</span><span class="at">center_lng</span><span class="op">,</span> <span class="dt">resolution</span><span class="op">:</span> <span class="dv">4</span> }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Two things make this harder than <code>pid</code> (revised after Codex review of v1):</p>
+<ol type="1">
+<li><strong>Resolution-dependent</strong>: a cluster at H3 res 4 doesn’t exist as a unit at res 6; it splits into smaller cells. Reload at a different camera altitude → different H3 resolution → no cluster matches.</li>
+<li><strong>Source-filter-dependent only</strong>: cluster aggregation depends on the active <code>?sources=</code> filter. The H3 summary parquets explicitly carry only <code>dominant_source</code> — the cluster code at <code>explorer.qmd:1706-1710</code> documents that <code>material</code> / <code>context</code> / <code>object_type</code> filters <strong>cannot</strong> affect cluster counts, only sample-level views. So cluster identity is reproducible if <code>?sources=</code> is pinned.</li>
+</ol>
+<p>The H3 cell index is <strong>canonical</strong>: a single 15-character hex value (e.g.&nbsp;<code>841a067ffffffff</code>) that uniquely identifies a cell at a specific resolution. The resolution is <em>embedded</em> in the index — no separate field needed. The explorer’s H3 summary queries (<code>explorer.qmd:973</code>, <code>:1316</code>) already SELECT <code>h3_cell</code>; the cluster <code>.id</code> object simply doesn’t carry it forward. <strong>The “is the H3 index available?” open question (v1 doc OQ1) is answered: yes, no data-pipeline change required.</strong></p>
+<p>So a URL that says “you clicked H3 cell <code>841a067ffffffff</code>” plus the existing <code>?sources=</code> filter state fully reproduces the cluster the user saw — no lat/lng drift, no resolution param, exact join into the parquet row.</p>
+<hr>
+</section>
+<section id="encoding-options" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="encoding-options"><span class="header-section-number">1.3</span> 3. Encoding options</h2>
+<p>Four candidate URL representations for cluster selection, with the <code>&amp;pid=</code> slot generalized.</p>
+<section id="option-a-separate-cluster-fields" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="option-a-separate-cluster-fields"><span class="header-section-number">1.3.1</span> Option A: separate cluster fields</h3>
+<pre><code>#cluster_lat=33.2706&amp;cluster_lng=-86.2375&amp;cluster_res=4&amp;cluster_source=SESAR</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>pro</th>
+<th>con</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Mirrors the runtime <code>id</code> shape; trivial round-trip; greppable.</td>
+<td>Four params; bloats hash; collisions risk if other features want <code>&amp;cluster_*</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="option-b-single-packed-latlng-tuple-rejected" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="option-b-single-packed-latlng-tuple-rejected"><span class="header-section-number">1.3.2</span> Option B: single packed lat/lng tuple — REJECTED</h3>
+<pre><code>#cluster=SESAR:4:33.2706,-86.2375</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>pro</th>
+<th>con</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>One token; matches <code>#pid</code> ergonomically; format is documentable.</td>
+<td><strong>Lossy</strong> — relies on lat/lng comparison rather than exact key join. The H3 cell index is already in the runtime data (see Option C); this option throws it away for no reason. Custom parser; coordinate rounding could miss the row.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="option-c-h3-cell-index-recommended" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="option-c-h3-cell-index-recommended"><span class="header-section-number">1.3.3</span> Option C: H3 cell index — RECOMMENDED</h3>
+<pre><code>#h3=841a067ffffffff</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>pro</th>
+<th>con</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>H3 cell index is a canonical 15-char hex token uniquely identifying the cell at a specific resolution; resolution is <em>embedded</em> in the index. Joins to the cluster row are exact (<code>WHERE h3_cell = ?</code>), not delta-windowed. The <code>?sources=</code> filter (already URL-persisted) covers source-state reproducibility.</td>
+<td>None significant — the index is already SELECTed at <code>explorer.qmd:973</code> and <code>:1316</code>; only the cluster <code>.id</code> object needs to carry it.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: <code>dominant_source</code> does <em>not</em> need to be in the URL. It’s a <em>derived</em> attribute of the cluster row, looked up by <code>h3_cell</code> at hydration time. The source-filter state (<code>?sources=</code>) is what matters for reproducing the same aggregation.</p>
+</section>
+<section id="option-a-separate-cluster-fields-1" class="level3" data-number="1.3.4">
+<h3 data-number="1.3.4" data-anchor-id="option-a-separate-cluster-fields-1"><span class="header-section-number">1.3.4</span> Option A: separate cluster fields</h3>
+<p>(see above)</p>
+</section>
+<section id="option-d-unified-sel-field-with-type-prefix" class="level3" data-number="1.3.5">
+<h3 data-number="1.3.5" data-anchor-id="option-d-unified-sel-field-with-type-prefix"><span class="header-section-number">1.3.5</span> Option D: unified <code>&amp;sel=</code> field with type prefix</h3>
+<pre><code>#sel=p:ark:/65665/abc      (sample)
+#sel=c:841a067ffffffff     (cluster, h3-form)</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>pro</th>
+<th>con</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>One field for “what’s selected”; uniform handler; future-proofs other selection types.</td>
+<td>Migration cost: existing <code>&amp;pid=</code> URLs in the wild stop working unless we keep both. Backwards-compat shim isn’t free.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="recommendation" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="recommendation"><span class="header-section-number">1.4</span> 4. Recommendation</h2>
+<p><strong>Option C (<code>&amp;h3=&lt;cell&gt;</code>), keeping <code>&amp;pid=</code> as-is.</strong></p>
+<p>Revised from v1 of this doc after Codex review confirmed <code>h3_cell</code> is already in the H3 summary parquets (queried at <code>explorer.qmd:973</code> and <code>:1316</code>) — the cluster <code>.id</code> just doesn’t carry it forward.</p>
+<p>Rationale:</p>
+<ul>
+<li><strong>Exact lookup, not lossy</strong>: <code>WHERE h3_cell = '&lt;cell&gt;'</code> is a primary-key join. The lat/lng-tuple alternative (Option B) requires <code>WHERE</code> + range comparison and is fragile to coordinate rounding.</li>
+<li><strong>Single token</strong>: 15 hex chars; resolution implicit; no parser beyond <code>params.get('h3')</code>.</li>
+<li><strong>No data-pipeline change</strong>: just thread <code>h3_cell</code> into the runtime <code>id</code> object at the two <code>add()</code> sites.</li>
+<li><strong>No backwards-compat tax</strong>: <code>&amp;pid=</code> URLs keep working unchanged.</li>
+<li><strong>Cluster + sample mutual exclusion</strong> matches the runtime invariant (<code>selectedPid</code> is cleared on cluster click).</li>
+</ul>
+<p>Concretely:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Carry h3_cell into the runtime id (explorer.qmd:987 and :1331)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>viewer<span class="op">.</span><span class="at">h3Points</span><span class="op">.</span><span class="fu">add</span>({</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">id</span><span class="op">:</span> { <span class="dt">h3_cell</span><span class="op">:</span> row<span class="op">.</span><span class="at">h3_cell</span><span class="op">,</span> count<span class="op">,</span> <span class="dt">source</span><span class="op">:</span> row<span class="op">.</span><span class="at">dominant_source</span><span class="op">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>          <span class="dt">lat</span><span class="op">:</span> row<span class="op">.</span><span class="at">center_lat</span><span class="op">,</span> <span class="dt">lng</span><span class="op">:</span> row<span class="op">.</span><span class="at">center_lng</span><span class="op">,</span> <span class="dt">resolution</span><span class="op">:</span> <span class="dv">4</span> }<span class="op">,</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Extend _globeState (explorer.qmd:821)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>viewer<span class="op">.</span><span class="at">_globeState</span> <span class="op">=</span> {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">mode</span><span class="op">:</span> <span class="st">'cluster'</span> <span class="op">|</span> <span class="st">'point'</span><span class="op">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">selectedPid</span><span class="op">:</span> string <span class="op">|</span> <span class="kw">null</span><span class="op">,</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">selectedH3</span><span class="op">:</span> string <span class="op">|</span> <span class="kw">null</span><span class="op">,</span>  <span class="co">// NEW — the h3_cell hex string</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. readHash() addition (:615)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>h3<span class="op">:</span> params<span class="op">.</span><span class="fu">get</span>(<span class="st">'h3'</span>) <span class="op">||</span> <span class="kw">null</span><span class="op">,</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">// 4. buildHash() addition (:629)</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> gs <span class="op">=</span> v<span class="op">.</span><span class="at">_globeState</span><span class="op">;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (gs<span class="op">.</span><span class="at">selectedH3</span>) params<span class="op">.</span><span class="fu">set</span>(<span class="st">'h3'</span><span class="op">,</span> gs<span class="op">.</span><span class="at">selectedH3</span>)<span class="op">;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">// 5. Cluster-click handler (:916-920)</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span><span class="at">_globeState</span><span class="op">.</span><span class="at">selectedPid</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span><span class="at">_globeState</span><span class="op">.</span><span class="at">selectedH3</span> <span class="op">=</span> meta<span class="op">.</span><span class="at">h3_cell</span><span class="op">;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>history<span class="op">.</span><span class="fu">pushState</span>(<span class="kw">null</span><span class="op">,</span> <span class="st">''</span><span class="op">,</span> <span class="fu">buildHash</span>(v))<span class="op">;</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">// 6. Hash hydration (:1733, :2167)</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (state<span class="op">.</span><span class="at">h3</span>) {</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Reconstruct cluster meta with: SELECT * FROM read_parquet(...) WHERE h3_cell = ?</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Then call updateClusterCard(meta) + the nearby-samples query at :925-960.</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Mutual exclusion: clear selectedPid.</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Behavior on URL load:</p>
+<ol type="1">
+<li><code>&amp;h3=...</code> present, no <code>&amp;pid=</code>: query the parquet for that cell, populate side panel + nearby-samples list. Camera/H3-resolution layer left as-is — see OQ2.</li>
+<li><code>&amp;pid=</code> present, no <code>&amp;h3=</code>: existing behavior, no change.</li>
+<li>Both present: prefer <code>&amp;pid=</code> (sample mode wins; cluster URL is stale). Drop <code>&amp;h3=</code> via <code>replaceState</code> to clean up.</li>
+<li>Neither: blank selection (current behavior).</li>
+</ol>
+<hr>
+</section>
+<section id="open-questions" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="open-questions"><span class="header-section-number">1.5</span> 5. Open questions</h2>
+<ol type="1">
+<li><del><strong>H3 cell index in parquet?</strong></del> <strong>Answered</strong>: yes. <code>h3_cell</code> is already SELECTed at <code>explorer.qmd:973</code> (phase1) and <code>:1316</code> (loadRes); only the cluster <code>.id</code> object needs to carry it forward.</li>
+<li><strong>Cross-resolution behavior on load.</strong> If you share <code>&amp;h3=&lt;cell&gt;&amp;alt=...</code> and the recipient’s window altitude maps to a different H3 resolution than the cell’s, should the URL load <em>force</em> the resolution to match the cell’s, or just populate the side-panel and leave the visible H3 layer alone? <em>Recommendation: populate the side panel only. The shared-link receiver wanted to see your sample list, not necessarily your grid.</em></li>
+<li><strong>Does the side panel need a “this cluster’s view is no longer live” hint</strong> when the recipient’s camera/filters cause the on-globe rendering to differ from the URL one? <em>Defer; revisit after implementation if it confuses people.</em></li>
+<li><strong>Backwards compat for <code>&amp;pid=</code></strong>: keep forever. Existing sample-share links must not break.</li>
+<li><strong>Schema bump</strong>: should this trip <code>v=1</code> → <code>v=2</code> in the hash? Probably no — <code>&amp;h3=</code> is purely additive and old clients ignore unknown params. Reserve the version bump for breaking changes.</li>
+</ol>
+<hr>
+</section>
+<section id="phasing" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="phasing"><span class="header-section-number">1.6</span> 6. Phasing</h2>
+<ul>
+<li><strong>Phase 1</strong> <em>(this proposal)</em>: ship <code>&amp;h3=&lt;cell&gt;</code> per Option C. ~25-line patch in <code>explorer.qmd</code> (carry <code>h3_cell</code> through the runtime <code>id</code>; extend <code>_globeState</code>, <code>readHash</code>, <code>buildHash</code>, cluster-click handler, hash hydration). Update <code>EXPLORER_STATE.md §2</code> table to add the row.</li>
+<li><strong>Phase 2</strong> <em>(only if needed)</em>: unified <code>&amp;sel=</code> field per Option D. Worth doing only if a third selection type (e.g., region/polygon) appears.</li>
+</ul>
+<p>The previous Phase 2 (compat shim from <code>&amp;cluster=</code> to <code>&amp;h3=</code>) is dropped — by going straight to Option C we never ship the lossy intermediate form.</p>
+<hr>
+</section>
+<section id="acceptance-for-phase-1" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="acceptance-for-phase-1"><span class="header-section-number">1.7</span> 7. Acceptance for Phase 1</h2>
+<ul class="task-list">
+<li><label><input type="checkbox"><code>h3_cell</code> carried through the runtime cluster <code>id</code> at both <code>add()</code> sites (<code>:987</code>, <code>:1331</code>).</label></li>
+<li><label><input type="checkbox"><code>viewer._globeState.selectedH3</code> field exists and is mutated by the cluster-click handler at <code>:916</code>.</label></li>
+<li><label><input type="checkbox"><code>buildHash()</code> writes <code>&amp;h3=</code> when <code>selectedH3</code> is non-null.</label></li>
+<li><label><input type="checkbox"><code>readHash()</code> parses <code>&amp;h3=</code> as a hex string.</label></li>
+<li><label><input type="checkbox">Reloading a <code>&amp;h3=&lt;cell&gt;</code> URL re-populates the side-panel cluster card + nearby-samples list with the same data the click would have produced (exact <code>WHERE h3_cell = ?</code> join).</label></li>
+<li><label><input type="checkbox">Sample-click clears <code>selectedH3</code>; cluster-click clears <code>selectedPid</code>. Mutual exclusion preserved.</label></li>
+<li><label><input type="checkbox"><code>EXPLORER_STATE.md §2</code> table updated with the new row.</label></li>
+<li><label><input type="checkbox">One Playwright test: click cluster → verify URL contains <code>&amp;h3=</code> → reload → verify side panel re-populates.</label></li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_CLUSTER_URL_PROPOSAL.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
