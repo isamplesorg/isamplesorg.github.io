@@ -111,7 +111,14 @@ across cells without becoming a separate OJS reactive value.
 | `viewer.h3Points` | Cesium `PointPrimitiveCollection` | `:815` | cluster mode rendering | |
 | `viewer.samplePoints` | Cesium `PointPrimitiveCollection` | `:818` | point mode rendering | |
 | `viewer.pointLabel` | Cesium label entity | `:823` | mouse-move handler (`:836-848`) | hover tooltip |
+| `viewer._selGen` | int | bumped by every `freshSelectionToken(viewer)` call (top-level helper, see invariant below) | snapshot captured by each handler that mutates selection | freshness counter; see invariant below |
 | `window.refreshSamplesTable` | `() => Promise<void>` | `:1238` | external (debug / Playwright) | not used by other cells; safe to keep or remove |
+
+### Async-selection invariant
+
+Any async work that updates `viewer._globeState`, the URL hash, or the side-panel DOM **must check freshness after every await**. The `freshSelectionToken(viewer)` helper (defined at top level alongside `readHash` / `buildHash` so both the viewer-cell click handler and the zoomWatcher-cell handlers can reach it) is the primitive: each user-input event handler that touches selection (cluster/sample click, hashchange, source-filter toggle, boot deep-link) calls it once at start to bump `_selGen` and capture an `isStale()` closure; every subsequent await is followed by `if (isStale()) return;` before any state/URL/DOM mutation. Pass `isStale` into nested helpers (`hydrateClusterUI`'s second param) so their internal awaits also bail before touching the DOM.
+
+This invariant exists because there's no central "selection store" — selection state lives in `_globeState`, the URL hash, and the side-panel DOM, and four different paths (click, hashchange, filter, boot) write to all three. Without the freshness check, a slow earlier handler can repaint the side panel for a selection the user has already moved off of. Issue #187 has the post-mortem on the 6-round Codex review that motivated extracting the primitive.
 
 ### `_urlParamsHydrated` — confirmed gone
 
