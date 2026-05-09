@@ -234,7 +234,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#dom-as-state" id="toc-dom-as-state" class="nav-link" data-scroll-target="#dom-as-state"><span class="header-section-number">1.3</span> 3. DOM-as-state</a></li>
   <li><a href="#widget-internal-state-viewer.-window." id="toc-widget-internal-state-viewer.-window." class="nav-link" data-scroll-target="#widget-internal-state-viewer.-window."><span class="header-section-number">1.4</span> 4. Widget-internal state (<code>viewer.*</code> / <code>window.*</code>)</a>
   <ul class="collapse">
-  <li><a href="#urlparamshydrated-confirmed-gone" id="toc-urlparamshydrated-confirmed-gone" class="nav-link" data-scroll-target="#urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.1</span> <code>_urlParamsHydrated</code> — confirmed gone</a></li>
+  <li><a href="#async-selection-invariant" id="toc-async-selection-invariant" class="nav-link" data-scroll-target="#async-selection-invariant"><span class="header-section-number">1.4.1</span> Async-selection invariant</a></li>
+  <li><a href="#urlparamshydrated-confirmed-gone" id="toc-urlparamshydrated-confirmed-gone" class="nav-link" data-scroll-target="#urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.2</span> <code>_urlParamsHydrated</code> — confirmed gone</a></li>
   </ul></li>
   <li><a href="#ojs-cell-graph" id="toc-ojs-cell-graph" class="nav-link" data-scroll-target="#ojs-cell-graph"><span class="header-section-number">1.5</span> 5. OJS cell graph</a></li>
   <li><a href="#search-semantics-decision" id="toc-search-semantics-decision" class="nav-link" data-scroll-target="#search-semantics-decision"><span class="header-section-number">1.6</span> 6. Search-semantics decision</a>
@@ -669,6 +670,13 @@ ul.task-list li input[type="checkbox"] {
 <td>hover tooltip</td>
 </tr>
 <tr class="odd">
+<td><code>viewer._selGen</code></td>
+<td>int</td>
+<td>bumped by every <code>freshSelectionToken(viewer)</code> call (top-level helper, see invariant below)</td>
+<td>snapshot captured by each handler that mutates selection</td>
+<td>freshness counter; see invariant below</td>
+</tr>
+<tr class="even">
 <td><code>window.refreshSamplesTable</code></td>
 <td><code>() =&gt; Promise&lt;void&gt;</code></td>
 <td><code>:1238</code></td>
@@ -677,8 +685,13 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<section id="urlparamshydrated-confirmed-gone" class="level3" data-number="1.4.1">
-<h3 data-number="1.4.1" data-anchor-id="urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.1</span> <code>_urlParamsHydrated</code> — confirmed gone</h3>
+<section id="async-selection-invariant" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="async-selection-invariant"><span class="header-section-number">1.4.1</span> Async-selection invariant</h3>
+<p>Any async work that updates <code>viewer._globeState</code>, the URL hash, or the side-panel DOM <strong>must check freshness after every await</strong>. The <code>freshSelectionToken(viewer)</code> helper (defined at top level alongside <code>readHash</code> / <code>buildHash</code> so both the viewer-cell click handler and the zoomWatcher-cell handlers can reach it) is the primitive: each user-input event handler that touches selection (cluster/sample click, hashchange, source-filter toggle, boot deep-link) calls it once at start to bump <code>_selGen</code> and capture an <code>isStale()</code> closure; every subsequent await is followed by <code>if (isStale()) return;</code> before any state/URL/DOM mutation. Pass <code>isStale</code> into nested helpers (<code>hydrateClusterUI</code>’s second param) so their internal awaits also bail before touching the DOM.</p>
+<p>This invariant exists because there’s no central “selection store” — selection state lives in <code>_globeState</code>, the URL hash, and the side-panel DOM, and four different paths (click, hashchange, filter, boot) write to all three. Without the freshness check, a slow earlier handler can repaint the side panel for a selection the user has already moved off of. Issue #187 has the post-mortem on the 6-round Codex review that motivated extracting the primitive.</p>
+</section>
+<section id="urlparamshydrated-confirmed-gone" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" data-anchor-id="urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.2</span> <code>_urlParamsHydrated</code> — confirmed gone</h3>
 <p>Grep for <code>_urlParamsHydrated</code> in <code>explorer.qmd</code> returns no hits. The flag from PR #159’s first cut was removed; the new contract is “URL → DOM hydration runs exactly once per cell that owns the corresponding DOM, gated only by the OJS DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration; tableView ⇒ view hydration).”</p>
 <hr>
 </section>
