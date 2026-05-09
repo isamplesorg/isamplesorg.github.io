@@ -487,6 +487,16 @@ ul.task-list li input[type="checkbox"] {
 <td>none beyond <code>null</code> check</td>
 <td>drives a <code>lite_url</code> lookup + lazy <code>wide_url</code> description fetch</td>
 </tr>
+<tr class="odd">
+<td><code>h3</code></td>
+<td><code>viewer._globeState.selectedH3</code></td>
+<td>omitted</td>
+<td>canonical 15-char lowercase hex (e.g.&nbsp;<code>843f6d3ffffffff</code>)</td>
+<td><code>readHash()</code> parses; boot deep-link calls <code>fetchClusterByH3</code> then <code>hydrateClusterUI</code> under a <code>_selGen</code> race guard; same path on <code>hashchange</code></td>
+<td>cluster-click sets <code>selectedH3 = meta.h3_cell</code> and clears <code>selectedPid</code> (mutual exclusion); sample-click clears <code>selectedH3</code>; source-filter change re-validates and may clear or rehydrate; written in <code>buildHash</code> if non-null</td>
+<td>strict <code>/^[0-9a-f]{15}$/i</code>; cell-mode (<code>lower[0] === '8'</code>); resolution nibble in <code>RES_TO_H3_URL</code> map (4/6/8)</td>
+<td>drives a single <code>WHERE h3_cell = CAST('&lt;decimal&gt;' AS UBIGINT) AND &lt;sourceFilterSQL&gt;</code> lookup against the resolution-routed parquet. h3_cell column is UBIGINT so SELECTs cast to VARCHAR and JS converts via <code>BigInt(dec).toString(16)</code> to avoid Number precision loss. <code>&amp;pid=</code> wins if both present. Per <code>EXPLORER_CLUSTER_URL_PROPOSAL.md</code></td>
+</tr>
 </tbody>
 </table>
 <section id="hash-write-vs-read-coordination" class="level3" data-number="1.2.1">
