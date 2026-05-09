@@ -1305,6 +1305,29 @@ zoomWatcher = {
     let requestId = 0;      // stale-request guard
     // clusterDataCache stored on viewer._clusterData (set by phase1 and loadRes)
 
+    // --- Selection freshness primitive ---
+    //
+    // Async work that updates `viewer._globeState`, the URL hash, or the side
+    // panel must check freshness after every await. A user input (click,
+    // hashchange, source-filter toggle, boot deep-link) bumps `_selGen`; any
+    // in-flight async work whose generation no longer matches must NOT mutate
+    // anything that an interactive newer event has already moved.
+    //
+    // Usage:
+    //   const isStale = freshSelectionToken();
+    //   await someWork();
+    //   if (isStale()) return;
+    //   updateDOM();
+    //
+    // Pass `isStale` into helpers (see hydrateClusterUI) so their internal
+    // awaits also bail before touching DOM. See issue #187 for the post-mortem
+    // that motivated extracting this primitive.
+    function freshSelectionToken() {
+        viewer._selGen = (viewer._selGen || 0) + 1;
+        const gen = viewer._selGen;
+        return () => gen !== viewer._selGen;
+    }
+
     // Hysteresis thresholds to avoid flicker
     const ENTER_POINT_ALT = 120000;  // 120 km → enter point mode
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
@@ -1699,8 +1722,7 @@ zoomWatcher = {
         // any in-flight selection lookup AND re-validate the current selection
         // (cluster or sample) under the new filter — if it's filtered out, drop
         // it from runtime state and the URL so the side panel matches the globe.
-        viewer._selGen = (viewer._selGen || 0) + 1;
-        const filterSelGen = viewer._selGen;
+        const isStale = freshSelectionToken();
         try {
             updateSourceLegendState();
             writeQueryState();
@@ -1714,11 +1736,11 @@ zoomWatcher = {
             refreshFacetCounts();
 
             // Re-validate selection (only if no newer filter change has fired).
-            if (filterSelGen === viewer._selGen) {
+            if (!isStale()) {
                 const sel = viewer._globeState;
                 if (sel.selectedH3) {
                     const meta = await fetchClusterByH3(sel.selectedH3);
-                    if (filterSelGen !== viewer._selGen) return;
+                    if (isStale()) return;
                     if (!meta) {
                         sel.selectedH3 = null;
                         updateClusterCard(null);
@@ -1731,7 +1753,7 @@ zoomWatcher = {
                         // source-filtered too — re-run it under the new filter
                         // so the panel doesn't show stale rows from unchecked
                         // sources (or miss newly-checked ones).
-                        await hydrateClusterUI(meta, () => filterSelGen !== viewer._selGen);
+                        await hydrateClusterUI(meta, isStale);
                     }
                 } else if (sel.selectedPid) {
                     const safe = sel.selectedPid.replace(/'/g, "''");
@@ -1741,7 +1763,7 @@ zoomWatcher = {
                         ${sourceFilterSQL('source')}
                         LIMIT 1
                     `);
-                    if (filterSelGen !== viewer._selGen) return;
+                    if (isStale()) return;
                     if (!stillVisible || stillVisible.length === 0) {
                         sel.selectedPid = null;
                         updateClusterCard(null);
@@ -1930,7 +1952,7 @@ zoomWatcher = {
     window.addEventListener('hashchange', async () => {
         // Bump the selection generation BEFORE any early-return so even
         // hashchanges that lack lat/lng invalidate stale async work.
-        viewer._selGen = (viewer._selGen || 0) + 1;
+        const isStale = freshSelectionToken();
         const state = readHash();
         if (state.lat == null || state.lng == null) return;
 
@@ -1958,9 +1980,8 @@ zoomWatcher = {
         // EXPLORER_CLUSTER_URL_PROPOSAL §4). Both branches do an `await` against
         // a remote parquet, so a fast back/forward could race: an older fetch
         // resolves AFTER a newer hash has applied, and would otherwise repaint
-        // the side panel with stale data. `_selGen` is bumped at the very top
-        // of this handler; we capture it here and check after each await.
-        const selGen = viewer._selGen;
+        // the side panel with stale data. `isStale` is the freshness token
+        // captured at the top of this handler; we check it after each await.
         if (state.pid) {
             viewer._globeState.selectedPid = state.pid;
             viewer._globeState.selectedH3 = null;
@@ -1971,7 +1992,7 @@ zoomWatcher = {
                     WHERE pid = '${state.pid.replace(/'/g, "''")}'
                     LIMIT 1
                 `);
-                if (selGen !== viewer._selGen) return;
+                if (isStale()) return;
                 if (sample && sample.length > 0) {
                     const s = sample[0];
                     updateSampleCard({
@@ -1987,10 +2008,10 @@ zoomWatcher = {
             viewer._globeState.selectedPid = null;
             viewer._globeState.selectedH3 = state.h3.toLowerCase();
             const meta = await fetchClusterByH3(state.h3);
-            if (selGen !== viewer._selGen) return;
+            if (isStale()) return;
             if (meta) {
                 viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
-                await hydrateClusterUI(meta, () => selGen !== viewer._selGen);
+                await hydrateClusterUI(meta, isStale);
             } else {
                 // Unknown / malformed h3 — clear the side panel rather than
                 // leaving prior content stranded.
@@ -2337,14 +2358,13 @@ zoomWatcher = {
     // Sample mode wins if both &pid= and &h3= are present (see EXPLORER_CLUSTER_URL_PROPOSAL §4).
     // The boot path runs once, but the hashchange listener is already registered
     // by this point — back/forward or a manual hash edit during the boot await
-    // could supersede this lookup. Use the same `_selGen` token the hashchange
-    // handler uses; bumping it here also invalidates any in-flight lookups.
+    // could supersede this lookup. Capture the same freshness token the
+    // hashchange handler uses; bumping it here also invalidates any in-flight
+    // lookups.
     // Wrap in try/finally so `_suppressHashWrite = false` always runs even if
     // a stale early-return aborts the deep-link work — otherwise a no-lat/lng
     // hashchange during boot could leave hash writes suppressed forever.
-    viewer._selGen = (viewer._selGen || 0) + 1;
-    const bootSelGen = viewer._selGen;
-    const isBootStale = () => bootSelGen !== viewer._selGen;
+    const isStale = freshSelectionToken();
     const ih = viewer._initialHash;
     try {
         if (ih.pid) {
@@ -2357,7 +2377,7 @@ zoomWatcher = {
                     WHERE pid = '${ih.pid.replace(/'/g, "''")}'
                     LIMIT 1
                 `);
-                if (isBootStale()) return "active";
+                if (isStale()) return "active";
                 if (sample && sample.length > 0) {
                     const s = sample[0];
                     updateSampleCard({
@@ -2370,7 +2390,7 @@ zoomWatcher = {
                         WHERE pid = '${ih.pid.replace(/'/g, "''")}'
                         LIMIT 1
                     `);
-                    if (isBootStale()) return "active";
+                    if (isStale()) return "active";
                     if (detail && detail.length > 0) updateSampleDetail(detail[0]);
                     else updateSampleDetail({ description: '' });
                 }
@@ -2380,10 +2400,10 @@ zoomWatcher = {
         } else if (ih.h3) {
             viewer._globeState.selectedH3 = ih.h3.toLowerCase();
             const meta = await fetchClusterByH3(ih.h3);
-            if (isBootStale()) return "active";
+            if (isStale()) return "active";
             if (meta) {
                 viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
-                await hydrateClusterUI(meta, isBootStale);
+                await hydrateClusterUI(meta, isStale);
             } else {
                 // Unknown / malformed h3, OR filtered out by ?sources=. Drop it
                 // from runtime state so buildHash() doesn't keep emitting it.
