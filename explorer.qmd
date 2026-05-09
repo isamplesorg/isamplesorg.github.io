@@ -623,6 +623,7 @@ function readHash() {
         pitch: parseNum(params.get('pitch'), -90, -90, 0),
         mode: params.get('mode') || null,
         pid: params.get('pid') || null,
+        h3: params.get('h3') || null,
     };
 }
 
@@ -641,6 +642,7 @@ function buildHash(v) {
     const gs = v._globeState;
     if (gs.mode === 'point') params.set('mode', 'point');
     if (gs.selectedPid) params.set('pid', gs.selectedPid);
+    if (gs.selectedH3) params.set('h3', gs.selectedH3);
     return '#' + params.toString();
 }
 
@@ -818,7 +820,7 @@ viewer = {
     });
 
     // URL deep-link state (must be set before globalRect/once block reads it)
-    v._globeState = { mode: 'cluster', selectedPid: null };
+    v._globeState = { mode: 'cluster', selectedPid: null, selectedH3: null };
     v._initialHash = readHash();
     v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
     v._suppressTimer = null;
@@ -890,6 +892,7 @@ viewer = {
             // --- Individual sample click ---
             updateSampleCard(meta);
             v._globeState.selectedPid = meta.pid;
+            v._globeState.selectedH3 = null;
             history.pushState(null, '', buildHash(v));
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
@@ -917,6 +920,7 @@ viewer = {
             // --- Cluster click ---
             updateClusterCard(meta);
             v._globeState.selectedPid = null;
+            v._globeState.selectedH3 = meta.h3_cell || null;
             history.pushState(null, '', buildHash(v));
 
             const sampEl = document.getElementById('samplesSection');
@@ -984,7 +988,8 @@ phase1 = {
         totalSamples += count;
         const size = Math.min(3 + Math.log10(count) * 4, 20);
         viewer.h3Points.add({
-            id: { count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: 4 },
+            // h3_cell is UBIGINT in the parquet; carry as hex string (canonical H3 form).
+            id: { h3_cell: row.h3_cell.toString(16), count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: 4 },
             position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
             pixelSize: size,
             color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.8),
@@ -1327,7 +1332,7 @@ zoomWatcher = {
                 total += row.sample_count;
                 const size = Math.min(3 + Math.log10(row.sample_count) * 3.5, 18);
                 viewer.h3Points.add({
-                    id: { count: row.sample_count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: res },
+                    id: { h3_cell: row.h3_cell.toString(16), count: row.sample_count, source: row.dominant_source, lat: row.center_lat, lng: row.center_lng, resolution: res },
                     position: Cesium.Cartesian3.fromDegrees(row.center_lng, row.center_lat, 0),
                     pixelSize: size,
                     color: Cesium.Color.fromCssColorString(SOURCE_COLORS[row.dominant_source] || '#666').withAlpha(0.85),
@@ -1780,6 +1785,71 @@ zoomWatcher = {
     });
     viewer.camera.percentageChanged = 0.1;
 
+    // --- Helper: hydrate cluster row from H3 cell index across all 3 resolution parquets ---
+    // Used by both the boot deep-link path and the back/forward hashchange handler.
+    // The cell only exists in one of res4/res6/res8; UNION ALL + LIMIT 1 picks it.
+    async function fetchClusterByH3(cellHex) {
+        // h3_cell is stored as UBIGINT in the parquet; we receive a hex string
+        // (canonical H3 form). DuckDB-WASM doesn't accept `0x...` literals, so
+        // convert hex → decimal in JS via BigInt, then CAST to UBIGINT in SQL.
+        const safe = String(cellHex).replace(/[^0-9a-fA-F]/g, '');
+        if (!safe) return null;
+        let decimal;
+        try { decimal = BigInt('0x' + safe).toString(); }
+        catch { return null; }
+        try {
+            const result = await db.query(`
+                SELECT 4 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
+                FROM read_parquet('${h3_res4_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
+                UNION ALL
+                SELECT 6 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
+                FROM read_parquet('${h3_res6_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
+                UNION ALL
+                SELECT 8 AS resolution, h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count
+                FROM read_parquet('${h3_res8_url}') WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
+                LIMIT 1
+            `);
+            if (!result || result.length === 0) return null;
+            const r = result[0];
+            return {
+                h3_cell: r.h3_cell.toString(16),
+                count: r.sample_count,
+                source: r.dominant_source,
+                lat: r.center_lat,
+                lng: r.center_lng,
+                resolution: r.resolution,
+            };
+        } catch(err) {
+            console.error("fetchClusterByH3 query failed:", err);
+            return null;
+        }
+    }
+
+    // --- Helper: populate side panel + nearby-samples list from a cluster meta object ---
+    // Mirrors the cluster-click handler at the LEFT_CLICK input action above.
+    async function hydrateClusterUI(meta) {
+        if (!meta) return;
+        updateClusterCard(meta);
+        const sampEl = document.getElementById('samplesSection');
+        if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+        const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
+        try {
+            const samples = await db.query(`
+                SELECT pid, label, source, latitude, longitude, place_name
+                FROM read_parquet('${lite_url}')
+                WHERE latitude BETWEEN ${meta.lat - delta} AND ${meta.lat + delta}
+                  AND longitude BETWEEN ${meta.lng - delta} AND ${meta.lng + delta}
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                LIMIT 30
+            `);
+            updateSamples(samples);
+        } catch(err) {
+            console.error("Cluster hydration nearby query failed:", err);
+            if (sampEl) sampEl.innerHTML = '<div style="color: #c62828; padding: 12px;">Query failed — try again.</div>';
+        }
+    }
+
     // --- Handle browser back/forward ---
     window.addEventListener('hashchange', async () => {
         const state = readHash();
@@ -1805,9 +1875,10 @@ zoomWatcher = {
             else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
         }, 2000);
 
-        // Handle pid selection
+        // Handle pid selection (sample mode wins if both present — see EXPLORER_CLUSTER_URL_PROPOSAL §4)
         if (state.pid) {
             viewer._globeState.selectedPid = state.pid;
+            viewer._globeState.selectedH3 = null;
             try {
                 const sample = await db.query(`
                     SELECT pid, label, source, latitude, longitude, place_name, result_time
@@ -1826,8 +1897,14 @@ zoomWatcher = {
             } catch(err) {
                 console.error("Hash pid query failed:", err);
             }
+        } else if (state.h3) {
+            viewer._globeState.selectedPid = null;
+            viewer._globeState.selectedH3 = state.h3;
+            const meta = await fetchClusterByH3(state.h3);
+            if (meta) await hydrateClusterUI(meta);
         } else {
             viewer._globeState.selectedPid = null;
+            viewer._globeState.selectedH3 = null;
             updateClusterCard(null);
         }
     });
@@ -2159,9 +2236,11 @@ zoomWatcher = {
     refreshFacetCounts();
 
     // --- Deep-link: restore selection from initial hash ---
+    // Sample mode wins if both &pid= and &h3= are present (see EXPLORER_CLUSTER_URL_PROPOSAL §4).
     const ih = viewer._initialHash;
     if (ih.pid) {
         viewer._globeState.selectedPid = ih.pid;
+        viewer._globeState.selectedH3 = null;
         try {
             const sample = await db.query(`
                 SELECT pid, label, source, latitude, longitude, place_name, result_time
@@ -2187,6 +2266,10 @@ zoomWatcher = {
         } catch(err) {
             console.error("Deep-link pid query failed:", err);
         }
+    } else if (ih.h3) {
+        viewer._globeState.selectedH3 = ih.h3;
+        const meta = await fetchClusterByH3(ih.h3);
+        if (meta) await hydrateClusterUI(meta);
     }
 
     // Enable hash writing now that everything is initialized
