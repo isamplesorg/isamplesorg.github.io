@@ -1631,16 +1631,32 @@ zoomWatcher = {
     //
     // INVARIANT: every `loadRes` call site in this cell *outside this
     // helper* that could be in flight when the user crosses below
-    // `ENTER_POINT_ALT` MUST be followed by `await tryEnterPointModeIfNeeded()`.
+    // `ENTER_POINT_ALT` MUST capture the call's return value and chase
+    // with `await tryEnterPointModeIfNeeded()` *iff that return is `true`*
+    // (i.e., fresh data was applied). Idiom:
+    //
+    //   const applied = await loadRes(...);
+    //   if (applied) await tryEnterPointModeIfNeeded();
+    //
     // The `!loading` short-circuit below relies on this — when an unrelated
     // `loadRes` is in flight we bail and leave recovery to that call site's
-    // own post-await chase. A new `loadRes` caller added without the chase
-    // would silently break supersession recovery and only surface as a rare
-    // liveness regression (see issue #194). Verify with:
+    // own post-await chase.
+    //
+    // Why gate the chase on `applied` (issue #193):
+    //  - On `false`-stale: a newer `loadRes` caller superseded us; that
+    //    caller chases when it settles, so our chase would be redundant.
+    //  - On `false`-failed: `loadRes` already painted a "Failed to load…"
+    //    phase message that the user should be able to read; chasing here
+    //    would immediately overpaint it with "Fetching sample index…".
+    //
+    // A new `loadRes` caller added without the chase would silently break
+    // supersession recovery and only surface as a rare liveness regression
+    // (see issue #194). Verify with:
     //   grep -nE "await[[:space:]]+loadRes\(" explorer.qmd
     // which lists exactly the awaited call sites (one inside this helper,
-    // and one per external caller). For each external match, confirm it is
-    // immediately followed by `await tryEnterPointModeIfNeeded()`.
+    // and one per external caller). For each external match, confirm it
+    // captures the return into `applied` and is immediately followed by
+    // `if (applied) await tryEnterPointModeIfNeeded();`.
     async function tryEnterPointModeIfNeeded() {
         if (mode === 'point') return;
         if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
@@ -1827,17 +1843,20 @@ zoomWatcher = {
             writeQueryState();
             if (mode === 'cluster') {
                 loading = false;
-                await loadRes(currentRes, resUrls[currentRes]);
+                const applied = await loadRes(currentRes, resUrls[currentRes]);
                 // Liveness recovery (issue #190 round-2 review): if the user
                 // is sitting at point-mode altitude — e.g. they toggled the
                 // source filter mid-way through the cold-cache boot wait,
                 // which superseded the camera handler's pending res8 load —
-                // drive the cluster→point transition forward here. Without
-                // this, the user would stay in cluster mode at point altitude
-                // until they nudged the camera. The helper is idempotent and
-                // returns immediately if already in point mode or above the
-                // point-mode altitude threshold.
-                await tryEnterPointModeIfNeeded();
+                // drive the cluster→point transition forward here.
+                //
+                // Only chase on `applied === true` (issue #193): on `false`
+                // we either lost to a newer call (in which case that call's
+                // chase will recover) or we caught an error (in which case
+                // the user has a "Failed to load…" message they should be
+                // able to read, not have it papered over by "Fetching
+                // sample index…").
+                if (applied) await tryEnterPointModeIfNeeded();
             } else {
                 cachedBounds = null;
                 await loadViewportSamples();
@@ -1941,11 +1960,17 @@ zoomWatcher = {
                 // Reload appropriate resolution
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
                 if (target !== currentRes && !loading) {
-                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    const applied = await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
                     // The user may have crossed below ENTER_POINT_ALT while
                     // this cluster load was in flight; reconcile after it
                     // settles so no extra camera nudge is required.
-                    await tryEnterPointModeIfNeeded();
+                    //
+                    // Skip chase on non-applied returns (issue #193): a
+                    // stale return is recovered by the supersedor's own
+                    // chase, and a failed return should leave the user's
+                    // "Failed to load…" message visible instead of
+                    // overpainting it with "Fetching sample index…".
+                    if (applied) await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'point') {
                 // Already in point mode — update viewport samples
@@ -1954,11 +1979,12 @@ zoomWatcher = {
                 // Cluster mode — check if resolution should change
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
                 if (target !== currentRes && !loading) {
-                    await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    const applied = await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
                     // The user may have crossed below ENTER_POINT_ALT while
                     // this cluster load was in flight; reconcile after it
                     // settles so no extra camera nudge is required.
-                    await tryEnterPointModeIfNeeded();
+                    // Same chase gate as the cluster-reload branch above (issue #193).
+                    if (applied) await tryEnterPointModeIfNeeded();
                 }
             }
 
