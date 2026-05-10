@@ -417,6 +417,27 @@ function sourceFilterSQL(col) {
 SOURCE_VALUES = ['SESAR', 'OPENCONTEXT', 'GEOME', 'SMITHSONIAN']
 DEFAULT_POINT_BUDGET = 5000
 
+// Disable per-primitive depth test below this camera distance (meters).
+// All cluster and sample point primitives are placed at altitude=0 (ellipsoid
+// surface). With Cesium world terrain enabled, terrain mesh in hilly regions
+// (e.g. Troodos mountains in Cyprus, Birmingham AL hills) rises hundreds to
+// thousands of meters above ellipsoid — making sea-level primitives
+// physically underground and depth-culled by the standard per-pixel depth
+// test (issue #185).
+//
+// Bypass scope: only when the camera is closer than 2,000 km, which covers
+// every realistic interactive altitude (point mode <120 km, res8 cluster
+// mode up to ~300 km, res6 up to ~3,000 km — the upper range is technically
+// outside the bypass but at that altitude dots are tiny anyway, so this is
+// where the existing pre-issue behavior is preserved).
+//
+// Why bounded (2.0e6) and not POSITIVE_INFINITY: PR #181 used Infinity and
+// caused back-side-of-globe primitive bleed-through (the depth test was the
+// only thing keeping points on the FAR hemisphere from rendering through
+// the Earth). A 2,000 km bound preserves globe-ellipsoid occlusion at
+// long range while bypassing terrain occlusion at every interactive zoom.
+POINT_DEPTH_TEST_DISTANCE = 2.0e6
+
 function csvParamValues(params, key) {
     if (!params.has(key)) return null;
     const raw = params.get(key) || '';
@@ -1034,6 +1055,7 @@ phase1 = {
             outlineColor: Cesium.Color.WHITE,
             outlineWidth: 1.5,
             scaleByDistance: scalar,
+            disableDepthTestDistance: POINT_DEPTH_TEST_DISTANCE,  // issue #185
         });
     }
 
@@ -1395,6 +1417,7 @@ zoomWatcher = {
                     outlineColor: Cesium.Color.WHITE,
                     outlineWidth: 1.5,
                     scaleByDistance: scalar,
+                    disableDepthTestDistance: POINT_DEPTH_TEST_DISTANCE,  // issue #185
                 });
             }
 
@@ -1566,6 +1589,7 @@ zoomWatcher = {
                 outlineColor: Cesium.Color.WHITE,
                 outlineWidth: 1.5,
                 scaleByDistance: scalar,
+                disableDepthTestDistance: POINT_DEPTH_TEST_DISTANCE,  // issue #185
             });
         }
     }
