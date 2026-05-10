@@ -1604,6 +1604,44 @@ zoomWatcher = {
         console.log('Exited point mode');
     }
 
+    // --- Boot→point-mode transition (issue #190 fix 2) ---
+    //
+    // Idempotent helper that runs the cluster→point-mode transition iff the
+    // camera is currently at point-mode altitude. Called from two sites:
+    //
+    //  1. The camera-changed handler, when `targetMode === 'point' && mode
+    //     !== 'point'` — the normal cold-cache deep-link path.
+    //  2. The source-filter handler's `mode === 'cluster'` branch, after its
+    //     own `loadRes(currentRes, ...)` settles. Without this second call,
+    //     a source-filter toggle during the 60-90s cold-cache wait would
+    //     supersede the camera handler's pending res8 load (`loadResGen`++),
+    //     the camera handler's post-await re-check would correctly refuse
+    //     to enter point mode, and then no camera event would necessarily
+    //     fire to retry — leaving the user in cluster mode at point altitude
+    //     until they nudged the camera (issue #190 round-2 review).
+    //
+    // The function re-checks altitude/`mode` after its own (potentially
+    // long) `loadRes` await for the same reason: if the user zooms back out
+    // or another path enters point mode during the wait, we must not force
+    // entry afterwards.
+    async function tryEnterPointModeIfNeeded() {
+        if (mode === 'point') return;
+        if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
+
+        let res8Ready = currentRes === 8;
+        if (!res8Ready && !loading) {
+            res8Ready = await loadRes(8, h3_res8_url, {
+                loadingMsg: 'Fetching sample index…',
+                suppressDoneMsg: true,
+                errorMsg: 'Failed to fetch the sample index — try zooming out and back in.',
+            });
+        }
+        const hNow = viewer.camera.positionCartographic.height;
+        if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
+            enterPointMode();
+        }
+    }
+
     // === Cross-filter facet count refresh (issue #156, Phase 2) ===
     //
     // Counts answer: for each value in facet D, how many samples would match
@@ -1770,6 +1808,16 @@ zoomWatcher = {
             if (mode === 'cluster') {
                 loading = false;
                 await loadRes(currentRes, resUrls[currentRes]);
+                // Liveness recovery (issue #190 round-2 review): if the user
+                // is sitting at point-mode altitude — e.g. they toggled the
+                // source filter mid-way through the cold-cache boot wait,
+                // which superseded the camera handler's pending res8 load —
+                // drive the cluster→point transition forward here. Without
+                // this, the user would stay in cluster mode at point altitude
+                // until they nudged the camera. The helper is idempotent and
+                // returns immediately if already in point mode or above the
+                // point-mode altitude threshold.
+                await tryEnterPointModeIfNeeded();
             } else {
                 cachedBounds = null;
                 await loadViewportSamples();
@@ -1862,45 +1910,12 @@ zoomWatcher = {
                              : mode;
 
             if (targetMode === 'point' && mode !== 'point') {
-                // Make sure we're at res8 clusters before transitioning.
-                //
-                // On a cold-cache deep-link to a point-mode altitude, this
-                // res8 fetch can take 60-90s while the 60 MB samples_map_lite
-                // file is also being pulled (DuckDB-WASM 1.24.0 falls back to
-                // a full HTTP read; see issue #190). During that wait the
-                // user sees the empty globe and no sample dots. Surface a
-                // boot-aware loading/error message pair so the user knows the
-                // page is busy fetching the index, not broken — and suppress
-                // the intermediate "Zoom closer for individual samples." done
-                // message that would otherwise flash before point mode
-                // overwrites it with its own "Loading individual samples…".
-                //
-                // Note: the override messages apply to any cluster→point
-                // transition where `currentRes !== 8`, including manual
-                // zoom-in, not only cold-cache boot. That's intentional —
-                // "Fetching sample index…" reads sensibly for both.
-                let res8Ready = currentRes === 8;
-                if (!res8Ready && !loading) {
-                    res8Ready = await loadRes(8, h3_res8_url, {
-                        loadingMsg: 'Fetching sample index…',
-                        suppressDoneMsg: true,
-                        errorMsg: 'Failed to fetch the sample index — try zooming out and back in.',
-                    });
-                }
-                // Re-check preconditions after the (potentially 60-90s) await:
-                //  - `res8Ready` is false if our load was superseded by a newer
-                //    `loadRes` (e.g. a source-filter change that fired
-                //    `loadRes(currentRes=4, ...)` while we were still waiting)
-                //    or if it failed. In either case `currentRes` may not be 8
-                //    and entering point mode would render dots over the wrong
-                //    cluster index.
-                //  - The user may have zoomed back out during the wait, so
-                //    altitude is no longer in the point-mode regime.
-                //  - Another path may have already entered point mode.
-                const hNow = viewer.camera.positionCartographic.height;
-                if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
-                    enterPointMode();
-                }
+                // Cold-cache deep-link: the res8 + samples_map_lite fetches
+                // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
+                // HTTP read; see issue #190). Delegate to the shared helper
+                // so the source-filter handler can call the same path on
+                // supersession recovery.
+                await tryEnterPointModeIfNeeded();
             } else if (targetMode === 'cluster' && mode !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
