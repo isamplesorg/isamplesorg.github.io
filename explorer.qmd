@@ -1350,11 +1350,23 @@ zoomWatcher = {
     let cachedData = null;    // array of rows
 
     // --- H3 cluster loading (existing logic) ---
+    //
+    // `opts.loadingMsg` / `opts.errorMsg` override the default phase text so
+    // callers like the boot→point-mode path can show a coherent
+    // "Fetching sample index…" / "Failed to fetch the sample index…" pair
+    // (issue #190 fix 2) instead of internal "H3 res8" jargon.
+    //
+    // Return value: `true` if this call applied fresh data and `currentRes`
+    // is now `res`; `false` if the call was superseded by a newer one (stale
+    // generation) or failed. Callers that gate follow-up work on the cluster
+    // resolution being ready (e.g. the camera handler before `enterPointMode`)
+    // must use the return value rather than treating a normal `await` return
+    // as success.
     let loadResGen = 0;  // generation counter to discard stale results
-    const loadRes = async (res, url) => {
+    const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
         loading = true;
-        updatePhaseMsg(`Loading H3 res${res}...`, 'loading');
+        updatePhaseMsg(opts.loadingMsg || `Loading H3 res${res}...`, 'loading');
 
         try {
             performance.mark(`r${res}-s`);
@@ -1366,7 +1378,7 @@ zoomWatcher = {
                 WHERE 1=1${sourceFilterSQL('dominant_source')}
             `);
 
-            if (gen !== loadResGen) return;  // stale — a newer call superseded this one
+            if (gen !== loadResGen) return false;  // stale — a newer call superseded this one
             viewer.h3Points.removeAll();
             const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
             let total = 0;
@@ -1398,15 +1410,32 @@ zoomWatcher = {
             const bounds = getViewportBounds();
             const inView = countInViewport(bounds);
             updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
-            updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
+            // Skip the "Zoom closer for individual samples." done message when
+            // the caller is about to transition into point mode itself — the
+            // next step (loadViewportSamples) immediately overwrites it with
+            // its own "Loading individual samples…" loading state, so flashing
+            // a misleading "zoom closer" hint at a user who is already deep
+            // in point altitude is just noise (issue #190 fix 2).
+            if (!opts.suppressDoneMsg) {
+                updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
+            }
 
             currentRes = res;
             console.log(`Res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
+            return true;
         } catch(err) {
+            // Same generation guard as the success path — a stale failure
+            // must not overwrite UI state owned by a newer in-flight call.
+            if (gen !== loadResGen) return false;
             console.error(`Failed to load res${res}:`, err);
-            updatePhaseMsg(`Failed to load H3 res${res} — try zooming again.`, 'loading');
+            updatePhaseMsg(opts.errorMsg || `Failed to load H3 res${res} — try zooming again.`, 'loading');
+            return false;
         } finally {
-            loading = false;
+            // Only release the busy flag if we're still the current generation.
+            // A stale call's `finally` running after a newer call has set
+            // `loading = true` would otherwise clear the flag while the newer
+            // load is still in flight.
+            if (gen === loadResGen) loading = false;
         }
     };
 
@@ -1575,6 +1604,48 @@ zoomWatcher = {
         console.log('Exited point mode');
     }
 
+    // --- Boot→point-mode transition (issue #190 fix 2) ---
+    //
+    // Idempotent helper that runs the cluster→point-mode transition iff the
+    // camera is currently at point-mode altitude. Called from three paths:
+    //
+    //  1. The camera-changed handler, when `targetMode === 'point' && mode
+    //     !== 'point'` — the normal cold-cache deep-link path.
+    //  2. The source-filter handler's `mode === 'cluster'` branch, after its
+    //     own `loadRes(currentRes, ...)` settles. Without this second call,
+    //     a source-filter toggle during the 60-90s cold-cache wait would
+    //     supersede the camera handler's pending res8 load (`loadResGen`++),
+    //     the camera handler's post-await re-check would correctly refuse
+    //     to enter point mode, and then no camera event would necessarily
+    //     fire to retry — leaving the user in cluster mode at point altitude
+    //     until they nudged the camera (issue #190 round-2 review).
+    //  3. The camera handler's cluster-resolution reload branches, after
+    //     their `loadRes(target, ...)` settles. This covers the same liveness
+    //     shape when a camera-initiated cluster load was already in flight as
+    //     the user crossed into point altitude.
+    //
+    // The function re-checks altitude/`mode` after its own (potentially
+    // long) `loadRes` await for the same reason: if the user zooms back out
+    // or another path enters point mode during the wait, we must not force
+    // entry afterwards.
+    async function tryEnterPointModeIfNeeded() {
+        if (mode === 'point') return;
+        if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
+
+        let res8Ready = currentRes === 8;
+        if (!res8Ready && !loading) {
+            res8Ready = await loadRes(8, h3_res8_url, {
+                loadingMsg: 'Fetching sample index…',
+                suppressDoneMsg: true,
+                errorMsg: 'Failed to fetch the sample index — try zooming out and back in.',
+            });
+        }
+        const hNow = viewer.camera.positionCartographic.height;
+        if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
+            enterPointMode();
+        }
+    }
+
     // === Cross-filter facet count refresh (issue #156, Phase 2) ===
     //
     // Counts answer: for each value in facet D, how many samples would match
@@ -1741,6 +1812,16 @@ zoomWatcher = {
             if (mode === 'cluster') {
                 loading = false;
                 await loadRes(currentRes, resUrls[currentRes]);
+                // Liveness recovery (issue #190 round-2 review): if the user
+                // is sitting at point-mode altitude — e.g. they toggled the
+                // source filter mid-way through the cold-cache boot wait,
+                // which superseded the camera handler's pending res8 load —
+                // drive the cluster→point transition forward here. Without
+                // this, the user would stay in cluster mode at point altitude
+                // until they nudged the camera. The helper is idempotent and
+                // returns immediately if already in point mode or above the
+                // point-mode altitude threshold.
+                await tryEnterPointModeIfNeeded();
             } else {
                 cachedBounds = null;
                 await loadViewportSamples();
@@ -1833,17 +1914,22 @@ zoomWatcher = {
                              : mode;
 
             if (targetMode === 'point' && mode !== 'point') {
-                // Make sure we're at res8 clusters before transitioning
-                if (currentRes !== 8 && !loading) {
-                    await loadRes(8, h3_res8_url);
-                }
-                enterPointMode();
+                // Cold-cache deep-link: the res8 + samples_map_lite fetches
+                // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
+                // HTTP read; see issue #190). Delegate to the shared helper
+                // so the source-filter handler can call the same path on
+                // supersession recovery.
+                await tryEnterPointModeIfNeeded();
             } else if (targetMode === 'cluster' && mode !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
                 if (target !== currentRes && !loading) {
                     await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    // The user may have crossed below ENTER_POINT_ALT while
+                    // this cluster load was in flight; reconcile after it
+                    // settles so no extra camera nudge is required.
+                    await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'point') {
                 // Already in point mode — update viewport samples
@@ -1853,6 +1939,10 @@ zoomWatcher = {
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
                 if (target !== currentRes && !loading) {
                     await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    // The user may have crossed below ENTER_POINT_ALT while
+                    // this cluster load was in flight; reconcile after it
+                    // settles so no extra camera nudge is required.
+                    await tryEnterPointModeIfNeeded();
                 }
             }
 
