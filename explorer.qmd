@@ -1628,11 +1628,27 @@ zoomWatcher = {
     // long) `loadRes` await for the same reason: if the user zooms back out
     // or another path enters point mode during the wait, we must not force
     // entry afterwards.
+    //
+    // INVARIANT: every `loadRes` call site in this cell *outside this
+    // helper* that could be in flight when the user crosses below
+    // `ENTER_POINT_ALT` MUST be followed by `await tryEnterPointModeIfNeeded()`.
+    // The `!loading` short-circuit below relies on this — when an unrelated
+    // `loadRes` is in flight we bail and leave recovery to that call site's
+    // own post-await chase. A new `loadRes` caller added without the chase
+    // would silently break supersession recovery and only surface as a rare
+    // liveness regression (see issue #194). Verify with:
+    //   grep -nE "await[[:space:]]+loadRes\(" explorer.qmd
+    // which lists exactly the awaited call sites (one inside this helper,
+    // and one per external caller). For each external match, confirm it is
+    // immediately followed by `await tryEnterPointModeIfNeeded()`.
     async function tryEnterPointModeIfNeeded() {
         if (mode === 'point') return;
         if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
 
         let res8Ready = currentRes === 8;
+        // See INVARIANT above: if an unrelated load is in flight, that
+        // call site is responsible for chasing with this helper when it
+        // settles. Don't second-guess it from here.
         if (!res8Ready && !loading) {
             res8Ready = await loadRes(8, h3_res8_url, {
                 loadingMsg: 'Fetching sample index…',
