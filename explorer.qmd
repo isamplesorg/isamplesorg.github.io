@@ -1350,11 +1350,16 @@ zoomWatcher = {
     let cachedData = null;    // array of rows
 
     // --- H3 cluster loading (existing logic) ---
+    //
+    // `opts.loadingMsg` overrides the default "Loading H3 res${res}..." phase
+    // text. Used by the boot→point-mode path so the user sees a coherent
+    // "Fetching sample index…" message during the cold-cache wait (issue #190
+    // fix 2) instead of internal "H3 res8" jargon.
     let loadResGen = 0;  // generation counter to discard stale results
-    const loadRes = async (res, url) => {
+    const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
         loading = true;
-        updatePhaseMsg(`Loading H3 res${res}...`, 'loading');
+        updatePhaseMsg(opts.loadingMsg || `Loading H3 res${res}...`, 'loading');
 
         try {
             performance.mark(`r${res}-s`);
@@ -1398,7 +1403,15 @@ zoomWatcher = {
             const bounds = getViewportBounds();
             const inView = countInViewport(bounds);
             updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
-            updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
+            // Skip the "Zoom closer for individual samples." done message when
+            // the caller is about to transition into point mode itself — the
+            // next step (loadViewportSamples) immediately overwrites it with
+            // its own "Loading individual samples…" loading state, so flashing
+            // a misleading "zoom closer" hint at a user who is already deep
+            // in point altitude is just noise (issue #190 fix 2).
+            if (!opts.suppressDoneMsg) {
+                updatePhaseMsg(`${data.length.toLocaleString()} clusters, ${total.toLocaleString()} samples. ${res < 8 ? 'Zoom in for finer detail.' : 'Zoom closer for individual samples.'}`, 'done');
+            }
 
             currentRes = res;
             console.log(`Res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
@@ -1833,9 +1846,23 @@ zoomWatcher = {
                              : mode;
 
             if (targetMode === 'point' && mode !== 'point') {
-                // Make sure we're at res8 clusters before transitioning
+                // Make sure we're at res8 clusters before transitioning.
+                //
+                // On a cold-cache deep-link to a point-mode altitude, this
+                // res8 fetch can take 60-90s while the 60 MB samples_map_lite
+                // file is also being pulled (DuckDB-WASM 1.24.0 falls back to
+                // a full HTTP read; see issue #190). During that wait the
+                // user sees the empty globe and no sample dots. Surface a
+                // boot-aware loading message so the user knows the page is
+                // busy fetching the index, not broken — and suppress the
+                // intermediate "Zoom closer for individual samples." done
+                // message that would otherwise flash before point mode
+                // overwrites it with its own "Loading individual samples…".
                 if (currentRes !== 8 && !loading) {
-                    await loadRes(8, h3_res8_url);
+                    await loadRes(8, h3_res8_url, {
+                        loadingMsg: 'Fetching sample index…',
+                        suppressDoneMsg: true,
+                    });
                 }
                 enterPointMode();
             } else if (targetMode === 'cluster' && mode !== 'cluster') {
