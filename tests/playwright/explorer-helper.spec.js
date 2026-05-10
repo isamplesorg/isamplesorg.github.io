@@ -6,31 +6,32 @@
  *   (b) altitude >= ENTER_POINT_ALT      (cluster regime)
  *   (c) `currentRes !== 8 && loading`    (an unrelated load is in flight)
  *
- * Most cell-internal state (`mode`, `currentRes`, `loading`, `viewer`) is
- * closure-private inside an OJS cell and is NOT exposed on `window`. The
- * deterministically observable signal from outside the closure is the
- * `#phaseMsg` element's textContent, which `updatePhaseMsg(...)` rewrites
- * at every state transition. These tests install a MutationObserver on
- * `#phaseMsg` and assert on the captured history.
+ * Cell-internal state (`mode`, `currentRes`, `loading`, `viewer`) is
+ * closure-private inside an OJS cell, but Quarto's OJS runtime exposes
+ * the cell's *outputs* through `window._ojs.ojsConnector.mainModule.value(name)`.
+ * We use that to fetch the `viewer` Cesium widget and drive its camera
+ * directly, then assert on observable outputs:
+ *   - `#phaseMsg` textContent (rewritten by `updatePhaseMsg(...)`)
+ *   - `viewer._globeState.mode` ('cluster' | 'point')
+ *   - `viewer.camera.positionCartographic.height`
+ *
+ * This lets us reproduce the cold-cache cluster→point-mode transition in
+ * headless chromium without needing real user interaction with the globe.
  *
  * Coverage matrix vs the helper's invariants:
- *   - Invariant (b) altitude short-circuit:  covered by the world-altitude
- *     source-filter test below — the source-filter handler chases with the
- *     helper after its own loadRes settles, and the chase MUST short-
- *     circuit at the altitude check (no "Fetching sample index…" appears).
- *   - Invariant (a) mode==='point' short-circuit:  covered structurally by
- *     the source-filter handler taking its `else` branch in point mode
- *     (calls loadViewportSamples, not loadRes), so the helper isn't called
- *     at all from there. The point-mode test below exercises that path
- *     end-to-end.
+ *   - Invariant (a) `mode==='point'` short-circuit: covered by the
+ *     point-mode source-filter test. After the helper has driven us
+ *     into point mode, toggling the source filter must NOT trigger the
+ *     helper's `Fetching sample index…` loadingMsg again.
+ *   - Invariant (b) altitude short-circuit: covered by the world-altitude
+ *     source-filter test. The source-filter handler chases the helper
+ *     after its own `loadRes` settles; at world altitude the chase MUST
+ *     bail at the altitude check without painting the helper's loadingMsg.
+ *   - Invariant (c) `!loading` short-circuit: not exercised here; would
+ *     need timing injection. Documented in #192 as a future addition.
  *
- * Two tests are `.skip()`d below — they require driving the Cesium camera
- * into point altitude (alt < 120 km), which doesn't reliably reproduce in
- * headless chromium because the scene-render loop that triggers `postRender`
- * (used to apply the deep-link camera position) doesn't drive the camera
- * change events the same way as a real WebGL display. Re-enable in headed
- * mode (`npm run test:headed`) or wait for issue #192 follow-up that adds
- * a small test-only hook to expose `viewer` on `window`.
+ * Plus the boot→point-mode happy path is covered as a smoke test for the
+ * helper's overall behavior (camera-handler call site).
  */
 
 const { test, expect } = require('@playwright/test');
@@ -43,12 +44,21 @@ const FETCHING_SAMPLE_INDEX = 'Fetching sample index';   // the helper's loading
 const LOADING_H3_RES = 'Loading H3 res';                  // default loadRes loadingMsg
 const LOADING_INDIVIDUAL = 'Loading individual samples';  // loadViewportSamples loading
 const CLUSTERS_DONE = 'clusters,';                        // cluster-mode done message contains "${n} clusters, ${m} samples."
+const INDIVIDUAL_SAMPLES = 'individual samples';          // point-mode done message
 
-// Deep-link URL fragments used in tests.
-// World view (cluster mode, alt > EXIT_POINT_ALT = 180 km):
-const HASH_WORLD = '#v=1&lat=20&lng=0&alt=10000000';
-// Point altitude (alt < ENTER_POINT_ALT = 120 km), Cyprus PKAP region:
-const HASH_POINT_CYPRUS = '#v=1&lat=34.9954&lng=33.7052&alt=62054&heading=360.0&mode=point&h3=882da6b2e1fffff';
+// Camera altitudes used by tests. Match the hysteresis thresholds in
+// explorer.qmd: ENTER_POINT_ALT = 120000m, EXIT_POINT_ALT = 180000m.
+const ALT_WORLD = 10000000;        // > EXIT_POINT_ALT, definitely cluster
+const ALT_POINT_CYPRUS = 62054;    // < ENTER_POINT_ALT, point mode (Cyprus PKAP)
+const LAT_CYPRUS = 34.9954;
+const LNG_CYPRUS = 33.7052;
+
+/**
+ * Fetch the closure-private `viewer` cell value via Quarto's OJS runtime.
+ * Must be called inside a `page.evaluate(async () => { ... })` block.
+ * Inlined into each evaluate to keep this helper self-contained.
+ */
+const GET_VIEWER = `await window._ojs.ojsConnector.mainModule.value('viewer')`;
 
 /**
  * Install a MutationObserver on `#phaseMsg` that records every textContent
@@ -59,7 +69,6 @@ async function startPhaseHistory(page) {
     window._phaseHistory = [];
     const el = document.getElementById('phaseMsg');
     if (!el) throw new Error('No #phaseMsg element');
-    // Capture initial state too
     window._phaseHistory.push(el.textContent.trim());
     const observer = new MutationObserver(() => {
       const text = el.textContent.trim();
@@ -77,7 +86,6 @@ async function getPhaseHistory(page) {
 
 /**
  * Wait until #phaseMsg textContent contains `substring`, or until `timeoutMs`.
- * Returns the matching textContent.
  */
 async function waitForPhaseMessage(page, substring, timeoutMs = 60000) {
   return await page.waitForFunction(
@@ -91,19 +99,54 @@ async function waitForPhaseMessage(page, substring, timeoutMs = 60000) {
   ).then(handle => handle.jsonValue());
 }
 
+/** Wait until viewer._globeState.mode equals `expected`. */
+async function waitForMode(page, expected, timeoutMs = 60000) {
+  return await page.waitForFunction(
+    async (expectedMode) => {
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      return v && v._globeState && v._globeState.mode === expectedMode;
+    },
+    expected,
+    { timeout: timeoutMs }
+  );
+}
+
 /**
  * Wait for the explorer's initial phase-1 cluster load to settle so a
  * subsequent action starts from a known-good baseline.
  */
 async function waitForClusterBoot(page) {
-  // Phase 1 paints "${n} clusters, ${m} samples. Zoom in for finer detail."
   await waitForPhaseMessage(page, CLUSTERS_DONE);
+}
+
+/**
+ * Drive the Cesium camera to `(lat, lng, alt)` via flyTo, with the scene's
+ * requestRenderMode disabled so the render loop stays active. Cesium
+ * fires `camera.changed` only between consecutive `postRender` events
+ * that exceed `camera.percentageChanged`; in headless chromium the
+ * render loop suspends after idle, so a single `setView` + `requestRender`
+ * doesn't reliably trigger the camera-changed handler. Continuous-render
+ * + animated flight does.
+ *
+ * The camera-changed handler is debounced 600ms, so callers should
+ * `await waitForMode(...)` or `waitForPhaseMessage(...)` afterward to
+ * observe the resulting transition.
+ */
+async function flyCameraTo(page, lat, lng, alt) {
+  await page.evaluate(async ({ lat, lng, alt }) => {
+    const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+    v.scene.requestRenderMode = false;  // keep render loop running so camera.changed fires
+    v.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lng, lat, alt),
+      duration: 1.0,
+    });
+  }, { lat, lng, alt });
 }
 
 test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', () => {
 
   test('boot to cluster mode reaches a done message with cluster counts', async ({ page }) => {
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}${HASH_WORLD}`, {
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -120,7 +163,7 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // helper after its own loadRes settles; at world altitude the chase
     // should bail at the altitude check WITHOUT painting "Fetching sample
     // index…".
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}${HASH_WORLD}`, {
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -129,65 +172,90 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
 
     await startPhaseHistory(page);
 
-    // Toggle the first source-filter checkbox off and back on so the
-    // handler's loadRes(currentRes, ...) fires and chases.
     const firstSource = page.locator('#sourceFilter input[type="checkbox"]').first();
     await firstSource.uncheck({ force: true });
-    await waitForPhaseMessage(page, CLUSTERS_DONE);   // first reload settles
+    await waitForPhaseMessage(page, CLUSTERS_DONE);
     await firstSource.check({ force: true });
-    await waitForPhaseMessage(page, CLUSTERS_DONE);   // second reload settles
+    await waitForPhaseMessage(page, CLUSTERS_DONE);
 
     const history = await getPhaseHistory(page);
-
-    // The handler's own loadRes paints "Loading H3 res${currentRes}..."
     expect(history.some(s => s.includes(LOADING_H3_RES))).toBeTruthy();
-
-    // The chase MUST short-circuit at the altitude check, so the helper's
-    // own loadingMsg ("Fetching sample index…") MUST NOT appear.
     expect(history.some(s => s.includes(FETCHING_SAMPLE_INDEX))).toBeFalsy();
   });
 
-  // The two tests below need the Cesium camera at point altitude; in
-  // headless chromium the postRender event that applies the deep-link
-  // camera position doesn't drive the camera-changed handler the same way
-  // as a real display, so the camera stays at world altitude and point
-  // mode never fires. They run cleanly in headed mode (`npm run test:headed`)
-  // and document expected behavior for a future hookable refactor.
-  test.skip('deep-link to point altitude reaches a sample-points done message', async ({ page }) => {
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}${HASH_POINT_CYPRUS}`, {
+  test('flying camera into point altitude triggers helper and enters point mode', async ({ page }) => {
+    // End-to-end coverage of the camera-handler call site of the helper.
+    // Boots in cluster mode, then drives the camera to point altitude via
+    // the OJS-runtime hook on viewer.camera.setView. Asserts that the
+    // helper's loadingMsg ("Fetching sample index…") OR the eventual
+    // point-mode done message ("${n} individual samples.") appear in
+    // the phase-message history. (Cold-cache: helper fires loadRes(8)
+    // and paints "Fetching sample index…"; warm-cache: currentRes is
+    // already 8 so the helper short-circuits its loadRes and goes
+    // straight to enterPointMode → "Loading individual samples…".)
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-    await page.waitForSelector('#phaseMsg', { timeout: 30000 });
+    await waitForClusterBoot(page);
 
-    const text = await waitForPhaseMessage(page, 'individual samples', 90000);
+    await startPhaseHistory(page);
+    await flyCameraTo(page, LAT_CYPRUS, LNG_CYPRUS, ALT_POINT_CYPRUS);
+
+    // Wait for the camera-changed handler to debounce + helper to settle
+    // + loadViewportSamples to fetch the 60 MB samples_map_lite.parquet.
+    // Cold-cache fetches can take 60-90s on a real network; allow generous
+    // timeouts at each stage.
+    await waitForMode(page, 'point', 120000);
+    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
+
+    const history = await getPhaseHistory(page);
+    // The helper either fired (cold cache → "Fetching sample index…") or
+    // short-circuited at currentRes === 8 (warm cache → straight to point
+    // mode). Either way, "Loading individual samples…" must appear from
+    // loadViewportSamples inside enterPointMode.
+    expect(history.some(s => s.includes(LOADING_INDIVIDUAL))).toBeTruthy();
+    // Final state: terminal point-mode done message ("${n} individual
+    // samples. Click one for details."). Wait specifically for the
+    // count-prefixed form rather than the loading-state substring,
+    // which would also contain "individual samples".
+    const text = await page.waitForFunction(() => {
+      const t = document.getElementById('phaseMsg').textContent;
+      return /\d[\d,]*\s+individual\s+samples/.test(t) ? t.trim() : null;
+    }, null, { timeout: 60000 }).then(h => h.jsonValue());
     expect(text).toMatch(/\d[\d,]*\s+individual\s+samples/);
   });
 
-  test.skip('source-filter toggle while in point mode does NOT trigger Fetching sample index', async ({ page }) => {
+  test('source-filter toggle while in point mode does NOT trigger Fetching sample index', async ({ page }) => {
     // Verifies invariant (a): tryEnterPointModeIfNeeded short-circuits on
-    // mode === 'point'. The source-filter handler in point mode takes its
-    // `else` branch (calls loadViewportSamples, not loadRes), so the
-    // helper isn't called from there — but if a future refactor wires it
-    // in, the short-circuit must keep "Fetching sample index…" suppressed
-    // because we're already in point mode.
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}${HASH_POINT_CYPRUS}`, {
+    // mode === 'point'. The source-filter handler in point mode takes
+    // its `else` branch (calls loadViewportSamples, not loadRes), so the
+    // helper isn't directly called from there — but if a future refactor
+    // wires a chase in, the short-circuit must keep the helper's
+    // loadingMsg ("Fetching sample index…") suppressed because we're
+    // already in point mode.
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-    await page.waitForSelector('#sourceFilter input[type="checkbox"]', { timeout: 30000 });
-    await waitForPhaseMessage(page, 'individual samples', 90000);
+    await waitForClusterBoot(page);
+    await flyCameraTo(page, LAT_CYPRUS, LNG_CYPRUS, ALT_POINT_CYPRUS);
+    await waitForMode(page, 'point', 120000);
+    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
 
     await startPhaseHistory(page);
 
     const firstSource = page.locator('#sourceFilter input[type="checkbox"]').first();
     await firstSource.uncheck({ force: true });
-    await waitForPhaseMessage(page, 'individual samples', 30000);
+    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
     await firstSource.check({ force: true });
-    await waitForPhaseMessage(page, 'individual samples', 30000);
+    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
 
     const history = await getPhaseHistory(page);
+    // Point-mode source-filter reload uses loadViewportSamples, which
+    // paints "Loading individual samples..." while the new query runs.
     expect(history.some(s => s.includes(LOADING_INDIVIDUAL))).toBeTruthy();
+    // Helper's loadingMsg MUST NOT appear in point-mode source-filter flow.
     expect(history.some(s => s.includes(FETCHING_SAMPLE_INDEX))).toBeFalsy();
   });
 
