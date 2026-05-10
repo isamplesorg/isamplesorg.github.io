@@ -112,11 +112,83 @@ async function waitForMode(page, expected, timeoutMs = 60000) {
 }
 
 /**
- * Wait for the explorer's initial phase-1 cluster load to settle so a
- * subsequent action starts from a known-good baseline.
+ * Wait for a loading→done transition to be present in `window._phaseHistory`
+ * since the observer was started. Searches the history for `loadingSub`,
+ * then a *later* entry matching `donePattern` (string substring or RegExp).
+ *
+ * Use this for assertions that must wait for an action to fully settle.
+ * `waitForPhaseMessage(...)` alone can resolve against pre-action text
+ * because `#phaseMsg` may already contain the substring before the
+ * action triggered any new loadRes / loadViewportSamples call.
+ */
+async function waitForLoadingThenDone(page, loadingSub, donePattern, timeoutMs = 120000) {
+  const patternIsRegex = donePattern instanceof RegExp;
+  const patternStr = patternIsRegex
+    ? { source: donePattern.source, flags: donePattern.flags, isRegex: true }
+    : { source: donePattern, isRegex: false };
+  await page.waitForFunction(
+    ({ loadingSub, patternStr }) => {
+      const h = window._phaseHistory || [];
+      const match = (s) => patternStr.isRegex
+        ? new RegExp(patternStr.source, patternStr.flags).test(s)
+        : s.includes(patternStr.source);
+      const loadingIdx = h.findIndex(s => s.includes(loadingSub));
+      if (loadingIdx === -1) return false;
+      // Look for the done pattern strictly after the loading entry — done
+      // text that already appeared *before* the action is not enough.
+      return h.slice(loadingIdx + 1).some(match);
+    },
+    { loadingSub, patternStr },
+    { timeout: timeoutMs }
+  );
+}
+
+// Regex matching the count-prefixed cluster done message ("${n} clusters,
+// ${m} samples. Zoom in for finer detail."). Match `n` followed by " clusters,".
+const CLUSTER_DONE_RE = /\d[\d,]*\s+clusters,/;
+// Regex matching the count-prefixed point-mode done message ("${n} individual
+// samples. Click one for details.").
+const POINT_DONE_RE = /\d[\d,]*\s+individual\s+samples/;
+
+/**
+ * Wait for the explorer's initial phase-1 cluster load to settle AND
+ * for the `zoomWatcher` OJS cell to finish initializing. Phase 1 paints
+ * the cluster done message, but the source-filter change handler /
+ * camera handler are registered later, inside the `zoomWatcher` cell
+ * (which depends on `phase1`). Without this second wait, a test that
+ * dispatches a change event right after the done message appears can
+ * race the listener registration and silently no-op.
  */
 async function waitForClusterBoot(page) {
   await waitForPhaseMessage(page, CLUSTERS_DONE);
+  // zoomWatcher returns "active" after registering all camera /
+  // source-filter / facet event listeners. Awaiting its value is a
+  // reliable sync point — OJS resolves it once the cell body completes.
+  await page.evaluate(async () => {
+    return await window._ojs.ojsConnector.mainModule.value('zoomWatcher');
+  });
+}
+
+/**
+ * Toggle a source-filter checkbox and dispatch a `change` event manually.
+ *
+ * Playwright's checkbox helpers (`uncheck()` / `check()` with `force:true`)
+ * skip actionability checks but don't reliably fire `change` in this
+ * layout where the input lives inside a `<label class="legend-item">`
+ * wrapper. A plain `click()` works in isolation but is flaky when run
+ * after another test in the same suite (Cesium widget may transiently
+ * occlude the checkbox during boot). Direct DOM mutation + a
+ * `dispatchEvent(new Event('change', { bubbles: true }))` is what the
+ * source-filter handler actually listens for, and is robust under both
+ * conditions.
+ */
+async function toggleSourceFilter(page, index = 0) {
+  await page.evaluate((i) => {
+    const cb = document.querySelectorAll('#sourceFilter input[type="checkbox"]')[i];
+    if (!cb) throw new Error('No source-filter checkbox at index ' + i);
+    cb.checked = !cb.checked;
+    cb.dispatchEvent(new Event('change', { bubbles: true }));
+  }, index);
 }
 
 /**
@@ -172,14 +244,26 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
 
     await startPhaseHistory(page);
 
-    const firstSource = page.locator('#sourceFilter input[type="checkbox"]').first();
-    await firstSource.uncheck({ force: true });
-    await waitForPhaseMessage(page, CLUSTERS_DONE);
-    await firstSource.check({ force: true });
-    await waitForPhaseMessage(page, CLUSTERS_DONE);
+    // Toggle off, then wait for the full Loading H3 res… → done cycle to
+    // appear in the history (must be a NEW done after the loading, not
+    // the pre-action done text the observer captured at startup).
+    await toggleSourceFilter(page, 0);
+    await waitForLoadingThenDone(page, LOADING_H3_RES, CLUSTER_DONE_RE);
+    // Toggle back on, then wait again for a NEW loading → done cycle.
+    await toggleSourceFilter(page, 0);
+    const beforeRetoggleLen = (await getPhaseHistory(page)).length;
+    await page.waitForFunction(
+      (n) => (window._phaseHistory || []).length > n,
+      beforeRetoggleLen,
+      { timeout: 60000 }
+    );
+    await waitForLoadingThenDone(page, LOADING_H3_RES, CLUSTER_DONE_RE);
 
     const history = await getPhaseHistory(page);
     expect(history.some(s => s.includes(LOADING_H3_RES))).toBeTruthy();
+    // The chase MUST short-circuit at the altitude check — the helper's
+    // own loadingMsg ("Fetching sample index…") MUST NOT appear at any
+    // point in the captured history.
     expect(history.some(s => s.includes(FETCHING_SAMPLE_INDEX))).toBeFalsy();
   });
 
@@ -207,7 +291,13 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // Cold-cache fetches can take 60-90s on a real network; allow generous
     // timeouts at each stage.
     await waitForMode(page, 'point', 120000);
-    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
+    // Wait for the full Loading individual samples → "${n} individual
+    // samples." cycle in the captured history. Using the loading→done
+    // sequence guarantees the negative assertion below (no Fetching
+    // sample index after the loading-state) is meaningful — a regression
+    // that paints Fetching sample index AFTER point-mode entry would now
+    // be observable.
+    await waitForLoadingThenDone(page, LOADING_INDIVIDUAL, POINT_DONE_RE);
 
     const history = await getPhaseHistory(page);
     // The helper either fired (cold cache → "Fetching sample index…") or
@@ -215,15 +305,7 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // mode). Either way, "Loading individual samples…" must appear from
     // loadViewportSamples inside enterPointMode.
     expect(history.some(s => s.includes(LOADING_INDIVIDUAL))).toBeTruthy();
-    // Final state: terminal point-mode done message ("${n} individual
-    // samples. Click one for details."). Wait specifically for the
-    // count-prefixed form rather than the loading-state substring,
-    // which would also contain "individual samples".
-    const text = await page.waitForFunction(() => {
-      const t = document.getElementById('phaseMsg').textContent;
-      return /\d[\d,]*\s+individual\s+samples/.test(t) ? t.trim() : null;
-    }, null, { timeout: 60000 }).then(h => h.jsonValue());
-    expect(text).toMatch(/\d[\d,]*\s+individual\s+samples/);
+    expect(history.some(s => POINT_DONE_RE.test(s))).toBeTruthy();
   });
 
   test('source-filter toggle while in point mode does NOT trigger Fetching sample index', async ({ page }) => {
@@ -245,11 +327,20 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
 
     await startPhaseHistory(page);
 
-    const firstSource = page.locator('#sourceFilter input[type="checkbox"]').first();
-    await firstSource.uncheck({ force: true });
-    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
-    await firstSource.check({ force: true });
-    await waitForPhaseMessage(page, INDIVIDUAL_SAMPLES, 120000);
+    // Toggle off → wait for Loading individual samples → count-prefixed done.
+    await toggleSourceFilter(page, 0);
+    await waitForLoadingThenDone(page, LOADING_INDIVIDUAL, POINT_DONE_RE);
+    // Toggle on → wait for ANOTHER Loading individual samples → done cycle.
+    // (Use history length to guarantee we observe the new transition,
+    // not the previous done state the observer just captured.)
+    await toggleSourceFilter(page, 0);
+    const beforeRetoggleLen = (await getPhaseHistory(page)).length;
+    await page.waitForFunction(
+      (n) => (window._phaseHistory || []).length > n,
+      beforeRetoggleLen,
+      { timeout: 60000 }
+    );
+    await waitForLoadingThenDone(page, LOADING_INDIVIDUAL, POINT_DONE_RE);
 
     const history = await getPhaseHistory(page);
     // Point-mode source-filter reload uses loadViewportSamples, which
