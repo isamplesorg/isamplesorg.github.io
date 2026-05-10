@@ -1351,10 +1351,17 @@ zoomWatcher = {
 
     // --- H3 cluster loading (existing logic) ---
     //
-    // `opts.loadingMsg` overrides the default "Loading H3 res${res}..." phase
-    // text. Used by the boot→point-mode path so the user sees a coherent
-    // "Fetching sample index…" message during the cold-cache wait (issue #190
-    // fix 2) instead of internal "H3 res8" jargon.
+    // `opts.loadingMsg` / `opts.errorMsg` override the default phase text so
+    // callers like the boot→point-mode path can show a coherent
+    // "Fetching sample index…" / "Failed to fetch the sample index…" pair
+    // (issue #190 fix 2) instead of internal "H3 res8" jargon.
+    //
+    // Return value: `true` if this call applied fresh data and `currentRes`
+    // is now `res`; `false` if the call was superseded by a newer one (stale
+    // generation) or failed. Callers that gate follow-up work on the cluster
+    // resolution being ready (e.g. the camera handler before `enterPointMode`)
+    // must use the return value rather than treating a normal `await` return
+    // as success.
     let loadResGen = 0;  // generation counter to discard stale results
     const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
@@ -1371,7 +1378,7 @@ zoomWatcher = {
                 WHERE 1=1${sourceFilterSQL('dominant_source')}
             `);
 
-            if (gen !== loadResGen) return;  // stale — a newer call superseded this one
+            if (gen !== loadResGen) return false;  // stale — a newer call superseded this one
             viewer.h3Points.removeAll();
             const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
             let total = 0;
@@ -1415,11 +1422,20 @@ zoomWatcher = {
 
             currentRes = res;
             console.log(`Res${res}: ${data.length} clusters in ${elapsed.toFixed(0)}ms`);
+            return true;
         } catch(err) {
+            // Same generation guard as the success path — a stale failure
+            // must not overwrite UI state owned by a newer in-flight call.
+            if (gen !== loadResGen) return false;
             console.error(`Failed to load res${res}:`, err);
-            updatePhaseMsg(`Failed to load H3 res${res} — try zooming again.`, 'loading');
+            updatePhaseMsg(opts.errorMsg || `Failed to load H3 res${res} — try zooming again.`, 'loading');
+            return false;
         } finally {
-            loading = false;
+            // Only release the busy flag if we're still the current generation.
+            // A stale call's `finally` running after a newer call has set
+            // `loading = true` would otherwise clear the flag while the newer
+            // load is still in flight.
+            if (gen === loadResGen) loading = false;
         }
     };
 
@@ -1853,18 +1869,38 @@ zoomWatcher = {
                 // file is also being pulled (DuckDB-WASM 1.24.0 falls back to
                 // a full HTTP read; see issue #190). During that wait the
                 // user sees the empty globe and no sample dots. Surface a
-                // boot-aware loading message so the user knows the page is
-                // busy fetching the index, not broken — and suppress the
-                // intermediate "Zoom closer for individual samples." done
+                // boot-aware loading/error message pair so the user knows the
+                // page is busy fetching the index, not broken — and suppress
+                // the intermediate "Zoom closer for individual samples." done
                 // message that would otherwise flash before point mode
                 // overwrites it with its own "Loading individual samples…".
-                if (currentRes !== 8 && !loading) {
-                    await loadRes(8, h3_res8_url, {
+                //
+                // Note: the override messages apply to any cluster→point
+                // transition where `currentRes !== 8`, including manual
+                // zoom-in, not only cold-cache boot. That's intentional —
+                // "Fetching sample index…" reads sensibly for both.
+                let res8Ready = currentRes === 8;
+                if (!res8Ready && !loading) {
+                    res8Ready = await loadRes(8, h3_res8_url, {
                         loadingMsg: 'Fetching sample index…',
                         suppressDoneMsg: true,
+                        errorMsg: 'Failed to fetch the sample index — try zooming out and back in.',
                     });
                 }
-                enterPointMode();
+                // Re-check preconditions after the (potentially 60-90s) await:
+                //  - `res8Ready` is false if our load was superseded by a newer
+                //    `loadRes` (e.g. a source-filter change that fired
+                //    `loadRes(currentRes=4, ...)` while we were still waiting)
+                //    or if it failed. In either case `currentRes` may not be 8
+                //    and entering point mode would render dots over the wrong
+                //    cluster index.
+                //  - The user may have zoomed back out during the wait, so
+                //    altitude is no longer in the point-mode regime.
+                //  - Another path may have already entered point mode.
+                const hNow = viewer.camera.positionCartographic.height;
+                if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
+                    enterPointMode();
+                }
             } else if (targetMode === 'cluster' && mode !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
