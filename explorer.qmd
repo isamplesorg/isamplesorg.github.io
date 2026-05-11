@@ -17,6 +17,7 @@ format:
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels.parquet">
 ---
 
+```{=html}
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
@@ -279,6 +280,7 @@ format:
     .facet-row.zero:hover { opacity: 0.65; }
     .facet-count.recomputing { opacity: 0.55; font-style: italic; }
 </style>
+```
 
 ::: {.callout-note collapse="true"}
 ## How It Works
