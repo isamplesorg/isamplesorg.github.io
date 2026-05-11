@@ -1967,6 +1967,18 @@ zoomWatcher = {
         timer = setTimeout(async () => {
             const h = viewer.camera.positionCartographic.height;
 
+            // Write the URL hash BEFORE any awaits (issue #201, Bug A).
+            // The camera position/heading is known synchronously; without this
+            // early write, a user who pans into a region that triggers a
+            // resolution change (cluster→res8) or a cold-cache point-mode
+            // transition won't see the URL update until the await chain
+            // below settles — and a URL copy in the meantime captures the
+            // PREVIOUS state. We still write again at the end of the
+            // handler to capture any mode change that the awaits produced.
+            if (!viewer._suppressHashWrite) {
+                history.replaceState(null, '', buildHash(viewer));
+            }
+
             // Determine target mode with hysteresis
             const targetMode = h < ENTER_POINT_ALT ? 'point'
                              : h > EXIT_POINT_ALT ? 'cluster'
@@ -2582,6 +2594,19 @@ zoomWatcher = {
         // Enable hash writing now that everything is initialized — runs even on
         // stale-abort early returns above.
         viewer._suppressHashWrite = false;
+    }
+
+    // Deep-link mode hydration (issue #201, Bug B). The boot path positions
+    // the camera via `camera.setView`, which in some cases (notably when the
+    // URL omits `heading` — i.e. heading defaults to 0 — at point altitudes)
+    // does not raise `camera.changed`, so the camera-changed handler never
+    // runs and the URL's `mode=point` is silently ignored. Drive the mode
+    // transition explicitly here so the boot is independent of whether
+    // `setView` happened to fire the event. `tryEnterPointModeIfNeeded()`
+    // short-circuits if alt >= ENTER_POINT_ALT or we're already in point
+    // mode, so this is a no-op for cluster deep-links.
+    if (ih.mode === 'point') {
+        await tryEnterPointModeIfNeeded();
     }
 
     return "active";
