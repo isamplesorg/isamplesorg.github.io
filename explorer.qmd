@@ -2042,6 +2042,21 @@ zoomWatcher = {
     });
     viewer.camera.percentageChanged = 0.1;
 
+    // Backstop URL-write trigger (issue #204). `camera.changed` is suppressed
+    // for sub-`percentageChanged` moves, so a small drag-pan that doesn't
+    // cross the 10% threshold never schedules the debounced callback above —
+    // and the URL stays stale until a larger move fires the event. `moveEnd`
+    // fires once per discrete settled camera move regardless of magnitude
+    // (mouseup on a drag, wheel-stop on a zoom, flight-complete on flyTo),
+    // so this catches every camera position the user can pan/zoom to.
+    // The `_suppressHashWrite` gate keeps the hashchange-flight path
+    // unaffected.
+    viewer.camera.moveEnd.addEventListener(() => {
+        if (!viewer._suppressHashWrite) {
+            history.replaceState(null, '', buildHash(viewer));
+        }
+    });
+
     // --- Helper: hydrate cluster row from H3 cell index ---
     // Canonical H3 cells encode resolution in the 2nd hex char (the leading-zero-
     // stripped form is `8<res><...>` for cell-mode indices). We support res 4/6/8
