@@ -23,9 +23,16 @@ format:
 <style>
     :root {
         --explorer-map-height: clamp(500px, 65vh, 680px);
+        --explorer-shell-width: min(1420px, calc(100vw - 64px));
     }
     html {
         scrollbar-gutter: stable;
+    }
+    #quarto-document-content {
+        max-width: none;
+        width: var(--explorer-shell-width);
+        margin-left: 50%;
+        transform: translateX(-50%);
     }
     div.cesium-topleft {
         display: block;
@@ -44,6 +51,7 @@ format:
     @media (max-width: 900px) {
         :root {
             --explorer-map-height: clamp(360px, 58vh, 520px);
+            --explorer-shell-width: calc(100vw - 32px);
         }
         .globe-layout { grid-template-columns: 1fr; }
     }

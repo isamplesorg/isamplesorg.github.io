@@ -61,6 +61,7 @@ async function elementRect(page, selector) {
     const r = el.getBoundingClientRect();
     return {
       top: r.top,
+      width: r.width,
       height: r.height,
     };
   });
@@ -68,6 +69,7 @@ async function elementRect(page, selector) {
 
 function expectRectStable(actual, expected, tolerance = 2) {
   expect(Math.abs(actual.top - expected.top)).toBeLessThanOrEqual(tolerance);
+  expect(Math.abs(actual.width - expected.width)).toBeLessThanOrEqual(tolerance);
   expect(Math.abs(actual.height - expected.height)).toBeLessThanOrEqual(tolerance);
 }
 
@@ -81,6 +83,7 @@ test.describe('explorer layout stability', () => {
     await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
 
     const initialRect = await elementRect(page, '#cesiumContainer');
+    expect(initialRect.width).toBeGreaterThanOrEqual(840);
     expect(Math.abs(initialRect.height - 585)).toBeLessThanOrEqual(2);
 
     await waitForClusterBoot(page);
