@@ -1527,14 +1527,22 @@ zoomWatcher = {
             performance.mark('sp-s');
             // facetFilterSQL() returns a portable `pid IN (...)` predicate,
             // so the same query works whether or not facet filters are active.
-            const query = `
-                SELECT pid, label, source, latitude, longitude,
-                       place_name, result_time
-                FROM read_parquet('${lite_url}')
+            //
+            // ORDER BY pid (issue #206): without explicit ordering, which
+            // POINT_BUDGET-worth of rows the LIMIT returns is undefined and
+            // can differ across browsers/sessions for the same query.
+            const whereClause = `
                 WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
                   AND longitude BETWEEN ${padded.west} AND ${padded.east}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+            `;
+            const query = `
+                SELECT pid, label, source, latitude, longitude,
+                       place_name, result_time
+                FROM read_parquet('${lite_url}')
+                ${whereClause}
+                ORDER BY pid
                 LIMIT ${POINT_BUDGET}
             `;
             const data = await db.query(query);
@@ -1548,15 +1556,49 @@ zoomWatcher = {
                 return;
             }
 
+            // Real in-view count (issue #206). Without this, the "Samples in
+            // View" counter caps at POINT_BUDGET, silently understating dense
+            // regions (Cyprus/Polis: real count 23,421 vs displayed 5,000).
+            // Only query when we hit the cap — when LIMIT returned fewer
+            // rows than the budget, that count IS the real count and a
+            // second query would be wasteful.
+            let totalCount = data.length;
+            let capReached = false;
+            if (data.length >= POINT_BUDGET) {
+                try {
+                    const countRow = await db.query(`
+                        SELECT count(*) AS n
+                        FROM read_parquet('${lite_url}')
+                        ${whereClause}
+                    `);
+                    if (myReqId !== requestId) return;  // stale guard
+                    totalCount = Number(countRow[0]?.n ?? data.length);
+                    capReached = totalCount > data.length;
+                } catch(err) {
+                    // Don't fail the whole load if the count query fails;
+                    // just fall back to the displayed-count behavior.
+                    console.warn("Real-count query failed; falling back to rendered count:", err);
+                }
+            }
+
             // Cache the padded bounds + data
             cachedBounds = padded;
             cachedData = Array.from(data);
 
             renderSamplePoints(cachedData, bounds);
 
-            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`, 'Samples in View', 'Samples in View');
-            updatePhaseMsg(`${cachedData.length.toLocaleString()} individual samples. Click one for details.`, 'done');
-            console.log(`Point mode: ${cachedData.length} samples in ${elapsed.toFixed(0)}ms`);
+            // Stat boxes: when the cap is reached, the LEFT box (sPoints)
+            // shows the rendered count and the RIGHT box (sSamples) shows
+            // the real in-view total. When not capped, both show the same
+            // number and the labels degenerate to plain "Samples in View".
+            const pointsLabel = capReached ? 'Samples Rendered' : 'Samples in View';
+            const samplesLabel = 'Samples in View';
+            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, pointsLabel, samplesLabel);
+            const phaseMsg = capReached
+                ? `${totalCount.toLocaleString()} samples in view (showing ${cachedData.length.toLocaleString()} — zoom in for more). Click one for details.`
+                : `${cachedData.length.toLocaleString()} individual samples. Click one for details.`;
+            updatePhaseMsg(phaseMsg, 'done');
+            console.log(`Point mode: rendered ${cachedData.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
             if (myReqId !== requestId) return;
