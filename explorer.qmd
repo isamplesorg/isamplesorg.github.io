@@ -20,6 +20,12 @@ format:
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
+    :root {
+        --explorer-map-height: clamp(500px, 65vh, 680px);
+    }
+    html {
+        scrollbar-gutter: stable;
+    }
     div.cesium-topleft {
         display: block;
         position: absolute;
@@ -30,23 +36,27 @@ format:
     }
     .globe-layout {
         display: grid;
-        grid-template-columns: 1fr 340px;
+        grid-template-columns: minmax(0, 1fr) 340px;
         gap: 12px;
         margin-bottom: 16px;
     }
     @media (max-width: 900px) {
+        :root {
+            --explorer-map-height: clamp(360px, 58vh, 520px);
+        }
         .globe-layout { grid-template-columns: 1fr; }
     }
     #cesiumContainer {
         width: 100%;
-        min-height: 500px;
-        aspect-ratio: 4/3;
+        height: var(--explorer-map-height);
+        min-height: 0;
+        aspect-ratio: auto;
     }
     .side-panel {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        max-height: 700px;
+        max-height: var(--explorer-map-height);
         overflow-y: auto;
     }
     .panel-section {
@@ -111,14 +121,20 @@ format:
         left: 36px;
         right: auto;
     }
-    .search-bar { display: flex; gap: 6px; margin-bottom: 6px; }
+    .explorer-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    .search-bar { display: flex; gap: 6px; }
     .search-bar input {
         flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
         font-size: 14px; outline: none;
     }
     .search-bar input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
     .search-actions {
-        display: flex; gap: 6px; margin-bottom: 8px;
+        display: flex; gap: 6px;
     }
     .search-actions button {
         flex: 1; border: none; padding: 8px 12px; border-radius: 4px;
@@ -129,14 +145,28 @@ format:
     .search-actions #searchAreaBtn:hover { background: #e65100; }
     .search-actions #searchWorldBtn { background: #1565c0; }
     .search-actions #searchWorldBtn:hover { background: #0d47a1; }
-    .search-results { font-size: 12px; color: #666; padding: 4px 0; }
+    .search-help {
+        font-size: 11px;
+        color: #888;
+        line-height: 1.3;
+    }
+    .search-results {
+        font-size: 12px;
+        color: #666;
+        padding: 4px 0;
+        min-height: calc(2.7em + 8px);
+        max-height: calc(2.7em + 8px);
+        overflow-y: auto;
+        line-height: 1.35;
+    }
     .view-toolbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        margin: 10px 0 12px;
+        margin: 4px 0 0;
         flex-wrap: wrap;
+        min-height: 50px;
     }
     .view-toggle {
         display: inline-flex;
@@ -263,6 +293,7 @@ Circle size = log(sample count). Color = dominant data source.
 :::
 
 <!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
+<div class="explorer-controls">
 <div class="search-bar">
 <input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
 </div>
@@ -270,11 +301,11 @@ Circle size = log(sample count). Color = dominant data source.
 <button id="searchAreaBtn" type="button" title="Limit results to samples within the current map view">Search Selected Areas</button>
 <button id="searchWorldBtn" type="button" title="Search all samples globally">Search Entire World</button>
 </div>
-<div class="search-help" style="font-size: 11px; color: #888; padding: 2px 0 6px 0; line-height: 1.3;">
+<div class="search-help">
 Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
 <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
 </div>
-<div id="searchResults" class="search-results"></div>
+<div id="searchResults" class="search-results" aria-live="polite"></div>
 
 <div class="view-toolbar">
 <div class="view-toggle" role="group" aria-label="View mode">
@@ -284,6 +315,7 @@ Searches labels, descriptions, and place names. <strong>First search can take 10
 <div id="tableControls" class="table-controls">
 <label for="maxSamples">Max samples</label>
 <input type="number" id="maxSamples" min="1000" max="100000" step="1000" value="25000">
+</div>
 </div>
 </div>
 
