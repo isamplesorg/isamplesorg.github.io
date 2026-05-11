@@ -1368,8 +1368,10 @@ zoomWatcher = {
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
     // Viewport cache: avoid re-querying same area
-    let cachedBounds = null;  // { south, north, west, east }
-    let cachedData = null;    // array of rows
+    let cachedBounds = null;       // { south, north, west, east }
+    let cachedData = null;         // array of rows
+    let cachedTotalCount = null;   // real in-view count (issue #206)
+    let cachedCapReached = false;  // whether the LIMIT was hit (issue #206)
 
     // --- H3 cluster loading (existing logic) ---
     //
@@ -1505,9 +1507,14 @@ zoomWatcher = {
         const bounds = getViewportBounds();
         if (!bounds) return;
 
-        // If viewport is within cached area, just re-render from cache
+        // If viewport is within cached area, just re-render from cache.
+        // Re-apply the cached count/cap state to the stat boxes so panning
+        // inside the padded cache window doesn't leave stale figures on
+        // screen (#206 Codex review).
         if (isWithinCache(bounds) && cachedData) {
             renderSamplePoints(cachedData, bounds);
+            const total = cachedTotalCount != null ? cachedTotalCount : cachedData.length;
+            updateStats('Samples', cachedData.length, total, null, 'Samples Rendered', 'Samples in View');
             return;
         }
 
@@ -1575,25 +1582,31 @@ zoomWatcher = {
                     totalCount = Number(countRow[0]?.n ?? data.length);
                     capReached = totalCount > data.length;
                 } catch(err) {
+                    // Stale guard before any state mutation/logging:
+                    // a newer request may have started while count was in
+                    // flight (Codex review of PR #210).
+                    if (myReqId !== requestId) return;
                     // Don't fail the whole load if the count query fails;
                     // just fall back to the displayed-count behavior.
                     console.warn("Real-count query failed; falling back to rendered count:", err);
                 }
             }
 
-            // Cache the padded bounds + data
+            // Cache the padded bounds + data + count state so cache-hit
+            // pans preserve the same stat-box display (Codex review).
             cachedBounds = padded;
             cachedData = Array.from(data);
+            cachedTotalCount = totalCount;
+            cachedCapReached = capReached;
 
             renderSamplePoints(cachedData, bounds);
 
-            // Stat boxes: when the cap is reached, the LEFT box (sPoints)
-            // shows the rendered count and the RIGHT box (sSamples) shows
-            // the real in-view total. When not capped, both show the same
-            // number and the labels degenerate to plain "Samples in View".
-            const pointsLabel = capReached ? 'Samples Rendered' : 'Samples in View';
-            const samplesLabel = 'Samples in View';
-            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, pointsLabel, samplesLabel);
+            // Stat boxes: LEFT (sPoints) always shows rendered count under
+            // "Samples Rendered", RIGHT (sSamples) always shows real in-view
+            // total under "Samples in View". Stable labels even when both
+            // numbers are equal (Codex review preference: avoids label
+            // flipping as the user zooms across the cap boundary).
+            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
             const phaseMsg = capReached
                 ? `${totalCount.toLocaleString()} samples in view (showing ${cachedData.length.toLocaleString()} — zoom in for more). Click one for details.`
                 : `${cachedData.length.toLocaleString()} individual samples. Click one for details.`;
@@ -1656,6 +1669,8 @@ zoomWatcher = {
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         cachedBounds = null;
         cachedData = null;
+        cachedTotalCount = null;
+        cachedCapReached = false;
 
         // Restore cluster stats with viewport count
         const bounds = getViewportBounds();
@@ -1925,6 +1940,8 @@ zoomWatcher = {
                 if (applied) await tryEnterPointModeIfNeeded();
             } else {
                 cachedBounds = null;
+                cachedTotalCount = null;
+                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -1990,6 +2007,8 @@ zoomWatcher = {
             writeQueryState();
             if (mode === 'point') {
                 cachedBounds = null;
+                cachedTotalCount = null;
+                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
