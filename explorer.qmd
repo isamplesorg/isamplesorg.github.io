@@ -2226,12 +2226,17 @@ zoomWatcher = {
             duration: 1.5,
         });
 
-        // After flight settles, force mode and clear suppress flag
+        // After flight settles, force mode and clear suppress flag.
+        // Use the same altitude-authoritative predicate as the boot path
+        // (issue #207 item 4 → Codex follow-up): without this, back/forward
+        // through a `#alt=8000` URL with no `mode=point` would exit point
+        // mode here even though boot would have entered it.
         viewer._suppressTimer = setTimeout(() => {
             viewer._suppressHashWrite = false;
             const s = readHash();
-            if (s.mode === 'point' && mode !== 'point') enterPointMode(false);
-            else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
+            const wantsPoint = s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            if (wantsPoint && mode !== 'point') enterPointMode(false);
+            else if (!wantsPoint && mode === 'point') exitPointMode(false);
         }, 2000);
 
         // Handle pid / h3 selection (sample mode wins if both present — see
@@ -2497,29 +2502,60 @@ zoomWatcher = {
                 }
                 sampEl.innerHTML = h;
 
-                // Click search result → fly to it AND set it as the
-                // selected sample (issue #207 item 8). Without the
-                // selection write, the URL captured at flight settle
-                // would carry whatever prior pid/h3 was selected,
-                // misrepresenting the user's actual view in any paste-
-                // elsewhere flow.
+                // Click search result → treat as a full selection event
+                // (issue #207 item 8 → Codex follow-up): freshness token
+                // bump, sample-card hydration, selection state, flight,
+                // and lazy detail load — matching the on-globe sample
+                // click ceremony at line ~944. Without the full ceremony
+                // a slow prior selection load could repaint the panel
+                // after the click, leaving UI inconsistent with URL.
+                const resultsByPid = new Map(results.map(s => [s.pid, s]));
                 sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
-                    row.addEventListener('click', (e) => {
+                    row.addEventListener('click', async (e) => {
                         if (e.target.tagName === 'A') return; // let links work
-                        const lat = parseFloat(row.dataset.lat);
-                        const lng = parseFloat(row.dataset.lng);
                         const pid = row.dataset.pid;
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            // Update selection BEFORE the flight so that
-                            // moveEnd's buildHash captures the new pid.
-                            if (pid) {
-                                viewer._globeState.selectedPid = pid;
-                                viewer._globeState.selectedH3 = null;
-                            }
-                            viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(lng, lat, 50000),
-                                duration: 1.5
-                            });
+                        const sample = pid ? resultsByPid.get(pid) : null;
+                        if (!sample || sample.latitude == null || sample.longitude == null) return;
+
+                        // Bump the freshness token BEFORE any async work so
+                        // a prior cluster/sample detail load can't repaint
+                        // the panel after we navigate.
+                        const isStale = freshSelectionToken(viewer);
+
+                        viewer._globeState.selectedPid = pid;
+                        viewer._globeState.selectedH3 = null;
+                        updateSampleCard({
+                            pid: sample.pid,
+                            label: sample.label,
+                            source: sample.source,
+                            lat: sample.latitude,
+                            lng: sample.longitude,
+                            place_name: sample.place_name,
+                            result_time: sample.result_time
+                        });
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
+                            duration: 1.5
+                        });
+
+                        // Lazy-load full description (mirrors the globe
+                        // click handler). Don't clear samplesSection here —
+                        // it currently holds the search results the user
+                        // is browsing.
+                        try {
+                            const detail = await db.query(`
+                                SELECT description
+                                FROM read_parquet('${wide_url}')
+                                WHERE pid = '${pid.replace(/'/g, "''")}'
+                                LIMIT 1
+                            `);
+                            if (isStale()) return;
+                            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                            else updateSampleDetail({ description: '' });
+                        } catch(err) {
+                            if (isStale()) return;
+                            console.error("Search-row detail query failed:", err);
+                            updateSampleDetail(null);
                         }
                     });
                 });
