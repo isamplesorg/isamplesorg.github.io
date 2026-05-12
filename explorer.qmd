@@ -1394,7 +1394,13 @@ zoomWatcher = {
     if (!facetFilters) return;  // wait for facet checkboxes
 
     // --- State ---
-    let mode = 'cluster';  // 'cluster' or 'point'
+    // `viewer._globeState.mode` is the single source of truth for cluster/
+    // point mode (issue #208 smell 2). The closure-private `mode` variable
+    // that used to live here was removed; reads now go through the helper
+    // below, writes only via `setExplorerMode()` (in enterPointMode /
+    // exitPointMode).
+    const getMode = () => viewer._globeState.mode;
+    const setExplorerMode = (next) => { viewer._globeState.mode = next; };
     let currentRes = 4;
     let loading = false;
     let requestId = 0;      // stale-request guard
@@ -1410,8 +1416,10 @@ zoomWatcher = {
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
     // Viewport cache: avoid re-querying same area
-    let cachedBounds = null;  // { south, north, west, east }
-    let cachedData = null;    // array of rows
+    let cachedBounds = null;       // { south, north, west, east }
+    let cachedData = null;         // array of rows
+    let cachedTotalCount = null;   // real in-view count (issue #206)
+    let cachedCapReached = false;  // whether the LIMIT was hit (issue #206)
 
     // --- H3 cluster loading (existing logic) ---
     //
@@ -1547,9 +1555,14 @@ zoomWatcher = {
         const bounds = getViewportBounds();
         if (!bounds) return;
 
-        // If viewport is within cached area, just re-render from cache
+        // If viewport is within cached area, just re-render from cache.
+        // Re-apply the cached count/cap state to the stat boxes so panning
+        // inside the padded cache window doesn't leave stale figures on
+        // screen (#206 Codex review).
         if (isWithinCache(bounds) && cachedData) {
             renderSamplePoints(cachedData, bounds);
+            const total = cachedTotalCount != null ? cachedTotalCount : cachedData.length;
+            updateStats('Samples', cachedData.length, total, null, 'Samples Rendered', 'Samples in View');
             return;
         }
 
@@ -1569,14 +1582,22 @@ zoomWatcher = {
             performance.mark('sp-s');
             // facetFilterSQL() returns a portable `pid IN (...)` predicate,
             // so the same query works whether or not facet filters are active.
-            const query = `
-                SELECT pid, label, source, latitude, longitude,
-                       place_name, result_time
-                FROM read_parquet('${lite_url}')
+            //
+            // ORDER BY pid (issue #206): without explicit ordering, which
+            // POINT_BUDGET-worth of rows the LIMIT returns is undefined and
+            // can differ across browsers/sessions for the same query.
+            const whereClause = `
                 WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
                   AND longitude BETWEEN ${padded.west} AND ${padded.east}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+            `;
+            const query = `
+                SELECT pid, label, source, latitude, longitude,
+                       place_name, result_time
+                FROM read_parquet('${lite_url}')
+                ${whereClause}
+                ORDER BY pid
                 LIMIT ${POINT_BUDGET}
             `;
             const data = await db.query(query);
@@ -1590,15 +1611,55 @@ zoomWatcher = {
                 return;
             }
 
-            // Cache the padded bounds + data
+            // Real in-view count (issue #206). Without this, the "Samples in
+            // View" counter caps at POINT_BUDGET, silently understating dense
+            // regions (Cyprus/Polis: real count 23,421 vs displayed 5,000).
+            // Only query when we hit the cap — when LIMIT returned fewer
+            // rows than the budget, that count IS the real count and a
+            // second query would be wasteful.
+            let totalCount = data.length;
+            let capReached = false;
+            if (data.length >= POINT_BUDGET) {
+                try {
+                    const countRow = await db.query(`
+                        SELECT count(*) AS n
+                        FROM read_parquet('${lite_url}')
+                        ${whereClause}
+                    `);
+                    if (myReqId !== requestId) return;  // stale guard
+                    totalCount = Number(countRow[0]?.n ?? data.length);
+                    capReached = totalCount > data.length;
+                } catch(err) {
+                    // Stale guard before any state mutation/logging:
+                    // a newer request may have started while count was in
+                    // flight (Codex review of PR #210).
+                    if (myReqId !== requestId) return;
+                    // Don't fail the whole load if the count query fails;
+                    // just fall back to the displayed-count behavior.
+                    console.warn("Real-count query failed; falling back to rendered count:", err);
+                }
+            }
+
+            // Cache the padded bounds + data + count state so cache-hit
+            // pans preserve the same stat-box display (Codex review).
             cachedBounds = padded;
             cachedData = Array.from(data);
+            cachedTotalCount = totalCount;
+            cachedCapReached = capReached;
 
             renderSamplePoints(cachedData, bounds);
 
-            updateStats('Samples', cachedData.length, cachedData.length, `${(elapsed/1000).toFixed(1)}s`, 'Samples in View', 'Samples in View');
-            updatePhaseMsg(`${cachedData.length.toLocaleString()} individual samples. Click one for details.`, 'done');
-            console.log(`Point mode: ${cachedData.length} samples in ${elapsed.toFixed(0)}ms`);
+            // Stat boxes: LEFT (sPoints) always shows rendered count under
+            // "Samples Rendered", RIGHT (sSamples) always shows real in-view
+            // total under "Samples in View". Stable labels even when both
+            // numbers are equal (Codex review preference: avoids label
+            // flipping as the user zooms across the cap boundary).
+            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
+            const phaseMsg = capReached
+                ? `${totalCount.toLocaleString()} samples in view (showing ${cachedData.length.toLocaleString()} — zoom in for more). Click one for details.`
+                : `${cachedData.length.toLocaleString()} individual samples. Click one for details.`;
+            updatePhaseMsg(phaseMsg, 'done');
+            console.log(`Point mode: rendered ${cachedData.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
             if (myReqId !== requestId) return;
@@ -1638,8 +1699,7 @@ zoomWatcher = {
 
     // --- Mode transitions ---
     function enterPointMode(pushHistory) {
-        mode = 'point';
-        viewer._globeState.mode = 'point';
+        setExplorerMode('point');
         viewer.h3Points.show = false;
         viewer.samplePoints.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
@@ -1648,14 +1708,15 @@ zoomWatcher = {
     }
 
     function exitPointMode(pushHistory) {
-        mode = 'cluster';
-        viewer._globeState.mode = 'cluster';
+        setExplorerMode('cluster');
         viewer.samplePoints.show = false;
         viewer.samplePoints.removeAll();
         viewer.h3Points.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         cachedBounds = null;
         cachedData = null;
+        cachedTotalCount = null;
+        cachedCapReached = false;
 
         // Restore cluster stats with viewport count
         const bounds = getViewportBounds();
@@ -1723,8 +1784,8 @@ zoomWatcher = {
     // and one per external caller). For each external match, confirm it
     // captures the return into `applied` and is immediately followed by
     // `if (applied) await tryEnterPointModeIfNeeded();`.
-    async function tryEnterPointModeIfNeeded() {
-        if (mode === 'point') return;
+    async function tryEnterPointModeIfNeeded(opts) {
+        if (getMode() === 'point') return;
         if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
 
         let res8Ready = currentRes === 8;
@@ -1739,8 +1800,10 @@ zoomWatcher = {
             });
         }
         const hNow = viewer.camera.positionCartographic.height;
-        if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
-            enterPointMode();
+        if (res8Ready && getMode() !== 'point' && hNow < ENTER_POINT_ALT) {
+            // Propagate `pushHistory` so boot/hash hydration callers can
+            // avoid growing the browser history stack (issue #207 item 3).
+            enterPointMode(opts && opts.pushHistory);
         }
     }
 
@@ -1907,7 +1970,7 @@ zoomWatcher = {
         try {
             updateSourceLegendState();
             writeQueryState();
-            if (mode === 'cluster') {
+            if (getMode() === 'cluster') {
                 loading = false;
                 const applied = await loadRes(currentRes, resUrls[currentRes]);
                 // Liveness recovery (issue #190 round-2 review): if the user
@@ -1925,6 +1988,8 @@ zoomWatcher = {
                 if (applied) await tryEnterPointModeIfNeeded();
             } else {
                 cachedBounds = null;
+                cachedTotalCount = null;
+                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -1986,10 +2051,12 @@ zoomWatcher = {
         busyAcquire();
         try {
             const active = hasFacetFilters();
-            if (facetNote) facetNote.style.display = (active && mode === 'cluster') ? 'block' : 'none';
+            if (facetNote) facetNote.style.display = (active && getMode() === 'cluster') ? 'block' : 'none';
             writeQueryState();
-            if (mode === 'point') {
+            if (getMode() === 'point') {
                 cachedBounds = null;
+                cachedTotalCount = null;
+                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -2009,19 +2076,31 @@ zoomWatcher = {
         timer = setTimeout(async () => {
             const h = viewer.camera.positionCartographic.height;
 
+            // Write the URL hash BEFORE any awaits (issue #201, Bug A).
+            // The camera position/heading is known synchronously; without this
+            // early write, a user who pans into a region that triggers a
+            // resolution change (cluster→res8) or a cold-cache point-mode
+            // transition won't see the URL update until the await chain
+            // below settles — and a URL copy in the meantime captures the
+            // PREVIOUS state. We still write again at the end of the
+            // handler to capture any mode change that the awaits produced.
+            if (!viewer._suppressHashWrite) {
+                history.replaceState(null, '', buildHash(viewer));
+            }
+
             // Determine target mode with hysteresis
             const targetMode = h < ENTER_POINT_ALT ? 'point'
                              : h > EXIT_POINT_ALT ? 'cluster'
-                             : mode;
+                             : getMode();
 
-            if (targetMode === 'point' && mode !== 'point') {
+            if (targetMode === 'point' && getMode() !== 'point') {
                 // Cold-cache deep-link: the res8 + samples_map_lite fetches
                 // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
                 // HTTP read; see issue #190). Delegate to the shared helper
                 // so the source-filter handler can call the same path on
                 // supersession recovery.
                 await tryEnterPointModeIfNeeded();
-            } else if (targetMode === 'cluster' && mode !== 'cluster') {
+            } else if (targetMode === 'cluster' && getMode() !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
@@ -2055,7 +2134,7 @@ zoomWatcher = {
             }
 
             // Update viewport cluster count (cluster mode only; point mode already shows viewport count)
-            if (mode === 'cluster' && viewer._clusterData) {
+            if (getMode() === 'cluster' && viewer._clusterData) {
                 const bounds = getViewportBounds();
                 const inView = countInViewport(bounds);
                 const total = viewer._clusterTotal;
@@ -2071,6 +2150,21 @@ zoomWatcher = {
         }, 600);
     });
     viewer.camera.percentageChanged = 0.1;
+
+    // Backstop URL-write trigger (issue #204). `camera.changed` is suppressed
+    // for sub-`percentageChanged` moves, so a small drag-pan that doesn't
+    // cross the 10% threshold never schedules the debounced callback above —
+    // and the URL stays stale until a larger move fires the event. `moveEnd`
+    // fires once per discrete settled camera move regardless of magnitude
+    // (mouseup on a drag, wheel-stop on a zoom, flight-complete on flyTo),
+    // so this catches every camera position the user can pan/zoom to.
+    // The `_suppressHashWrite` gate keeps the hashchange-flight path
+    // unaffected.
+    viewer.camera.moveEnd.addEventListener(() => {
+        if (!viewer._suppressHashWrite) {
+            history.replaceState(null, '', buildHash(viewer));
+        }
+    });
 
     // --- Helper: hydrate cluster row from H3 cell index ---
     // Canonical H3 cells encode resolution in the 2nd hex char (the leading-zero-
@@ -2178,12 +2272,17 @@ zoomWatcher = {
             duration: 1.5,
         });
 
-        // After flight settles, force mode and clear suppress flag
+        // After flight settles, force mode and clear suppress flag.
+        // Use the same altitude-authoritative predicate as the boot path
+        // (issue #207 item 4 → Codex follow-up): without this, back/forward
+        // through a `#alt=8000` URL with no `mode=point` would exit point
+        // mode here even though boot would have entered it.
         viewer._suppressTimer = setTimeout(() => {
             viewer._suppressHashWrite = false;
             const s = readHash();
-            if (s.mode === 'point' && mode !== 'point') enterPointMode(false);
-            else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
+            const wantsPoint = s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            if (wantsPoint && getMode() !== 'point') enterPointMode(false);
+            else if (!wantsPoint && getMode() === 'point') exitPointMode(false);
         }, 2000);
 
         // Handle pid / h3 selection (sample mode wins if both present — see
@@ -2223,8 +2322,13 @@ zoomWatcher = {
                 viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
                 await hydrateClusterUI(meta, isStale);
             } else {
-                // Unknown / malformed h3 — clear the side panel rather than
-                // leaving prior content stranded.
+                // Unknown / malformed h3, OR filtered out by ?sources= —
+                // clear the side panel rather than leaving prior content
+                // stranded, AND drop the h3 from runtime state so
+                // buildHash() doesn't keep emitting it (issue #207 item 6:
+                // restores symmetry with the boot deep-link path which
+                // already does this).
+                viewer._globeState.selectedH3 = null;
                 updateClusterCard(null);
                 const sampEl = document.getElementById('samplesSection');
                 if (sampEl) sampEl.innerHTML = '';
@@ -2444,18 +2548,60 @@ zoomWatcher = {
                 }
                 sampEl.innerHTML = h;
 
-                // Click search result → fly to it
+                // Click search result → treat as a full selection event
+                // (issue #207 item 8 → Codex follow-up): freshness token
+                // bump, sample-card hydration, selection state, flight,
+                // and lazy detail load — matching the on-globe sample
+                // click ceremony at line ~944. Without the full ceremony
+                // a slow prior selection load could repaint the panel
+                // after the click, leaving UI inconsistent with URL.
+                const resultsByPid = new Map(results.map(s => [s.pid, s]));
                 sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
-                    row.addEventListener('click', (e) => {
+                    row.addEventListener('click', async (e) => {
                         if (e.target.tagName === 'A') return; // let links work
-                        const lat = parseFloat(row.dataset.lat);
-                        const lng = parseFloat(row.dataset.lng);
                         const pid = row.dataset.pid;
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(lng, lat, 50000),
-                                duration: 1.5
-                            });
+                        const sample = pid ? resultsByPid.get(pid) : null;
+                        if (!sample || sample.latitude == null || sample.longitude == null) return;
+
+                        // Bump the freshness token BEFORE any async work so
+                        // a prior cluster/sample detail load can't repaint
+                        // the panel after we navigate.
+                        const isStale = freshSelectionToken(viewer);
+
+                        viewer._globeState.selectedPid = pid;
+                        viewer._globeState.selectedH3 = null;
+                        updateSampleCard({
+                            pid: sample.pid,
+                            label: sample.label,
+                            source: sample.source,
+                            lat: sample.latitude,
+                            lng: sample.longitude,
+                            place_name: sample.place_name,
+                            result_time: sample.result_time
+                        });
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
+                            duration: 1.5
+                        });
+
+                        // Lazy-load full description (mirrors the globe
+                        // click handler). Don't clear samplesSection here —
+                        // it currently holds the search results the user
+                        // is browsing.
+                        try {
+                            const detail = await db.query(`
+                                SELECT description
+                                FROM read_parquet('${wide_url}')
+                                WHERE pid = '${pid.replace(/'/g, "''")}'
+                                LIMIT 1
+                            `);
+                            if (isStale()) return;
+                            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                            else updateSampleDetail({ description: '' });
+                        } catch(err) {
+                            if (isStale()) return;
+                            console.error("Search-row detail query failed:", err);
+                            updateSampleDetail(null);
                         }
                     });
                 });
@@ -2464,7 +2610,15 @@ zoomWatcher = {
             // Fly to the first result. Skip for area-scoped searches —
             // the user is already at the area they care about; flying
             // would zoom in and disorient.
+            //
+            // Auto-flight is a NUDGE, not an explicit selection — clear
+            // any prior selectedPid/selectedH3 so the resulting URL
+            // doesn't carry stale selection state across the flight
+            // (issue #207 item 8). User clicks on a specific row to
+            // establish a new selection.
             if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+                viewer._globeState.selectedPid = null;
+                viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
                     duration: 1.5
@@ -2624,6 +2778,29 @@ zoomWatcher = {
         // Enable hash writing now that everything is initialized — runs even on
         // stale-abort early returns above.
         viewer._suppressHashWrite = false;
+    }
+
+    // Deep-link mode hydration (issue #201 Bug B + issue #207 item 4).
+    // The boot path positions the camera via `camera.setView`, which in
+    // some cases (notably when the URL omits `heading` — i.e. heading
+    // defaults to 0 — at point altitudes) does not raise `camera.changed`,
+    // so the camera-changed handler never runs and the URL's `mode=point`
+    // is silently ignored. Drive the mode transition explicitly here so
+    // the boot is independent of whether `setView` happened to fire the
+    // event.
+    //
+    // Trigger on EITHER `ih.mode === 'point'` OR low altitude (< ENTER_POINT_ALT).
+    // The altitude branch closes the loophole introduced by #203's early
+    // URL write: a user copying mid-transition can produce a URL like
+    // `alt=8000` *without* `mode=point`, which previously round-tripped
+    // as cluster mode at low altitude. Now boot enters point mode for
+    // any URL whose altitude says it should. `tryEnterPointModeIfNeeded()`
+    // short-circuits if alt >= ENTER_POINT_ALT or we're already in point
+    // mode, so this is a no-op for cluster deep-links at cluster altitude.
+    if (ih.mode === 'point' || (ih.alt != null && ih.alt < ENTER_POINT_ALT)) {
+        // pushHistory: false — boot should reconcile state without adding
+        // a history entry (issue #207 item 3).
+        await tryEnterPointModeIfNeeded({ pushHistory: false });
     }
 
     return "active";
