@@ -77,6 +77,21 @@ function expectRectStable(actual, expected, tolerance = 2) {
   expect(Math.abs(actual.height - expected.height)).toBeLessThanOrEqual(tolerance);
 }
 
+/** Resolve `var(--explorer-map-height)` to a computed px value via a hidden
+ *  probe element. Reading the custom property directly via
+ *  `getPropertyValue('--explorer-map-height')` returns the unresolved
+ *  `clamp(...)` string, not a px value. */
+async function resolveMapHeightPx(page) {
+  return await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'height: var(--explorer-map-height); position: absolute; visibility: hidden;';
+    document.body.appendChild(probe);
+    const h = probe.getBoundingClientRect().height;
+    probe.remove();
+    return h;
+  });
+}
+
 test.describe('explorer layout stability', () => {
   test('desktop globe rect is stable across boot, status, point mode, and table round trip', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -88,7 +103,13 @@ test.describe('explorer layout stability', () => {
 
     const initialRect = await elementRect(page, '#cesiumContainer');
     expect(initialRect.width).toBeGreaterThanOrEqual(840);
-    expect(Math.abs(initialRect.height - 585)).toBeLessThanOrEqual(2);
+    // At 1280×900 desktop, `clamp(500px, 65vh, 680px)` resolves to 585px
+    // (65vh = 585). Derive expected from the probe rather than hardcoding,
+    // for consistency with the mobile cases below.
+    const expectedDesktopMapHeight = await resolveMapHeightPx(page);
+    expect(expectedDesktopMapHeight).toBeGreaterThanOrEqual(500);
+    expect(expectedDesktopMapHeight).toBeLessThanOrEqual(680);
+    expect(Math.abs(initialRect.height - expectedDesktopMapHeight)).toBeLessThanOrEqual(2);
 
     await waitForClusterBoot(page);
     expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
@@ -128,20 +149,10 @@ test.describe('explorer layout stability', () => {
     await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
 
     const initialRect = await elementRect(page, '#cesiumContainer');
-    // Resolve the `clamp(360px, 58vh, 520px)` mobile value via a probe element
-    // styled with `height: var(--explorer-map-height)`. Reading the custom
-    // property directly via `getPropertyValue` returns the unresolved `clamp(...)`
-    // string, not a computed px value — so use a probe instead. This keeps the
-    // test honest if the clamp values change in CSS.
-    const expectedMapHeight = await page.evaluate(() => {
-      const probe = document.createElement('div');
-      probe.style.cssText = 'height: var(--explorer-map-height); position: absolute; visibility: hidden;';
-      document.body.appendChild(probe);
-      const h = probe.getBoundingClientRect().height;
-      probe.remove();
-      return h;
-    });
-    // Sanity: at 390×844, 58vh = 489.52, within [360, 520] clamp → 489.52.
+    // At 390×844, mobile CSS resolves `clamp(360px, 58vh, 520px)` to 489.52px
+    // (58vh of 844). Derive expected via the probe helper.
+    const expectedMapHeight = await resolveMapHeightPx(page);
+    // Sanity: must be within the mobile clamp bounds [360, 520].
     expect(expectedMapHeight).toBeGreaterThanOrEqual(360);
     expect(expectedMapHeight).toBeLessThanOrEqual(520);
     expect(Math.abs(initialRect.height - expectedMapHeight)).toBeLessThanOrEqual(2);
@@ -167,14 +178,7 @@ test.describe('explorer layout stability', () => {
     await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
 
     const initialRect = await elementRect(page, '#cesiumContainer');
-    const expectedMapHeight = await page.evaluate(() => {
-      const probe = document.createElement('div');
-      probe.style.cssText = 'height: var(--explorer-map-height); position: absolute; visibility: hidden;';
-      document.body.appendChild(probe);
-      const h = probe.getBoundingClientRect().height;
-      probe.remove();
-      return h;
-    });
+    const expectedMapHeight = await resolveMapHeightPx(page);
     expect(expectedMapHeight).toBe(360);
     expect(Math.abs(initialRect.height - 360)).toBeLessThanOrEqual(2);
 
