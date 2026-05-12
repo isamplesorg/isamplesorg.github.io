@@ -1738,7 +1738,7 @@ zoomWatcher = {
     // and one per external caller). For each external match, confirm it
     // captures the return into `applied` and is immediately followed by
     // `if (applied) await tryEnterPointModeIfNeeded();`.
-    async function tryEnterPointModeIfNeeded() {
+    async function tryEnterPointModeIfNeeded(opts) {
         if (mode === 'point') return;
         if (viewer.camera.positionCartographic.height >= ENTER_POINT_ALT) return;
 
@@ -1755,7 +1755,9 @@ zoomWatcher = {
         }
         const hNow = viewer.camera.positionCartographic.height;
         if (res8Ready && mode !== 'point' && hNow < ENTER_POINT_ALT) {
-            enterPointMode();
+            // Propagate `pushHistory` so boot/hash hydration callers can
+            // avoid growing the browser history stack (issue #207 item 3).
+            enterPointMode(opts && opts.pushHistory);
         }
     }
 
@@ -2224,12 +2226,17 @@ zoomWatcher = {
             duration: 1.5,
         });
 
-        // After flight settles, force mode and clear suppress flag
+        // After flight settles, force mode and clear suppress flag.
+        // Use the same altitude-authoritative predicate as the boot path
+        // (issue #207 item 4 → Codex follow-up): without this, back/forward
+        // through a `#alt=8000` URL with no `mode=point` would exit point
+        // mode here even though boot would have entered it.
         viewer._suppressTimer = setTimeout(() => {
             viewer._suppressHashWrite = false;
             const s = readHash();
-            if (s.mode === 'point' && mode !== 'point') enterPointMode(false);
-            else if (s.mode !== 'point' && mode === 'point') exitPointMode(false);
+            const wantsPoint = s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            if (wantsPoint && mode !== 'point') enterPointMode(false);
+            else if (!wantsPoint && mode === 'point') exitPointMode(false);
         }, 2000);
 
         // Handle pid / h3 selection (sample mode wins if both present — see
@@ -2269,8 +2276,13 @@ zoomWatcher = {
                 viewer._globeState.selectedH3 = meta.h3_cell;  // canonical lowercase
                 await hydrateClusterUI(meta, isStale);
             } else {
-                // Unknown / malformed h3 — clear the side panel rather than
-                // leaving prior content stranded.
+                // Unknown / malformed h3, OR filtered out by ?sources= —
+                // clear the side panel rather than leaving prior content
+                // stranded, AND drop the h3 from runtime state so
+                // buildHash() doesn't keep emitting it (issue #207 item 6:
+                // restores symmetry with the boot deep-link path which
+                // already does this).
+                viewer._globeState.selectedH3 = null;
                 updateClusterCard(null);
                 const sampEl = document.getElementById('samplesSection');
                 if (sampEl) sampEl.innerHTML = '';
@@ -2490,18 +2502,60 @@ zoomWatcher = {
                 }
                 sampEl.innerHTML = h;
 
-                // Click search result → fly to it
+                // Click search result → treat as a full selection event
+                // (issue #207 item 8 → Codex follow-up): freshness token
+                // bump, sample-card hydration, selection state, flight,
+                // and lazy detail load — matching the on-globe sample
+                // click ceremony at line ~944. Without the full ceremony
+                // a slow prior selection load could repaint the panel
+                // after the click, leaving UI inconsistent with URL.
+                const resultsByPid = new Map(results.map(s => [s.pid, s]));
                 sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
-                    row.addEventListener('click', (e) => {
+                    row.addEventListener('click', async (e) => {
                         if (e.target.tagName === 'A') return; // let links work
-                        const lat = parseFloat(row.dataset.lat);
-                        const lng = parseFloat(row.dataset.lng);
                         const pid = row.dataset.pid;
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(lng, lat, 50000),
-                                duration: 1.5
-                            });
+                        const sample = pid ? resultsByPid.get(pid) : null;
+                        if (!sample || sample.latitude == null || sample.longitude == null) return;
+
+                        // Bump the freshness token BEFORE any async work so
+                        // a prior cluster/sample detail load can't repaint
+                        // the panel after we navigate.
+                        const isStale = freshSelectionToken(viewer);
+
+                        viewer._globeState.selectedPid = pid;
+                        viewer._globeState.selectedH3 = null;
+                        updateSampleCard({
+                            pid: sample.pid,
+                            label: sample.label,
+                            source: sample.source,
+                            lat: sample.latitude,
+                            lng: sample.longitude,
+                            place_name: sample.place_name,
+                            result_time: sample.result_time
+                        });
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
+                            duration: 1.5
+                        });
+
+                        // Lazy-load full description (mirrors the globe
+                        // click handler). Don't clear samplesSection here —
+                        // it currently holds the search results the user
+                        // is browsing.
+                        try {
+                            const detail = await db.query(`
+                                SELECT description
+                                FROM read_parquet('${wide_url}')
+                                WHERE pid = '${pid.replace(/'/g, "''")}'
+                                LIMIT 1
+                            `);
+                            if (isStale()) return;
+                            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                            else updateSampleDetail({ description: '' });
+                        } catch(err) {
+                            if (isStale()) return;
+                            console.error("Search-row detail query failed:", err);
+                            updateSampleDetail(null);
                         }
                     });
                 });
@@ -2510,7 +2564,15 @@ zoomWatcher = {
             // Fly to the first result. Skip for area-scoped searches —
             // the user is already at the area they care about; flying
             // would zoom in and disorient.
+            //
+            // Auto-flight is a NUDGE, not an explicit selection — clear
+            // any prior selectedPid/selectedH3 so the resulting URL
+            // doesn't carry stale selection state across the flight
+            // (issue #207 item 8). User clicks on a specific row to
+            // establish a new selection.
             if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+                viewer._globeState.selectedPid = null;
+                viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
                     duration: 1.5
@@ -2672,17 +2734,27 @@ zoomWatcher = {
         viewer._suppressHashWrite = false;
     }
 
-    // Deep-link mode hydration (issue #201, Bug B). The boot path positions
-    // the camera via `camera.setView`, which in some cases (notably when the
-    // URL omits `heading` — i.e. heading defaults to 0 — at point altitudes)
-    // does not raise `camera.changed`, so the camera-changed handler never
-    // runs and the URL's `mode=point` is silently ignored. Drive the mode
-    // transition explicitly here so the boot is independent of whether
-    // `setView` happened to fire the event. `tryEnterPointModeIfNeeded()`
+    // Deep-link mode hydration (issue #201 Bug B + issue #207 item 4).
+    // The boot path positions the camera via `camera.setView`, which in
+    // some cases (notably when the URL omits `heading` — i.e. heading
+    // defaults to 0 — at point altitudes) does not raise `camera.changed`,
+    // so the camera-changed handler never runs and the URL's `mode=point`
+    // is silently ignored. Drive the mode transition explicitly here so
+    // the boot is independent of whether `setView` happened to fire the
+    // event.
+    //
+    // Trigger on EITHER `ih.mode === 'point'` OR low altitude (< ENTER_POINT_ALT).
+    // The altitude branch closes the loophole introduced by #203's early
+    // URL write: a user copying mid-transition can produce a URL like
+    // `alt=8000` *without* `mode=point`, which previously round-tripped
+    // as cluster mode at low altitude. Now boot enters point mode for
+    // any URL whose altitude says it should. `tryEnterPointModeIfNeeded()`
     // short-circuits if alt >= ENTER_POINT_ALT or we're already in point
-    // mode, so this is a no-op for cluster deep-links.
-    if (ih.mode === 'point') {
-        await tryEnterPointModeIfNeeded();
+    // mode, so this is a no-op for cluster deep-links at cluster altitude.
+    if (ih.mode === 'point' || (ih.alt != null && ih.alt < ENTER_POINT_ALT)) {
+        // pushHistory: false — boot should reconcile state without adding
+        // a history entry (issue #207 item 3).
+        await tryEnterPointModeIfNeeded({ pushHistory: false });
     }
 
     return "active";
