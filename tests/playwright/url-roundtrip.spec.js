@@ -87,19 +87,28 @@ async function waitForBootSettled(page, timeoutMs = 180000) {
   );
 }
 
-/** Wait until the URL hash's lat/lng match the expected values within `eps`.
- *  Replaces fixed sleeps with a precise settle condition for moveEnd-driven
- *  hash writes (regression for #205). */
-async function waitForHashLatLng(page, expectedLat, expectedLng, eps = 0.001, timeoutMs = 10000) {
+/** Wait until the URL hash's lat/lng (and optionally alt) match the expected
+ *  values within `eps` / `altEps`. Replaces fixed sleeps with a precise settle
+ *  condition for moveEnd-driven hash writes (regression for #205). */
+async function waitForHashLatLng(page, expectedLat, expectedLng, opts = {}) {
+  const eps = opts.eps ?? 0.001;
+  const expectedAlt = opts.alt ?? null;
+  const altEps = opts.altEps ?? 100;
+  const timeoutMs = opts.timeoutMs ?? 10000;
   await page.waitForFunction(
-    ({ lat, lng, eps }) => {
+    ({ lat, lng, eps, alt, altEps }) => {
       const params = new URLSearchParams(location.hash.slice(1));
       const ul = parseFloat(params.get('lat'));
       const un = parseFloat(params.get('lng'));
-      return Number.isFinite(ul) && Number.isFinite(un)
-        && Math.abs(ul - lat) < eps && Math.abs(un - lng) < eps;
+      if (!Number.isFinite(ul) || !Number.isFinite(un)) return false;
+      if (Math.abs(ul - lat) >= eps || Math.abs(un - lng) >= eps) return false;
+      if (alt != null) {
+        const ua = parseFloat(params.get('alt'));
+        if (!Number.isFinite(ua) || Math.abs(ua - alt) >= altEps) return false;
+      }
+      return true;
     },
-    { lat: expectedLat, lng: expectedLng, eps },
+    { lat: expectedLat, lng: expectedLng, eps, alt: expectedAlt, altEps },
     { timeout: timeoutMs }
   );
 }
@@ -212,8 +221,10 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
         });
       }, { lat: newLat, lng: newLng, alt: newAlt });
 
-      // Wait for the URL hash to reflect the new camera, not a fixed sleep.
-      await waitForHashLatLng(pageA, newLat, newLng);
+      // Wait for the URL hash to reflect the new camera (lat + lng + alt) —
+      // tighter assertion than lat/lng alone, since `buildHash` writes all
+      // three together.
+      await waitForHashLatLng(pageA, newLat, newLng, { alt: newAlt });
 
       const snapA = await snapshot(pageA);
       expect(snapA.mode).toBe('point');
@@ -238,18 +249,21 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
   test('h3 hashchange with unknown cell clears selectedH3 (#207 item 6)', async ({ page }) => {
     // Regression we're testing: the hashchange handler's null-result branch
     // at explorer.qmd:2278-2289 must clear `_globeState.selectedH3` when
-    // `fetchClusterByH3` returns null. If line 2285 were removed, selectedH3
-    // would retain the URL's h3 value (set at line 2272) instead of clearing.
+    // `fetchClusterByH3` returns null.
     //
-    // Codex review (PR #214 round 1) suggested seeding selectedH3 to a
-    // non-null sentinel before the hashchange to "prove prior state was
-    // cleared." We attempted that but the seed survived the hashchange
-    // unexpectedly (suspected OJS reactivity around `mainModule.value('viewer')`
-    // returning a different reference than the handler's closure-captured
-    // viewer). Falling back to the simpler form below, which still exercises
-    // the regression: line 2272 unconditionally writes selectedH3 from the
-    // URL on hashchange, so the only way the post-handler value is null is
-    // the explicit null-result branch at line 2285 executing.
+    // Codex round-2 review (PR #214) caught a subtle weakness: booting with
+    // `&h3=<invalid>` runs the BOOT deep-link path's own null-result branch
+    // (explorer.qmd:2728), which sets `selectedH3 = null` BEFORE the test
+    // even drives a hashchange. So a post-hashchange `selectedH3 === null`
+    // assertion is true regardless of whether the hashchange handler's own
+    // null-clear branch (line 2285) ran.
+    //
+    // Fix: gate the assertion on a handler-only side effect. The hashchange
+    // handler's `camera.flyTo` (lines 2220-2227) rotates `camera.heading` to
+    // the URL's `heading` value — a side effect that only the hashchange
+    // handler produces. Wait for that rotation BEFORE checking selectedH3;
+    // by then the handler has executed past line 2272 (which writes a new
+    // non-null selectedH3) AND reached line 2285 (the null-clear branch).
     const invalidH3 = '0deadbeefffffff';  // 15 chars but not a real h3 cell
     await page.goto(`${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}&h3=${invalidH3}`);
     await waitForMode(page, 'cluster');
@@ -257,22 +271,30 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
     // hashchange listener is registered at line 2210; wait for boot settle.
     await waitForBootSettled(page);
 
-    // Drive a hashchange to a different invalid h3. The handler runs:
-    // line 2272 sets selectedH3=<new invalid>, line 2273 awaits fetchClusterByH3,
-    // which returns null (line 2134 — fails 15-char regex), line 2285 clears.
+    // Drive a hashchange to a DIFFERENT invalid h3, plus an explicit heading
+    // change to detect that the handler actually ran (boot's heading is 0).
     await page.evaluate((newH3) => {
       const params = new URLSearchParams(location.hash.slice(1));
       params.set('h3', newH3);
-      params.set('heading', '5.0');  // bump heading to force hashchange to fire
+      params.set('heading', '5.0');  // distinctive value — only handler's flyTo writes this
       location.hash = '#' + params.toString();
     }, '0baadbeeffffffff');
 
-    // Poll for `selectedH3 === null` — replaces a fixed 3s sleep.
+    // Wait for the hashchange handler's `flyTo` to rotate camera heading
+    // toward 5°. 5° = ~0.0873 radians; wait until heading is within a few
+    // degrees of that target. This proves the handler executed past line
+    // 2225 (camera.flyTo with the new heading from the URL).
     await page.waitForFunction(async () => {
       const v = await window._ojs.ojsConnector.mainModule.value('viewer');
-      return v._globeState.selectedH3 === null;
-    }, null, { timeout: 10000 });
+      const headingDeg = Cesium.Math.toDegrees(v.camera.heading) % 360;
+      return Math.abs(headingDeg - 5.0) < 1.0;
+    }, null, { timeout: 15000 });
 
+    // Now the handler has run. Line 2272 wrote `selectedH3` to a non-null
+    // value from the URL; line 2273 awaited `fetchClusterByH3` (which returns
+    // null at line 2134 for the malformed 16-char h3); line 2285 cleared it.
+    // If line 2285 is removed, selectedH3 stays as the URL's invalid h3, NOT
+    // null, and this assertion catches it.
     const s = await snapshot(page);
     expect(s.selectedH3).toBeNull();
   });
