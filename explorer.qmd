@@ -302,7 +302,12 @@ format:
 Circle size = log(sample count). Color = dominant data source.
 :::
 
-<!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity. -->
+<!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity.
+     Wrapped in `{=html}` raw-html fence because otherwise Quarto's Pandoc
+     pass parses Markdown inside the HTML and wraps bare `<input>` / `<label>`
+     in `<p>` tags, breaking the `.search-bar input { flex: 1 }` flex relationship
+     and adding paragraph margins to control rows. -->
+```{=html}
 <div class="explorer-controls">
 <div class="search-bar">
 <input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
@@ -328,7 +333,9 @@ Searches labels, descriptions, and place names. <strong>First search can take 10
 </div>
 </div>
 </div>
+```
 
+```{=html}
 <div class="globe-layout">
 <div id="cesiumContainer"></div>
 <div class="side-panel">
@@ -398,6 +405,7 @@ Loading H3 global overview...
 <button id="tableNext" type="button">Next</button>
 </div>
 </div>
+```
 
 ```{ojs}
 //| output: false

@@ -22,6 +22,10 @@ async function waitForPhaseMessage(page, substring, timeoutMs = 60000) {
 
 async function waitForClusterBoot(page) {
   await waitForPhaseMessage(page, 'clusters,');
+  // Awaiting `value('zoomWatcher')` ensures the OJS cell has finished
+  // running — listener registration + boot hydration are complete by the
+  // time this resolves. The cell returns the string "active" so we don't
+  // use the return value, only the await.
   await page.evaluate(async () => {
     return await window._ojs.ojsConnector.mainModule.value('zoomWatcher');
   });
@@ -96,7 +100,11 @@ test.describe('explorer layout stability', () => {
 
     await flyCameraTo(page, LAT_CYPRUS, LNG_CYPRUS, ALT_POINT_CYPRUS);
     await waitForMode(page, 'point');
-    await waitForPhaseMessage(page, 'individual samples', 120000);
+    // Wait on the trailing phrase common to BOTH point-mode done branches
+    // (normal: "<N> individual samples. Click one for details." and cap-reached:
+    // "<N> samples in view (showing M — zoom in for more). Click one for details.")
+    // rather than "individual samples", which misses the cap-reached path.
+    await waitForPhaseMessage(page, 'Click one for details', 120000);
     expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
 
     await page.locator('#tableViewBtn').click();
@@ -111,7 +119,8 @@ test.describe('explorer layout stability', () => {
   });
 
   test('mobile globe height override is stable across boot and wrapped status', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+    const viewport = { width: 390, height: 844 };
+    await page.setViewportSize(viewport);
     await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
@@ -119,7 +128,23 @@ test.describe('explorer layout stability', () => {
     await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
 
     const initialRect = await elementRect(page, '#cesiumContainer');
-    expect(Math.abs(initialRect.height - 489.52)).toBeLessThanOrEqual(2);
+    // Resolve the `clamp(360px, 58vh, 520px)` mobile value via a probe element
+    // styled with `height: var(--explorer-map-height)`. Reading the custom
+    // property directly via `getPropertyValue` returns the unresolved `clamp(...)`
+    // string, not a computed px value — so use a probe instead. This keeps the
+    // test honest if the clamp values change in CSS.
+    const expectedMapHeight = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'height: var(--explorer-map-height); position: absolute; visibility: hidden;';
+      document.body.appendChild(probe);
+      const h = probe.getBoundingClientRect().height;
+      probe.remove();
+      return h;
+    });
+    // Sanity: at 390×844, 58vh = 489.52, within [360, 520] clamp → 489.52.
+    expect(expectedMapHeight).toBeGreaterThanOrEqual(360);
+    expect(expectedMapHeight).toBeLessThanOrEqual(520);
+    expect(Math.abs(initialRect.height - expectedMapHeight)).toBeLessThanOrEqual(2);
 
     await waitForClusterBoot(page);
     expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
@@ -127,6 +152,33 @@ test.describe('explorer layout stability', () => {
     await page.locator('#searchResults').evaluate((el) => {
       el.textContent = 'Search error: a long mobile status message that should scroll inside its reserved slot';
     });
+    expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
+  });
+
+  test('small-phone (320×568) clamps map height to the 360px floor', async ({ page }) => {
+    // At 320×568, mobile CSS resolves `clamp(360px, 58vh, 520px)` with
+    // 58vh = 329.44px — below the 360px floor — so map height = 360px.
+    // Covers the clamp-floor branch which the 390×844 case never exercises.
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+
+    const initialRect = await elementRect(page, '#cesiumContainer');
+    const expectedMapHeight = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'height: var(--explorer-map-height); position: absolute; visibility: hidden;';
+      document.body.appendChild(probe);
+      const h = probe.getBoundingClientRect().height;
+      probe.remove();
+      return h;
+    });
+    expect(expectedMapHeight).toBe(360);
+    expect(Math.abs(initialRect.height - 360)).toBeLessThanOrEqual(2);
+
+    await waitForClusterBoot(page);
     expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
   });
 });
