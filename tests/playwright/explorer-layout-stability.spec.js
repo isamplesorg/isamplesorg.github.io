@@ -93,7 +93,7 @@ async function resolveMapHeightPx(page) {
 }
 
 test.describe('explorer layout stability', () => {
-  test('desktop globe rect is stable across boot, status, point mode, and table round trip', async ({ page }) => {
+  test('desktop globe rect is stable across boot, status, and point-mode flight; table is permanent below', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
       waitUntil: 'domcontentloaded',
@@ -103,12 +103,12 @@ test.describe('explorer layout stability', () => {
 
     const initialRect = await elementRect(page, '#cesiumContainer');
     expect(initialRect.width).toBeGreaterThanOrEqual(840);
-    // At 1280×900 desktop, `clamp(500px, 65vh, 680px)` resolves to 585px
-    // (65vh = 585). Derive expected from the probe rather than hardcoding,
-    // for consistency with the mobile cases below.
+    // Per M-5 the map height was reduced from clamp(500,65vh,680) to
+    // clamp(400,50vh,540). At 1280x900 desktop, 50vh = 450 (within the
+    // clamp range). Derive from the probe rather than hardcoding.
     const expectedDesktopMapHeight = await resolveMapHeightPx(page);
-    expect(expectedDesktopMapHeight).toBeGreaterThanOrEqual(500);
-    expect(expectedDesktopMapHeight).toBeLessThanOrEqual(680);
+    expect(expectedDesktopMapHeight).toBeGreaterThanOrEqual(400);
+    expect(expectedDesktopMapHeight).toBeLessThanOrEqual(540);
     expect(Math.abs(initialRect.height - expectedDesktopMapHeight)).toBeLessThanOrEqual(2);
 
     await waitForClusterBoot(page);
@@ -128,15 +128,15 @@ test.describe('explorer layout stability', () => {
     await waitForPhaseMessage(page, 'Click one for details', 120000);
     expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
 
-    await page.locator('#tableViewBtn').click();
-    await expect(page.locator('.globe-layout')).toBeHidden();
+    // Table is now permanent (M-5). Both .globe-layout and #tableContainer
+    // are visible at the same time; table sits below the globe.
+    await expect(page.locator('.globe-layout')).toBeVisible();
     await expect(page.locator('#tableContainer')).toBeVisible();
     const tableRect = await elementRect(page, '#tableContainer');
-    expect(Math.abs(tableRect.top - initialRect.top)).toBeLessThanOrEqual(2);
-
-    await page.locator('#globeViewBtn').click();
-    await expect(page.locator('.globe-layout')).toBeVisible();
-    expectRectStable(await elementRect(page, '#cesiumContainer'), initialRect);
+    expect(tableRect.top).toBeGreaterThan(initialRect.top + initialRect.height - 4);
+    // No view-toggle buttons should exist anymore.
+    await expect(page.locator('#globeViewBtn')).toHaveCount(0);
+    await expect(page.locator('#tableViewBtn')).toHaveCount(0);
   });
 
   test('mobile globe height override is stable across boot and wrapped status', async ({ page }) => {
@@ -149,12 +149,13 @@ test.describe('explorer layout stability', () => {
     await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
 
     const initialRect = await elementRect(page, '#cesiumContainer');
-    // At 390×844, mobile CSS resolves `clamp(360px, 58vh, 520px)` to 489.52px
-    // (58vh of 844). Derive expected via the probe helper.
+    // Per M-5, mobile CSS resolves `clamp(360px, 50vh, 480px)` (was
+    // 360/58/520 pre-M-5). At 390×844, 50vh = 422. Derive expected via
+    // the probe helper.
     const expectedMapHeight = await resolveMapHeightPx(page);
-    // Sanity: must be within the mobile clamp bounds [360, 520].
+    // Sanity: must be within the new mobile clamp bounds [360, 480].
     expect(expectedMapHeight).toBeGreaterThanOrEqual(360);
-    expect(expectedMapHeight).toBeLessThanOrEqual(520);
+    expect(expectedMapHeight).toBeLessThanOrEqual(480);
     expect(Math.abs(initialRect.height - expectedMapHeight)).toBeLessThanOrEqual(2);
 
     await waitForClusterBoot(page);
@@ -167,8 +168,8 @@ test.describe('explorer layout stability', () => {
   });
 
   test('small-phone (320×568) clamps map height to the 360px floor', async ({ page }) => {
-    // At 320×568, mobile CSS resolves `clamp(360px, 58vh, 520px)` with
-    // 58vh = 329.44px — below the 360px floor — so map height = 360px.
+    // At 320×568, mobile CSS resolves `clamp(360px, 50vh, 480px)` with
+    // 50vh = 284px — below the 360px floor — so map height = 360px.
     // Covers the clamp-floor branch which the 390×844 case never exercises.
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {

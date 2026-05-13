@@ -17,9 +17,10 @@
  *
  * These specs use the Quarto preview against warm-cache artifacts.
  * Cold-cache live-site behavior and the rest of issue #209's checklist
- * (`pid`+filters, `search`/`search_scope`, facet filters, `view=table`,
- * search-result flight) stay in `url_roundtrip_investigation.js` and a
- * follow-up issue.
+ * (`pid`+filters, `search`/`search_scope`, facet filters, search-result
+ * flight) stay in `url_roundtrip_investigation.js` and a follow-up issue.
+ * The legacy `?view=table` param was removed in #200 M-5 (the samples
+ * table is now permanent below the globe; no view toggle).
  */
 
 const { test, expect } = require('@playwright/test');

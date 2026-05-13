@@ -22,7 +22,9 @@ format:
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
     :root {
-        --explorer-map-height: clamp(500px, 65vh, 680px);
+        /* Map is shorter now that the samples table is permanent below it
+           (issue #200 / M-5). The grid sidebar tracks this height. */
+        --explorer-map-height: clamp(400px, 50vh, 540px);
         --explorer-shell-width: min(1420px, calc(100vw - 64px));
     }
     html {
@@ -50,10 +52,14 @@ format:
     }
     @media (max-width: 900px) {
         :root {
-            --explorer-map-height: clamp(360px, 58vh, 520px);
+            --explorer-map-height: clamp(360px, 50vh, 480px);
             --explorer-shell-width: calc(100vw - 32px);
         }
         .globe-layout { grid-template-columns: 1fr; }
+    }
+    .map-wrap {
+        position: relative;
+        width: 100%;
     }
     #cesiumContainer {
         width: 100%;
@@ -61,6 +67,93 @@ format:
         min-height: 0;
         aspect-ratio: auto;
     }
+    .map-search-overlay {
+        position: absolute;
+        top: 8px;
+        left: 50px; /* clear of Cesium toolbar column at left: 5px */
+        width: min(480px, calc(100% - 60px));
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(4px);
+        padding: 8px 10px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .map-search-overlay .search-results { color: #333; }
+    @media (max-width: 900px) {
+        /* Keep the overlay clear of the vertical Cesium toolbar column at
+           left: 5px. Don't switch to left: 8px here — that overlaps the
+           toolbar hit targets at narrow widths. */
+        .map-search-overlay {
+            width: calc(100% - 58px);
+        }
+    }
+    @media (max-width: 400px) {
+        /* At iPhone-SE-ish widths the two scope buttons would otherwise
+           overflow because of their nowrap labels. Stack them vertically. */
+        .map-search-overlay .search-actions {
+            flex-direction: column;
+        }
+    }
+    /* Display-only color legend at bottom-center of the map. The functional
+       source filter (toggle/show-hide) lives in #sourceFilter in the side
+       panel. aria-hidden="true" on this element keeps screen readers from
+       reading the palette twice. Sits above Cesium's bottom-left credits. */
+    .map-color-legend {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: #333;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(4px);
+        padding: 6px 12px;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        pointer-events: none; /* never intercept globe interaction */
+        white-space: nowrap;
+    }
+    .map-color-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .map-color-legend .map-color-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    @media (max-width: 600px) {
+        /* Below 600px the four-source row gets cramped — let it wrap and
+           shrink the padding so it doesn't crowd the map. */
+        .map-color-legend {
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            max-width: calc(100% - 24px);
+            justify-content: center;
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+    }
+    .sidebar-search { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-search input {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+    }
+    .sidebar-search input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
+    .sidebar-search-hint { font-size: 11px; color: #888; }
     .side-panel {
         display: flex;
         flex-direction: column;
@@ -125,16 +218,13 @@ format:
         align-items: flex-start;
     }
     .cesium-viewer-toolbar > * { margin-left: 0 !important; }
-    /* Open baseLayerPicker dropdown to the right since we're left-anchored */
+    /* Open baseLayerPicker dropdown to the right since we're left-anchored.
+       z-index must beat .map-search-overlay (1000) so the dropdown is not
+       occluded by the in-map search controls. */
     .cesium-baseLayerPicker-dropDown {
         left: 36px;
         right: auto;
-    }
-    .explorer-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 12px;
+        z-index: 1100;
     }
     .search-bar { display: flex; gap: 6px; }
     .search-bar input {
@@ -168,38 +258,13 @@ format:
         overflow-y: auto;
         line-height: 1.35;
     }
-    .view-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin: 4px 0 0;
-        flex-wrap: wrap;
-        min-height: 50px;
-    }
-    .view-toggle {
-        display: inline-flex;
-        border: 1px solid #b8c7d9;
-        border-radius: 6px;
-        overflow: hidden;
-    }
-    .view-toggle button {
-        background: white;
-        color: #234;
-        border: 0;
-        border-right: 1px solid #b8c7d9;
-        padding: 6px 14px;
-        cursor: pointer;
-        font-size: 13px;
-    }
-    .view-toggle button:last-child { border-right: 0; }
-    .view-toggle button.active { background: #1565c0; color: white; }
     .table-controls {
-        display: none;
+        display: flex;
         align-items: center;
         gap: 8px;
         font-size: 12px;
         color: #555;
+        margin-bottom: 8px;
     }
     .table-controls input {
         width: 92px;
@@ -209,8 +274,25 @@ format:
         font-size: 13px;
     }
     #tableContainer {
-        display: none;
         margin-bottom: 16px;
+    }
+    .samples-section-heading {
+        font-size: 15px;
+        font-weight: 600;
+        color: #234;
+        margin: 18px 0 8px;
+    }
+    .samples-table tbody tr {
+        cursor: pointer;
+    }
+    .samples-table tbody tr:hover {
+        background: #f3f7fc;
+    }
+    .samples-table tbody tr.selected {
+        background: #d8e8fa;
+    }
+    .samples-table tbody tr.selected:hover {
+        background: #cfe1f7;
     }
     .table-meta {
         font-size: 12px;
@@ -302,13 +384,16 @@ format:
 Circle size = log(sample count). Color = dominant data source.
 :::
 
-<!-- Static layout: globe + side panel. Updated via DOM, not OJS reactivity.
-     Wrapped in `{=html}` raw-html fence because otherwise Quarto's Pandoc
-     pass parses Markdown inside the HTML and wraps bare `<input>` / `<label>`
-     in `<p>` tags, breaking the `.search-bar input { flex: 1 }` flex relationship
-     and adding paragraph margins to control rows. -->
+<!-- Static layout: globe + side panel + permanent samples table. Updated via
+     DOM, not OJS reactivity. Wrapped in `{=html}` raw-html fence because
+     otherwise Quarto's Pandoc pass parses Markdown inside the HTML and wraps
+     bare `<input>` / `<label>` in `<p>` tags, breaking flex layouts and
+     adding paragraph margins to control rows. -->
 ```{=html}
-<div class="explorer-controls">
+<div class="globe-layout">
+<div class="map-wrap">
+<div id="cesiumContainer"></div>
+<div class="map-search-overlay">
 <div class="search-bar">
 <input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
 </div>
@@ -321,24 +406,19 @@ Searches labels, descriptions, and place names. <strong>First search can take 10
 <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
 </div>
 <div id="searchResults" class="search-results" aria-live="polite"></div>
-
-<div class="view-toolbar">
-<div class="view-toggle" role="group" aria-label="View mode">
-<button id="globeViewBtn" type="button" class="active" aria-pressed="true">Globe</button>
-<button id="tableViewBtn" type="button" aria-pressed="false">Table</button>
 </div>
-<div id="tableControls" class="table-controls">
-<label for="maxSamples">Max samples</label>
-<input type="number" id="maxSamples" min="1000" max="100000" step="1000" value="25000">
+<div class="map-color-legend" aria-hidden="true">
+<span><span class="map-color-legend-dot" style="background:#3366CC"></span>SESAR</span>
+<span><span class="map-color-legend-dot" style="background:#DC3912"></span>OpenContext</span>
+<span><span class="map-color-legend-dot" style="background:#109618"></span>GEOME</span>
+<span><span class="map-color-legend-dot" style="background:#FF9900"></span>Smithsonian</span>
 </div>
 </div>
-</div>
-```
-
-```{=html}
-<div class="globe-layout">
-<div id="cesiumContainer"></div>
 <div class="side-panel">
+<div class="panel-section sidebar-search">
+<input type="text" id="sampleSearchSidebar" placeholder="Search samples (press Enter to search globally)" aria-label="Search samples globally" />
+<div class="sidebar-search-hint">Enter searches the entire world. Use the in-map controls for area-limited search.</div>
+</div>
 <div class="panel-section">
 <div class="stats-compact">
 <div class="stat-box"><span id="sPhase" class="val">Loading...</span><span class="lbl">Resolution</span></div>
@@ -396,8 +476,13 @@ Loading H3 global overview...
 </div>
 </div>
 
+<h3 class="samples-section-heading">Samples table</h3>
+<div id="tableControls" class="table-controls">
+<label for="maxSamples">Max samples</label>
+<input type="number" id="maxSamples" min="1000" max="100000" step="1000" value="25000">
+</div>
 <div id="tableContainer">
-<div id="tableMeta" class="table-meta">Table view loads samples matching the current filters.</div>
+<div id="tableMeta" class="table-meta">Loading samples matching the current filters...</div>
 <div id="samplesTable"></div>
 <div class="table-pager">
 <button id="tablePrev" type="button">Previous</button>
@@ -519,10 +604,14 @@ function applyQueryToSourceFilter() {
 // See docs/site_libs/quarto-search/quarto-search.js.
 function applyQueryToSearch() {
     const input = document.getElementById('sampleSearch');
-    if (!input) return;
+    const sidebarInput = document.getElementById('sampleSearchSidebar');
+    if (!input && !sidebarInput) return;
     const params = new URLSearchParams(location.search);
     const q = params.get('search');
-    if (q != null) input.value = q;
+    if (q != null) {
+        if (input) input.value = q;
+        if (sidebarInput) sidebarInput.value = q;
+    }
 }
 
 function setCheckedValues(containerId, values) {
@@ -562,11 +651,10 @@ function writeQueryState() {
         else params.delete(key);
     });
 
-    if (typeof document !== 'undefined' && document.body && document.body.classList.contains('table-view-active')) {
-        params.set('view', 'table');
-    } else {
-        params.delete('view');
-    }
+    // Canonicalize away the legacy `view` param (issue #200 / M-5 removed
+    // the Globe/Table toggle). A bookmarked `?view=table&...` URL would
+    // otherwise stick through filter/share flows.
+    params.delete('view');
 
     const qs = params.toString();
     const url = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
@@ -855,7 +943,7 @@ function updateSamples(samples) {
     el.innerHTML = h;
 }
 
-// === Binary Globe/Table view ===
+// === Samples table (permanent below globe; M-5) ===
 TABLE_PAGE_SIZE = 100
 TABLE_DEFAULT_MAX = 25000
 TABLE_MIN_MAX = 1000
@@ -883,9 +971,6 @@ function getTableMaxSamples() {
     return value;
 }
 
-function isTableViewActive() {
-    return document.body.classList.contains('table-view-active');
-}
 ```
 
 ```{ojs}
@@ -1226,17 +1311,12 @@ tableView = {
     if (!facetFilters) return;
 
     let rows = [];
+    let rowsByPid = new Map();
     let page = 0;
     let requestId = 0;
     let loadedMax = 0;
     let hitHardCap = false;
-    let tableDirty = true;
 
-    const globeLayout = document.querySelector('.globe-layout');
-    const tableContainer = document.getElementById('tableContainer');
-    const tableControls = document.getElementById('tableControls');
-    const globeBtn = document.getElementById('globeViewBtn');
-    const tableBtn = document.getElementById('tableViewBtn');
     const maxInput = document.getElementById('maxSamples');
     const prevBtn = document.getElementById('tablePrev');
     const nextBtn = document.getElementById('tableNext');
@@ -1261,6 +1341,8 @@ tableView = {
         page = Math.min(page, totalPages - 1);
         const start = page * TABLE_PAGE_SIZE;
         const visible = rows.slice(start, start + TABLE_PAGE_SIZE);
+        const selectedPid = (typeof viewer !== 'undefined' && viewer._globeState)
+            ? viewer._globeState.selectedPid : null;
 
         if (!tableEl) return;
         if (visible.length === 0) {
@@ -1278,7 +1360,9 @@ tableView = {
                 const labelHtml = url
                     ? `<a class="table-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
                     : escapeHtml(label);
-                return `<tr>
+                const pidAttr = escapeHtml(r.pid || '');
+                const selectedClass = (r.pid && r.pid === selectedPid) ? ' class="selected"' : '';
+                return `<tr data-pid="${pidAttr}"${selectedClass}>
                     <td>${tableSourceBadge(r.source)}</td>
                     <td>${labelHtml}</td>
                     <td>${escapeHtml(place)}</td>
@@ -1293,6 +1377,64 @@ tableView = {
                     <tbody>${body}</tbody>
                 </table>
             </div>`;
+            // Wire row clicks. Each click follows the same ceremony as the
+            // search-row click handler (see #207 item 8): bump the freshness
+            // token first, set selection state, hydrate the card, fly the
+            // camera, then lazy-load description. Reusing the sample-mode
+            // selection path keeps the URL (`#pid=...`) and sidebar in sync
+            // regardless of which surface initiated the selection.
+            tableEl.querySelectorAll('tbody tr[data-pid]').forEach(tr => {
+                tr.addEventListener('click', async (e) => {
+                    if (e.target.tagName === 'A') return; // let label links work
+                    const pid = tr.dataset.pid;
+                    const sample = pid ? rowsByPid.get(pid) : null;
+                    if (!sample || sample.latitude == null || sample.longitude == null) return;
+                    if (typeof viewer === 'undefined') return;
+
+                    const isStale = freshSelectionToken(viewer);
+                    viewer._globeState.selectedPid = pid;
+                    viewer._globeState.selectedH3 = null;
+                    updateSampleCard({
+                        pid: sample.pid,
+                        label: sample.label,
+                        source: sample.source,
+                        lat: sample.latitude,
+                        lng: sample.longitude,
+                        place_name: sample.place_name,
+                        result_time: sample.result_time
+                    });
+                    viewer.camera.flyTo({
+                        destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
+                        duration: 1.5
+                    });
+                    // Write the #pid hash directly here rather than relying on
+                    // zoomWatcher's listener. zoomWatcher may not be wired yet
+                    // at very-early-boot click time, and even when it is, the
+                    // _suppressHashWrite gate could swallow the write. Calling
+                    // buildHash() unconditionally keeps the URL canonical with
+                    // the selection regardless of init ordering.
+                    history.replaceState(null, '', buildHash(viewer));
+                    // Repaint to apply .selected class without a full refresh.
+                    tableEl.querySelectorAll('tbody tr.selected').forEach(el => el.classList.remove('selected'));
+                    tr.classList.add('selected');
+
+                    try {
+                        const detail = await db.query(`
+                            SELECT description
+                            FROM read_parquet('${wide_url}')
+                            WHERE pid = '${pid.replace(/'/g, "''")}'
+                            LIMIT 1
+                        `);
+                        if (isStale()) return;
+                        if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                        else updateSampleDetail({ description: '' });
+                    } catch(err) {
+                        if (isStale()) return;
+                        console.error('Table-row detail query failed:', err);
+                        updateSampleDetail(null);
+                    }
+                });
+            });
         }
 
         if (pageInfoEl) {
@@ -1325,7 +1467,7 @@ tableView = {
             const arr = Array.from(data);
             hitHardCap = arr.length === loadedMax;
             rows = arr;
-            tableDirty = false;
+            rowsByPid = new Map(arr.map(r => [r.pid, r]));
             renderTable();
             const capText = hitHardCap
                 ? (loadedMax < TABLE_MAX_MAX
@@ -1337,46 +1479,23 @@ tableView = {
             if (myReq !== requestId) return;
             console.error('Table query failed:', err);
             rows = [];
+            rowsByPid = new Map();
             renderTable();
             setMeta('Table query failed; adjust filters and try again.', false);
         }
     }
 
-    function setView(mode, updateUrl) {
-        const tableMode = mode === 'table';
-        document.body.classList.toggle('table-view-active', tableMode);
-        if (globeLayout) globeLayout.style.display = tableMode ? 'none' : '';
-        if (tableContainer) tableContainer.style.display = tableMode ? 'block' : 'none';
-        if (tableControls) tableControls.style.display = tableMode ? 'flex' : 'none';
-        if (globeBtn) {
-            globeBtn.classList.toggle('active', !tableMode);
-            globeBtn.setAttribute('aria-pressed', String(!tableMode));
-        }
-        if (tableBtn) {
-            tableBtn.classList.toggle('active', tableMode);
-            tableBtn.setAttribute('aria-pressed', String(tableMode));
-        }
-        if (updateUrl) writeQueryState();
-        if (tableMode && (tableDirty || rows.length === 0)) refreshTable();
-        if (!tableMode && typeof viewer !== 'undefined') {
-            setTimeout(() => viewer.resize(), 0);
-        }
-    }
-
-    if (globeBtn) globeBtn.addEventListener('click', () => setView('globe', true));
-    if (tableBtn) tableBtn.addEventListener('click', () => setView('table', true));
     if (prevBtn) prevBtn.addEventListener('click', () => { page = Math.max(0, page - 1); renderTable(); });
     if (nextBtn) nextBtn.addEventListener('click', () => { page += 1; renderTable(); });
     if (maxInput) {
         maxInput.addEventListener('change', () => {
             maxInput.value = getTableMaxSamples();
-            if (isTableViewActive()) refreshTable();
+            refreshTable();
         });
     }
 
     function handleTableFilterChange() {
-        tableDirty = true;
-        if (isTableViewActive()) refreshTable();
+        refreshTable();
     }
 
     document.getElementById('sourceFilter')?.addEventListener('change', handleTableFilterChange);
@@ -1385,8 +1504,9 @@ tableView = {
     document.getElementById('objectTypeFilterBody')?.addEventListener('change', handleTableFilterChange);
 
     window.refreshSamplesTable = refreshTable;
-    const params = new URLSearchParams(location.search);
-    setView(params.get('view') === 'table' ? 'table' : 'globe', false);
+    // Table is permanent now — load on boot instead of waiting for a
+    // setView('table') call that no longer exists (issue #200 / M-5).
+    refreshTable();
 
     return "active";
 }
@@ -2717,7 +2837,35 @@ zoomWatcher = {
     // no button has been clicked yet). Defaults to 'world' for keyboard-only
     // users on first invocation.
     if (searchInput) searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doSearch(_searchScope);
+        // Skip Enter during IME composition — IMEs send Enter to commit a
+        // candidate, and submitting then would fire on the pre-commit value.
+        if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
+            doSearch(_searchScope);
+        }
+    });
+
+    // Sidebar open-text search (M-1B). Mirrors #sampleSearch so there's one
+    // logical query term with two input chrome. Enter on sidebar always
+    // submits world scope — typed-text-from-sidebar implies "find anywhere".
+    // The mirror guards against feedback loops by comparing values before
+    // setting; setting .value does not fire 'input' so a simple guard suffices.
+    const searchInputSidebar = document.getElementById('sampleSearchSidebar');
+    if (searchInputSidebar && searchInput) {
+        searchInputSidebar.addEventListener('input', () => {
+            if (searchInput.value !== searchInputSidebar.value) {
+                searchInput.value = searchInputSidebar.value;
+            }
+        });
+        searchInput.addEventListener('input', () => {
+            if (searchInputSidebar.value !== searchInput.value) {
+                searchInputSidebar.value = searchInput.value;
+            }
+        });
+    }
+    if (searchInputSidebar) searchInputSidebar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
+            doSearch('world');
+        }
     });
 
     if (searchInput && searchInput.value.trim().length >= 2) {
