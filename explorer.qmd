@@ -89,6 +89,13 @@ format:
             width: calc(100% - 58px);
         }
     }
+    @media (max-width: 400px) {
+        /* At iPhone-SE-ish widths the two scope buttons would otherwise
+           overflow because of their nowrap labels. Stack them vertically. */
+        .map-search-overlay .search-actions {
+            flex-direction: column;
+        }
+    }
     .sidebar-search { display: flex; flex-direction: column; gap: 4px; }
     .sidebar-search input {
         width: 100%;
