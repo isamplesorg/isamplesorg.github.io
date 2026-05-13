@@ -247,6 +247,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#result-set-shape-acceptance-cases" id="toc-result-set-shape-acceptance-cases" class="nav-link" data-scroll-target="#result-set-shape-acceptance-cases"><span class="header-section-number">1.6.5</span> Result-set shape acceptance cases</a></li>
   <li><a href="#state-inventory-addendum-for-c" id="toc-state-inventory-addendum-for-c" class="nav-link" data-scroll-target="#state-inventory-addendum-for-c"><span class="header-section-number">1.6.6</span> State-inventory addendum for (C)</a></li>
   <li><a href="#light-path-addendum-two-button-scope-selection-178-2026-05-08" id="toc-light-path-addendum-two-button-scope-selection-178-2026-05-08" class="nav-link" data-scroll-target="#light-path-addendum-two-button-scope-selection-178-2026-05-08"><span class="header-section-number">1.6.7</span> Light-path addendum: two-button scope selection (#178, 2026-05-08)</a></li>
+  <li><a href="#mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05" id="toc-mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05" class="nav-link" data-scroll-target="#mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05"><span class="header-section-number">1.6.8</span> Mockup-v1 addendum: in-map overlay, sidebar mirror, permanent table (#200, 2026-05)</a></li>
   </ul></li>
   <li><a href="#facet-count-contract" id="toc-facet-count-contract" class="nav-link" data-scroll-target="#facet-count-contract"><span class="header-section-number">1.7</span> 7. Facet-count contract</a></li>
   <li><a href="#out-of-scope" id="toc-out-of-scope" class="nav-link" data-scroll-target="#out-of-scope"><span class="header-section-number">1.8</span> 8. Out of scope</a></li>
@@ -265,7 +266,7 @@ ul.task-list li input[type="checkbox"] {
 <h1 data-number="1"><span class="header-section-number">1</span> Explorer State Contract</h1>
 <p>Doc-only contract for <code>explorer.qmd</code>. Locks down where every piece of explorer state lives, who owns it, when it gets written, and what the cross-filter rules are. Resolves <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/164">#164</a>; unblocks the items in <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/163">#163</a>.</p>
 <p><strong>Direction</strong>: imperative + URL-as-canonical-state. OJS cells are used as a DAG-aware bootstrap (run viewer once, run phase1 after viewer is ready, etc.), not as a reactive UI runtime. All user-driven UI updates go through <code>writeQueryState()</code> → <code>history.replaceState</code> and direct DOM mutation. Reading DOM checkboxes is the source of truth for facet state inside SQL builders; the URL is the source of truth across reloads.</p>
-<p>All file:line references below are against <code>explorer.qmd</code> at commit <code>94e7674</code> (the tree this doc is being written against).</p>
+<p>All file:line references below are against <code>explorer.qmd</code> at commit <code>94e7674</code> (the tree this doc was originally written against). The inventory has had targeted edits as later changes land — most notably the <strong>mockup-v1 PR</strong> (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/200">#200</a>) which removed the Globe/Table view toggle, relocated search into an in-map overlay, added a sidebar search input that mirrors the in-map one, and made the samples table a permanent surface below the globe. See §6 “Mockup-v1 addendum” for the full delta. Line numbers may not match exactly; the contract is the source of truth, not the line citations.</p>
 <hr>
 <section id="url-query-params-location.search" class="level2" data-number="1.1">
 <h2 data-number="1.1" data-anchor-id="url-query-params-location.search"><span class="header-section-number">1.1</span> 1. URL query params (<code>location.search</code>)</h2>
@@ -295,11 +296,11 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><code>search</code></td>
-<td>DOM <code>#sampleSearch</code> value</td>
+<td>DOM <code>#sampleSearch</code> value (mirrored to <code>#sampleSearchSidebar</code>)</td>
 <td>omitted</td>
 <td>raw string</td>
-<td><code>applyQueryToSearch()</code> at start of <code>phase1</code> (<code>:937</code>)</td>
-<td><code>writeQueryState()</code> (<code>:445-446</code>) called from <code>doSearch()</code> (<code>:1789</code>) and from globe/table toggle</td>
+<td><code>applyQueryToSearch()</code> at start of <code>phase1</code> (hydrates both inputs)</td>
+<td><code>writeQueryState()</code> called from <code>doSearch()</code></td>
 <td>trim only; min 2 chars enforced at search time, not in URL</td>
 <td>written even on no-result searches</td>
 </tr>
@@ -344,26 +345,36 @@ ul.task-list li input[type="checkbox"] {
 <td>same</td>
 </tr>
 <tr class="even">
-<td><code>view</code></td>
-<td><code>body.classList.contains('table-view-active')</code></td>
-<td>omitted (= globe)</td>
-<td><code>table</code> only; absent ⇒ globe</td>
-<td><code>tableView</code> cell reads <code>params.get('view')</code> (<code>:1239-1240</code>) and calls <code>setView(...)</code> with <code>updateUrl=false</code></td>
-<td><code>writeQueryState()</code> from <code>setView(mode, true)</code> via globe/table button clicks (<code>:1217-1218</code>, <code>:1210</code>)</td>
-<td>only <code>table</code> is honored (<code>:1240</code>)</td>
-<td><code>writeQueryState()</code> reads body class, not <code>viewer.*</code></td>
+<td><del><code>view</code></del></td>
+<td><em>removed in mockup-v1 (#200)</em></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>The Globe/Table toggle is gone — the samples table is now permanent below the globe. <code>writeQueryState()</code> does <code>params.delete('view')</code> to canonicalize legacy bookmarks. See §6 “Mockup-v1 addendum”</td>
 </tr>
 <tr class="odd">
+<td><code>search_scope</code></td>
+<td>local closure <code>_searchScope</code> in <code>zoomWatcher</code></td>
+<td>omitted (= <code>world</code>)</td>
+<td><code>area</code> only; absent ⇒ world</td>
+<td><code>_searchScope</code> hydrated at top of <code>zoomWatcher</code> from <code>params.get('search_scope')</code></td>
+<td><code>persistSearchScope()</code> from <code>doSearch()</code> and button clicks</td>
+<td>exact match <code>'area'</code></td>
+<td>sidebar <code>#sampleSearchSidebar</code> Enter always submits <code>world</code>, never <code>area</code> — see §6 mockup-v1 addendum</td>
+</tr>
+<tr class="even">
 <td><code>page</code></td>
-<td>inner closure <code>let page = 0</code> in <code>tableView</code> (<code>:1080</code>)</td>
+<td>inner closure <code>let page = 0</code> in <code>tableView</code></td>
 <td>not in URL</td>
 <td>—</td>
 <td>—</td>
-<td>resets to 0 on <code>refreshTable()</code> (<code>:1163</code>); ±1 on prev/next (<code>:1219-1220</code>)</td>
-<td>clamped to <code>[0, totalPages-1]</code> (<code>:1112</code>)</td>
+<td>resets to 0 on <code>refreshTable()</code>; ±1 on prev/next</td>
+<td>clamped to <code>[0, totalPages-1]</code></td>
 <td><strong>#163 item 6</strong> — table page is intentionally not URL state today; if/when added, must coexist with the cross-filter contract below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>perf</code></td>
 <td>— (read-only feature flag)</td>
 <td>omitted</td>
@@ -532,25 +543,39 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>document.body.classList['table-view-active']</code></td>
-<td>view marker (table vs globe)</td>
-<td><code>setView()</code> in <code>tableView</code> (<code>:1198</code>)</td>
-<td><code>writeQueryState()</code> (<code>:462</code>); <code>isTableViewActive()</code> (<code>:755</code>)</td>
-<td>URL <code>view</code> param is <strong>derived</strong> from this class, not the other way around</td>
+<td><del><code>document.body.classList['table-view-active']</code></del></td>
+<td><em>removed in mockup-v1 (#200)</em></td>
+<td>—</td>
+<td>—</td>
+<td>The view marker class is gone with the Globe/Table toggle. The samples table is permanent below the globe; <code>isTableViewActive()</code> and <code>setView()</code> were deleted</td>
 </tr>
 <tr class="even">
 <td><code>data-facet</code>, <code>data-value</code> on <code>.facet-row</code> and <code>.facet-count</code></td>
 <td>facet selectors for in-place count mutation</td>
-<td>rendered in <code>renderFilter</code> (<code>:1053</code>) and the static source legend (<code>:270-273</code>)</td>
-<td><code>applyFacetCounts()</code> (<code>:553-565</code>)</td>
+<td>rendered in <code>renderFilter</code> and the static source legend</td>
+<td><code>applyFacetCounts()</code></td>
 <td>rebuilding the HTML would lose mid-interaction selections; <code>data-*</code> attrs are why we mutate counts in place</td>
 </tr>
 <tr class="odd">
 <td><code>data-lat</code>, <code>data-lng</code>, <code>data-pid</code> on <code>.sample-row</code></td>
 <td>click-to-fly payload for search/nearby results</td>
-<td>rendered in <code>doSearch()</code> (<code>:1822</code>) and <code>updateSamples()</code> not currently using data-* (only the search list does)</td>
-<td>search-row click handler (<code>:1832-1845</code>)</td>
+<td>rendered in <code>doSearch()</code></td>
+<td>search-row click handler</td>
 <td>the nearby-samples list does not have data-* today; click-to-fly only works from the search list</td>
+</tr>
+<tr class="even">
+<td><code>data-pid</code> on <code>.samples-table tbody tr</code></td>
+<td>click-to-select payload for the permanent table</td>
+<td>rendered in <code>tableView</code> <code>renderTable()</code></td>
+<td>table-row click handler (same ceremony as the search-row click — see §6 mockup-v1 addendum)</td>
+<td>per-PID lookup uses <code>rowsByPid: Map</code> cached at <code>refreshTable()</code> time; not the DOM</td>
+</tr>
+<tr class="odd">
+<td><code>tr.selected</code> on <code>.samples-table</code></td>
+<td>“this row is the current sample selection” visual marker</td>
+<td>table-row click handler (<code>add</code>); next click on a different row (<code>remove</code>); next <code>renderTable()</code> reflects current <code>viewer._globeState.selectedPid</code></td>
+<td>CSS only</td>
+<td>derived; do not read. The globe → table direction is <em>not</em> live (only repaints on the next refresh)</td>
 </tr>
 <tr class="even">
 <td><code>.recomputing</code> on <code>.facet-count</code></td>
@@ -575,7 +600,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#maxSamples</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, <code>getTableMaxSamples()</code>, and the search input. SQL builders read these directly each call.</p>
+<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#sampleSearchSidebar</code> + <code>#maxSamples</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, <code>getTableMaxSamples()</code>, and the search input. SQL builders read <code>#sampleSearch</code> directly each call. <code>#sampleSearchSidebar</code> is kept in lock-step with <code>#sampleSearch</code> via a two-way <code>input</code>-event mirror (see §6 mockup-v1 addendum).</p>
 <hr>
 </section>
 <section id="widget-internal-state-viewer.-window." class="level2" data-number="1.4">
@@ -692,7 +717,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="urlparamshydrated-confirmed-gone" class="level3" data-number="1.4.2">
 <h3 data-number="1.4.2" data-anchor-id="urlparamshydrated-confirmed-gone"><span class="header-section-number">1.4.2</span> <code>_urlParamsHydrated</code> — confirmed gone</h3>
-<p>Grep for <code>_urlParamsHydrated</code> in <code>explorer.qmd</code> returns no hits. The flag from PR #159’s first cut was removed; the new contract is “URL → DOM hydration runs exactly once per cell that owns the corresponding DOM, gated only by the OJS DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration; tableView ⇒ view hydration).”</p>
+<p>Grep for <code>_urlParamsHydrated</code> in <code>explorer.qmd</code> returns no hits. The flag from PR #159’s first cut was removed; the new contract is “URL → DOM hydration runs exactly once per cell that owns the corresponding DOM, gated only by the OJS DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration). Mockup-v1 removed the <code>tableView ⇒ view</code> hydration step along with the <code>?view=</code> URL param.”</p>
 <hr>
 </section>
 </section>
@@ -705,7 +730,7 @@ db                 [DuckDBClient.of()]
 viewer             [creates Cesium viewer; reads readHash() once]
   └── phase1       [needs viewer + db; runs URL→DOM hydration for search + sources]
         └── facetFilters    [needs phase1; loads vocab + summaries; sets _baselineCounts; runs URL→DOM hydration for facet checkboxes]
-              ├── tableView    [needs facetFilters; reads view from URL once]
+              ├── tableView    [needs facetFilters; calls refreshTable() unconditionally on boot — no URL hydration]
               └── zoomWatcher  [needs facetFilters; registers ALL change handlers; runs deep-link pid restore]
                     └── perfPanel  [opt-in; needs phase1; renders perf panel if ?perf=1]</code></pre>
 <table class="caption-top table">
@@ -780,17 +805,17 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <td><code>tableView</code></td>
 <td><code>:1071</code></td>
 <td><code>facetFilters</code></td>
-<td><code>#globe-layout</code>, <code>#tableContainer</code>, <code>#tableControls</code>, <code>#samplesTable</code>, <code>body.classList</code></td>
-<td>globe/table buttons; prev/next; max input; <strong>change</strong> on all four facet bodies</td>
-<td><code>replaceState</code> via <code>writeQueryState</code> (<code>view</code> flip)</td>
+<td><code>#tableContainer</code>, <code>#samplesTable</code>, <code>tr.selected</code> class</td>
+<td>prev/next; max input; <strong>change</strong> on all four facet bodies; table-row clicks</td>
+<td><code>replaceState</code> via <code>buildHash</code> from table-row click (sets <code>#pid</code> directly, mirrors sample-mode globe click)</td>
 </tr>
 <tr class="even">
 <td><code>zoomWatcher</code></td>
 <td><code>:1246</code></td>
 <td><code>phase1</code>, <code>facetFilters</code>, <code>db</code></td>
 <td>facet count text; stats; phase msg; sample card; samples list</td>
-<td>source filter <code>change</code>; material/context/object_type <code>change</code>; <code>camera.changed</code>; <code>window</code> <code>hashchange</code>; share button; search button; search input keydown</td>
-<td><code>pushState</code> and <code>replaceState</code> via <code>buildHash</code> (camera, mode flip, sample fly); <code>replaceState</code> via <code>writeQueryState</code> (filter changes, search submit, share)</td>
+<td>source filter <code>change</code>; material/context/object_type <code>change</code>; <code>camera.changed</code>; <code>camera.moveEnd</code> (sub-threshold pan settle, #205); <code>window</code> <code>hashchange</code>; share button; search button; in-map search input keydown; sidebar search input <code>input</code> (mirror) and keydown (world-scope submit)</td>
+<td><code>pushState</code> and <code>replaceState</code> via <code>buildHash</code> (camera changed/moveEnd, mode flip, sample fly, <strong>share button</strong>); <code>replaceState</code> via <code>writeQueryState</code> (filter changes, search submit)</td>
 </tr>
 <tr class="odd">
 <td><code>perfPanel</code></td>
@@ -802,7 +827,7 @@ viewer             [creates Cesium viewer; reads readHash() once]
 </tr>
 </tbody>
 </table>
-<p>Note that <strong>two cells register <code>change</code> listeners on the four facet container elements</strong>: <code>tableView</code> (<code>:1233-1236</code>) marks the table dirty and refreshes if visible, and <code>zoomWatcher</code> (<code>:1617</code>, <code>:1649-1651</code>) reloads the globe and debounces the cross-filter count refresh. Both listeners fire on every facet change; this is intentional (each cell handles its own concerns) but is the single most “magical” coupling in the file — touch with care.</p>
+<p>Note that <strong>two cells register <code>change</code> listeners on the four facet container elements</strong>: <code>tableView</code> calls <code>refreshTable()</code> unconditionally (the table is permanent post-mockup-v1, so there’s no view gate); <code>zoomWatcher</code> reloads the globe and debounces the cross-filter count refresh. Both listeners fire on every facet change; this is intentional (each cell handles its own concerns) but is the single most “magical” coupling in the file — touch with care.</p>
 <hr>
 </section>
 <section id="search-semantics-decision" class="level2" data-number="1.6">
@@ -989,6 +1014,40 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <li>Area mode requires coordinates by definition, so the <code>INNER JOIN</code> drops samples that have facets but no <code>samples_map_lite</code> row. World mode keeps them (via <code>LEFT JOIN</code>) since coord-less samples are still legitimate text matches.</li>
 </ul>
 <p>A future Heavy revisit may rethink (A) global-filter semantics if usage data shows users <em>expect</em> the map and facets to update with search. That decision is deferred until #170-#172 land.</p>
+</section>
+<section id="mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05" class="level3" data-number="1.6.8">
+<h3 data-number="1.6.8" data-anchor-id="mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05"><span class="header-section-number">1.6.8</span> Mockup-v1 addendum: in-map overlay, sidebar mirror, permanent table (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/200">#200</a>, 2026-05)</h3>
+<p>A coordinated UI refactor aligning the explorer with Hana’s wireframe. Built as a single PR sequenced into independently revertable commits. All changes are UI-relocation / surface-additive; the data/query contract is unchanged from the (C) decision + #178 light path above.</p>
+<p><strong>M-1A — Search controls relocated into an in-map overlay.</strong> The search input, the two scope buttons (Search Selected Areas / Search Entire World), help text, and <code>#searchResults</code> count moved from a top-of-page <code>.explorer-controls</code> block into <code>.map-search-overlay</code>, absolutely positioned over <code>#cesiumContainer</code> inside a new <code>.map-wrap</code> wrapper. All element IDs preserved so existing handlers in <code>zoomWatcher</code> and the <code>writeQueryState()</code> contract bind unchanged. Overlay positioning clears the Cesium toolbar column (<code>left: 50px</code>) and the base-layer picker dropdown wins z-stack (<code>z-index: 1100</code> vs overlay’s <code>1000</code>).</p>
+<p><strong>M-1B — Sidebar open-text search input that mirrors the in-map one.</strong> A second input <code>#sampleSearchSidebar</code> lives at the top of <code>.side-panel</code>. Two-way <code>input</code>-event mirror keeps both inputs in lock-step as a single logical query term:</p>
+<ul>
+<li>Typing in <code>#sampleSearchSidebar</code> propagates to <code>#sampleSearch</code>.</li>
+<li>Typing in <code>#sampleSearch</code> propagates to <code>#sampleSearchSidebar</code>.</li>
+<li>Mirror handlers guard against feedback loops by comparing values before assignment; programmatic <code>.value =</code> does not fire <code>input</code>, so the comparison is sufficient (no debounce flag).</li>
+<li><code>applyQueryToSearch()</code> hydrates <em>both</em> inputs from the <code>?search=</code> URL param.</li>
+<li><code>writeQueryState()</code> still reads from <code>#sampleSearch</code> only — mirror parity makes the choice arbitrary.</li>
+</ul>
+<p><strong>Sidebar Enter = world scope (Option B).</strong> Enter on <code>#sampleSearchSidebar</code> always calls <code>doSearch('world')</code>, regardless of the in-map two-button scope choice. Rationale: typed-text-from-sidebar implies “find anywhere”; the in-map buttons remain the explicit way to constrain to current viewport. Both Enter handlers gate on <code>!e.isComposing &amp;&amp; e.keyCode !== 229</code> so IMEs that emit Enter to commit a candidate don’t submit on the pre-commit value.</p>
+<p><strong>M-2 — Display-only color legend at bottom-center of the map.</strong> <code>.map-color-legend</code> is a static <code>aria-hidden="true"</code> swatch row with <code>pointer-events: none</code>. It mirrors the four-source palette from <code>assets/js/source-palette.js</code> and never affects filter state — the functional toggles remain in <code>#sourceFilter</code> in the sidebar. Sits above Cesium’s bottom-left credits via <code>bottom: 30px</code>.</p>
+<p><strong>M-5 — Permanent samples table; Globe/Table toggle removed.</strong> The biggest delta to this contract:</p>
+<ul>
+<li><code>#globeViewBtn</code>, <code>#tableViewBtn</code>, <code>body.table-view-active</code>, <code>isTableViewActive()</code>, and the <code>?view=</code> URL param are all <strong>gone</strong>.</li>
+<li>The samples table is always visible below the globe. Map height shrinks to <code>clamp(400px, 50vh, 540px)</code> (was 500/65vh/680) so the table fits below without a full-page-height feel.</li>
+<li><code>tableView</code> cell initializes by calling <code>refreshTable()</code> unconditionally on boot.</li>
+<li><code>writeQueryState()</code> does <code>params.delete('view')</code> to canonicalize legacy bookmarked <code>?view=table&amp;...</code> URLs. Caveat: only the next <code>writeQueryState()</code> call strips the param — hash-only writes via <code>buildHash(viewer)</code> (camera moves, sample/cluster click, Share) preserve <code>location.search</code> as-is, so <code>?view=</code> lingers until the user touches a filter, the search box, or anything else that flows through <code>writeQueryState()</code>.</li>
+<li><strong>Table-row click = sample-mode globe click.</strong> Clicking a row in <code>.samples-table tbody tr[data-pid]</code> reuses the same async-selection ceremony as the search-row click handler (and the on-globe sample-point click), with one table-specific addition: the direct hash write. Preconditions before any work: bail if <code>e.target.tagName === 'A'</code> (let inline source-link clicks through), bail if the row has no resolvable sample / no lat-lng, bail if <code>typeof viewer === 'undefined'</code>. Once preconditions pass:
+<ol type="1">
+<li><code>const isStale = freshSelectionToken(viewer)</code> — bump BEFORE any await.</li>
+<li><code>viewer._globeState.selectedPid</code> set; <code>selectedH3</code> cleared.</li>
+<li><code>updateSampleCard({...})</code> populates the sidebar.</li>
+<li><code>viewer.camera.flyTo({...})</code> at altitude <code>50000</code>.</li>
+<li><strong>Table-specific:</strong> <code>history.replaceState(null, '', buildHash(viewer))</code> writes the <code>#pid</code> hash directly. The search-row and globe-point paths do not need this — they rely on <code>zoomWatcher</code>’s camera listener to fold selection into the hash. The table-row path can fire at very-early-boot before <code>zoomWatcher</code> is wired and while <code>_suppressHashWrite</code> is still <code>true</code>, so it writes the hash itself.</li>
+<li>Repaint <code>.selected</code>: remove from any prior <code>tr.selected</code>, add to the clicked row — synchronously, before the async detail query.</li>
+<li>Lazy-load <code>description</code> from <code>wide_url</code> with the pid SQL-escaped via <code>pid.replace(/'/g, "''")</code>; gated on <code>if (isStale()) return</code> before any DOM/state mutation. The error branch also stale-checks. A <code>rowsByPid: Map</code> cached at <code>refreshTable()</code> time gives O(1) per-PID lookup on click.</li>
+</ol></li>
+<li><strong>Asymmetric selection sync.</strong> Clicking a table row updates the globe + sidebar + URL. Clicking a globe point or a search-result row does NOT live-update the table’s <code>.selected</code> class — the table only repaints <code>.selected</code> on the next <code>renderTable()</code>. Treated as acceptable scope for v1; bidirectional highlight is a follow-up.</li>
+</ul>
+<p><strong>State surfaces added by mockup-v1.</strong> See the table additions in §1 (URL params: <code>search_scope</code>; legacy <code>view</code> struck), §3 (DOM-as-state: <code>tr.selected</code>, <code>data-pid</code> on table rows; <code>body.table-view-active</code> struck), and §5 (OJS cell graph: <code>tableView</code> no longer writes <code>view</code> to URL; <code>tableView</code> does write <code>#pid</code> to hash via <code>buildHash</code>).</p>
 <hr>
 </section>
 </section>
@@ -1025,9 +1084,9 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <td>option (C); search renders a side panel + result-pin overlay, but does not alter facet counts</td>
 </tr>
 <tr class="even">
-<td>view mode (globe vs table)</td>
-<td><strong>NO</strong></td>
-<td>the same dataset underlies both; facet counts should not flip when the user toggles view</td>
+<td><del>view mode (globe vs table)</del></td>
+<td><em>moot — mockup-v1 (#200) removed the Globe/Table toggle; both surfaces are permanent</em></td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
