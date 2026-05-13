@@ -150,6 +150,41 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     }
   });
 
+  test('clicking a table row selects the sample, updates #pid hash, and marks the row selected', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+    await waitForBootReady(page);
+
+    // Table loads on boot; wait for at least one data row.
+    const firstRow = page.locator('.samples-table tbody tr[data-pid]').first();
+    await expect(firstRow).toBeVisible({ timeout: 60000 });
+    const pid = await firstRow.getAttribute('data-pid');
+    expect(pid, 'first table row should have data-pid').toBeTruthy();
+
+    // Click the row; label cell may be a link — click the source-badge cell
+    // (first <td>) to avoid intercepting an <a>.
+    await firstRow.locator('td').first().click();
+
+    // .selected class is repainted in place.
+    await expect(firstRow).toHaveClass(/\bselected\b/);
+
+    // viewer._globeState.selectedPid is set to this row's pid.
+    const selectedPid = await page.evaluate(async () => {
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      return v && v._globeState ? v._globeState.selectedPid : null;
+    });
+    expect(selectedPid).toBe(pid);
+
+    // The #pid hash param is written directly by the click handler so it
+    // does not depend on zoomWatcher's listener being wired yet.
+    const hash = await page.evaluate(() => location.hash);
+    expect(hash).toContain(`pid=${encodeURIComponent(pid)}`);
+  });
+
   test('sidebar search input mirrors in-map search input', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`${BASE_URL}${EXPLORER_PATH}`, {

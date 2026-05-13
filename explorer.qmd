@@ -651,6 +651,11 @@ function writeQueryState() {
         else params.delete(key);
     });
 
+    // Canonicalize away the legacy `view` param (issue #200 / M-5 removed
+    // the Globe/Table toggle). A bookmarked `?view=table&...` URL would
+    // otherwise stick through filter/share flows.
+    params.delete('view');
+
     const qs = params.toString();
     const url = `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`;
     if (url !== `${location.pathname}${location.search}${location.hash}`) {
@@ -938,7 +943,7 @@ function updateSamples(samples) {
     el.innerHTML = h;
 }
 
-// === Binary Globe/Table view ===
+// === Samples table (permanent below globe; M-5) ===
 TABLE_PAGE_SIZE = 100
 TABLE_DEFAULT_MAX = 25000
 TABLE_MIN_MAX = 1000
@@ -1402,6 +1407,13 @@ tableView = {
                         destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
                         duration: 1.5
                     });
+                    // Write the #pid hash directly here rather than relying on
+                    // zoomWatcher's listener. zoomWatcher may not be wired yet
+                    // at very-early-boot click time, and even when it is, the
+                    // _suppressHashWrite gate could swallow the write. Calling
+                    // buildHash() unconditionally keeps the URL canonical with
+                    // the selection regardless of init ordering.
+                    history.replaceState(null, '', buildHash(viewer));
                     // Repaint to apply .selected class without a full refresh.
                     tableEl.querySelectorAll('tbody tr.selected').forEach(el => el.classList.remove('selected'));
                     tr.classList.add('selected');
