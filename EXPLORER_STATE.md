@@ -29,7 +29,7 @@ citations.
 
 | field | owner | default | URL repr | hydration site | write-back trigger | validation | notes |
 |-------|-------|---------|----------|----------------|--------------------|------------|-------|
-| `search` | DOM `#sampleSearch` value | omitted | raw string | `applyQueryToSearch()` at start of `phase1` (`:937`) | `writeQueryState()` (`:445-446`) called from `doSearch()` (`:1789`) and from globe/table toggle | trim only; min 2 chars enforced at search time, not in URL | written even on no-result searches |
+| `search` | DOM `#sampleSearch` value (mirrored to `#sampleSearchSidebar`) | omitted | raw string | `applyQueryToSearch()` at start of `phase1` (hydrates both inputs) | `writeQueryState()` called from `doSearch()` | trim only; min 2 chars enforced at search time, not in URL | written even on no-result searches |
 | `sources` | DOM `#sourceFilter` checkboxes | omitted (= all 4 checked) | CSV of `SOURCE_VALUES` ∩ user-checked | `applyQueryToSourceFilter()` at start of `phase1` (`:938`) | `writeQueryState()` from source filter `change` (`:1620`) | filtered by `SOURCE_VALUES` allowlist (`:407`); param removed when all 4 checked (`:449`) | empty (zero checked) renders as `&sources=` and yields `1=0` predicate (`:379`) |
 | `material` | DOM `#materialFilterBody` checkboxes | omitted (= no filter) | CSV of full URIs | `applyQueryToFacetFilters()` at end of `facetFilters` (`:1061`) | `writeQueryState()` from `handleFacetFilterChange` (`:1642`) | none — checkbox `value` already constrained by render | empty checked set ⇒ param removed (`:459`) |
 | `context` | DOM `#contextFilterBody` checkboxes | omitted | CSV of full URIs | same as `material` | same as `material` | none | same |
@@ -138,8 +138,9 @@ This invariant exists because there's no central "selection store" — selection
 Grep for `_urlParamsHydrated` in `explorer.qmd` returns no hits. The flag from
 PR #159's first cut was removed; the new contract is "URL → DOM hydration runs
 exactly once per cell that owns the corresponding DOM, gated only by the OJS
-DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration;
-tableView ⇒ view hydration)."
+DAG (phase1 ⇒ source/search hydration; facetFilters ⇒ facet hydration).
+Mockup-v1 removed the `tableView ⇒ view` hydration step along with the
+`?view=` URL param."
 
 ---
 
@@ -155,7 +156,7 @@ db                 [DuckDBClient.of()]
 viewer             [creates Cesium viewer; reads readHash() once]
   └── phase1       [needs viewer + db; runs URL→DOM hydration for search + sources]
         └── facetFilters    [needs phase1; loads vocab + summaries; sets _baselineCounts; runs URL→DOM hydration for facet checkboxes]
-              ├── tableView    [needs facetFilters; reads view from URL once]
+              ├── tableView    [needs facetFilters; calls refreshTable() unconditionally on boot — no URL hydration]
               └── zoomWatcher  [needs facetFilters; registers ALL change handlers; runs deep-link pid restore]
                     └── perfPanel  [opt-in; needs phase1; renders perf panel if ?perf=1]
 ```
@@ -169,15 +170,16 @@ viewer             [creates Cesium viewer; reads readHash() once]
 | `phase1` | `:930` | `viewer`, `db` | `#sourceFilter` (via hydration); stats DOM | — | — |
 | `facetFilters` | `:979` | `phase1`, `db` | `#materialFilterBody`, `#contextFilterBody`, `#objectTypeFilterBody`; facet count text | — | — |
 | `tableView` | `:1071` | `facetFilters` | `#tableContainer`, `#samplesTable`, `tr.selected` class | prev/next; max input; **change** on all four facet bodies; table-row clicks | `replaceState` via `buildHash` from table-row click (sets `#pid` directly, mirrors sample-mode globe click) |
-| `zoomWatcher` | `:1246` | `phase1`, `facetFilters`, `db` | facet count text; stats; phase msg; sample card; samples list | source filter `change`; material/context/object_type `change`; `camera.changed`; `window` `hashchange`; share button; search button; search input keydown | `pushState` and `replaceState` via `buildHash` (camera, mode flip, sample fly); `replaceState` via `writeQueryState` (filter changes, search submit, share) |
+| `zoomWatcher` | `:1246` | `phase1`, `facetFilters`, `db` | facet count text; stats; phase msg; sample card; samples list | source filter `change`; material/context/object_type `change`; `camera.changed`; `window` `hashchange`; share button; search button; in-map search input keydown; sidebar search input `input` (mirror) and keydown (world-scope submit) | `pushState` and `replaceState` via `buildHash` (camera, mode flip, sample fly); `replaceState` via `writeQueryState` (filter changes, search submit, share) |
 | `perfPanel` | `:1910` | `phase1` | `#perfPanel` floating div | close button | — |
 
 Note that **two cells register `change` listeners on the four facet container
-elements**: `tableView` (`:1233-1236`) marks the table dirty and refreshes if
-visible, and `zoomWatcher` (`:1617`, `:1649-1651`) reloads the globe and
-debounces the cross-filter count refresh. Both listeners fire on every facet
-change; this is intentional (each cell handles its own concerns) but is the
-single most "magical" coupling in the file — touch with care.
+elements**: `tableView` calls `refreshTable()` unconditionally (the table
+is permanent post-mockup-v1, so there's no view gate); `zoomWatcher`
+reloads the globe and debounces the cross-filter count refresh. Both
+listeners fire on every facet change; this is intentional (each cell
+handles its own concerns) but is the single most "magical" coupling in
+the file — touch with care.
 
 ---
 
@@ -408,22 +410,38 @@ The biggest delta to this contract:
 - `tableView` cell initializes by calling `refreshTable()`
   unconditionally on boot.
 - `writeQueryState()` does `params.delete('view')` to canonicalize
-  legacy bookmarked `?view=table&...` URLs on the next URL update.
+  legacy bookmarked `?view=table&...` URLs. Caveat: only the next
+  `writeQueryState()` call strips the param — hash-only writes via
+  `buildHash(viewer)` (camera moves, sample/cluster click, Share)
+  preserve `location.search` as-is, so `?view=` lingers until the
+  user touches a filter, the search box, or anything else that
+  flows through `writeQueryState()`.
 - **Table-row click = sample-mode globe click.** Clicking a row in
-  `.samples-table tbody tr[data-pid]` runs the same five-step ceremony
-  as the search-row click handler (and the on-globe sample-point click):
-  1. `freshSelectionToken(viewer)` bumped BEFORE any await.
+  `.samples-table tbody tr[data-pid]` reuses the same async-selection
+  ceremony as the search-row click handler (and the on-globe
+  sample-point click), with one table-specific addition: the direct
+  hash write. Preconditions before any work: bail if
+  `e.target.tagName === 'A'` (let inline source-link clicks through),
+  bail if the row has no resolvable sample / no lat-lng, bail if
+  `typeof viewer === 'undefined'`. Once preconditions pass:
+  1. `const isStale = freshSelectionToken(viewer)` — bump BEFORE any await.
   2. `viewer._globeState.selectedPid` set; `selectedH3` cleared.
   3. `updateSampleCard({...})` populates the sidebar.
   4. `viewer.camera.flyTo({...})` at altitude `50000`.
-  5. Direct `history.replaceState(null, '', buildHash(viewer))` to
-     write the `#pid` hash — does NOT rely on `zoomWatcher`'s camera
-     listener (which may not be wired at very-early-boot click time
-     and gates on `_suppressHashWrite`).
-  6. Lazy-load `description` from `wide_url`; gated on `if (isStale()) return`.
-  Repaints `.selected` class on the clicked `<tr>` in place. A
-  `rowsByPid: Map` cached at `refreshTable()` time gives O(1) per-PID
-  lookup on click.
+  5. **Table-specific:** `history.replaceState(null, '', buildHash(viewer))`
+     writes the `#pid` hash directly. The search-row and globe-point
+     paths do not need this — they rely on `zoomWatcher`'s camera
+     listener to fold selection into the hash. The table-row path
+     can fire at very-early-boot before `zoomWatcher` is wired and
+     while `_suppressHashWrite` is still `true`, so it writes the
+     hash itself.
+  6. Repaint `.selected`: remove from any prior `tr.selected`, add to
+     the clicked row — synchronously, before the async detail query.
+  7. Lazy-load `description` from `wide_url` with the pid SQL-escaped
+     via `pid.replace(/'/g, "''")`; gated on `if (isStale()) return`
+     before any DOM/state mutation. The error branch also stale-checks.
+  A `rowsByPid: Map` cached at `refreshTable()` time gives O(1)
+  per-PID lookup on click.
 - **Asymmetric selection sync.** Clicking a table row updates the
   globe + sidebar + URL. Clicking a globe point or a search-result
   row does NOT live-update the table's `.selected` class — the table
