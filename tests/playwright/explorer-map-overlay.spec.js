@@ -150,6 +150,63 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     }
   });
 
+  test('table v2: pagination is server-side, pager shows Page X of Y, Next loads new rows', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+    await waitForBootReady(page);
+
+    // First page should be visible with rows.
+    await expect(page.locator('.samples-table tbody tr[data-pid]').first()).toBeVisible({ timeout: 60000 });
+
+    // After COUNT returns, pager text matches "Page 1 of N (1-100 of TOTAL)".
+    const pagerLocator = page.locator('#tablePageInfo');
+    await expect(pagerLocator).toContainText(/Page 1 of \d+/, { timeout: 60000 });
+
+    // Capture first page's first 3 pids.
+    const page1Pids = await page.locator('.samples-table tbody tr[data-pid]')
+      .evaluateAll(rows => rows.slice(0, 3).map(r => r.getAttribute('data-pid')));
+    expect(page1Pids.length).toBe(3);
+
+    // Click Next; pager should update to Page 2 and rows should differ.
+    await page.locator('#tableNext').click();
+    await expect(pagerLocator).toContainText(/Page 2 of \d+/, { timeout: 30000 });
+
+    const page2Pids = await page.locator('.samples-table tbody tr[data-pid]')
+      .evaluateAll(rows => rows.slice(0, 3).map(r => r.getAttribute('data-pid')));
+    expect(page2Pids).not.toEqual(page1Pids);
+
+    // No #maxSamples element exists.
+    await expect(page.locator('#maxSamples')).toHaveCount(0);
+  });
+
+  test('table v2: filter change clears pager text and re-fetches count', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+    await waitForBootReady(page);
+
+    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+/, { timeout: 60000 });
+    const totalAll = await page.locator('#tablePageInfo').textContent();
+
+    // Toggle off one source — total should change.
+    await page.locator('#sourceFilter input[value="OPENCONTEXT"]').uncheck();
+    // aria-busy goes true during the refetch.
+    await expect(page.locator('#tableContainer')).toHaveAttribute('aria-busy', 'true', { timeout: 5000 });
+    // Then back to false once both COUNT and page queries return.
+    await expect(page.locator('#tableContainer')).toHaveAttribute('aria-busy', 'false', { timeout: 60000 });
+
+    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+/, { timeout: 60000 });
+    const totalFiltered = await page.locator('#tablePageInfo').textContent();
+    expect(totalFiltered).not.toBe(totalAll);
+  });
+
   test('clicking a table row selects the sample, updates #pid hash, and marks the row selected', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {

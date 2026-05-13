@@ -258,23 +258,31 @@ format:
         overflow-y: auto;
         line-height: 1.35;
     }
-    .table-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: #555;
-        margin-bottom: 8px;
-    }
-    .table-controls input {
-        width: 92px;
-        padding: 5px 8px;
-        border: 1px solid #b8c7d9;
-        border-radius: 4px;
-        font-size: 13px;
-    }
     #tableContainer {
         margin-bottom: 16px;
+    }
+    /* Stale-while-loading: dim the existing table to ~60% opacity while
+       a new page or filter result is being fetched, so the user can see
+       that the visible rows are not yet current. The CSS-animated spinner
+       in #tableMeta provides the explicit "working" affordance. */
+    #tableContainer.is-loading .samples-table {
+        opacity: 0.6;
+    }
+    .samples-table { transition: opacity 0.15s ease; }
+    .table-loading-spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #cfd8e3;
+        border-top-color: #1565c0;
+        border-radius: 50%;
+        animation: tableSpin 0.8s linear infinite;
+        vertical-align: -2px;
+        margin-right: 6px;
+    }
+    @keyframes tableSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+        .table-loading-spinner { animation: none; border-top-color: #1565c0; }
     }
     .samples-section-heading {
         font-size: 15px;
@@ -477,11 +485,7 @@ Loading H3 global overview...
 </div>
 
 <h3 class="samples-section-heading">Samples table</h3>
-<div id="tableControls" class="table-controls">
-<label for="maxSamples">Max samples</label>
-<input type="number" id="maxSamples" min="1000" max="100000" step="1000" value="25000">
-</div>
-<div id="tableContainer">
+<div id="tableContainer" aria-busy="false">
 <div id="tableMeta" class="table-meta">Loading samples matching the current filters...</div>
 <div id="samplesTable"></div>
 <div class="table-pager">
@@ -944,10 +948,12 @@ function updateSamples(samples) {
 }
 
 // === Samples table (permanent below globe; M-5) ===
+// Server-side pagination via DuckDB LIMIT/OFFSET (table v2, #200 follow-up).
+// Previously the table loaded up to 25,000-100,000 rows up-front and sliced
+// client-side; now each page is a fresh DuckDB query, and a COUNT(*) is
+// issued on filter change so the pager knows the total. The deterministic
+// ORDER BY pid makes "Page N is the same N rows" actually true.
 TABLE_PAGE_SIZE = 100
-TABLE_DEFAULT_MAX = 25000
-TABLE_MIN_MAX = 1000
-TABLE_MAX_MAX = 100000
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -956,19 +962,6 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-}
-
-function clampTableMaxSamples(value) {
-    const n = parseInt(value, 10);
-    if (!Number.isFinite(n)) return TABLE_DEFAULT_MAX;
-    return Math.min(TABLE_MAX_MAX, Math.max(TABLE_MIN_MAX, n));
-}
-
-function getTableMaxSamples() {
-    const el = document.getElementById('maxSamples');
-    const value = clampTableMaxSamples(el ? el.value : TABLE_DEFAULT_MAX);
-    if (el && String(value) !== String(el.value)) el.value = value;
-    return value;
 }
 
 ```
@@ -1306,28 +1299,81 @@ facetFilters = {
 //| echo: false
 //| output: false
 
-// === Table view: paginated sample rows matching current filters ===
+// === Table view: server-side paginated sample rows (table v2) ===
+//
+// Architecture:
+// - One DuckDB query per page (LIMIT TABLE_PAGE_SIZE OFFSET page*size).
+// - One COUNT(*) query per filter change (cached until filters change again).
+// - ORDER BY pid for deterministic page contents.
+// - Stale-while-loading: old rows stay visible (dimmed via .is-loading class)
+//   while the new page/count is fetched in the DuckDB Web Worker. aria-busy
+//   on #tableContainer signals to screen readers.
+// - pageGen invalidates in-flight queries when a newer one starts.
 tableView = {
     if (!facetFilters) return;
 
-    let rows = [];
-    let rowsByPid = new Map();
-    let page = 0;
-    let requestId = 0;
-    let loadedMax = 0;
-    let hitHardCap = false;
+    let totalRows = null;          // null = "unknown / fetching"; set by loadCount()
+    let pageRows = [];             // rows visible right now
+    let pageRowsByPid = new Map(); // pid → row lookup for row-click handler
+    let currentPage = 0;
+    let pageGen = 0;               // bumped on any new load; in-flight callbacks check this
+    let lastPageFailed = false;    // surfaces a sentinel table state when loadPage errors
 
-    const maxInput = document.getElementById('maxSamples');
     const prevBtn = document.getElementById('tablePrev');
     const nextBtn = document.getElementById('tableNext');
     const metaEl = document.getElementById('tableMeta');
     const pageInfoEl = document.getElementById('tablePageInfo');
     const tableEl = document.getElementById('samplesTable');
+    const containerEl = document.getElementById('tableContainer');
 
-    function setMeta(text, loading) {
+    function totalPagesFor(total) {
+        return Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
+    }
+
+    function setLoading(loading) {
+        if (containerEl) {
+            containerEl.classList.toggle('is-loading', loading);
+            containerEl.setAttribute('aria-busy', String(loading));
+        }
+        // Disable pager during load so a user can't queue a second click while
+        // a query is in flight. updatePagerEdges() re-enables based on edge.
+        if (loading) {
+            if (prevBtn) prevBtn.disabled = true;
+            if (nextBtn) nextBtn.disabled = true;
+        } else {
+            updatePagerEdges();
+        }
+    }
+
+    function updatePagerEdges() {
+        if (prevBtn) prevBtn.disabled = currentPage <= 0;
+        if (nextBtn) {
+            // Next is disabled when totalRows is unknown (count query
+            // failed or hasn't returned) — otherwise the button looks
+            // active but its click handler bails, which is confusing.
+            // It's also disabled once we're at the last page.
+            if (totalRows == null) {
+                nextBtn.disabled = true;
+            } else {
+                nextBtn.disabled = currentPage >= totalPagesFor(totalRows) - 1;
+            }
+        }
+    }
+
+    function setMeta(text, isError) {
         if (!metaEl) return;
         metaEl.textContent = text;
-        metaEl.style.color = loading ? '#1565c0' : '#555';
+        metaEl.style.color = isError ? '#c62828' : '#555';
+    }
+
+    function setMetaLoading(text) {
+        if (!metaEl) return;
+        metaEl.innerHTML = `<span class="table-loading-spinner" aria-hidden="true"></span>${escapeHtml(text)}`;
+        metaEl.style.color = '#1565c0';
+        // Clear the pager-info text while loading so it doesn't show
+        // stale "Page 3 of 12 (200-300 of 1,200)" against an incoming
+        // filter change. renderTable() repopulates it after data arrives.
+        if (pageInfoEl) pageInfoEl.textContent = '';
     }
 
     function tableSourceBadge(source) {
@@ -1337,18 +1383,20 @@ tableView = {
     }
 
     function renderTable() {
-        const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
-        page = Math.min(page, totalPages - 1);
-        const start = page * TABLE_PAGE_SIZE;
-        const visible = rows.slice(start, start + TABLE_PAGE_SIZE);
         const selectedPid = (typeof viewer !== 'undefined' && viewer._globeState)
             ? viewer._globeState.selectedPid : null;
 
         if (!tableEl) return;
-        if (visible.length === 0) {
+        if (lastPageFailed) {
+            // Page query failed — show an explicit sentinel rather than
+            // leaving the old, now-inert rows visible (they'd look
+            // clickable but pageRowsByPid is empty, so clicks would
+            // silently no-op).
+            tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>Page query failed. Adjust filters or click Previous/Next to retry.</td></tr></tbody></table></div>';
+        } else if (pageRows.length === 0 && totalRows === 0) {
             tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>No samples match the current filters.</td></tr></tbody></table></div>';
-        } else {
-            const body = visible.map(r => {
+        } else if (pageRows.length > 0) {
+            const body = pageRows.map(r => {
                 const placeParts = r.place_name;
                 const place = Array.isArray(placeParts) && placeParts.length > 0
                     ? placeParts.filter(Boolean).join(' › ')
@@ -1387,7 +1435,7 @@ tableView = {
                 tr.addEventListener('click', async (e) => {
                     if (e.target.tagName === 'A') return; // let label links work
                     const pid = tr.dataset.pid;
-                    const sample = pid ? rowsByPid.get(pid) : null;
+                    const sample = pid ? pageRowsByPid.get(pid) : null;
                     if (!sample || sample.latitude == null || sample.longitude == null) return;
                     if (typeof viewer === 'undefined') return;
 
@@ -1410,9 +1458,7 @@ tableView = {
                     // Write the #pid hash directly here rather than relying on
                     // zoomWatcher's listener. zoomWatcher may not be wired yet
                     // at very-early-boot click time, and even when it is, the
-                    // _suppressHashWrite gate could swallow the write. Calling
-                    // buildHash() unconditionally keeps the URL canonical with
-                    // the selection regardless of init ordering.
+                    // _suppressHashWrite gate could swallow the write.
                     history.replaceState(null, '', buildHash(viewer));
                     // Repaint to apply .selected class without a full refresh.
                     tableEl.querySelectorAll('tbody tr.selected').forEach(el => el.classList.remove('selected'));
@@ -1437,76 +1483,152 @@ tableView = {
             });
         }
 
+        // Pager text. While totalRows is null (count still in flight after a
+        // filter change) we still know the current page index from the
+        // page-data query, so render that without the total.
         if (pageInfoEl) {
-            const first = rows.length === 0 ? 0 : start + 1;
-            const last = Math.min(rows.length, start + visible.length);
-            pageInfoEl.textContent = rows.length === 0
-                ? 'Page 0 of 0'
-                : `Page ${page + 1} of ${totalPages} (${first.toLocaleString()}-${last.toLocaleString()} of ${rows.length.toLocaleString()})`;
+            if (lastPageFailed) {
+                pageInfoEl.textContent = '';
+            } else if (totalRows === 0) {
+                pageInfoEl.textContent = '';
+            } else if (totalRows == null) {
+                pageInfoEl.textContent = pageRows.length > 0
+                    ? `Page ${currentPage + 1}`
+                    : '';
+            } else {
+                const totalPages = totalPagesFor(totalRows);
+                const first = currentPage * TABLE_PAGE_SIZE + 1;
+                const last = Math.min(totalRows, first + pageRows.length - 1);
+                pageInfoEl.textContent = `Page ${currentPage + 1} of ${totalPages} (${first.toLocaleString()}-${last.toLocaleString()} of ${totalRows.toLocaleString()})`;
+            }
         }
-        if (prevBtn) prevBtn.disabled = page <= 0;
-        if (nextBtn) nextBtn.disabled = page >= totalPages - 1;
     }
 
-    async function refreshTable() {
-        const myReq = ++requestId;
-        loadedMax = getTableMaxSamples();
-        page = 0;
-        setMeta(`Loading up to ${loadedMax.toLocaleString()} samples matching filters...`, true);
-
+    async function loadCount(genAtStart) {
         try {
+            // pid IS NOT NULL mirrors the page query so the total counts only
+            // rows that are actually pageable. Without this, totalRows could
+            // overcount and the pager could enable Next past the last
+            // non-null page.
+            const data = await db.query(`
+                SELECT COUNT(*) AS n
+                FROM read_parquet('${lite_url}')
+                WHERE pid IS NOT NULL
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+            `);
+            if (genAtStart !== pageGen) return true;
+            // DuckDB-WASM returns BigInt for COUNT(*); coerce safely.
+            const arr = Array.from(data);
+            totalRows = arr.length > 0 ? Number(arr[0].n) : 0;
+            renderTable();
+            return true;
+        } catch (err) {
+            if (genAtStart !== pageGen) return false;
+            console.error('Table count query failed:', err);
+            // Leave totalRows null; the page query may still succeed and
+            // render rows without a total. The meta line surfaces the error.
+            return false;
+        }
+    }
+
+    async function loadPage(p, genAtStart) {
+        try {
+            const offset = p * TABLE_PAGE_SIZE;
+            // AND pid IS NOT NULL: belt-and-suspenders. pid is the primary
+            // identifier and should never be null, but ORDER BY a column
+            // that contains nulls is only deterministic by accident on a
+            // read-only parquet snapshot. Filter them defensively so the
+            // page contract holds even if a future parquet rev allows nulls.
             const data = await db.query(`
                 SELECT pid, label, source, latitude, longitude, place_name, result_time
                 FROM read_parquet('${lite_url}')
-                WHERE 1=1
+                WHERE pid IS NOT NULL
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
-                LIMIT ${loadedMax}
+                ORDER BY pid
+                LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
             `);
-            if (myReq !== requestId) return;
+            if (genAtStart !== pageGen) return true;
             const arr = Array.from(data);
-            hitHardCap = arr.length === loadedMax;
-            rows = arr;
-            rowsByPid = new Map(arr.map(r => [r.pid, r]));
+            pageRows = arr;
+            pageRowsByPid = new Map(arr.map(r => [r.pid, r]));
+            currentPage = p;
+            lastPageFailed = false;
             renderTable();
-            const capText = hitHardCap
-                ? (loadedMax < TABLE_MAX_MAX
-                    ? ` Max samples cap reached; raise it to inspect more rows.`
-                    : ` Maximum table cap reached.`)
-                : '';
-            setMeta(`Loaded ${rows.length.toLocaleString()} sample rows.${capText}`, false);
+            return true;
         } catch (err) {
-            if (myReq !== requestId) return;
-            console.error('Table query failed:', err);
-            rows = [];
-            rowsByPid = new Map();
+            if (genAtStart !== pageGen) return false;
+            console.error('Table page query failed:', err);
+            pageRows = [];
+            pageRowsByPid = new Map();
+            lastPageFailed = true;
             renderTable();
-            setMeta('Table query failed; adjust filters and try again.', false);
+            return false;
         }
     }
 
-    if (prevBtn) prevBtn.addEventListener('click', () => { page = Math.max(0, page - 1); renderTable(); });
-    if (nextBtn) nextBtn.addEventListener('click', () => { page += 1; renderTable(); });
-    if (maxInput) {
-        maxInput.addEventListener('change', () => {
-            maxInput.value = getTableMaxSamples();
-            refreshTable();
-        });
+    function summaryText() {
+        if (totalRows == null) return 'Counting samples...';
+        if (totalRows === 0) return 'No samples match the current filters.';
+        const total = totalRows.toLocaleString();
+        return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
     }
 
-    function handleTableFilterChange() {
-        refreshTable();
+    async function refreshAll() {
+        const gen = ++pageGen;
+        currentPage = 0;
+        totalRows = null;
+        setLoading(true);
+        setMetaLoading('Loading samples matching filters...');
+        // Stale-while-loading: leave existing pageRows rendered (dimmed by
+        // .is-loading) so the table doesn't blink to empty.
+        const [countOk, pageOk] = await Promise.all([loadCount(gen), loadPage(0, gen)]);
+        if (gen !== pageGen) return;
+        setLoading(false);
+        if (pageOk && countOk) {
+            setMeta(summaryText());
+        } else if (pageOk) {
+            // Count failed but page succeeded: show row totals from the page
+            // alone (caller can still navigate; Next is enabled only if
+            // totalRows is known).
+            setMeta('Page loaded, but the total-row count failed; try again to recompute.', true);
+        } else {
+            setMeta('Table query failed; adjust filters and try again.', true);
+        }
     }
 
-    document.getElementById('sourceFilter')?.addEventListener('change', handleTableFilterChange);
-    document.getElementById('materialFilterBody')?.addEventListener('change', handleTableFilterChange);
-    document.getElementById('contextFilterBody')?.addEventListener('change', handleTableFilterChange);
-    document.getElementById('objectTypeFilterBody')?.addEventListener('change', handleTableFilterChange);
+    async function refreshPage(newPage) {
+        const gen = ++pageGen;
+        setLoading(true);
+        setMetaLoading(`Loading page ${newPage + 1}...`);
+        const ok = await loadPage(newPage, gen);
+        if (gen !== pageGen) return;
+        setLoading(false);
+        if (ok) {
+            setMeta(summaryText());
+        } else {
+            setMeta('Page query failed; adjust filters and try again.', true);
+        }
+    }
 
-    window.refreshSamplesTable = refreshTable;
-    // Table is permanent now — load on boot instead of waiting for a
-    // setView('table') call that no longer exists (issue #200 / M-5).
-    refreshTable();
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+        if (currentPage <= 0) return;
+        refreshPage(currentPage - 1);
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+        if (totalRows == null) return;
+        if (currentPage >= totalPagesFor(totalRows) - 1) return;
+        refreshPage(currentPage + 1);
+    });
+
+    document.getElementById('sourceFilter')?.addEventListener('change', refreshAll);
+    document.getElementById('materialFilterBody')?.addEventListener('change', refreshAll);
+    document.getElementById('contextFilterBody')?.addEventListener('change', refreshAll);
+    document.getElementById('objectTypeFilterBody')?.addEventListener('change', refreshAll);
+
+    window.refreshSamplesTable = refreshAll;
+    refreshAll();
 
     return "active";
 }
