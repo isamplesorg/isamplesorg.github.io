@@ -40,16 +40,18 @@ class TestExplorerLoads:
     def test_has_specimen_type_filter(self, explorer_page):
         assert explorer_page.locator("#objectTypeFilter").count() == 1
 
-    def test_has_max_samples_input(self, explorer_page):
-        # Phase 4: number input bounded 1K-100K, default 25K. Lives in table view controls.
-        max_input = explorer_page.locator("#maxSamples")
-        max_input.wait_for(state="attached", timeout=15000)
-        assert max_input.count() == 1
-
-    def test_has_view_toggle(self, explorer_page):
-        # Phase 4: binary Globe/Table toggle (no List).
-        assert explorer_page.locator("#globeViewBtn").count() == 1
-        assert explorer_page.locator("#tableViewBtn").count() == 1
+    def test_has_permanent_table(self, explorer_page):
+        # PR #200 made the samples table a permanent surface below the globe;
+        # table v2 (#218) replaced the #maxSamples cap with server-side
+        # pagination, so neither #maxSamples nor the old Globe/Table view
+        # toggle (#globeViewBtn / #tableViewBtn) exists anymore.
+        assert explorer_page.locator("#tableContainer").count() == 1
+        assert explorer_page.locator("#samplesTable").count() == 1
+        assert explorer_page.locator("#tablePrev").count() == 1
+        assert explorer_page.locator("#tableNext").count() == 1
+        assert explorer_page.locator("#maxSamples").count() == 0
+        assert explorer_page.locator("#globeViewBtn").count() == 0
+        assert explorer_page.locator("#tableViewBtn").count() == 0
 
 
 class TestExplorerFacetCounts:

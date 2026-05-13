@@ -1362,6 +1362,10 @@ tableView = {
         if (!metaEl) return;
         metaEl.innerHTML = `<span class="table-loading-spinner" aria-hidden="true"></span>${escapeHtml(text)}`;
         metaEl.style.color = '#1565c0';
+        // Clear the pager-info text while loading so it doesn't show
+        // stale "Page 3 of 12 (200-300 of 1,200)" against an incoming
+        // filter change. renderTable() repopulates it after data arrives.
+        if (pageInfoEl) pageInfoEl.textContent = '';
     }
 
     function tableSourceBadge(source) {
@@ -1493,44 +1497,52 @@ tableView = {
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
             `);
-            if (genAtStart !== pageGen) return;
+            if (genAtStart !== pageGen) return true;
             // DuckDB-WASM returns BigInt for COUNT(*); coerce safely.
             const arr = Array.from(data);
             totalRows = arr.length > 0 ? Number(arr[0].n) : 0;
             renderTable();
+            return true;
         } catch (err) {
-            if (genAtStart !== pageGen) return;
+            if (genAtStart !== pageGen) return false;
             console.error('Table count query failed:', err);
             // Leave totalRows null; the page query may still succeed and
             // render rows without a total. The meta line surfaces the error.
+            return false;
         }
     }
 
     async function loadPage(p, genAtStart) {
         try {
             const offset = p * TABLE_PAGE_SIZE;
+            // AND pid IS NOT NULL: belt-and-suspenders. pid is the primary
+            // identifier and should never be null, but ORDER BY a column
+            // that contains nulls is only deterministic by accident on a
+            // read-only parquet snapshot. Filter them defensively so the
+            // page contract holds even if a future parquet rev allows nulls.
             const data = await db.query(`
                 SELECT pid, label, source, latitude, longitude, place_name, result_time
                 FROM read_parquet('${lite_url}')
-                WHERE 1=1
+                WHERE pid IS NOT NULL
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                 ORDER BY pid
                 LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
             `);
-            if (genAtStart !== pageGen) return;
+            if (genAtStart !== pageGen) return true;
             const arr = Array.from(data);
             pageRows = arr;
             pageRowsByPid = new Map(arr.map(r => [r.pid, r]));
             currentPage = p;
             renderTable();
+            return true;
         } catch (err) {
-            if (genAtStart !== pageGen) return;
+            if (genAtStart !== pageGen) return false;
             console.error('Table page query failed:', err);
             pageRows = [];
             pageRowsByPid = new Map();
-            setMeta('Table query failed; adjust filters and try again.', true);
             renderTable();
+            return false;
         }
     }
 
@@ -1549,20 +1561,33 @@ tableView = {
         setMetaLoading('Loading samples matching filters...');
         // Stale-while-loading: leave existing pageRows rendered (dimmed by
         // .is-loading) so the table doesn't blink to empty.
-        await Promise.all([loadCount(gen), loadPage(0, gen)]);
+        const [countOk, pageOk] = await Promise.all([loadCount(gen), loadPage(0, gen)]);
         if (gen !== pageGen) return;
         setLoading(false);
-        setMeta(summaryText());
+        if (pageOk && countOk) {
+            setMeta(summaryText());
+        } else if (pageOk) {
+            // Count failed but page succeeded: show row totals from the page
+            // alone (caller can still navigate; Next is enabled only if
+            // totalRows is known).
+            setMeta('Page loaded, but the total-row count failed; try again to recompute.', true);
+        } else {
+            setMeta('Table query failed; adjust filters and try again.', true);
+        }
     }
 
     async function refreshPage(newPage) {
         const gen = ++pageGen;
         setLoading(true);
         setMetaLoading(`Loading page ${newPage + 1}...`);
-        await loadPage(newPage, gen);
+        const ok = await loadPage(newPage, gen);
         if (gen !== pageGen) return;
         setLoading(false);
-        setMeta(summaryText());
+        if (ok) {
+            setMeta(summaryText());
+        } else {
+            setMeta('Page query failed; adjust filters and try again.', true);
+        }
     }
 
     if (prevBtn) prevBtn.addEventListener('click', () => {

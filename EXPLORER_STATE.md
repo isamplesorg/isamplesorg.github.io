@@ -92,18 +92,22 @@ predates the store-on-`viewer` pattern and isn't worth migrating.
 | ~~`document.body.classList['table-view-active']`~~ | _removed in mockup-v1 (#200)_ | — | — | The view marker class is gone with the Globe/Table toggle. The samples table is permanent below the globe; `isTableViewActive()` and `setView()` were deleted |
 | `data-facet`, `data-value` on `.facet-row` and `.facet-count` | facet selectors for in-place count mutation | rendered in `renderFilter` and the static source legend | `applyFacetCounts()` | rebuilding the HTML would lose mid-interaction selections; `data-*` attrs are why we mutate counts in place |
 | `data-lat`, `data-lng`, `data-pid` on `.sample-row` | click-to-fly payload for search/nearby results | rendered in `doSearch()` | search-row click handler | the nearby-samples list does not have data-* today; click-to-fly only works from the search list |
-| `data-pid` on `.samples-table tbody tr` | click-to-select payload for the permanent table | rendered in `tableView` `renderTable()` | table-row click handler (same ceremony as the search-row click — see §6 mockup-v1 addendum) | per-PID lookup uses `rowsByPid: Map` cached at `refreshTable()` time; not the DOM |
-| `tr.selected` on `.samples-table` | "this row is the current sample selection" visual marker | table-row click handler (`add`); next click on a different row (`remove`); next `renderTable()` reflects current `viewer._globeState.selectedPid` | CSS only | derived; do not read. The globe → table direction is *not* live (only repaints on the next refresh) |
+| `data-pid` on `.samples-table tbody tr` | click-to-select payload for the permanent table | rendered in `tableView` `renderTable()` | table-row click handler (same ceremony as the search-row click — see §6 mockup-v1 addendum) | per-PID lookup uses `pageRowsByPid: Map` cached per page at `loadPage()` time (table v2); only the current page is in memory |
+| `tr.selected` on `.samples-table` | "this row is the current sample selection" visual marker | table-row click handler (`add`); next click on a different row (`remove`); next `renderTable()` reflects current `viewer._globeState.selectedPid` | CSS only | derived; do not read. The globe → table direction is *not* live (only repaints on the next page load) |
+| `#tableContainer.is-loading` + `aria-busy="true"` | "table query in flight" marker | `setLoading(true/false)` in `tableView` (table v2) | CSS dim (`.samples-table` opacity 0.6); screen readers | added in table v2 follow-up to PR #200 for stale-while-loading UX |
 | `.recomputing` on `.facet-count` | transient "loading" styling during cross-filter recompute | `markFacetCountsRecomputing()` (`:570`) | `applyFacetCounts()` clears it (`:562`) | UI-only; not state in the persistence sense |
 | `.zero` on `.facet-row` | "value has zero count under current filters" styling | `applyFacetCounts()` (`:565`) | CSS only | derived; do not read |
 | `.disabled` on `#sourceFilter .legend-item` | unchecked source visual | `updateSourceLegendState()` (`:395-400`) | CSS only | derived from checkbox `checked`; do not read |
 
 DOM input elements (the four facet checkbox bodies + `#sampleSearch` +
-`#sampleSearchSidebar` + `#maxSamples`) are the **source of truth** for
-`getActiveSources()`, `getCheckedValues()`, `getTableMaxSamples()`, and
-the search input. SQL builders read `#sampleSearch` directly each call.
-`#sampleSearchSidebar` is kept in lock-step with `#sampleSearch` via a
-two-way `input`-event mirror (see §6 mockup-v1 addendum).
+`#sampleSearchSidebar`) are the **source of truth** for
+`getActiveSources()`, `getCheckedValues()`, and the search input. SQL
+builders read `#sampleSearch` directly each call. `#sampleSearchSidebar`
+is kept in lock-step with `#sampleSearch` via a two-way `input`-event
+mirror (see §6 mockup-v1 addendum). The `#maxSamples` input and the
+`getTableMaxSamples()` / `clampTableMaxSamples()` helpers were removed
+in the table v2 follow-up — the samples table now paginates server-side
+via DuckDB `LIMIT/OFFSET` instead of fetching up to 25K rows up-front.
 
 ---
 
@@ -453,6 +457,49 @@ The biggest delta to this contract:
 `tr.selected`, `data-pid` on table rows; `body.table-view-active`
 struck), and §5 (OJS cell graph: `tableView` no longer writes `view`
 to URL; `tableView` does write `#pid` to hash via `buildHash`).
+
+### Table v2 addendum: server-side pagination ([#218](https://github.com/isamplesorg/isamplesorg.github.io/issues/218), 2026-05)
+
+Follow-up to the mockup-v1 PR. The samples table no longer fetches up
+to 25,000-100,000 rows up-front and paginates client-side. Each page
+is now its own DuckDB `LIMIT TABLE_PAGE_SIZE OFFSET page*size` query,
+plus one `COUNT(*)` query per filter change. Removes the `#maxSamples`
+input + `getTableMaxSamples()` / `clampTableMaxSamples()` helpers
+entirely.
+
+**Determinism.** `ORDER BY pid` plus `WHERE pid IS NOT NULL` makes
+"Page N is the same N rows" actually true. Defensive null filter even
+though `pid` is the canonical identifier and should never be null —
+ORDER BY a column that contains nulls is only deterministic by
+accident on a read-only parquet snapshot.
+
+**Stale-while-loading.** When filters change or the user pages, the
+existing rendered rows stay visible (dimmed to 60% opacity via
+`#tableContainer.is-loading .samples-table`) while the new page+count
+queries run in the DuckDB Web Worker. A CSS-only spinner appears in
+`#tableMeta`. `#tableContainer[aria-busy="true"]` exposes the state
+to screen readers. The pager-info text is cleared during load to
+avoid showing stale "Page 3 of 12 (200-300 of 1,200)" against an
+incoming filter set. `prefers-reduced-motion` is honored.
+
+**Race protection.** A `pageGen` integer is bumped on every refresh.
+Inner queries (`loadCount`, `loadPage`) compare `gen === pageGen`
+BEFORE mutating `pageRows`, `pageRowsByPid`, `totalRows`, or
+`currentPage`. `refreshAll` / `refreshPage` re-check the same gen
+before clearing the loading state, so a faster newer load can win
+the visible UI even if an older load resolves last.
+
+**Error handling.** `loadCount` and `loadPage` both return
+`true`/`false` to the orchestrator. If page load fails, the meta line
+shows "Page query failed; adjust filters and try again." If count
+fails but page succeeds, the meta line says so explicitly. This
+replaces the round-1 codex finding where the error meta was being
+overwritten by the success summary.
+
+**Click handler unchanged.** Table-row click uses
+`pageRowsByPid: Map` (renamed from `rowsByPid`) which is now scoped
+to the current page only — sufficient since only the visible page has
+clickable rows.
 
 ---
 
