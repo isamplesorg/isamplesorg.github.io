@@ -1317,6 +1317,7 @@ tableView = {
     let pageRowsByPid = new Map(); // pid → row lookup for row-click handler
     let currentPage = 0;
     let pageGen = 0;               // bumped on any new load; in-flight callbacks check this
+    let lastPageFailed = false;    // surfaces a sentinel table state when loadPage errors
 
     const prevBtn = document.getElementById('tablePrev');
     const nextBtn = document.getElementById('tableNext');
@@ -1347,8 +1348,15 @@ tableView = {
     function updatePagerEdges() {
         if (prevBtn) prevBtn.disabled = currentPage <= 0;
         if (nextBtn) {
-            const atEnd = totalRows != null && currentPage >= totalPagesFor(totalRows) - 1;
-            nextBtn.disabled = atEnd;
+            // Next is disabled when totalRows is unknown (count query
+            // failed or hasn't returned) — otherwise the button looks
+            // active but its click handler bails, which is confusing.
+            // It's also disabled once we're at the last page.
+            if (totalRows == null) {
+                nextBtn.disabled = true;
+            } else {
+                nextBtn.disabled = currentPage >= totalPagesFor(totalRows) - 1;
+            }
         }
     }
 
@@ -1379,7 +1387,13 @@ tableView = {
             ? viewer._globeState.selectedPid : null;
 
         if (!tableEl) return;
-        if (pageRows.length === 0 && totalRows === 0) {
+        if (lastPageFailed) {
+            // Page query failed — show an explicit sentinel rather than
+            // leaving the old, now-inert rows visible (they'd look
+            // clickable but pageRowsByPid is empty, so clicks would
+            // silently no-op).
+            tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>Page query failed. Adjust filters or click Previous/Next to retry.</td></tr></tbody></table></div>';
+        } else if (pageRows.length === 0 && totalRows === 0) {
             tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>No samples match the current filters.</td></tr></tbody></table></div>';
         } else if (pageRows.length > 0) {
             const body = pageRows.map(r => {
@@ -1473,7 +1487,9 @@ tableView = {
         // filter change) we still know the current page index from the
         // page-data query, so render that without the total.
         if (pageInfoEl) {
-            if (totalRows === 0) {
+            if (lastPageFailed) {
+                pageInfoEl.textContent = '';
+            } else if (totalRows === 0) {
                 pageInfoEl.textContent = '';
             } else if (totalRows == null) {
                 pageInfoEl.textContent = pageRows.length > 0
@@ -1490,10 +1506,14 @@ tableView = {
 
     async function loadCount(genAtStart) {
         try {
+            // pid IS NOT NULL mirrors the page query so the total counts only
+            // rows that are actually pageable. Without this, totalRows could
+            // overcount and the pager could enable Next past the last
+            // non-null page.
             const data = await db.query(`
                 SELECT COUNT(*) AS n
                 FROM read_parquet('${lite_url}')
-                WHERE 1=1
+                WHERE pid IS NOT NULL
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
             `);
@@ -1534,6 +1554,7 @@ tableView = {
             pageRows = arr;
             pageRowsByPid = new Map(arr.map(r => [r.pid, r]));
             currentPage = p;
+            lastPageFailed = false;
             renderTable();
             return true;
         } catch (err) {
@@ -1541,6 +1562,7 @@ tableView = {
             console.error('Table page query failed:', err);
             pageRows = [];
             pageRowsByPid = new Map();
+            lastPageFailed = true;
             renderTable();
             return false;
         }

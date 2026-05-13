@@ -467,11 +467,14 @@ plus one `COUNT(*)` query per filter change. Removes the `#maxSamples`
 input + `getTableMaxSamples()` / `clampTableMaxSamples()` helpers
 entirely.
 
-**Determinism.** `ORDER BY pid` plus `WHERE pid IS NOT NULL` makes
-"Page N is the same N rows" actually true. Defensive null filter even
-though `pid` is the canonical identifier and should never be null —
-ORDER BY a column that contains nulls is only deterministic by
-accident on a read-only parquet snapshot.
+**Determinism.** `ORDER BY pid` plus `WHERE pid IS NOT NULL` on
+**both** the page query and the `COUNT(*)` query makes "Page N is
+the same N rows" actually true, and keeps the count consistent with
+what's pageable. Defensive null filter even though `pid` is the
+canonical identifier and should never be null — ORDER BY a column
+that contains nulls is only deterministic by accident on a read-only
+parquet snapshot, and an unfiltered count could over-enable
+pagination past the last non-null page.
 
 **Stale-while-loading.** When filters change or the user pages, the
 existing rendered rows stay visible (dimmed to 60% opacity via
@@ -490,11 +493,22 @@ before clearing the loading state, so a faster newer load can win
 the visible UI even if an older load resolves last.
 
 **Error handling.** `loadCount` and `loadPage` both return
-`true`/`false` to the orchestrator. If page load fails, the meta line
-shows "Page query failed; adjust filters and try again." If count
-fails but page succeeds, the meta line says so explicitly. This
-replaces the round-1 codex finding where the error meta was being
-overwritten by the success summary.
+`true`/`false` to the orchestrator. Three distinct error surfaces:
+
+- **Page load failed:** meta shows the error, `lastPageFailed` flag
+  flips on, and `renderTable()` swaps the table body for an explicit
+  "Page query failed. Adjust filters or click Previous/Next to retry."
+  sentinel row (rather than leaving the old, now-inert rows visible
+  with a cleared `pageRowsByPid`). Pager text is cleared.
+- **Count failed but page succeeded:** rows render, but `totalRows`
+  stays `null`. Pager text shows "Page N" without the total. The
+  Next button is disabled while `totalRows == null` (so a user can't
+  click it into a no-op handler).
+- **Both failed:** generic error meta; sentinel table state.
+
+This replaces the round-1 codex finding where the error meta was
+being overwritten by the success summary, and the round-2 finding
+where a failed page left old DOM visible but pageRowsByPid empty.
 
 **Click handler unchanged.** Table-row click uses
 `pageRowsByPid: Map` (renamed from `rowsByPid`) which is now scoped
