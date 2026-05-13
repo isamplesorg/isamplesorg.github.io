@@ -55,11 +55,37 @@ format:
         }
         .globe-layout { grid-template-columns: 1fr; }
     }
+    .map-wrap {
+        position: relative;
+        width: 100%;
+    }
     #cesiumContainer {
         width: 100%;
         height: var(--explorer-map-height);
         min-height: 0;
         aspect-ratio: auto;
+    }
+    .map-search-overlay {
+        position: absolute;
+        top: 8px;
+        left: 50px; /* clear of Cesium toolbar column at left: 5px */
+        width: min(480px, calc(100% - 60px));
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(4px);
+        padding: 8px 10px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .map-search-overlay .search-results { color: #333; }
+    @media (max-width: 900px) {
+        .map-search-overlay {
+            left: 8px;
+            width: calc(100% - 16px);
+        }
     }
     .side-panel {
         display: flex;
@@ -309,19 +335,6 @@ Circle size = log(sample count). Color = dominant data source.
      and adding paragraph margins to control rows. -->
 ```{=html}
 <div class="explorer-controls">
-<div class="search-bar">
-<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
-</div>
-<div class="search-actions">
-<button id="searchAreaBtn" type="button" title="Limit results to samples within the current map view">Search Selected Areas</button>
-<button id="searchWorldBtn" type="button" title="Search all samples globally">Search Entire World</button>
-</div>
-<div class="search-help">
-Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
-<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
-</div>
-<div id="searchResults" class="search-results" aria-live="polite"></div>
-
 <div class="view-toolbar">
 <div class="view-toggle" role="group" aria-label="View mode">
 <button id="globeViewBtn" type="button" class="active" aria-pressed="true">Globe</button>
@@ -337,7 +350,23 @@ Searches labels, descriptions, and place names. <strong>First search can take 10
 
 ```{=html}
 <div class="globe-layout">
+<div class="map-wrap">
 <div id="cesiumContainer"></div>
+<div class="map-search-overlay">
+<div class="search-bar">
+<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
+</div>
+<div class="search-actions">
+<button id="searchAreaBtn" type="button" title="Limit results to samples within the current map view">Search Selected Areas</button>
+<button id="searchWorldBtn" type="button" title="Search all samples globally">Search Entire World</button>
+</div>
+<div class="search-help">
+Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
+<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
+</div>
+<div id="searchResults" class="search-results" aria-live="polite"></div>
+</div>
+</div>
 <div class="side-panel">
 <div class="panel-section">
 <div class="stats-compact">
