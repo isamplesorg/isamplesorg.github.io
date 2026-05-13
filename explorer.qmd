@@ -96,6 +96,51 @@ format:
             flex-direction: column;
         }
     }
+    /* Display-only color legend at bottom-center of the map. The functional
+       source filter (toggle/show-hide) lives in #sourceFilter in the side
+       panel. aria-hidden="true" on this element keeps screen readers from
+       reading the palette twice. Sits above Cesium's bottom-left credits. */
+    .map-color-legend {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: #333;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(4px);
+        padding: 6px 12px;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        pointer-events: none; /* never intercept globe interaction */
+        white-space: nowrap;
+    }
+    .map-color-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .map-color-legend .map-color-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    @media (max-width: 600px) {
+        /* Below 600px the four-source row gets cramped — let it wrap and
+           shrink the padding so it doesn't crowd the map. */
+        .map-color-legend {
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            max-width: calc(100% - 24px);
+            justify-content: center;
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+    }
     .sidebar-search { display: flex; flex-direction: column; gap: 4px; }
     .sidebar-search input {
         width: 100%;
@@ -388,6 +433,12 @@ Searches labels, descriptions, and place names. <strong>First search can take 10
 <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
 </div>
 <div id="searchResults" class="search-results" aria-live="polite"></div>
+</div>
+<div class="map-color-legend" aria-hidden="true">
+<span><span class="map-color-legend-dot" style="background:#3366CC"></span>SESAR</span>
+<span><span class="map-color-legend-dot" style="background:#DC3912"></span>OpenContext</span>
+<span><span class="map-color-legend-dot" style="background:#109618"></span>GEOME</span>
+<span><span class="map-color-legend-dot" style="background:#FF9900"></span>Smithsonian</span>
 </div>
 </div>
 <div class="side-panel">
