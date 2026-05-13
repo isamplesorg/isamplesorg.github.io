@@ -248,6 +248,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#state-inventory-addendum-for-c" id="toc-state-inventory-addendum-for-c" class="nav-link" data-scroll-target="#state-inventory-addendum-for-c"><span class="header-section-number">1.6.6</span> State-inventory addendum for (C)</a></li>
   <li><a href="#light-path-addendum-two-button-scope-selection-178-2026-05-08" id="toc-light-path-addendum-two-button-scope-selection-178-2026-05-08" class="nav-link" data-scroll-target="#light-path-addendum-two-button-scope-selection-178-2026-05-08"><span class="header-section-number">1.6.7</span> Light-path addendum: two-button scope selection (#178, 2026-05-08)</a></li>
   <li><a href="#mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05" id="toc-mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05" class="nav-link" data-scroll-target="#mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05"><span class="header-section-number">1.6.8</span> Mockup-v1 addendum: in-map overlay, sidebar mirror, permanent table (#200, 2026-05)</a></li>
+  <li><a href="#table-v2-addendum-server-side-pagination-218-2026-05" id="toc-table-v2-addendum-server-side-pagination-218-2026-05" class="nav-link" data-scroll-target="#table-v2-addendum-server-side-pagination-218-2026-05"><span class="header-section-number">1.6.9</span> Table v2 addendum: server-side pagination (#218, 2026-05)</a></li>
   </ul></li>
   <li><a href="#facet-count-contract" id="toc-facet-count-contract" class="nav-link" data-scroll-target="#facet-count-contract"><span class="header-section-number">1.7</span> 7. Facet-count contract</a></li>
   <li><a href="#out-of-scope" id="toc-out-of-scope" class="nav-link" data-scroll-target="#out-of-scope"><span class="header-section-number">1.8</span> 8. Out of scope</a></li>
@@ -568,30 +569,37 @@ ul.task-list li input[type="checkbox"] {
 <td>click-to-select payload for the permanent table</td>
 <td>rendered in <code>tableView</code> <code>renderTable()</code></td>
 <td>table-row click handler (same ceremony as the search-row click — see §6 mockup-v1 addendum)</td>
-<td>per-PID lookup uses <code>rowsByPid: Map</code> cached at <code>refreshTable()</code> time; not the DOM</td>
+<td>per-PID lookup uses <code>pageRowsByPid: Map</code> cached per page at <code>loadPage()</code> time (table v2); only the current page is in memory</td>
 </tr>
 <tr class="odd">
 <td><code>tr.selected</code> on <code>.samples-table</code></td>
 <td>“this row is the current sample selection” visual marker</td>
 <td>table-row click handler (<code>add</code>); next click on a different row (<code>remove</code>); next <code>renderTable()</code> reflects current <code>viewer._globeState.selectedPid</code></td>
 <td>CSS only</td>
-<td>derived; do not read. The globe → table direction is <em>not</em> live (only repaints on the next refresh)</td>
+<td>derived; do not read. The globe → table direction is <em>not</em> live (only repaints on the next page load)</td>
 </tr>
 <tr class="even">
+<td><code>#tableContainer.is-loading</code> + <code>aria-busy="true"</code></td>
+<td>“table query in flight” marker</td>
+<td><code>setLoading(true/false)</code> in <code>tableView</code> (table v2)</td>
+<td>CSS dim (<code>.samples-table</code> opacity 0.6); screen readers</td>
+<td>added in table v2 follow-up to PR #200 for stale-while-loading UX</td>
+</tr>
+<tr class="odd">
 <td><code>.recomputing</code> on <code>.facet-count</code></td>
 <td>transient “loading” styling during cross-filter recompute</td>
 <td><code>markFacetCountsRecomputing()</code> (<code>:570</code>)</td>
 <td><code>applyFacetCounts()</code> clears it (<code>:562</code>)</td>
 <td>UI-only; not state in the persistence sense</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>.zero</code> on <code>.facet-row</code></td>
 <td>“value has zero count under current filters” styling</td>
 <td><code>applyFacetCounts()</code> (<code>:565</code>)</td>
 <td>CSS only</td>
 <td>derived; do not read</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>.disabled</code> on <code>#sourceFilter .legend-item</code></td>
 <td>unchecked source visual</td>
 <td><code>updateSourceLegendState()</code> (<code>:395-400</code>)</td>
@@ -600,7 +608,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#sampleSearchSidebar</code> + <code>#maxSamples</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, <code>getTableMaxSamples()</code>, and the search input. SQL builders read <code>#sampleSearch</code> directly each call. <code>#sampleSearchSidebar</code> is kept in lock-step with <code>#sampleSearch</code> via a two-way <code>input</code>-event mirror (see §6 mockup-v1 addendum).</p>
+<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#sampleSearchSidebar</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, and the search input. SQL builders read <code>#sampleSearch</code> directly each call. <code>#sampleSearchSidebar</code> is kept in lock-step with <code>#sampleSearch</code> via a two-way <code>input</code>-event mirror (see §6 mockup-v1 addendum). The <code>#maxSamples</code> input and the <code>getTableMaxSamples()</code> / <code>clampTableMaxSamples()</code> helpers were removed in the table v2 follow-up — the samples table now paginates server-side via DuckDB <code>LIMIT/OFFSET</code> instead of fetching up to 25K rows up-front.</p>
 <hr>
 </section>
 <section id="widget-internal-state-viewer.-window." class="level2" data-number="1.4">
@@ -1048,6 +1056,21 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <li><strong>Asymmetric selection sync.</strong> Clicking a table row updates the globe + sidebar + URL. Clicking a globe point or a search-result row does NOT live-update the table’s <code>.selected</code> class — the table only repaints <code>.selected</code> on the next <code>renderTable()</code>. Treated as acceptable scope for v1; bidirectional highlight is a follow-up.</li>
 </ul>
 <p><strong>State surfaces added by mockup-v1.</strong> See the table additions in §1 (URL params: <code>search_scope</code>; legacy <code>view</code> struck), §3 (DOM-as-state: <code>tr.selected</code>, <code>data-pid</code> on table rows; <code>body.table-view-active</code> struck), and §5 (OJS cell graph: <code>tableView</code> no longer writes <code>view</code> to URL; <code>tableView</code> does write <code>#pid</code> to hash via <code>buildHash</code>).</p>
+</section>
+<section id="table-v2-addendum-server-side-pagination-218-2026-05" class="level3" data-number="1.6.9">
+<h3 data-number="1.6.9" data-anchor-id="table-v2-addendum-server-side-pagination-218-2026-05"><span class="header-section-number">1.6.9</span> Table v2 addendum: server-side pagination (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/218">#218</a>, 2026-05)</h3>
+<p>Follow-up to the mockup-v1 PR. The samples table no longer fetches up to 25,000-100,000 rows up-front and paginates client-side. Each page is now its own DuckDB <code>LIMIT TABLE_PAGE_SIZE OFFSET page*size</code> query, plus one <code>COUNT(*)</code> query per filter change. Removes the <code>#maxSamples</code> input + <code>getTableMaxSamples()</code> / <code>clampTableMaxSamples()</code> helpers entirely.</p>
+<p><strong>Determinism.</strong> <code>ORDER BY pid</code> plus <code>WHERE pid IS NOT NULL</code> on <strong>both</strong> the page query and the <code>COUNT(*)</code> query makes “Page N is the same N rows” actually true, and keeps the count consistent with what’s pageable. Defensive null filter even though <code>pid</code> is the canonical identifier and should never be null — ORDER BY a column that contains nulls is only deterministic by accident on a read-only parquet snapshot, and an unfiltered count could over-enable pagination past the last non-null page.</p>
+<p><strong>Stale-while-loading.</strong> When filters change or the user pages, the existing rendered rows stay visible (dimmed to 60% opacity via <code>#tableContainer.is-loading .samples-table</code>) while the new page+count queries run in the DuckDB Web Worker. A CSS-only spinner appears in <code>#tableMeta</code>. <code>#tableContainer[aria-busy="true"]</code> exposes the state to screen readers. The pager-info text is cleared during load to avoid showing stale “Page 3 of 12 (200-300 of 1,200)” against an incoming filter set. <code>prefers-reduced-motion</code> is honored.</p>
+<p><strong>Race protection.</strong> A <code>pageGen</code> integer is bumped on every refresh. Inner queries (<code>loadCount</code>, <code>loadPage</code>) compare <code>gen === pageGen</code> BEFORE mutating <code>pageRows</code>, <code>pageRowsByPid</code>, <code>totalRows</code>, or <code>currentPage</code>. <code>refreshAll</code> / <code>refreshPage</code> re-check the same gen before clearing the loading state, so a faster newer load can win the visible UI even if an older load resolves last.</p>
+<p><strong>Error handling.</strong> <code>loadCount</code> and <code>loadPage</code> both return <code>true</code>/<code>false</code> to the orchestrator. Three distinct error surfaces:</p>
+<ul>
+<li><strong>Page load failed:</strong> meta shows the error, <code>lastPageFailed</code> flag flips on, and <code>renderTable()</code> swaps the table body for an explicit “Page query failed. Adjust filters or click Previous/Next to retry.” sentinel row (rather than leaving the old, now-inert rows visible with a cleared <code>pageRowsByPid</code>). Pager text is cleared.</li>
+<li><strong>Count failed but page succeeded:</strong> rows render, but <code>totalRows</code> stays <code>null</code>. Pager text shows “Page N” without the total. The Next button is disabled while <code>totalRows == null</code> (so a user can’t click it into a no-op handler).</li>
+<li><strong>Both failed:</strong> generic error meta; sentinel table state.</li>
+</ul>
+<p>This replaces the round-1 codex finding where the error meta was being overwritten by the success summary, and the round-2 finding where a failed page left old DOM visible but pageRowsByPid empty.</p>
+<p><strong>Click handler unchanged.</strong> Table-row click uses <code>pageRowsByPid: Map</code> (renamed from <code>rowsByPid</code>) which is now scoped to the current page only — sufficient since only the visible page has clickable rows.</p>
 <hr>
 </section>
 </section>
