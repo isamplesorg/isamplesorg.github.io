@@ -13,7 +13,15 @@ DOM checkboxes is the source of truth for facet state inside SQL builders;
 the URL is the source of truth across reloads.
 
 All file:line references below are against `explorer.qmd` at commit
-`94e7674` (the tree this doc is being written against).
+`94e7674` (the tree this doc was originally written against). The
+inventory has had targeted edits as later changes land — most notably
+the **mockup-v1 PR** ([#200](https://github.com/isamplesorg/isamplesorg.github.io/issues/200))
+which removed the Globe/Table view toggle, relocated search into an
+in-map overlay, added a sidebar search input that mirrors the in-map
+one, and made the samples table a permanent surface below the globe.
+See §6 "Mockup-v1 addendum" for the full delta. Line numbers may not
+match exactly; the contract is the source of truth, not the line
+citations.
 
 ---
 
@@ -26,8 +34,9 @@ All file:line references below are against `explorer.qmd` at commit
 | `material` | DOM `#materialFilterBody` checkboxes | omitted (= no filter) | CSV of full URIs | `applyQueryToFacetFilters()` at end of `facetFilters` (`:1061`) | `writeQueryState()` from `handleFacetFilterChange` (`:1642`) | none — checkbox `value` already constrained by render | empty checked set ⇒ param removed (`:459`) |
 | `context` | DOM `#contextFilterBody` checkboxes | omitted | CSV of full URIs | same as `material` | same as `material` | none | same |
 | `object_type` | DOM `#objectTypeFilterBody` checkboxes | omitted | CSV of full URIs | same as `material` | same as `material` | none | same |
-| `view` | `body.classList.contains('table-view-active')` | omitted (= globe) | `table` only; absent ⇒ globe | `tableView` cell reads `params.get('view')` (`:1239-1240`) and calls `setView(...)` with `updateUrl=false` | `writeQueryState()` from `setView(mode, true)` via globe/table button clicks (`:1217-1218`, `:1210`) | only `table` is honored (`:1240`) | `writeQueryState()` reads body class, not `viewer.*` |
-| `page` | inner closure `let page = 0` in `tableView` (`:1080`) | not in URL | — | — | resets to 0 on `refreshTable()` (`:1163`); ±1 on prev/next (`:1219-1220`) | clamped to `[0, totalPages-1]` (`:1112`) | **#163 item 6** — table page is intentionally not URL state today; if/when added, must coexist with the cross-filter contract below |
+| ~~`view`~~ | _removed in mockup-v1 (#200)_ | — | — | — | — | — | The Globe/Table toggle is gone — the samples table is now permanent below the globe. `writeQueryState()` does `params.delete('view')` to canonicalize legacy bookmarks. See §6 "Mockup-v1 addendum" |
+| `search_scope` | local closure `_searchScope` in `zoomWatcher` | omitted (= `world`) | `area` only; absent ⇒ world | `_searchScope` hydrated at top of `zoomWatcher` from `params.get('search_scope')` | `persistSearchScope()` from `doSearch()` and button clicks | exact match `'area'` | sidebar `#sampleSearchSidebar` Enter always submits `world`, never `area` — see §6 mockup-v1 addendum |
+| `page` | inner closure `let page = 0` in `tableView` | not in URL | — | — | resets to 0 on `refreshTable()`; ±1 on prev/next | clamped to `[0, totalPages-1]` | **#163 item 6** — table page is intentionally not URL state today; if/when added, must coexist with the cross-filter contract below |
 | `perf` | — (read-only feature flag) | omitted | `1` to enable | `perfPanel` cell reads (`:1921-1922`) | never written | `=== '1'` exact match | never round-tripped; safe to add other tail params |
 
 ### Quarto site-search collision
@@ -80,17 +89,21 @@ predates the store-on-`viewer` pattern and isn't worth migrating.
 
 | location | role | written by | read by | notes |
 |----------|------|------------|---------|-------|
-| `document.body.classList['table-view-active']` | view marker (table vs globe) | `setView()` in `tableView` (`:1198`) | `writeQueryState()` (`:462`); `isTableViewActive()` (`:755`) | URL `view` param is **derived** from this class, not the other way around |
-| `data-facet`, `data-value` on `.facet-row` and `.facet-count` | facet selectors for in-place count mutation | rendered in `renderFilter` (`:1053`) and the static source legend (`:270-273`) | `applyFacetCounts()` (`:553-565`) | rebuilding the HTML would lose mid-interaction selections; `data-*` attrs are why we mutate counts in place |
-| `data-lat`, `data-lng`, `data-pid` on `.sample-row` | click-to-fly payload for search/nearby results | rendered in `doSearch()` (`:1822`) and `updateSamples()` not currently using data-* (only the search list does) | search-row click handler (`:1832-1845`) | the nearby-samples list does not have data-* today; click-to-fly only works from the search list |
+| ~~`document.body.classList['table-view-active']`~~ | _removed in mockup-v1 (#200)_ | — | — | The view marker class is gone with the Globe/Table toggle. The samples table is permanent below the globe; `isTableViewActive()` and `setView()` were deleted |
+| `data-facet`, `data-value` on `.facet-row` and `.facet-count` | facet selectors for in-place count mutation | rendered in `renderFilter` and the static source legend | `applyFacetCounts()` | rebuilding the HTML would lose mid-interaction selections; `data-*` attrs are why we mutate counts in place |
+| `data-lat`, `data-lng`, `data-pid` on `.sample-row` | click-to-fly payload for search/nearby results | rendered in `doSearch()` | search-row click handler | the nearby-samples list does not have data-* today; click-to-fly only works from the search list |
+| `data-pid` on `.samples-table tbody tr` | click-to-select payload for the permanent table | rendered in `tableView` `renderTable()` | table-row click handler (same ceremony as the search-row click — see §6 mockup-v1 addendum) | per-PID lookup uses `rowsByPid: Map` cached at `refreshTable()` time; not the DOM |
+| `tr.selected` on `.samples-table` | "this row is the current sample selection" visual marker | table-row click handler (`add`); next click on a different row (`remove`); next `renderTable()` reflects current `viewer._globeState.selectedPid` | CSS only | derived; do not read. The globe → table direction is *not* live (only repaints on the next refresh) |
 | `.recomputing` on `.facet-count` | transient "loading" styling during cross-filter recompute | `markFacetCountsRecomputing()` (`:570`) | `applyFacetCounts()` clears it (`:562`) | UI-only; not state in the persistence sense |
 | `.zero` on `.facet-row` | "value has zero count under current filters" styling | `applyFacetCounts()` (`:565`) | CSS only | derived; do not read |
 | `.disabled` on `#sourceFilter .legend-item` | unchecked source visual | `updateSourceLegendState()` (`:395-400`) | CSS only | derived from checkbox `checked`; do not read |
 
-DOM input elements (the four facet checkbox bodies + `#sampleSearch` + `#maxSamples`)
-are the **source of truth** for `getActiveSources()`, `getCheckedValues()`,
-`getTableMaxSamples()`, and the search input. SQL builders read these
-directly each call.
+DOM input elements (the four facet checkbox bodies + `#sampleSearch` +
+`#sampleSearchSidebar` + `#maxSamples`) are the **source of truth** for
+`getActiveSources()`, `getCheckedValues()`, `getTableMaxSamples()`, and
+the search input. SQL builders read `#sampleSearch` directly each call.
+`#sampleSearchSidebar` is kept in lock-step with `#sampleSearch` via a
+two-way `input`-event mirror (see §6 mockup-v1 addendum).
 
 ---
 
@@ -155,7 +168,7 @@ viewer             [creates Cesium viewer; reads readHash() once]
 | `viewer` | `:773` | — | `#cesiumContainer` mounts globe | `scene.postRender`×2; mouse-move; left-click | `pushState` (sample/cluster click) |
 | `phase1` | `:930` | `viewer`, `db` | `#sourceFilter` (via hydration); stats DOM | — | — |
 | `facetFilters` | `:979` | `phase1`, `db` | `#materialFilterBody`, `#contextFilterBody`, `#objectTypeFilterBody`; facet count text | — | — |
-| `tableView` | `:1071` | `facetFilters` | `#globe-layout`, `#tableContainer`, `#tableControls`, `#samplesTable`, `body.classList` | globe/table buttons; prev/next; max input; **change** on all four facet bodies | `replaceState` via `writeQueryState` (`view` flip) |
+| `tableView` | `:1071` | `facetFilters` | `#tableContainer`, `#samplesTable`, `tr.selected` class | prev/next; max input; **change** on all four facet bodies; table-row clicks | `replaceState` via `buildHash` from table-row click (sets `#pid` directly, mirrors sample-mode globe click) |
 | `zoomWatcher` | `:1246` | `phase1`, `facetFilters`, `db` | facet count text; stats; phase msg; sample card; samples list | source filter `change`; material/context/object_type `change`; `camera.changed`; `window` `hashchange`; share button; search button; search input keydown | `pushState` and `replaceState` via `buildHash` (camera, mode flip, sample fly); `replaceState` via `writeQueryState` (filter changes, search submit, share) |
 | `perfPanel` | `:1910` | `phase1` | `#perfPanel` floating div | close button | — |
 
@@ -336,6 +349,93 @@ A future Heavy revisit may rethink (A) global-filter semantics if usage
 data shows users *expect* the map and facets to update with search.
 That decision is deferred until #170-#172 land.
 
+### Mockup-v1 addendum: in-map overlay, sidebar mirror, permanent table ([#200](https://github.com/isamplesorg/isamplesorg.github.io/issues/200), 2026-05)
+
+A coordinated UI refactor aligning the explorer with Hana's wireframe.
+Built as a single PR sequenced into independently revertable commits.
+All changes are UI-relocation / surface-additive; the data/query
+contract is unchanged from the (C) decision + #178 light path above.
+
+**M-1A — Search controls relocated into an in-map overlay.** The
+search input, the two scope buttons (Search Selected Areas / Search
+Entire World), help text, and `#searchResults` count moved from a
+top-of-page `.explorer-controls` block into `.map-search-overlay`,
+absolutely positioned over `#cesiumContainer` inside a new `.map-wrap`
+wrapper. All element IDs preserved so existing handlers in `zoomWatcher`
+and the `writeQueryState()` contract bind unchanged. Overlay
+positioning clears the Cesium toolbar column (`left: 50px`) and the
+base-layer picker dropdown wins z-stack (`z-index: 1100` vs overlay's
+`1000`).
+
+**M-1B — Sidebar open-text search input that mirrors the in-map one.**
+A second input `#sampleSearchSidebar` lives at the top of `.side-panel`.
+Two-way `input`-event mirror keeps both inputs in lock-step as a single
+logical query term:
+
+- Typing in `#sampleSearchSidebar` propagates to `#sampleSearch`.
+- Typing in `#sampleSearch` propagates to `#sampleSearchSidebar`.
+- Mirror handlers guard against feedback loops by comparing values
+  before assignment; programmatic `.value =` does not fire `input`,
+  so the comparison is sufficient (no debounce flag).
+- `applyQueryToSearch()` hydrates *both* inputs from the `?search=`
+  URL param.
+- `writeQueryState()` still reads from `#sampleSearch` only — mirror
+  parity makes the choice arbitrary.
+
+**Sidebar Enter = world scope (Option B).** Enter on
+`#sampleSearchSidebar` always calls `doSearch('world')`, regardless of
+the in-map two-button scope choice. Rationale: typed-text-from-sidebar
+implies "find anywhere"; the in-map buttons remain the explicit way to
+constrain to current viewport. Both Enter handlers gate on
+`!e.isComposing && e.keyCode !== 229` so IMEs that emit Enter to
+commit a candidate don't submit on the pre-commit value.
+
+**M-2 — Display-only color legend at bottom-center of the map.**
+`.map-color-legend` is a static `aria-hidden="true"` swatch row with
+`pointer-events: none`. It mirrors the four-source palette from
+`assets/js/source-palette.js` and never affects filter state — the
+functional toggles remain in `#sourceFilter` in the sidebar. Sits
+above Cesium's bottom-left credits via `bottom: 30px`.
+
+**M-5 — Permanent samples table; Globe/Table toggle removed.**
+The biggest delta to this contract:
+
+- `#globeViewBtn`, `#tableViewBtn`, `body.table-view-active`,
+  `isTableViewActive()`, and the `?view=` URL param are all **gone**.
+- The samples table is always visible below the globe. Map height
+  shrinks to `clamp(400px, 50vh, 540px)` (was 500/65vh/680) so the
+  table fits below without a full-page-height feel.
+- `tableView` cell initializes by calling `refreshTable()`
+  unconditionally on boot.
+- `writeQueryState()` does `params.delete('view')` to canonicalize
+  legacy bookmarked `?view=table&...` URLs on the next URL update.
+- **Table-row click = sample-mode globe click.** Clicking a row in
+  `.samples-table tbody tr[data-pid]` runs the same five-step ceremony
+  as the search-row click handler (and the on-globe sample-point click):
+  1. `freshSelectionToken(viewer)` bumped BEFORE any await.
+  2. `viewer._globeState.selectedPid` set; `selectedH3` cleared.
+  3. `updateSampleCard({...})` populates the sidebar.
+  4. `viewer.camera.flyTo({...})` at altitude `50000`.
+  5. Direct `history.replaceState(null, '', buildHash(viewer))` to
+     write the `#pid` hash — does NOT rely on `zoomWatcher`'s camera
+     listener (which may not be wired at very-early-boot click time
+     and gates on `_suppressHashWrite`).
+  6. Lazy-load `description` from `wide_url`; gated on `if (isStale()) return`.
+  Repaints `.selected` class on the clicked `<tr>` in place. A
+  `rowsByPid: Map` cached at `refreshTable()` time gives O(1) per-PID
+  lookup on click.
+- **Asymmetric selection sync.** Clicking a table row updates the
+  globe + sidebar + URL. Clicking a globe point or a search-result
+  row does NOT live-update the table's `.selected` class — the table
+  only repaints `.selected` on the next `renderTable()`. Treated as
+  acceptable scope for v1; bidirectional highlight is a follow-up.
+
+**State surfaces added by mockup-v1.** See the table additions in §1
+(URL params: `search_scope`; legacy `view` struck), §3 (DOM-as-state:
+`tr.selected`, `data-pid` on table rows; `body.table-view-active`
+struck), and §5 (OJS cell graph: `tableView` no longer writes `view`
+to URL; `tableView` does write `#pid` to hash via `buildHash`).
+
 ---
 
 ## 7. Facet-count contract
@@ -347,7 +447,7 @@ The cross-filter rule (codified by Codex in #158, restated here):
 | other facet selections | **YES** | counts answer "if I add this value, how many samples would match all OTHER active filters plus this one"; that's the drill-out signal users want |
 | viewport (camera bounds) | **NO** | counts are global. Viewport-scoped counts would couple facet UI to camera state, contradict the "facets describe the dataset" reading, and require re-querying on every camera change |
 | `?search=` text query | **NO** | option (C); search renders a side panel + result-pin overlay, but does not alter facet counts |
-| view mode (globe vs table) | **NO** | the same dataset underlies both; facet counts should not flip when the user toggles view |
+| ~~view mode (globe vs table)~~ | _moot — mockup-v1 (#200) removed the Globe/Table toggle; both surfaces are permanent_ | — |
 
 Exposed via `applyFacetCounts(facetKey, countsMap)` (`:551-567`):
 
