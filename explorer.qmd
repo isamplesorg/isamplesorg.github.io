@@ -742,26 +742,30 @@ function facetFilterSQL() {
     return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
 }
 
-// Build a viewport-bbox SQL predicate for the given lat/lng column names,
-// using the viewer's current view rectangle. Returns null when the camera
-// can't produce a rectangle (off-globe; rare). Callers must decide what
-// to do with null — fall back to world (search) vs. show empty state
-// (table). NEVER fall back to no-bbox-filter for surfaces that are
-// labeled "in view" — that recreates the bug shape PR #219 was filed for.
+// Shared viewport-padding factor. The samples table (PR #219), the
+// point-mode sample loader, and the cluster-mode "Samples in View"
+// stat (issue #221 round 2) all expand the raw view rectangle by this
+// factor so the three surfaces agree on a single "in view" predicate.
+// Pass 0 (or undefined) for exact-viewport semantics (area search).
+const VIEWPORT_PAD_FACTOR = 0.3;
+
+// Return the viewer's current view rectangle, optionally padded in each
+// direction by `padFactor × span`, normalized into [-180, 180] longitude
+// (wrapping the antimeridian when needed). Returns null when the camera
+// can't produce a rectangle (off-globe; rare).
 //
-// padFactor expands the rectangle in each direction by N × span. This
-// matches the 30% padding the point-mode sample loader applies (so the
-// table's "samples in view" count agrees with the phase-msg count).
-// Pass 0 for exact-viewport semantics (area search uses this).
+// Dateline crossing: when the returned `west > east` the rectangle
+// wraps the antimeridian; callers that filter sample longitudes must
+// split on that boundary.
 //
-// Dateline crossing: when west > east the rectangle wraps the antimeridian;
-// emit two longitude ranges OR'd together.
-//
-// Used by:
-// - tableView (PR #219): scopes the samples table to the current viewport
-//   so "samples in view" in cluster/point mode == table row count.
-// - doSearch('area') (#178 light path): exact-viewport text search.
-function viewerBboxSQL(latCol, lngCol, padFactor) {
+// Normalization after padding:
+//   - Total span >= 360 → padding consumed the globe; return west=-180,
+//     east=180 (no wrap).
+//   - west < -180 or east > 180 → rotate the endpoint by 360 so it
+//     lands in [-180, 180]. A non-wrapping rect like west=170, east=179
+//     padded 30% becomes (167.3, 181.7); east wraps to -178.3 and the
+//     `west > east` flag flips on.
+function paddedViewportBounds(padFactor) {
     if (typeof viewer === 'undefined') return null;
     const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
     if (!rect) return null;
@@ -778,20 +782,8 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
         north += latPad;
         west -= lngPad;
         east += lngPad;
-        // Clamp latitude to valid degrees so the SQL doesn't BETWEEN past
-        // the poles (no data there but it reads odd).
         if (south < -90) south = -90;
         if (north > 90) north = 90;
-        // Normalize longitude after padding. Three cases:
-        //   - Total span >= 360: padding consumed the globe; emit a full
-        //     longitude predicate (BETWEEN -180 AND 180, no wrap).
-        //   - west pushed below -180 OR east above 180: rotate the
-        //     endpoint by 360 so it lands in [-180, 180]. The wrap-detect
-        //     below picks up the new wrap state. This is the case Codex
-        //     PR #219 round 2 caught: a non-wrapping rect like
-        //     west=170, east=179 padded by 30% becomes (167.3, 181.7);
-        //     east must wrap to -178.3 and the predicate must split into
-        //     two ranges.
         const totalSpan = originalSpan + 2 * lngPad;
         if (totalSpan >= 360) {
             west = -180; east = 180;
@@ -800,6 +792,24 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
             if (east > 180) east -= 360;
         }
     }
+    return { south, north, west, east };
+}
+
+// Build a viewport-bbox SQL predicate for the given lat/lng column names.
+// Returns null when the camera can't produce a rectangle (off-globe; rare).
+// Callers must decide what to do with null — fall back to world (search)
+// vs. show empty state (table). NEVER fall back to no-bbox-filter for
+// surfaces that are labeled "in view" — that recreates the bug shape
+// PR #219 was filed for.
+//
+// Used by:
+// - tableView (PR #219): scopes the samples table to the current viewport
+//   so "samples in view" in cluster/point mode == table row count.
+// - doSearch('area') (#178 light path): exact-viewport text search.
+function viewerBboxSQL(latCol, lngCol, padFactor) {
+    const b = paddedViewportBounds(padFactor);
+    if (!b) return null;
+    const { south, north, west, east } = b;
     const lngClause = (west > east)
         ? `(${lngCol} BETWEEN ${west} AND 180 OR ${lngCol} BETWEEN -180 AND ${east})`
         : `${lngCol} BETWEEN ${west} AND ${east}`;
@@ -1646,11 +1656,6 @@ tableView = {
         return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
     }
 
-    // 0.3 = match the 30% padding the point-mode sample loader uses, so
-    // the table's row count agrees with the "Samples in View" stat box
-    // and phase-msg count.
-    const BBOX_PAD_FACTOR = 0.3;
-
     async function refreshAll() {
         const gen = ++pageGen;
         currentPage = 0;
@@ -1659,7 +1664,9 @@ tableView = {
         // page queries see the same predicate. The user could pan during
         // the async window; pageGen invalidates the in-flight result, and
         // moveEnd will fire a fresh refreshAll() against the new bbox.
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        // VIEWPORT_PAD_FACTOR is shared with the point-mode loader and the
+        // cluster-mode "Samples in View" stat (issue #221).
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
         if (bboxSQL === null) {
             // No view rectangle (rare; off-globe). Don't fall back to a
             // no-bbox query — that's the bug shape that motivated PR #219.
@@ -1697,7 +1704,7 @@ tableView = {
         // Page navigation uses the CURRENT viewport bbox. Counting was
         // already done against this bbox (refreshAll caches totalRows for
         // the filter+bbox combo until the next refreshAll).
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
         if (bboxSQL === null) {
             // User somehow paged while the camera went off-globe; refresh
             // re-scopes properly.
@@ -1860,9 +1867,11 @@ zoomWatcher = {
             performance.measure(`r${res}`, `r${res}-s`, `r${res}-e`);
             const elapsed = performance.getEntriesByName(`r${res}`).pop().duration;
 
-            // Show viewport count immediately
-            const bounds = getViewportBounds();
-            const inView = countInViewport(bounds);
+            // Show viewport count immediately. Use the same padded bbox
+            // the samples table queries with (issue #221 round 2), so the
+            // cluster-mode "Samples in View" stat agrees with the table's
+            // row total.
+            const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
             updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
             // Skip the "Zoom closer for individual samples." done message when
             // the caller is about to transition into point mode itself — the
@@ -1927,9 +1936,11 @@ zoomWatcher = {
         const bounds = getViewportBounds();
         if (!bounds) return;
 
-        // Fetch with 30% padding for smooth panning
-        const latPad = (bounds.north - bounds.south) * 0.3;
-        const lngPad = (bounds.east - bounds.west) * 0.3;
+        // Fetch with VIEWPORT_PAD_FACTOR (30%) padding so this fetch
+        // covers the same bbox as the table query and the cluster-mode
+        // "Samples in View" count (issue #221).
+        const latPad = (bounds.north - bounds.south) * VIEWPORT_PAD_FACTOR;
+        const lngPad = (bounds.east - bounds.west) * VIEWPORT_PAD_FACTOR;
         const padded = {
             south: bounds.south - latPad,
             north: bounds.north + latPad,
@@ -2077,9 +2088,9 @@ zoomWatcher = {
         // the stale-request guard on completion.
         ++requestId;
 
-        // Restore cluster stats with viewport count
-        const bounds = getViewportBounds();
-        const inView = countInViewport(bounds);
+        // Restore cluster stats with viewport count. Use the padded bbox
+        // shared with the samples table (issue #221 round 2).
+        const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
         const total = viewer._clusterTotal;
         if (total) {
             updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), '—', 'Clusters in View / Loaded', 'Samples in View');
@@ -2489,10 +2500,12 @@ zoomWatcher = {
                 }
             }
 
-            // Update viewport cluster count (cluster mode only; point mode already shows viewport count)
+            // Update viewport cluster count (cluster mode only; point mode
+            // already shows viewport count). Padded bbox so the cluster
+            // "Samples in View" stat matches the samples table row total
+            // (issue #221 round 2).
             if (getMode() === 'cluster' && viewer._clusterData) {
-                const bounds = getViewportBounds();
-                const inView = countInViewport(bounds);
+                const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
                 const total = viewer._clusterTotal;
                 if (total) {
                     updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
