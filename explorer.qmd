@@ -742,26 +742,30 @@ function facetFilterSQL() {
     return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
 }
 
-// Build a viewport-bbox SQL predicate for the given lat/lng column names,
-// using the viewer's current view rectangle. Returns null when the camera
-// can't produce a rectangle (off-globe; rare). Callers must decide what
-// to do with null — fall back to world (search) vs. show empty state
-// (table). NEVER fall back to no-bbox-filter for surfaces that are
-// labeled "in view" — that recreates the bug shape PR #219 was filed for.
+// Shared viewport-padding factor. The samples table (PR #219), the
+// point-mode sample loader, and the cluster-mode "Samples in View"
+// stat (issue #221 round 2) all expand the raw view rectangle by this
+// factor so the three surfaces agree on a single "in view" predicate.
+// Pass 0 (or undefined) for exact-viewport semantics (area search).
+const VIEWPORT_PAD_FACTOR = 0.3;
+
+// Return the viewer's current view rectangle, optionally padded in each
+// direction by `padFactor × span`, normalized into [-180, 180] longitude
+// (wrapping the antimeridian when needed). Returns null when the camera
+// can't produce a rectangle (off-globe; rare).
 //
-// padFactor expands the rectangle in each direction by N × span. This
-// matches the 30% padding the point-mode sample loader applies (so the
-// table's "samples in view" count agrees with the phase-msg count).
-// Pass 0 for exact-viewport semantics (area search uses this).
+// Dateline crossing: when the returned `west > east` the rectangle
+// wraps the antimeridian; callers that filter sample longitudes must
+// split on that boundary.
 //
-// Dateline crossing: when west > east the rectangle wraps the antimeridian;
-// emit two longitude ranges OR'd together.
-//
-// Used by:
-// - tableView (PR #219): scopes the samples table to the current viewport
-//   so "samples in view" in cluster/point mode == table row count.
-// - doSearch('area') (#178 light path): exact-viewport text search.
-function viewerBboxSQL(latCol, lngCol, padFactor) {
+// Normalization after padding:
+//   - Total span >= 360 → padding consumed the globe; return west=-180,
+//     east=180 (no wrap).
+//   - west < -180 or east > 180 → rotate the endpoint by 360 so it
+//     lands in [-180, 180]. A non-wrapping rect like west=170, east=179
+//     padded 30% becomes (167.3, 181.7); east wraps to -178.3 and the
+//     `west > east` flag flips on.
+function paddedViewportBounds(padFactor) {
     if (typeof viewer === 'undefined') return null;
     const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
     if (!rect) return null;
@@ -778,20 +782,8 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
         north += latPad;
         west -= lngPad;
         east += lngPad;
-        // Clamp latitude to valid degrees so the SQL doesn't BETWEEN past
-        // the poles (no data there but it reads odd).
         if (south < -90) south = -90;
         if (north > 90) north = 90;
-        // Normalize longitude after padding. Three cases:
-        //   - Total span >= 360: padding consumed the globe; emit a full
-        //     longitude predicate (BETWEEN -180 AND 180, no wrap).
-        //   - west pushed below -180 OR east above 180: rotate the
-        //     endpoint by 360 so it lands in [-180, 180]. The wrap-detect
-        //     below picks up the new wrap state. This is the case Codex
-        //     PR #219 round 2 caught: a non-wrapping rect like
-        //     west=170, east=179 padded by 30% becomes (167.3, 181.7);
-        //     east must wrap to -178.3 and the predicate must split into
-        //     two ranges.
         const totalSpan = originalSpan + 2 * lngPad;
         if (totalSpan >= 360) {
             west = -180; east = 180;
@@ -800,6 +792,24 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
             if (east > 180) east -= 360;
         }
     }
+    return { south, north, west, east };
+}
+
+// Build a viewport-bbox SQL predicate for the given lat/lng column names.
+// Returns null when the camera can't produce a rectangle (off-globe; rare).
+// Callers must decide what to do with null — fall back to world (search)
+// vs. show empty state (table). NEVER fall back to no-bbox-filter for
+// surfaces that are labeled "in view" — that recreates the bug shape
+// PR #219 was filed for.
+//
+// Used by:
+// - tableView (PR #219): scopes the samples table to the current viewport
+//   so "samples in view" in cluster/point mode == table row count.
+// - doSearch('area') (#178 light path): exact-viewport text search.
+function viewerBboxSQL(latCol, lngCol, padFactor) {
+    const b = paddedViewportBounds(padFactor);
+    if (!b) return null;
+    const { south, north, west, east } = b;
     const lngClause = (west > east)
         ? `(${lngCol} BETWEEN ${west} AND 180 OR ${lngCol} BETWEEN -180 AND ${east})`
         : `${lngCol} BETWEEN ${west} AND ${east}`;
@@ -1646,11 +1656,6 @@ tableView = {
         return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
     }
 
-    // 0.3 = match the 30% padding the point-mode sample loader uses, so
-    // the table's row count agrees with the "Samples in View" stat box
-    // and phase-msg count.
-    const BBOX_PAD_FACTOR = 0.3;
-
     async function refreshAll() {
         const gen = ++pageGen;
         currentPage = 0;
@@ -1659,7 +1664,9 @@ tableView = {
         // page queries see the same predicate. The user could pan during
         // the async window; pageGen invalidates the in-flight result, and
         // moveEnd will fire a fresh refreshAll() against the new bbox.
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        // VIEWPORT_PAD_FACTOR is shared with the point-mode loader and the
+        // cluster-mode "Samples in View" stat (issue #221).
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
         if (bboxSQL === null) {
             // No view rectangle (rare; off-globe). Don't fall back to a
             // no-bbox query — that's the bug shape that motivated PR #219.
@@ -1697,7 +1704,7 @@ tableView = {
         // Page navigation uses the CURRENT viewport bbox. Counting was
         // already done against this bbox (refreshAll caches totalRows for
         // the filter+bbox combo until the next refreshAll).
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
         if (bboxSQL === null) {
             // User somehow paged while the camera went off-globe; refresh
             // re-scopes properly.
@@ -1795,11 +1802,12 @@ zoomWatcher = {
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
-    // Viewport cache: avoid re-querying same area
-    let cachedBounds = null;       // { south, north, west, east }
-    let cachedData = null;         // array of rows
-    let cachedTotalCount = null;   // real in-view count (issue #206)
-    let cachedCapReached = false;  // whether the LIMIT was hit (issue #206)
+    // No viewport cache: the samples table (PR #219) re-queries on every
+    // `moveEnd` against the current padded bbox, so reusing a cached
+    // `cachedTotalCount` here would have point-mode show a stale count
+    // while the table shows the fresh one (issue #221). Both surfaces
+    // now re-fetch in lockstep — small perf cost on rapid panning, but
+    // the two counts no longer diverge.
 
     // --- H3 cluster loading (existing logic) ---
     //
@@ -1859,9 +1867,11 @@ zoomWatcher = {
             performance.measure(`r${res}`, `r${res}-s`, `r${res}-e`);
             const elapsed = performance.getEntriesByName(`r${res}`).pop().duration;
 
-            // Show viewport count immediately
-            const bounds = getViewportBounds();
-            const inView = countInViewport(bounds);
+            // Show viewport count immediately. Use the same padded bbox
+            // the samples table queries with (issue #221 round 2), so the
+            // cluster-mode "Samples in View" stat agrees with the table's
+            // row total.
+            const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
             updateStats(`H3 Res${res}`, `${inView.clusters.toLocaleString()} / ${data.length.toLocaleString()}`, inView.samples.toLocaleString(), `${(elapsed/1000).toFixed(1)}s`, 'Clusters in View / Loaded', 'Samples in View');
             // Skip the "Zoom closer for individual samples." done message when
             // the caller is about to transition into point mode itself — the
@@ -1920,35 +1930,17 @@ zoomWatcher = {
         return { clusters, samples };
     }
 
-    // --- Check if viewport is within cached bounds ---
-    function isWithinCache(bounds) {
-        if (!cachedBounds || !bounds) return false;
-        return bounds.south >= cachedBounds.south &&
-               bounds.north <= cachedBounds.north &&
-               bounds.west >= cachedBounds.west &&
-               bounds.east <= cachedBounds.east;
-    }
-
     // --- Load individual samples for current viewport ---
     async function loadViewportSamples() {
         const myReqId = ++requestId;
         const bounds = getViewportBounds();
         if (!bounds) return;
 
-        // If viewport is within cached area, just re-render from cache.
-        // Re-apply the cached count/cap state to the stat boxes so panning
-        // inside the padded cache window doesn't leave stale figures on
-        // screen (#206 Codex review).
-        if (isWithinCache(bounds) && cachedData) {
-            renderSamplePoints(cachedData, bounds);
-            const total = cachedTotalCount != null ? cachedTotalCount : cachedData.length;
-            updateStats('Samples', cachedData.length, total, null, 'Samples Rendered', 'Samples in View');
-            return;
-        }
-
-        // Fetch with 30% padding for smooth panning
-        const latPad = (bounds.north - bounds.south) * 0.3;
-        const lngPad = (bounds.east - bounds.west) * 0.3;
+        // Fetch with VIEWPORT_PAD_FACTOR (30%) padding so this fetch
+        // covers the same bbox as the table query and the cluster-mode
+        // "Samples in View" count (issue #221).
+        const latPad = (bounds.north - bounds.south) * VIEWPORT_PAD_FACTOR;
+        const lngPad = (bounds.east - bounds.west) * VIEWPORT_PAD_FACTOR;
         const padded = {
             south: bounds.south - latPad,
             north: bounds.north + latPad,
@@ -2020,26 +2012,20 @@ zoomWatcher = {
                 }
             }
 
-            // Cache the padded bounds + data + count state so cache-hit
-            // pans preserve the same stat-box display (Codex review).
-            cachedBounds = padded;
-            cachedData = Array.from(data);
-            cachedTotalCount = totalCount;
-            cachedCapReached = capReached;
-
-            renderSamplePoints(cachedData, bounds);
+            const samples = Array.from(data);
+            renderSamplePoints(samples, bounds);
 
             // Stat boxes: LEFT (sPoints) always shows rendered count under
             // "Samples Rendered", RIGHT (sSamples) always shows real in-view
             // total under "Samples in View". Stable labels even when both
             // numbers are equal (Codex review preference: avoids label
             // flipping as the user zooms across the cap boundary).
-            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
+            updateStats('Samples', samples.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
             const phaseMsg = capReached
-                ? `${totalCount.toLocaleString()} samples in view (showing ${cachedData.length.toLocaleString()} — zoom in for more). Click one for details.`
-                : `${cachedData.length.toLocaleString()} individual samples. Click one for details.`;
+                ? `${totalCount.toLocaleString()} samples in view (showing ${samples.length.toLocaleString()} — zoom in for more). Click one for details.`
+                : `${samples.length.toLocaleString()} individual samples. Click one for details.`;
             updatePhaseMsg(phaseMsg, 'done');
-            console.log(`Point mode: rendered ${cachedData.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
+            console.log(`Point mode: rendered ${samples.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
             if (myReqId !== requestId) return;
@@ -2093,14 +2079,18 @@ zoomWatcher = {
         viewer.samplePoints.removeAll();
         viewer.h3Points.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
-        cachedBounds = null;
-        cachedData = null;
-        cachedTotalCount = null;
-        cachedCapReached = false;
 
-        // Restore cluster stats with viewport count
-        const bounds = getViewportBounds();
-        const inView = countInViewport(bounds);
+        // Invalidate any in-flight `loadViewportSamples()` so a slow sample
+        // query that returns after we've already restored cluster stats
+        // can't repaint the stat boxes / phase-msg with stale point-mode
+        // numbers (Codex review of #221). Without this bump, a pending
+        // sample query's renderSamplePoints + updateStats would still pass
+        // the stale-request guard on completion.
+        ++requestId;
+
+        // Restore cluster stats with viewport count. Use the padded bbox
+        // shared with the samples table (issue #221 round 2).
+        const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
         const total = viewer._clusterTotal;
         if (total) {
             updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), '—', 'Clusters in View / Loaded', 'Samples in View');
@@ -2367,9 +2357,6 @@ zoomWatcher = {
                 // sample index…").
                 if (applied) await tryEnterPointModeIfNeeded();
             } else {
-                cachedBounds = null;
-                cachedTotalCount = null;
-                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -2434,9 +2421,6 @@ zoomWatcher = {
             if (facetNote) facetNote.style.display = (active && getMode() === 'cluster') ? 'block' : 'none';
             writeQueryState();
             if (getMode() === 'point') {
-                cachedBounds = null;
-                cachedTotalCount = null;
-                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -2498,8 +2482,11 @@ zoomWatcher = {
                     if (applied) await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'point') {
-                // Already in point mode — update viewport samples
-                loadViewportSamples();
+                // Already in point mode — viewport sample refresh is driven
+                // by the `moveEnd` listener below (issue #221), in lockstep
+                // with the samples table. `camera.changed` is debounced
+                // (`percentageChanged = 0.1`) so sub-10% pans don't fire
+                // here; the `moveEnd` path catches every settled move.
             } else {
                 // Cluster mode — check if resolution should change
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
@@ -2513,10 +2500,12 @@ zoomWatcher = {
                 }
             }
 
-            // Update viewport cluster count (cluster mode only; point mode already shows viewport count)
+            // Update viewport cluster count (cluster mode only; point mode
+            // already shows viewport count). Padded bbox so the cluster
+            // "Samples in View" stat matches the samples table row total
+            // (issue #221 round 2).
             if (getMode() === 'cluster' && viewer._clusterData) {
-                const bounds = getViewportBounds();
-                const inView = countInViewport(bounds);
+                const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
                 const total = viewer._clusterTotal;
                 if (total) {
                     updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
@@ -2531,8 +2520,10 @@ zoomWatcher = {
     });
     viewer.camera.percentageChanged = 0.1;
 
-    // Backstop URL-write trigger (issue #204). `camera.changed` is suppressed
-    // for sub-`percentageChanged` moves, so a small drag-pan that doesn't
+    // Backstop URL-write + point-mode sample-refresh trigger.
+    //
+    // URL write (issue #204): `camera.changed` is suppressed for
+    // sub-`percentageChanged` moves, so a small drag-pan that doesn't
     // cross the 10% threshold never schedules the debounced callback above —
     // and the URL stays stale until a larger move fires the event. `moveEnd`
     // fires once per discrete settled camera move regardless of magnitude
@@ -2540,10 +2531,39 @@ zoomWatcher = {
     // so this catches every camera position the user can pan/zoom to.
     // The `_suppressHashWrite` gate keeps the hashchange-flight path
     // unaffected.
+    //
+    // Point-mode samples (issue #221): the samples table re-queries on
+    // every `moveEnd`. Refresh point-mode samples on the same trigger so
+    // the "Samples in View" stat / phase-msg stay in lockstep with the
+    // table's row count even on small sub-10% pans that `camera.changed`
+    // doesn't fire for.
     viewer.camera.moveEnd.addEventListener(() => {
         if (!viewer._suppressHashWrite) {
             history.replaceState(null, '', buildHash(viewer));
         }
+        if (getMode() !== 'point') return;
+        const h = viewer.camera.positionCartographic.height;
+        if (h > EXIT_POINT_ALT) {
+            // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't
+            // fire `camera.changed`, so without driving the exit here we'd
+            // be stuck in point mode above `EXIT_POINT_ALT` until a larger
+            // camera move. Mirror the `camera.changed` cluster-transition
+            // branch's `exitPointMode()` (Codex round-2 review of #221).
+            // The cluster-resolution reload that `camera.changed` also
+            // does is not needed for these small zoom-outs: in the
+            // 180–300 km band the target resolution stays res8, which
+            // point mode already had loaded. Larger zoom-outs that cross
+            // a resolution threshold will themselves fire `camera.changed`
+            // and run the normal reload path. The reverse direction
+            // (sub-10% zoom-in past `ENTER_POINT_ALT` from cluster mode)
+            // is left to `camera.changed` — pre-existing behavior, out of
+            // scope here.
+            exitPointMode();
+            return;
+        }
+        // In point mode and at point-mode altitude: refresh samples in
+        // lockstep with the samples table (issue #221).
+        loadViewportSamples();
     });
 
     // --- Helper: hydrate cluster row from H3 cell index ---

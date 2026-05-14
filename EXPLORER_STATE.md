@@ -538,18 +538,57 @@ correct row set, phase-msg can read zero or undercount. Scoped out
 as a follow-up because the user's primary complaint (table=6M vs
 phase-msg=153 at Crete) is unrelated to the dateline. Right fix is
 to share the `viewerBboxSQL`-style normalization with point-mode.
-The 0.3 padding factor matches the 30% padding the point-mode
-sample loader applies, so the table row count agrees with the
-"Samples in View" stat box / phase-msg count on **fresh** point-mode
-loads. Caveat: when the user pans within the point-mode cached
-bounds, `loadViewportSamples()` short-circuits and reuses
-`cachedTotalCount`, while the table re-queries the current padded
-bbox on every `moveEnd` — so cache-hit pans can show a small
-divergence (e.g. table=147, phase-msg=153 from the prior fetch).
-This is a known minor follow-up; the primary bug (table=6M while
-phase-msg=153) is fully resolved. `doSearch('area')` calls the same
-helper without a padFactor (= undefined, no padding), since search
-has always been documented as "samples within the current map view."
+The shared `VIEWPORT_PAD_FACTOR` (0.3) is applied by the table query,
+the point-mode loader, and the cluster-mode `countInViewport()` call
+sites, so all three surfaces use the same padded bbox for their "in
+view" counts in the non-dateline, non-facet-filtered case. Caveats
+called out below: point mode still has the antimeridian padding bug
+(#220), cluster counts are H3-cell-granularity approximations, and
+cluster H3 loads don't apply the material/context/object-type facet
+filters — so under those conditions the counts can still diverge
+independent of this PR. Issue #221 was three sources of divergence:
+
+1. **Cache reuse (point mode).** The point-mode loader cached a
+   padded bbox + `cachedTotalCount` and short-circuited cache-hit
+   pans (re-using the prior count) while the table re-queried the
+   current padded bbox each time. Removed: both surfaces always
+   re-fetch.
+2. **Different trigger events (point mode).** The table refreshed
+   on every `viewer.camera.moveEnd`, but point-mode samples only
+   refreshed through the debounced `camera.changed` handler
+   (`percentageChanged = 0.1`), so small sub-10% pans refreshed the
+   table without touching point-mode. Fixed: point-mode now also
+   re-fetches on `moveEnd` (the `camera.changed` "already in point
+   mode" branch is now a no-op).
+3. **Unpadded cluster bbox (cluster mode, round 2).** The cluster
+   "Samples in View" stat called `countInViewport(getViewportBounds())`
+   with the **raw** view rectangle, while the table queried the
+   30%-padded bbox — so the table consistently overcounted by the
+   padding ring (e.g. at alt=302 km over Egypt: table=34,983 vs
+   phase-msg=34,879). Fixed: the three `countInViewport` call sites
+   now pass `paddedViewportBounds(VIEWPORT_PAD_FACTOR)`, sharing the
+   same wrap-normalization helper that `viewerBboxSQL` uses.
+
+`exitPointMode()` bumps `requestId` so any sample query still in
+flight when the user zooms out is invalidated before it can repaint
+stat boxes / phase-msg with stale point-mode numbers.
+
+Residual cluster-mode divergence: even with matching bboxes,
+`countInViewport` filters H3 cells by their *center* and credits
+each cell's full `sample_count`, while the table filters individual
+sample lat/lng — so at low H3 resolutions (res 4, alt > 3 Mm) a
+small granularity-based gap remains. Inherent to cluster
+aggregation; not addressed here.
+
+Note: this is **viewport-count parity only**. The pre-existing
+antimeridian wrap bug in point-mode's own bbox padding
+(`latitude/longitude BETWEEN ...` doesn't split the wrapped
+longitude predicate) still causes the phase-msg to undercount near
+the dateline. That's tracked separately (issue #220).
+
+`doSearch('area')` calls the same helper without a padFactor
+(= undefined, no padding), since search has always been documented
+as "samples within the current map view."
 
 The table re-fires on `viewer.camera.moveEnd`, so panning/zooming
 the globe re-scopes the table. **Null-bbox handling**: if the camera
