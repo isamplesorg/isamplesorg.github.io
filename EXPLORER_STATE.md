@@ -175,6 +175,7 @@ viewer             [creates Cesium viewer; reads readHash() once]
 | `facetFilters` | `:979` | `phase1`, `db` | `#materialFilterBody`, `#contextFilterBody`, `#objectTypeFilterBody`; facet count text | — | — |
 | `tableView` | `:1071` | `facetFilters` | `#tableContainer`, `#samplesTable`, `tr.selected` class | prev/next; max input; **change** on all four facet bodies; table-row clicks | `replaceState` via `buildHash` from table-row click (sets `#pid` directly, mirrors sample-mode globe click) |
 | `zoomWatcher` | `:1246` | `phase1`, `facetFilters`, `db` | facet count text; stats; phase msg; sample card; samples list | source filter `change`; material/context/object_type `change`; `camera.changed`; `camera.moveEnd` (sub-threshold pan settle, #205); `window` `hashchange`; share button; search button; in-map search input keydown; sidebar search input `input` (mirror) and keydown (world-scope submit) | `pushState` and `replaceState` via `buildHash` (camera changed/moveEnd, mode flip, sample fly, **share button**); `replaceState` via `writeQueryState` (filter changes, search submit) |
+| `tableView` (post table-v2 viewport coupling) | — | `facetFilters`, `viewer` | also listens to `viewer.camera.moveEnd` to re-scope table to viewport bbox | — | — |
 | `perfPanel` | `:1910` | `phase1` | `#perfPanel` floating div | close button | — |
 
 Note that **two cells register `change` listeners on the four facet container
@@ -514,6 +515,18 @@ where a failed page left old DOM visible but pageRowsByPid empty.
 `pageRowsByPid: Map` (renamed from `rowsByPid`) which is now scoped
 to the current page only — sufficient since only the visible page has
 clickable rows.
+
+**Viewport coupling** (added shortly after table v2): both the page
+and count queries now include `viewerBboxSQL('latitude', 'longitude')`
+which expands to `AND latitude BETWEEN <s> AND <n> AND <lng-clause>`
+(with dateline-crossing handling). The table re-fires on
+`viewer.camera.moveEnd`, so panning/zooming the globe re-scopes the
+table to "samples in this viewport." Pre-coupling the table showed
+the full filtered dataset (~6M), which made the table feel
+disconnected from the globe — particularly in point mode where the
+globe shows "153 samples in view" but the table showed millions.
+`viewerBboxSQL()` is a shared helper now also used by `doSearch('area')`,
+so the area-search and table use the same bbox semantics.
 
 ---
 

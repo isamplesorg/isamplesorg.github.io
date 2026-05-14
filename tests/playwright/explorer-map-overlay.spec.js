@@ -150,6 +150,44 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     }
   });
 
+  test('table is bbox-scoped: deep-zoom URL yields far fewer rows than world zoom', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    // Load at world zoom and read total.
+    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+    await waitForBootReady(page);
+    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+/, { timeout: 60000 });
+    const worldText = await page.locator('#tablePageInfo').textContent();
+    const worldTotal = parseInt((worldText.match(/of ([\d,]+)\)$/) || [, '0'])[1].replace(/,/g, ''), 10);
+    expect(worldTotal).toBeGreaterThan(100000); // world view → millions of samples
+
+    // Fly to Crete-area deep zoom (matches the live-site URL the user reported).
+    await page.evaluate(async () => {
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      v.scene.requestRenderMode = false;
+      v.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(25.5610, 35.0104, 21299),
+        duration: 1.0,
+      });
+    });
+
+    // moveEnd fires when the flight ends. aria-busy flips true while the
+    // new query runs, then back to false. Wait for the count to stabilize.
+    await expect(page.locator('#tableContainer')).toHaveAttribute('aria-busy', 'false', { timeout: 60000 });
+    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+/, { timeout: 30000 });
+    const zoomedText = await page.locator('#tablePageInfo').textContent();
+    const zoomedTotal = parseInt((zoomedText.match(/of ([\d,]+)\)$/) || [, '0'])[1].replace(/,/g, ''), 10);
+
+    // The deep-zoom bbox should match far fewer rows than the world view —
+    // sanity threshold rather than an exact value (data can change).
+    expect(zoomedTotal).toBeLessThan(worldTotal);
+    expect(zoomedTotal).toBeLessThan(10000);
+  });
+
   test('table v2: pagination is server-side, pager shows Page X of Y, Next loads new rows', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {

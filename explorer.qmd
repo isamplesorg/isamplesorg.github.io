@@ -742,6 +742,32 @@ function facetFilterSQL() {
     return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
 }
 
+// Build a viewport-bbox SQL predicate for the given lat/lng column names,
+// using the viewer's current view rectangle. Returns an empty string when
+// the camera can't produce a rectangle (off-globe; rare) — callers should
+// treat that as "no bbox filter", matching the area-search fallback.
+//
+// Dateline crossing: when west > east the rectangle wraps the antimeridian;
+// emit two longitude ranges OR'd together.
+//
+// Used by:
+// - tableView (#218 follow-up): the samples table now scopes to the viewport
+//   so "153 samples in view" in cluster/point mode == 153 rows in the table.
+// - doSearch('area'): the "Search Selected Areas" button (#178 light path).
+function viewerBboxSQL(latCol, lngCol) {
+    if (typeof viewer === 'undefined') return '';
+    const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+    if (!rect) return '';
+    const south = Cesium.Math.toDegrees(rect.south);
+    const north = Cesium.Math.toDegrees(rect.north);
+    const west = Cesium.Math.toDegrees(rect.west);
+    const east = Cesium.Math.toDegrees(rect.east);
+    const lngClause = (west > east)
+        ? `(${lngCol} BETWEEN ${west} AND 180 OR ${lngCol} BETWEEN -180 AND ${east})`
+        : `${lngCol} BETWEEN ${west} AND ${east}`;
+    return ` AND ${latCol} BETWEEN ${south} AND ${north} AND ${lngClause}`;
+}
+
 // === Cross-filter facet count UI helpers ===
 function applyFacetCounts(facetKey, countsMap) {
     const baseline = (viewer && viewer._baselineCounts) ? viewer._baselineCounts[facetKey] : null;
@@ -1504,7 +1530,7 @@ tableView = {
         }
     }
 
-    async function loadCount(genAtStart) {
+    async function loadCount(genAtStart, bboxSQL) {
         try {
             // pid IS NOT NULL mirrors the page query so the total counts only
             // rows that are actually pageable. Without this, totalRows could
@@ -1516,6 +1542,7 @@ tableView = {
                 WHERE pid IS NOT NULL
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+                  ${bboxSQL}
             `);
             if (genAtStart !== pageGen) return true;
             // DuckDB-WASM returns BigInt for COUNT(*); coerce safely.
@@ -1532,7 +1559,7 @@ tableView = {
         }
     }
 
-    async function loadPage(p, genAtStart) {
+    async function loadPage(p, genAtStart, bboxSQL) {
         try {
             const offset = p * TABLE_PAGE_SIZE;
             // AND pid IS NOT NULL: belt-and-suspenders. pid is the primary
@@ -1546,6 +1573,7 @@ tableView = {
                 WHERE pid IS NOT NULL
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+                  ${bboxSQL}
                 ORDER BY pid
                 LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
             `);
@@ -1579,11 +1607,16 @@ tableView = {
         const gen = ++pageGen;
         currentPage = 0;
         totalRows = null;
+        // Snapshot the viewport bbox at refresh-start time so the count and
+        // page queries see the same predicate. The user could pan during
+        // the async window; pageGen invalidates the in-flight result, and
+        // moveEnd will fire a fresh refreshAll() against the new bbox.
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude');
         setLoading(true);
-        setMetaLoading('Loading samples matching filters...');
+        setMetaLoading('Loading samples in view...');
         // Stale-while-loading: leave existing pageRows rendered (dimmed by
         // .is-loading) so the table doesn't blink to empty.
-        const [countOk, pageOk] = await Promise.all([loadCount(gen), loadPage(0, gen)]);
+        const [countOk, pageOk] = await Promise.all([loadCount(gen, bboxSQL), loadPage(0, gen, bboxSQL)]);
         if (gen !== pageGen) return;
         setLoading(false);
         if (pageOk && countOk) {
@@ -1600,9 +1633,13 @@ tableView = {
 
     async function refreshPage(newPage) {
         const gen = ++pageGen;
+        // Page navigation uses the CURRENT viewport bbox. Counting was
+        // already done against this bbox (refreshAll caches totalRows for
+        // the filter+bbox combo until the next refreshAll).
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude');
         setLoading(true);
         setMetaLoading(`Loading page ${newPage + 1}...`);
-        const ok = await loadPage(newPage, gen);
+        const ok = await loadPage(newPage, gen, bboxSQL);
         if (gen !== pageGen) return;
         setLoading(false);
         if (ok) {
@@ -1626,6 +1663,16 @@ tableView = {
     document.getElementById('materialFilterBody')?.addEventListener('change', refreshAll);
     document.getElementById('contextFilterBody')?.addEventListener('change', refreshAll);
     document.getElementById('objectTypeFilterBody')?.addEventListener('change', refreshAll);
+
+    // Re-scope the table to the viewport on every camera settle. moveEnd
+    // fires once per user gesture (after the pan/zoom ends), so this is
+    // already debounced by user input. pageGen invalidates any racing
+    // in-flight query.
+    if (typeof viewer !== 'undefined') {
+        viewer.camera.moveEnd.addEventListener(() => {
+            refreshAll();
+        });
+    }
 
     window.refreshSamplesTable = refreshAll;
     refreshAll();
@@ -2721,8 +2768,8 @@ zoomWatcher = {
             // the viewport predicate; THEN top-50.
             let results;
             if (effectiveScope === 'area') {
-                const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
-                if (!rect) {
+                const bboxSQL = viewerBboxSQL('l.latitude', 'l.longitude');
+                if (!bboxSQL) {
                     // Camera couldn't produce a view rectangle (shouldn't
                     // happen in practice; defensive). Fall through to the
                     // world query so the user gets results, with a console
@@ -2730,21 +2777,13 @@ zoomWatcher = {
                     console.warn('Area scope requested but no view rectangle; falling back to world.');
                     results = await runWorldQuery();
                 } else {
-                    const south = Cesium.Math.toDegrees(rect.south);
-                    const north = Cesium.Math.toDegrees(rect.north);
-                    const west = Cesium.Math.toDegrees(rect.west);
-                    const east = Cesium.Math.toDegrees(rect.east);
-                    const lngClause = (west > east)
-                        ? `(l.longitude BETWEEN ${west} AND 180 OR l.longitude BETWEEN -180 AND ${east})`
-                        : `l.longitude BETWEEN ${west} AND ${east}`;
                     results = await db.query(`
                         SELECT f.pid, f.label, f.source, l.latitude, l.longitude,
                                f.place_name, (${score}) AS relevance_score
                         FROM read_parquet('${facets_url}') f
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE ${searchWhere}
-                          AND l.latitude BETWEEN ${south} AND ${north}
-                          AND ${lngClause}
+                          ${bboxSQL}
                         ${sourceFilterSQL('f.source')}
                         ${facetFilterSQL()}
                         ORDER BY relevance_score DESC, f.label
