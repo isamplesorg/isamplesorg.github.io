@@ -175,6 +175,7 @@ viewer             [creates Cesium viewer; reads readHash() once]
 | `facetFilters` | `:979` | `phase1`, `db` | `#materialFilterBody`, `#contextFilterBody`, `#objectTypeFilterBody`; facet count text | — | — |
 | `tableView` | `:1071` | `facetFilters` | `#tableContainer`, `#samplesTable`, `tr.selected` class | prev/next; max input; **change** on all four facet bodies; table-row clicks | `replaceState` via `buildHash` from table-row click (sets `#pid` directly, mirrors sample-mode globe click) |
 | `zoomWatcher` | `:1246` | `phase1`, `facetFilters`, `db` | facet count text; stats; phase msg; sample card; samples list | source filter `change`; material/context/object_type `change`; `camera.changed`; `camera.moveEnd` (sub-threshold pan settle, #205); `window` `hashchange`; share button; search button; in-map search input keydown; sidebar search input `input` (mirror) and keydown (world-scope submit) | `pushState` and `replaceState` via `buildHash` (camera changed/moveEnd, mode flip, sample fly, **share button**); `replaceState` via `writeQueryState` (filter changes, search submit) |
+| `tableView` (post table-v2 viewport coupling) | — | `facetFilters`, `viewer` | also listens to `viewer.camera.moveEnd` to re-scope table to viewport bbox | — | — |
 | `perfPanel` | `:1910` | `phase1` | `#perfPanel` floating div | close button | — |
 
 Note that **two cells register `change` listeners on the four facet container
@@ -514,6 +515,57 @@ where a failed page left old DOM visible but pageRowsByPid empty.
 `pageRowsByPid: Map` (renamed from `rowsByPid`) which is now scoped
 to the current page only — sufficient since only the visible page has
 clickable rows.
+
+**Viewport coupling** (PR #219, added shortly after table v2): both
+the page and count queries now include
+`viewerBboxSQL('latitude', 'longitude', 0.3)` which expands to
+`AND latitude BETWEEN <s> AND <n> AND <lng-clause>` (with
+dateline-crossing handling, including the post-padding wrap case
+where a non-wrapping rect spills past ±180 after the 30% expansion).
+
+**Known pre-existing wrap bug NOT fixed in this PR.**
+`loadViewportSamples()` in `zoomWatcher` (the point-mode sample
+loader) has its own padding logic that does *not* split the
+longitude predicate when the padded rectangle wraps the
+antimeridian — `bounds.east - bounds.west` is meaningless for a
+wrapping viewport, and the resulting single `BETWEEN` clause can
+return zero matches. This PR's table queries now route through
+`viewerBboxSQL()` and split the wrapped predicate correctly, so the
+**table is fine** at the dateline; the bug is now only in the
+point-mode count (phase-msg "Samples in View"). At wrapping
+viewports the two surfaces will therefore diverge: table shows the
+correct row set, phase-msg can read zero or undercount. Scoped out
+as a follow-up because the user's primary complaint (table=6M vs
+phase-msg=153 at Crete) is unrelated to the dateline. Right fix is
+to share the `viewerBboxSQL`-style normalization with point-mode.
+The 0.3 padding factor matches the 30% padding the point-mode
+sample loader applies, so the table row count agrees with the
+"Samples in View" stat box / phase-msg count on **fresh** point-mode
+loads. Caveat: when the user pans within the point-mode cached
+bounds, `loadViewportSamples()` short-circuits and reuses
+`cachedTotalCount`, while the table re-queries the current padded
+bbox on every `moveEnd` — so cache-hit pans can show a small
+divergence (e.g. table=147, phase-msg=153 from the prior fetch).
+This is a known minor follow-up; the primary bug (table=6M while
+phase-msg=153) is fully resolved. `doSearch('area')` calls the same
+helper without a padFactor (= undefined, no padding), since search
+has always been documented as "samples within the current map view."
+
+The table re-fires on `viewer.camera.moveEnd`, so panning/zooming
+the globe re-scopes the table. **Null-bbox handling**: if the camera
+can't produce a view rectangle (off-globe; rare), `viewerBboxSQL()`
+returns `null`. The table treats this as a status state ("No globe
+area in view; pan or zoom the globe to see samples.") rather than
+falling back to a no-bbox query — that's the bug shape PR #219 was
+filed against. Area search keeps its existing world fallback.
+
+**Boot ordering**: the viewer cell's `once()` postRender handler now
+sets `viewer._initialCameraApplied = true` after `setView`. The
+table defers its first refresh until either (a) the flag is true at
+cell-run time, or (b) the `camera.moveEnd` listener fires (which it
+will, once `setView` lands). This avoids the brief flash of
+world-view rows at boot when the URL hash specifies a deep-zoom
+camera.
 
 ---
 
