@@ -166,6 +166,10 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     expect(worldTotal).toBeGreaterThan(100000); // world view → millions of samples
 
     // Fly to Crete-area deep zoom (matches the live-site URL the user reported).
+    // Use Promise.race-style: kick off the flight, then wait for the table's
+    // pager text to *change* from the world view total. Just polling
+    // aria-busy is racy because aria-busy is already false from the boot
+    // load, and may briefly stay false between flight start and moveEnd.
     await page.evaluate(async () => {
       const v = await window._ojs.ojsConnector.mainModule.value('viewer');
       v.scene.requestRenderMode = false;
@@ -175,10 +179,14 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
       });
     });
 
-    // moveEnd fires when the flight ends. aria-busy flips true while the
-    // new query runs, then back to false. Wait for the count to stabilize.
+    // Wait for the pager total to change (different total ⇒ refresh against
+    // new bbox completed). Use the captured worldText as the not-this guard.
+    await expect.poll(
+      async () => await page.locator('#tablePageInfo').textContent(),
+      { timeout: 60000, intervals: [250, 500, 1000] }
+    ).not.toBe(worldText);
+    // And aria-busy should land at false after the page+count complete.
     await expect(page.locator('#tableContainer')).toHaveAttribute('aria-busy', 'false', { timeout: 60000 });
-    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+/, { timeout: 30000 });
     const zoomedText = await page.locator('#tablePageInfo').textContent();
     const zoomedTotal = parseInt((zoomedText.match(/of ([\d,]+)\)$/) || [, '0'])[1].replace(/,/g, ''), 10);
 

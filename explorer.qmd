@@ -743,25 +743,43 @@ function facetFilterSQL() {
 }
 
 // Build a viewport-bbox SQL predicate for the given lat/lng column names,
-// using the viewer's current view rectangle. Returns an empty string when
-// the camera can't produce a rectangle (off-globe; rare) — callers should
-// treat that as "no bbox filter", matching the area-search fallback.
+// using the viewer's current view rectangle. Returns null when the camera
+// can't produce a rectangle (off-globe; rare). Callers must decide what
+// to do with null — fall back to world (search) vs. show empty state
+// (table). NEVER fall back to no-bbox-filter for surfaces that are
+// labeled "in view" — that recreates the bug shape PR #219 was filed for.
+//
+// padFactor expands the rectangle in each direction by N × span. This
+// matches the 30% padding the point-mode sample loader applies (so the
+// table's "samples in view" count agrees with the phase-msg count).
+// Pass 0 for exact-viewport semantics (area search uses this).
 //
 // Dateline crossing: when west > east the rectangle wraps the antimeridian;
 // emit two longitude ranges OR'd together.
 //
 // Used by:
-// - tableView (#218 follow-up): the samples table now scopes to the viewport
-//   so "153 samples in view" in cluster/point mode == 153 rows in the table.
-// - doSearch('area'): the "Search Selected Areas" button (#178 light path).
-function viewerBboxSQL(latCol, lngCol) {
-    if (typeof viewer === 'undefined') return '';
+// - tableView (PR #219): scopes the samples table to the current viewport
+//   so "samples in view" in cluster/point mode == table row count.
+// - doSearch('area') (#178 light path): exact-viewport text search.
+function viewerBboxSQL(latCol, lngCol, padFactor) {
+    if (typeof viewer === 'undefined') return null;
     const rect = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
-    if (!rect) return '';
-    const south = Cesium.Math.toDegrees(rect.south);
-    const north = Cesium.Math.toDegrees(rect.north);
-    const west = Cesium.Math.toDegrees(rect.west);
-    const east = Cesium.Math.toDegrees(rect.east);
+    if (!rect) return null;
+    let south = Cesium.Math.toDegrees(rect.south);
+    let north = Cesium.Math.toDegrees(rect.north);
+    let west = Cesium.Math.toDegrees(rect.west);
+    let east = Cesium.Math.toDegrees(rect.east);
+    if (padFactor && padFactor > 0) {
+        const latPad = (north - south) * padFactor;
+        // For longitude span when the rect wraps the antimeridian, the span
+        // is (180 - west) + (east - (-180)); otherwise east - west.
+        const lngSpan = (west > east) ? (180 - west) + (east + 180) : east - west;
+        const lngPad = lngSpan * padFactor;
+        south -= latPad;
+        north += latPad;
+        west -= lngPad;
+        east += lngPad;
+    }
     const lngClause = (west > east)
         ? `(${lngCol} BETWEEN ${west} AND 180 OR ${lngCol} BETWEEN -180 AND ${east})`
         : `${lngCol} BETWEEN ${west} AND ${east}`;
@@ -1043,6 +1061,11 @@ viewer = {
         } else {
             v.camera.setView({ destination: globalRect });
         }
+        // Signal to dependent cells (e.g. tableView) that the URL-hydrated
+        // camera position has been applied. Anything that snapshots the
+        // viewer bbox at boot should wait for this rather than running
+        // against the default-constructed camera.
+        v._initialCameraApplied = true;
         v.scene.postRender.removeEventListener(once);
     };
     v.scene.postRender.addEventListener(once);
@@ -1603,6 +1626,11 @@ tableView = {
         return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
     }
 
+    // 0.3 = match the 30% padding the point-mode sample loader uses, so
+    // the table's row count agrees with the "Samples in View" stat box
+    // and phase-msg count.
+    const BBOX_PAD_FACTOR = 0.3;
+
     async function refreshAll() {
         const gen = ++pageGen;
         currentPage = 0;
@@ -1611,7 +1639,20 @@ tableView = {
         // page queries see the same predicate. The user could pan during
         // the async window; pageGen invalidates the in-flight result, and
         // moveEnd will fire a fresh refreshAll() against the new bbox.
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude');
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        if (bboxSQL === null) {
+            // No view rectangle (rare; off-globe). Don't fall back to a
+            // no-bbox query — that's the bug shape that motivated PR #219.
+            // Clear the table and surface a status message.
+            pageRows = [];
+            pageRowsByPid = new Map();
+            totalRows = 0;
+            lastPageFailed = false;
+            renderTable();
+            setLoading(false);
+            setMeta('No globe area in view; pan or zoom the globe to see samples.', true);
+            return;
+        }
         setLoading(true);
         setMetaLoading('Loading samples in view...');
         // Stale-while-loading: leave existing pageRows rendered (dimmed by
@@ -1636,7 +1677,12 @@ tableView = {
         // Page navigation uses the CURRENT viewport bbox. Counting was
         // already done against this bbox (refreshAll caches totalRows for
         // the filter+bbox combo until the next refreshAll).
-        const bboxSQL = viewerBboxSQL('latitude', 'longitude');
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', BBOX_PAD_FACTOR);
+        if (bboxSQL === null) {
+            // User somehow paged while the camera went off-globe; refresh
+            // re-scopes properly.
+            return refreshAll();
+        }
         setLoading(true);
         setMetaLoading(`Loading page ${newPage + 1}...`);
         const ok = await loadPage(newPage, gen, bboxSQL);
@@ -1667,7 +1713,10 @@ tableView = {
     // Re-scope the table to the viewport on every camera settle. moveEnd
     // fires once per user gesture (after the pan/zoom ends), so this is
     // already debounced by user input. pageGen invalidates any racing
-    // in-flight query.
+    // in-flight query. This listener also covers the boot case: when the
+    // viewer's once() handler does the URL-hydrated setView, moveEnd
+    // fires once and the initial table query runs against the correct
+    // bbox.
     if (typeof viewer !== 'undefined') {
         viewer.camera.moveEnd.addEventListener(() => {
             refreshAll();
@@ -1675,7 +1724,21 @@ tableView = {
     }
 
     window.refreshSamplesTable = refreshAll;
-    refreshAll();
+    // Boot: defer the initial refresh until the URL-hydrated camera has
+    // been applied (otherwise the first query runs against the
+    // default-constructed camera, briefly showing the wrong table).
+    // viewer.camera.moveEnd will fire when once() does setView and trigger
+    // the refresh via the listener above. If the camera is already
+    // settled (e.g. fast-path re-runs of this cell), refresh immediately.
+    if (typeof viewer !== 'undefined' && viewer._initialCameraApplied) {
+        refreshAll();
+    } else {
+        // Show the loading state so the user sees the spinner immediately
+        // rather than a stale "Loading samples matching the current
+        // filters..." default-meta line.
+        setLoading(true);
+        setMetaLoading('Loading samples in view...');
+    }
 
     return "active";
 }

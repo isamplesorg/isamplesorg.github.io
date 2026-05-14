@@ -516,17 +516,32 @@ where a failed page left old DOM visible but pageRowsByPid empty.
 to the current page only — sufficient since only the visible page has
 clickable rows.
 
-**Viewport coupling** (added shortly after table v2): both the page
-and count queries now include `viewerBboxSQL('latitude', 'longitude')`
-which expands to `AND latitude BETWEEN <s> AND <n> AND <lng-clause>`
-(with dateline-crossing handling). The table re-fires on
-`viewer.camera.moveEnd`, so panning/zooming the globe re-scopes the
-table to "samples in this viewport." Pre-coupling the table showed
-the full filtered dataset (~6M), which made the table feel
-disconnected from the globe — particularly in point mode where the
-globe shows "153 samples in view" but the table showed millions.
-`viewerBboxSQL()` is a shared helper now also used by `doSearch('area')`,
-so the area-search and table use the same bbox semantics.
+**Viewport coupling** (PR #219, added shortly after table v2): both
+the page and count queries now include
+`viewerBboxSQL('latitude', 'longitude', 0.3)` which expands to
+`AND latitude BETWEEN <s> AND <n> AND <lng-clause>` (with
+dateline-crossing handling). The 0.3 padding factor matches the 30%
+padding the point-mode sample loader applies, so the table row count
+agrees with the "Samples in View" stat box / phase-msg count rather
+than disagreeing by a 30% margin. `doSearch('area')` calls the same
+helper with `padFactor=0` (exact viewport) since the search has
+always been documented as "samples within the current map view."
+
+The table re-fires on `viewer.camera.moveEnd`, so panning/zooming
+the globe re-scopes the table. **Null-bbox handling**: if the camera
+can't produce a view rectangle (off-globe; rare), `viewerBboxSQL()`
+returns `null`. The table treats this as a status state ("No globe
+area in view; pan or zoom the globe to see samples.") rather than
+falling back to a no-bbox query — that's the bug shape PR #219 was
+filed against. Area search keeps its existing world fallback.
+
+**Boot ordering**: the viewer cell's `once()` postRender handler now
+sets `viewer._initialCameraApplied = true` after `setView`. The
+table defers its first refresh until either (a) the flag is true at
+cell-run time, or (b) the `camera.moveEnd` listener fires (which it
+will, once `setView` lands). This avoids the brief flash of
+world-view rows at boot when the URL hash specifies a deep-zoom
+camera.
 
 ---
 
