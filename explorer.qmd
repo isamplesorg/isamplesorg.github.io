@@ -771,14 +771,34 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
     let east = Cesium.Math.toDegrees(rect.east);
     if (padFactor && padFactor > 0) {
         const latPad = (north - south) * padFactor;
-        // For longitude span when the rect wraps the antimeridian, the span
-        // is (180 - west) + (east - (-180)); otherwise east - west.
-        const lngSpan = (west > east) ? (180 - west) + (east + 180) : east - west;
-        const lngPad = lngSpan * padFactor;
+        // Original longitude span. Wraps the antimeridian iff west > east.
+        const originalSpan = (west > east) ? (180 - west) + (east + 180) : east - west;
+        const lngPad = originalSpan * padFactor;
         south -= latPad;
         north += latPad;
         west -= lngPad;
         east += lngPad;
+        // Clamp latitude to valid degrees so the SQL doesn't BETWEEN past
+        // the poles (no data there but it reads odd).
+        if (south < -90) south = -90;
+        if (north > 90) north = 90;
+        // Normalize longitude after padding. Three cases:
+        //   - Total span >= 360: padding consumed the globe; emit a full
+        //     longitude predicate (BETWEEN -180 AND 180, no wrap).
+        //   - west pushed below -180 OR east above 180: rotate the
+        //     endpoint by 360 so it lands in [-180, 180]. The wrap-detect
+        //     below picks up the new wrap state. This is the case Codex
+        //     PR #219 round 2 caught: a non-wrapping rect like
+        //     west=170, east=179 padded by 30% becomes (167.3, 181.7);
+        //     east must wrap to -178.3 and the predicate must split into
+        //     two ranges.
+        const totalSpan = originalSpan + 2 * lngPad;
+        if (totalSpan >= 360) {
+            west = -180; east = 180;
+        } else {
+            if (west < -180) west += 360;
+            if (east > 180) east -= 360;
+        }
     }
     const lngClause = (west > east)
         ? `(${lngCol} BETWEEN ${west} AND 180 OR ${lngCol} BETWEEN -180 AND ${east})`

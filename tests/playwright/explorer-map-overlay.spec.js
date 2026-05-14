@@ -187,8 +187,13 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     ).not.toBe(worldText);
     // And aria-busy should land at false after the page+count complete.
     await expect(page.locator('#tableContainer')).toHaveAttribute('aria-busy', 'false', { timeout: 60000 });
+    // Belt-and-suspenders: confirm pager actually contains "Page 1 of N (..)"
+    // before parsing — without this, a blank/error pager would parseInt to 0
+    // and pass the < worldTotal assertion vacuously.
+    await expect(page.locator('#tablePageInfo')).toContainText(/Page 1 of \d+ \([\d,]+-[\d,]+ of [\d,]+\)/, { timeout: 30000 });
     const zoomedText = await page.locator('#tablePageInfo').textContent();
     const zoomedTotal = parseInt((zoomedText.match(/of ([\d,]+)\)$/) || [, '0'])[1].replace(/,/g, ''), 10);
+    expect(zoomedTotal).toBeGreaterThan(0);
 
     // The deep-zoom bbox should match far fewer rows than the world view —
     // sanity threshold rather than an exact value (data can change).

@@ -520,12 +520,20 @@ clickable rows.
 the page and count queries now include
 `viewerBboxSQL('latitude', 'longitude', 0.3)` which expands to
 `AND latitude BETWEEN <s> AND <n> AND <lng-clause>` (with
-dateline-crossing handling). The 0.3 padding factor matches the 30%
-padding the point-mode sample loader applies, so the table row count
-agrees with the "Samples in View" stat box / phase-msg count rather
-than disagreeing by a 30% margin. `doSearch('area')` calls the same
-helper with `padFactor=0` (exact viewport) since the search has
-always been documented as "samples within the current map view."
+dateline-crossing handling, including the post-padding wrap case
+where a non-wrapping rect spills past ±180 after the 30% expansion).
+The 0.3 padding factor matches the 30% padding the point-mode
+sample loader applies, so the table row count agrees with the
+"Samples in View" stat box / phase-msg count on **fresh** point-mode
+loads. Caveat: when the user pans within the point-mode cached
+bounds, `loadViewportSamples()` short-circuits and reuses
+`cachedTotalCount`, while the table re-queries the current padded
+bbox on every `moveEnd` — so cache-hit pans can show a small
+divergence (e.g. table=147, phase-msg=153 from the prior fetch).
+This is a known minor follow-up; the primary bug (table=6M while
+phase-msg=153) is fully resolved. `doSearch('area')` calls the same
+helper without a padFactor (= undefined, no padding), since search
+has always been documented as "samples within the current map view."
 
 The table re-fires on `viewer.camera.moveEnd`, so panning/zooming
 the globe re-scopes the table. **Null-bbox handling**: if the camera
