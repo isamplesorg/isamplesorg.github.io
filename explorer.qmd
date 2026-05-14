@@ -747,7 +747,10 @@ function facetFilterSQL() {
 // stat (issue #221 round 2) all expand the raw view rectangle by this
 // factor so the three surfaces agree on a single "in view" predicate.
 // Pass 0 (or undefined) for exact-viewport semantics (area search).
-const VIEWPORT_PAD_FACTOR = 0.3;
+// OJS cell syntax (bare `name = value`); `const` here would not bind
+// the name into the OJS module scope and would break every dependent
+// cell (issue #223 quick-fix).
+VIEWPORT_PAD_FACTOR = 0.3
 
 // Return the viewer's current view rectangle, optionally padded in each
 // direction by `padFactor × span`, normalized into [-180, 180] longitude
