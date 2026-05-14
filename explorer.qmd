@@ -1795,11 +1795,12 @@ zoomWatcher = {
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
-    // Viewport cache: avoid re-querying same area
-    let cachedBounds = null;       // { south, north, west, east }
-    let cachedData = null;         // array of rows
-    let cachedTotalCount = null;   // real in-view count (issue #206)
-    let cachedCapReached = false;  // whether the LIMIT was hit (issue #206)
+    // No viewport cache: the samples table (PR #219) re-queries on every
+    // `moveEnd` against the current padded bbox, so reusing a cached
+    // `cachedTotalCount` here would have point-mode show a stale count
+    // while the table shows the fresh one (issue #221). Both surfaces
+    // now re-fetch in lockstep — small perf cost on rapid panning, but
+    // the two counts no longer diverge.
 
     // --- H3 cluster loading (existing logic) ---
     //
@@ -1920,31 +1921,11 @@ zoomWatcher = {
         return { clusters, samples };
     }
 
-    // --- Check if viewport is within cached bounds ---
-    function isWithinCache(bounds) {
-        if (!cachedBounds || !bounds) return false;
-        return bounds.south >= cachedBounds.south &&
-               bounds.north <= cachedBounds.north &&
-               bounds.west >= cachedBounds.west &&
-               bounds.east <= cachedBounds.east;
-    }
-
     // --- Load individual samples for current viewport ---
     async function loadViewportSamples() {
         const myReqId = ++requestId;
         const bounds = getViewportBounds();
         if (!bounds) return;
-
-        // If viewport is within cached area, just re-render from cache.
-        // Re-apply the cached count/cap state to the stat boxes so panning
-        // inside the padded cache window doesn't leave stale figures on
-        // screen (#206 Codex review).
-        if (isWithinCache(bounds) && cachedData) {
-            renderSamplePoints(cachedData, bounds);
-            const total = cachedTotalCount != null ? cachedTotalCount : cachedData.length;
-            updateStats('Samples', cachedData.length, total, null, 'Samples Rendered', 'Samples in View');
-            return;
-        }
 
         // Fetch with 30% padding for smooth panning
         const latPad = (bounds.north - bounds.south) * 0.3;
@@ -2020,26 +2001,20 @@ zoomWatcher = {
                 }
             }
 
-            // Cache the padded bounds + data + count state so cache-hit
-            // pans preserve the same stat-box display (Codex review).
-            cachedBounds = padded;
-            cachedData = Array.from(data);
-            cachedTotalCount = totalCount;
-            cachedCapReached = capReached;
-
-            renderSamplePoints(cachedData, bounds);
+            const samples = Array.from(data);
+            renderSamplePoints(samples, bounds);
 
             // Stat boxes: LEFT (sPoints) always shows rendered count under
             // "Samples Rendered", RIGHT (sSamples) always shows real in-view
             // total under "Samples in View". Stable labels even when both
             // numbers are equal (Codex review preference: avoids label
             // flipping as the user zooms across the cap boundary).
-            updateStats('Samples', cachedData.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
+            updateStats('Samples', samples.length, totalCount, `${(elapsed/1000).toFixed(1)}s`, 'Samples Rendered', 'Samples in View');
             const phaseMsg = capReached
-                ? `${totalCount.toLocaleString()} samples in view (showing ${cachedData.length.toLocaleString()} — zoom in for more). Click one for details.`
-                : `${cachedData.length.toLocaleString()} individual samples. Click one for details.`;
+                ? `${totalCount.toLocaleString()} samples in view (showing ${samples.length.toLocaleString()} — zoom in for more). Click one for details.`
+                : `${samples.length.toLocaleString()} individual samples. Click one for details.`;
             updatePhaseMsg(phaseMsg, 'done');
-            console.log(`Point mode: rendered ${cachedData.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
+            console.log(`Point mode: rendered ${samples.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
             if (myReqId !== requestId) return;
@@ -2093,10 +2068,14 @@ zoomWatcher = {
         viewer.samplePoints.removeAll();
         viewer.h3Points.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
-        cachedBounds = null;
-        cachedData = null;
-        cachedTotalCount = null;
-        cachedCapReached = false;
+
+        // Invalidate any in-flight `loadViewportSamples()` so a slow sample
+        // query that returns after we've already restored cluster stats
+        // can't repaint the stat boxes / phase-msg with stale point-mode
+        // numbers (Codex review of #221). Without this bump, a pending
+        // sample query's renderSamplePoints + updateStats would still pass
+        // the stale-request guard on completion.
+        ++requestId;
 
         // Restore cluster stats with viewport count
         const bounds = getViewportBounds();
@@ -2367,9 +2346,6 @@ zoomWatcher = {
                 // sample index…").
                 if (applied) await tryEnterPointModeIfNeeded();
             } else {
-                cachedBounds = null;
-                cachedTotalCount = null;
-                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -2434,9 +2410,6 @@ zoomWatcher = {
             if (facetNote) facetNote.style.display = (active && getMode() === 'cluster') ? 'block' : 'none';
             writeQueryState();
             if (getMode() === 'point') {
-                cachedBounds = null;
-                cachedTotalCount = null;
-                cachedCapReached = false;
                 await loadViewportSamples();
             }
             refreshFacetCounts();
@@ -2498,8 +2471,11 @@ zoomWatcher = {
                     if (applied) await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'point') {
-                // Already in point mode — update viewport samples
-                loadViewportSamples();
+                // Already in point mode — viewport sample refresh is driven
+                // by the `moveEnd` listener below (issue #221), in lockstep
+                // with the samples table. `camera.changed` is debounced
+                // (`percentageChanged = 0.1`) so sub-10% pans don't fire
+                // here; the `moveEnd` path catches every settled move.
             } else {
                 // Cluster mode — check if resolution should change
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
@@ -2531,8 +2507,10 @@ zoomWatcher = {
     });
     viewer.camera.percentageChanged = 0.1;
 
-    // Backstop URL-write trigger (issue #204). `camera.changed` is suppressed
-    // for sub-`percentageChanged` moves, so a small drag-pan that doesn't
+    // Backstop URL-write + point-mode sample-refresh trigger.
+    //
+    // URL write (issue #204): `camera.changed` is suppressed for
+    // sub-`percentageChanged` moves, so a small drag-pan that doesn't
     // cross the 10% threshold never schedules the debounced callback above —
     // and the URL stays stale until a larger move fires the event. `moveEnd`
     // fires once per discrete settled camera move regardless of magnitude
@@ -2540,10 +2518,39 @@ zoomWatcher = {
     // so this catches every camera position the user can pan/zoom to.
     // The `_suppressHashWrite` gate keeps the hashchange-flight path
     // unaffected.
+    //
+    // Point-mode samples (issue #221): the samples table re-queries on
+    // every `moveEnd`. Refresh point-mode samples on the same trigger so
+    // the "Samples in View" stat / phase-msg stay in lockstep with the
+    // table's row count even on small sub-10% pans that `camera.changed`
+    // doesn't fire for.
     viewer.camera.moveEnd.addEventListener(() => {
         if (!viewer._suppressHashWrite) {
             history.replaceState(null, '', buildHash(viewer));
         }
+        if (getMode() !== 'point') return;
+        const h = viewer.camera.positionCartographic.height;
+        if (h > EXIT_POINT_ALT) {
+            // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't
+            // fire `camera.changed`, so without driving the exit here we'd
+            // be stuck in point mode above `EXIT_POINT_ALT` until a larger
+            // camera move. Mirror the `camera.changed` cluster-transition
+            // branch's `exitPointMode()` (Codex round-2 review of #221).
+            // The cluster-resolution reload that `camera.changed` also
+            // does is not needed for these small zoom-outs: in the
+            // 180–300 km band the target resolution stays res8, which
+            // point mode already had loaded. Larger zoom-outs that cross
+            // a resolution threshold will themselves fire `camera.changed`
+            // and run the normal reload path. The reverse direction
+            // (sub-10% zoom-in past `ENTER_POINT_ALT` from cluster mode)
+            // is left to `camera.changed` — pre-existing behavior, out of
+            // scope here.
+            exitPointMode();
+            return;
+        }
+        // In point mode and at point-mode altitude: refresh samples in
+        // lockstep with the samples table (issue #221).
+        loadViewportSamples();
     });
 
     // --- Helper: hydrate cluster row from H3 cell index ---

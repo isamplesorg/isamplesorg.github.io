@@ -540,16 +540,34 @@ phase-msg=153 at Crete) is unrelated to the dateline. Right fix is
 to share the `viewerBboxSQL`-style normalization with point-mode.
 The 0.3 padding factor matches the 30% padding the point-mode
 sample loader applies, so the table row count agrees with the
-"Samples in View" stat box / phase-msg count on **fresh** point-mode
-loads. Caveat: when the user pans within the point-mode cached
-bounds, `loadViewportSamples()` short-circuits and reuses
-`cachedTotalCount`, while the table re-queries the current padded
-bbox on every `moveEnd` — so cache-hit pans can show a small
-divergence (e.g. table=147, phase-msg=153 from the prior fetch).
-This is a known minor follow-up; the primary bug (table=6M while
-phase-msg=153) is fully resolved. `doSearch('area')` calls the same
-helper without a padFactor (= undefined, no padding), since search
-has always been documented as "samples within the current map view."
+"Samples in View" stat box / phase-msg count. Issue #221 was two
+sources of divergence:
+
+1. **Cache reuse.** The point-mode loader cached a padded bbox +
+   `cachedTotalCount` and short-circuited cache-hit pans (re-using
+   the prior count) while the table re-queried the current padded
+   bbox each time. Removed: both surfaces always re-fetch.
+2. **Different trigger events.** The table refreshed on every
+   `viewer.camera.moveEnd`, but point-mode samples only refreshed
+   through the debounced `camera.changed` handler
+   (`percentageChanged = 0.1`), so small sub-10% pans refreshed the
+   table without touching point-mode. Fixed: point-mode now also
+   re-fetches on `moveEnd` (the `camera.changed` "already in point
+   mode" branch is now a no-op).
+
+`exitPointMode()` bumps `requestId` so any sample query still in
+flight when the user zooms out is invalidated before it can repaint
+stat boxes / phase-msg with stale point-mode numbers.
+
+Note: this is **viewport-count parity only**. Pre-existing wrap bug
+above (point-mode `latitude/longitude BETWEEN ...` doesn't split
+the wrapped longitude predicate) still causes the phase-msg to
+undercount near the antimeridian. That's tracked separately
+(issue #220) and not addressed here.
+
+`doSearch('area')` calls the same helper without a padFactor
+(= undefined, no padding), since search has always been documented
+as "samples within the current map view."
 
 The table re-fires on `viewer.camera.moveEnd`, so panning/zooming
 the globe re-scopes the table. **Null-bbox handling**: if the camera
