@@ -529,12 +529,15 @@ loader) has its own padding logic that does *not* split the
 longitude predicate when the padded rectangle wraps the
 antimeridian — `bounds.east - bounds.west` is meaningless for a
 wrapping viewport, and the resulting single `BETWEEN` clause can
-return zero matches. This was true before #219 and remains true
-after; the table and point-mode count can therefore both fail in
-the same way at the dateline. Scoped out as a follow-up because
-the user's primary complaint (table=6M vs phase-msg=153 at Crete)
-is unrelated. Right fix is probably to share the
-`viewerBboxSQL`-style normalization with point-mode.
+return zero matches. This PR's table queries now route through
+`viewerBboxSQL()` and split the wrapped predicate correctly, so the
+**table is fine** at the dateline; the bug is now only in the
+point-mode count (phase-msg "Samples in View"). At wrapping
+viewports the two surfaces will therefore diverge: table shows the
+correct row set, phase-msg can read zero or undercount. Scoped out
+as a follow-up because the user's primary complaint (table=6M vs
+phase-msg=153 at Crete) is unrelated to the dateline. Right fix is
+to share the `viewerBboxSQL`-style normalization with point-mode.
 The 0.3 padding factor matches the 30% padding the point-mode
 sample loader applies, so the table row count agrees with the
 "Samples in View" stat box / phase-msg count on **fresh** point-mode
