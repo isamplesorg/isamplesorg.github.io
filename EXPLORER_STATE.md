@@ -522,6 +522,19 @@ the page and count queries now include
 `AND latitude BETWEEN <s> AND <n> AND <lng-clause>` (with
 dateline-crossing handling, including the post-padding wrap case
 where a non-wrapping rect spills past ±180 after the 30% expansion).
+
+**Known pre-existing wrap bug NOT fixed in this PR.**
+`loadViewportSamples()` in `zoomWatcher` (the point-mode sample
+loader) has its own padding logic that does *not* split the
+longitude predicate when the padded rectangle wraps the
+antimeridian — `bounds.east - bounds.west` is meaningless for a
+wrapping viewport, and the resulting single `BETWEEN` clause can
+return zero matches. This was true before #219 and remains true
+after; the table and point-mode count can therefore both fail in
+the same way at the dateline. Scoped out as a follow-up because
+the user's primary complaint (table=6M vs phase-msg=153 at Crete)
+is unrelated. Right fix is probably to share the
+`viewerBboxSQL`-style normalization with point-mode.
 The 0.3 padding factor matches the 30% padding the point-mode
 sample loader applies, so the table row count agrees with the
 "Samples in View" stat box / phase-msg count on **fresh** point-mode
