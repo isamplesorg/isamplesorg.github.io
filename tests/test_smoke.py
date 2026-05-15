@@ -67,8 +67,15 @@ def test_explorer_smoke(browser):
     page.on("pageerror", lambda e: page_errors.append(str(e)))
 
     def _on_console(msg):
-        if msg.type == "error" and _FATAL_CONSOLE.search(msg.text or ""):
-            fatal_console.append(msg.text)
+        # Only treat *same-origin* console errors as fatal. A third-party
+        # script (Cesium CDN, an injected extension) emitting a string that
+        # matches the regex must not block a deploy — pageerror remains the
+        # unambiguous hard signal for uncaught app exceptions.
+        if msg.type != "error" or not _FATAL_CONSOLE.search(msg.text or ""):
+            return
+        src = (msg.location or {}).get("url", "") or ""
+        if src.startswith(SITE_URL):
+            fatal_console.append(f"{msg.text}  @{src}")
 
     page.on("console", _on_console)
 
@@ -79,12 +86,26 @@ def test_explorer_smoke(browser):
         # 1. DuckDB-WASM initialized (facet query ran). Poll, do not reload.
         page.wait_for_function(_READY_JS, timeout=90_000)
 
-        # 2. Cesium actually drew a globe (canvas attached), not just a
-        #    container div.
+        # 2. Cesium actually drew a globe: canvas attached AND laid out
+        #    with non-zero dimensions. A 0x0 canvas means the widget
+        #    mounted but the globe never sized/rendered (the "container
+        #    but no globe" failure). A full pixel-readback assertion is
+        #    deliberately avoided — flaky timing, not worth the false-fail
+        #    risk for a liveness gate.
         page.wait_for_selector(
             ".cesium-viewer .cesium-widget canvas",
             state="attached",
             timeout=30_000,
+        )
+        canvas_box = page.evaluate(
+            """() => {
+                const c = document.querySelector(
+                    '.cesium-viewer .cesium-widget canvas');
+                return c ? {w: c.clientWidth, h: c.clientHeight} : null;
+            }"""
+        )
+        assert canvas_box and canvas_box["w"] > 0 and canvas_box["h"] > 0, (
+            f"Cesium canvas has no dimensions: {canvas_box}"
         )
 
         # 3. A world search via the *visible* slim-overlay submit button
@@ -101,7 +122,10 @@ def test_explorer_smoke(browser):
                 const t = (el && el.textContent || '').trim();
                 return t && !/Searching/i.test(t) && /result/i.test(t);
             }""",
-            timeout=60_000,
+            # Aligned with the perf test's 90s search budget — a cold
+            # DuckDB-WASM query + remote parquet fetch on a slow CI
+            # runner can exceed 60s without the build being broken.
+            timeout=90_000,
         )
         results_text = page.locator("#searchResults").inner_text().strip()
 
