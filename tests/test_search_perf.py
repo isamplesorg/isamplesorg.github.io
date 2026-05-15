@@ -72,8 +72,8 @@ CANONICAL_QUERIES = [
     {
         # Viewport-scoped search per #178 Light path. Camera position is
         # set via the URL hash (Mediterranean / Cyprus area) so the
-        # area-scope predicate has a meaningful rect. Clicks the
-        # "Search Selected Areas" button instead of "Search Entire World".
+        # area-scope predicate has a meaningful rect. Area scope is routed
+        # via ?search_scope=area in the URL (see _measure_one_query).
         "label": "area-scope",
         "term": "pottery",
         "filters": {"scope": "area"},
@@ -172,17 +172,22 @@ def _run_search(
     *,
     captured: list,
     expected_id_after: int,
-    scope: str = "world",
 ) -> dict:
-    """Type term, click the appropriate scope button, wait for the console event."""
+    """Type term, click the visible submit button, wait for the console event.
+
+    The slim overlay (PR #224) hides the per-scope buttons (`display: none`),
+    so Playwright can no longer click them. Scope is instead routed through
+    `_searchScope`, which the page hydrates from `?search_scope=area` in the
+    URL — `_measure_one_query` sets that param up front. `#searchSubmitBtn`
+    is the same public path a keyboard/mouse user now exercises.
+    """
     search_input = page.locator("#sampleSearch")
     search_input.click()
     # Clear via select-all + delete (faster + works around platform shortcuts).
     search_input.press("ControlOrMeta+a")
     search_input.press("Delete")
     search_input.fill(term)
-    button_id = "#searchAreaBtn" if scope == "area" else "#searchWorldBtn"
-    page.locator(button_id).click()
+    page.locator("#searchSubmitBtn").click()
 
     # Wait for an isamples.search log whose id is strictly greater than the
     # last one we observed. Polling is simpler than promise-based waits here.
@@ -226,27 +231,33 @@ def _measure_one_query(browser, query: dict) -> dict:
         captured: list = []
         _collect_search_logs(page, captured)
 
+        filters = query["filters"]
+        scope = filters.get("scope", "world")
+
+        # Area scope is hydrated from `?search_scope=area` (EXPLORER_URL
+        # already carries `?perf=1`, so append with `&`). The slim overlay
+        # hides the scope buttons, so the URL param is the public path the
+        # UI now uses to route to the area-scoped query.
+        scope_param = "&search_scope=area" if scope == "area" else ""
         # Optional URL hash for area-scope cases (#178) — sets the camera
         # before the search runs so the area predicate has a meaningful rect.
         url_hash = query.get("url_hash")
-        target_url = EXPLORER_URL + (f"#{url_hash}" if url_hash else "")
+        target_url = (
+            EXPLORER_URL + scope_param + (f"#{url_hash}" if url_hash else "")
+        )
         page.goto(target_url, wait_until="domcontentloaded", timeout=60_000)
         _wait_for_explorer_ready(page)
 
-        filters = query["filters"]
         if "source_only" in filters:
             _apply_source_filter(page, filters["source_only"])
         if "material_first_n" in filters:
             _apply_material_first_n(page, filters["material_first_n"])
-        scope = filters.get("scope", "world")
 
         cold = _run_search(
             page, query["term"], captured=captured, expected_id_after=0,
-            scope=scope,
         )
         warm = _run_search(
             page, query["term"], captured=captured, expected_id_after=cold["id"],
-            scope=scope,
         )
     finally:
         context.close()

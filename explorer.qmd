@@ -67,36 +67,93 @@ format:
         min-height: 0;
         aspect-ratio: auto;
     }
+    /* Slim top-right search overlay (Hana Figma node 222:456). The earlier
+       multi-row treatment (M-1A, PR #200) ate ~480px × ~100px on the left
+       side of the map; this collapses to one row at the right. The
+       Cesium toolbar is still at top-left (left:5px), so positioning at
+       top-right keeps both surfaces clear of each other. */
     .map-search-overlay {
         position: absolute;
         top: 8px;
-        left: 50px; /* clear of Cesium toolbar column at left: 5px */
-        width: min(480px, calc(100% - 60px));
+        right: 8px;
         z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 4px;
         background: rgba(255, 255, 255, 0.94);
         backdrop-filter: blur(4px);
-        padding: 8px 10px;
+        padding: 0 4px;
         border-radius: 6px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        height: 32px; /* slim row; Figma 222:456 target is ~28 + 4 chrome */
+        box-sizing: border-box;
     }
-    .map-search-overlay .search-results { color: #333; }
-    @media (max-width: 900px) {
-        /* Keep the overlay clear of the vertical Cesium toolbar column at
-           left: 5px. Don't switch to left: 8px here — that overlaps the
-           toolbar hit targets at narrow widths. */
-        .map-search-overlay {
-            width: calc(100% - 58px);
-        }
+    .map-search-overlay input[type="text"] {
+        width: 260px;
+        max-width: 100%;
+        height: 24px;
+        padding: 0 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+        background: white;
+        box-sizing: border-box;
+    }
+    .map-search-overlay input[type="text"]:focus {
+        border-color: #1565c0;
+        box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+    }
+    .map-search-overlay #searchSubmitBtn {
+        background: #1565c0;
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 14px;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .map-search-overlay #searchSubmitBtn:hover { background: #0d47a1; }
+    .map-search-overlay #searchSubmitBtn:focus-visible {
+        outline: 2px solid #0d47a1;
+        outline-offset: 2px;
+    }
+    /* Scope buttons + help paragraph are preserved in the DOM (handlers in
+       zoomWatcher / search wiring bind by id) but hidden in the slim
+       layout. Area-scoped search is still reachable via `?search_scope=area`
+       URL hydration, which calls doSearch('area') on boot. */
+    .map-search-overlay .search-actions,
+    .map-search-overlay .search-help { display: none; }
+    /* The aria-live results-count line sits just under the overlay at the
+       same right edge. Hidden visually when empty so it doesn't add a
+       blank strip; aria-live still announces. */
+    .map-search-results-line {
+        position: absolute;
+        top: 46px;
+        right: 8px;
+        max-width: 340px;
+        z-index: 1000;
+        font-size: 12px;
+        color: #333;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(4px);
+        padding: 3px 8px;
+        border-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+    .map-search-results-line:empty { display: none; }
+    @media (max-width: 600px) {
+        .map-search-overlay input[type="text"] { width: 160px; }
     }
     @media (max-width: 400px) {
-        /* At iPhone-SE-ish widths the two scope buttons would otherwise
-           overflow because of their nowrap labels. Stack them vertically. */
-        .map-search-overlay .search-actions {
-            flex-direction: column;
-        }
+        .map-search-overlay input[type="text"] { width: 120px; }
     }
     /* Display-only color legend at bottom-center of the map. The functional
        source filter (toggle/show-hide) lives in #sourceFilter in the side
@@ -401,20 +458,32 @@ Circle size = log(sample count). Color = dominant data source.
 <div class="globe-layout">
 <div class="map-wrap">
 <div id="cesiumContainer"></div>
+<!-- Slim search overlay (Hana Figma 222:456). One-line input + magnifier
+     button at the top-right of the map. The two scope buttons and the
+     help paragraph are preserved in the DOM (display:none via CSS) so
+     existing zoomWatcher handlers bind by id and the `?search_scope=area`
+     URL hydration path still works — area-scoped search is no longer
+     surfaced in the in-map UI but remains reachable via the URL. -->
 <div class="map-search-overlay">
-<div class="search-bar">
-<input type="text" id="sampleSearch" placeholder="Search samples — multiple words narrow results (e.g., pottery Cyprus)" />
+<input type="text" id="sampleSearch"
+       placeholder="Search samples — e.g., pottery Cyprus"
+       title="Searches labels, descriptions, and place names. First search can take 10-15 seconds while data loads; subsequent searches are faster. Press Enter or click the search button to submit." />
+<button id="searchSubmitBtn" type="button" aria-label="Search samples" title="Search (Enter)">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="20" y1="20" x2="16.65" y2="16.65"></line></svg>
+</button>
+<!-- Preserved-but-hidden scope buttons: kept so existing zoomWatcher
+     `searchAreaBtn.addEventListener('click', ...)` / `searchWorldBtn`
+     bindings continue to compile and so any external code (tests,
+     bookmarklets) that clicks them programmatically still works.
+     `?search_scope=area` URL hydration does NOT depend on these — it
+     sets `_searchScope` directly and the boot auto-search reads it. -->
+<div class="search-actions" aria-hidden="true">
+<button id="searchAreaBtn" type="button" tabindex="-1">Search Selected Areas</button>
+<button id="searchWorldBtn" type="button" tabindex="-1">Search Entire World</button>
 </div>
-<div class="search-actions">
-<button id="searchAreaBtn" type="button" title="Limit results to samples within the current map view">Search Selected Areas</button>
-<button id="searchWorldBtn" type="button" title="Search all samples globally">Search Entire World</button>
+<div class="search-help" aria-hidden="true"></div>
 </div>
-<div class="search-help">
-Searches labels, descriptions, and place names. <strong>First search can take 10-15 seconds</strong> while data loads; subsequent searches are faster.
-<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169" target="_blank" rel="noopener noreferrer" style="color: #888; text-decoration: underline;">Tracking issue: faster substrate FTS in progress</a>.
-</div>
-<div id="searchResults" class="search-results" aria-live="polite"></div>
-</div>
+<div id="searchResults" class="map-search-results-line" aria-live="polite"></div>
 <div class="map-color-legend" aria-hidden="true">
 <span><span class="map-color-legend-dot" style="background:#3366CC"></span>SESAR</span>
 <span><span class="map-color-legend-dot" style="background:#DC3912"></span>OpenContext</span>
@@ -3100,6 +3169,12 @@ zoomWatcher = {
 
     if (searchAreaBtn) searchAreaBtn.addEventListener('click', () => doSearch('area'));
     if (searchWorldBtn) searchWorldBtn.addEventListener('click', () => doSearch('world'));
+    // Slim-overlay submit button — same behavior as Enter on `#sampleSearch`.
+    // Uses `_searchScope` so URL-hydrated `?search_scope=area` still routes
+    // to the area-scoped query path even though the scope toggle UI is
+    // hidden in the slim treatment.
+    const searchSubmitBtn = document.getElementById('searchSubmitBtn');
+    if (searchSubmitBtn) searchSubmitBtn.addEventListener('click', () => doSearch(_searchScope));
     // Enter key uses the last-clicked scope (or the URL-hydrated scope if
     // no button has been clicked yet). Defaults to 'world' for keyboard-only
     // users on first invocation.
