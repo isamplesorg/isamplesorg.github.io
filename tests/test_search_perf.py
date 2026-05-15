@@ -72,8 +72,8 @@ CANONICAL_QUERIES = [
     {
         # Viewport-scoped search per #178 Light path. Camera position is
         # set via the URL hash (Mediterranean / Cyprus area) so the
-        # area-scope predicate has a meaningful rect. Clicks the
-        # "Search Selected Areas" button instead of "Search Entire World".
+        # area-scope predicate has a meaningful rect. Area scope is routed
+        # via ?search_scope=area in the URL (see _measure_one_query).
         "label": "area-scope",
         "term": "pottery",
         "filters": {"scope": "area"},
