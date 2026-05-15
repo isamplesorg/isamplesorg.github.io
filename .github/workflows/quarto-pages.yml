@@ -59,6 +59,32 @@ jobs:
         #  individual page content in the web site is defined by various xxx.qmd files.
         run: |
           scripts/generate_vocab_docs.sh; quarto render
+
+      # Pre-deploy smoke gate (Option C). Loads the freshly-rendered
+      # docs/ in a headless browser and asserts the explorer is
+      # fundamentally alive (DuckDB-WASM inits, Cesium draws, a search
+      # returns results, no uncaught JS error). Fail-closed: if this
+      # step fails the job fails and the Deploy step below is skipped,
+      # so a JS-dead render never reaches isamples.org.
+      - name: Smoke test rendered site
+        run: |
+          pip install pytest playwright
+          playwright install --with-deps chromium
+          python -m http.server 8080 --directory docs &
+          SERVER_PID=$!
+          # Always reap the static server, even when pytest fails and
+          # `bash -e` aborts the script (GitHub's default shell). The
+          # non-zero exit still propagates -> step fails -> Deploy is
+          # skipped (fail-closed).
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          # Wait for the static server to accept connections.
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/explorer.html >/dev/null && break
+            sleep 1
+          done
+          ISAMPLES_BASE_URL=http://localhost:8080 \
+            pytest tests/test_smoke.py -s -q
+
       - name: Deploy 🚀
         # only deploy when push to main
         if: github.event_name != 'pull_request'
