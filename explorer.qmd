@@ -246,6 +246,75 @@ format:
     .legend-item input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
     .source-badge { color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; white-space: nowrap; }
     .cluster-card { border-left: 4px solid #ccc; padding: 10px 12px; background: white; border-radius: 0 6px 6px 0; }
+    /* In-map detail card (Hana Figma node 225:1700). Anchored near the
+       clicked sample dot, points "up-left" via drop shadow. Same data
+       as the side-panel card; this is the in-map surface companion.
+       See issue #226 for click-semantics framing. */
+    .in-map-card {
+        position: absolute;
+        /* Sits above search overlay (1000), results line (1000), color
+           legend (1000), and Cesium toolbar (z=2). Per Codex review of
+           #226: any value below 1000 would let the card slide
+           underneath those surfaces. */
+        z-index: 1001;
+        width: 220px;
+        background: white;
+        border: 0.7px solid #d9d9d9;
+        border-radius: 7px;
+        padding: 8px;
+        filter: drop-shadow(-6px 6px 5px rgba(0,0,0,0.3));
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 12px;
+        line-height: 1.35;
+        pointer-events: auto;
+    }
+    .in-map-card[hidden] { display: none; }
+    .in-map-card .imc-head {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: 6px; margin-bottom: 6px;
+    }
+    .in-map-card .imc-title {
+        font-weight: 700; color: #36c; text-decoration: underline;
+        font-size: 13px; line-height: 1.25;
+        word-break: break-word; flex: 1 1 auto;
+    }
+    .in-map-card .imc-title:hover { color: #0d47a1; }
+    .in-map-card .imc-close {
+        flex: 0 0 auto; background: none; border: none; cursor: pointer;
+        font-size: 16px; line-height: 1; color: #666; padding: 0 2px;
+    }
+    .in-map-card .imc-close:hover { color: #000; }
+    .in-map-card .imc-body { display: flex; gap: 8px; align-items: flex-start; }
+    .in-map-card .imc-meta {
+        flex: 1 1 auto; min-width: 0;
+        /* Hard wrap: protects against unresolved vocab URIs or other
+           long strings (no spaces → would otherwise overflow the
+           220px card). overflow-wrap handles the no-space case;
+           word-break is the legacy fallback. */
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .in-map-card .imc-meta > div { margin-bottom: 2px; }
+    .in-map-card .imc-meta b { font-weight: 700; }
+    .in-map-card .imc-coords { color: #555; margin-top: 4px; }
+    .in-map-card .imc-thumb {
+        flex: 0 0 auto; width: 56px; height: 56px;
+        border: 1px solid #d9d9d9; border-radius: 3px;
+        background: #f5f5f5;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+    }
+    .in-map-card .imc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .in-map-card .imc-thumb-placeholder {
+        width: 100%; height: 100%; position: relative;
+        background: linear-gradient(135deg, transparent calc(50% - 0.5px), #bbb calc(50% - 0.5px), #bbb calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+                    linear-gradient(45deg, transparent calc(50% - 0.5px), #bbb calc(50% - 0.5px), #bbb calc(50% + 0.5px), transparent calc(50% + 0.5px));
+    }
+    .in-map-card .imc-source-badge {
+        display: inline-block; color: white; padding: 1px 6px;
+        border-radius: 6px; font-size: 10px; font-weight: 700;
+        margin-bottom: 4px;
+    }
     .sample-row { padding: 6px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
     .sample-row:last-child { border-bottom: none; }
     .sample-label { font-weight: 600; font-size: 13px; }
@@ -395,8 +464,20 @@ format:
         font-size: 10px;
         white-space: nowrap;
     }
-    .table-link { color: #1565c0; text-decoration: none; }
+    /* Was an <a> until #226 — kept the visual styling but the element
+       is now a role="button" span (no href) so click-anywhere-in-row
+       opens the detail card uniformly. The external source URL lives
+       inside the card. Keyboard parity via tabindex=0 + Enter/Space
+       handled in the row-click handler. */
+    .table-link {
+        color: #1565c0; text-decoration: none;
+        cursor: pointer; background: none; border: 0; padding: 0;
+        font: inherit;
+    }
     .table-link:hover { text-decoration: underline; }
+    .table-link:focus-visible {
+        outline: 2px solid #1565c0; outline-offset: 2px; border-radius: 2px;
+    }
     .table-pager {
         display: flex;
         justify-content: space-between;
@@ -490,6 +571,10 @@ Circle size = log(sample count). Color = dominant data source.
 <span><span class="map-color-legend-dot" style="background:#109618"></span>GEOME</span>
 <span><span class="map-color-legend-dot" style="background:#FF9900"></span>Smithsonian</span>
 </div>
+<!-- In-map detail card (Hana Figma node 225:1700). Populated by the
+     sample-click handler. Positioned absolutely inside .map-wrap.
+     See issue #226 for the unified click-semantics framing. -->
+<div id="inMapCard" class="in-map-card" hidden role="dialog" aria-label="Sample details"></div>
 </div>
 <div class="side-panel">
 <div class="panel-section sidebar-search">
@@ -1066,6 +1151,144 @@ function updateSampleDetail(detail) {
     el.innerHTML = `${desc ? `<div style="font-size: 12px; color: #444; margin-top: 6px; line-height: 1.4;">${desc}</div>` : ''}`;
 }
 
+// === In-map detail card (Hana Figma 225:1700; issue #226) ============
+// Companion floating surface to the side-panel sample card. Same data,
+// anchored near the clicked dot. v1 reads the same fields that
+// updateSampleCard() consumes; lazy-loaded thumbnail/feature/material
+// follow the same async pattern as updateSampleDetail().
+//
+// Positioning: .map-wrap is position:relative; #cesiumContainer fills
+// it, so Cesium canvas pixel coords (e.position from the scene click
+// handler) translate 1:1 to absolute coords inside .map-wrap.
+function showInMapCard(sample, screenPos) {
+    const el = document.getElementById('inMapCard');
+    if (!el) return;
+    const color = SOURCE_COLORS[sample.source] || '#666';
+    const name = SOURCE_NAMES[sample.source] || sample.source || '';
+    const srcUrl = sourceUrl(sample.pid);
+    const titleText = sample.label || sample.pid || 'Unnamed';
+    const lat = sample.lat != null ? Number(sample.lat).toFixed(4) : '';
+    const lng = sample.lng != null ? Number(sample.lng).toFixed(4) : '';
+    const coords = (lat && lng) ? `${lat}, ${lng}` : '';
+
+    // Codex review of #226: every interpolation below crosses an HTML
+    // attribute or text boundary, so each value is escaped. The href
+    // additionally only renders when srcUrl is a known-shape URL — we
+    // do not put user-controlled data into the href attribute as a
+    // raw string.
+    const safeTitle = escapeHtml(titleText);
+    const safeName = escapeHtml(name);
+    const safeColor = escapeHtml(color);
+    const safeCoords = escapeHtml(coords);
+    const titleHtml = srcUrl
+        ? `<a class="imc-title" href="${escapeHtml(srcUrl)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>`
+        : `<span class="imc-title">${safeTitle}</span>`;
+
+    el.innerHTML = `
+        <div class="imc-head">
+            ${titleHtml}
+            <button class="imc-close" type="button" aria-label="Close" title="Close">×</button>
+        </div>
+        <div class="imc-body">
+            <div class="imc-meta">
+                <span class="imc-source-badge" style="background:${safeColor}">${safeName}</span>
+                <div><b>Material:</b> <span id="imcMaterial">—</span></div>
+                <div><b>Sample Feature:</b> <span id="imcFeature">—</span></div>
+                <div><b>Specimen Type:</b> <span id="imcObjectType">—</span></div>
+                ${safeCoords ? `<div class="imc-coords">${safeCoords}</div>` : ''}
+            </div>
+            <div class="imc-thumb" id="imcThumb">
+                <div class="imc-thumb-placeholder" aria-label="No thumbnail"></div>
+            </div>
+        </div>
+    `;
+
+    // Wire close button.
+    const closeBtn = el.querySelector('.imc-close');
+    if (closeBtn) closeBtn.addEventListener('click', hideInMapCard);
+
+    // Position with collision avoidance. Default: card to the right and
+    // below the click point with a 12px offset. Flip horizontally if it
+    // would overflow the map-wrap; clamp vertically to keep it on-canvas.
+    const wrap = el.parentElement; // .map-wrap
+    if (wrap && screenPos && typeof screenPos.x === 'number') {
+        // Show invisibly first so we can measure.
+        el.style.left = '0px';
+        el.style.top = '0px';
+        el.hidden = false;
+        const wrapRect = wrap.getBoundingClientRect();
+        const cardRect = el.getBoundingClientRect();
+        const cardW = cardRect.width || 220;
+        const cardH = cardRect.height || 120;
+        let x = screenPos.x + 12;
+        let y = screenPos.y + 12;
+        // Flip to left of click if card would overflow right edge.
+        if (x + cardW > wrapRect.width - 4) {
+            x = screenPos.x - cardW - 12;
+        }
+        // Clamp.
+        if (x < 4) x = 4;
+        if (y + cardH > wrapRect.height - 4) y = wrapRect.height - cardH - 4;
+        if (y < 4) y = 4;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+    } else {
+        el.hidden = false;
+    }
+}
+
+function hideInMapCard() {
+    const el = document.getElementById('inMapCard');
+    if (!el) return;
+    el.hidden = true;
+}
+
+// Populate the lazy-loaded fields (thumbnail, material, feature,
+// specimen type) once the wide-parquet query returns. `detail` is the
+// row from explorer.qmd's existing detail query, extended to include
+// thumbnail_url / has_feature_of_interest / material_label /
+// object_type_label. See updateSampleDetail() for the side-panel
+// counterpart that uses the same row.
+function populateInMapCardDetail(detail) {
+    const el = document.getElementById('inMapCard');
+    if (!el || el.hidden) return; // card was closed or replaced
+    const setText = (id, val) => {
+        const node = el.querySelector(`#${id}`);
+        if (node) node.textContent = (val && String(val).trim()) ? val : 'Not Provided';
+    };
+    if (!detail) {
+        setText('imcMaterial', null);
+        setText('imcFeature', null);
+        setText('imcObjectType', null);
+        return;
+    }
+    setText('imcMaterial', detail.material_label);
+    setText('imcFeature', detail.has_feature_of_interest);
+    setText('imcObjectType', detail.object_type_label);
+
+    if (detail.thumbnail_url) {
+        const thumbEl = el.querySelector('#imcThumb');
+        if (thumbEl) {
+            // DOM construction (not innerHTML) so the thumbnail URL is
+            // never interpolated into an HTML attribute string and the
+            // onerror handler is a property, not an inline-JS string.
+            // Codex review of #226.
+            thumbEl.innerHTML = '';
+            const img = document.createElement('img');
+            img.alt = '';
+            img.onerror = () => {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'imc-thumb-placeholder';
+                placeholder.setAttribute('aria-label', 'Thumbnail unavailable');
+                thumbEl.innerHTML = '';
+                thumbEl.appendChild(placeholder);
+            };
+            img.src = detail.thumbnail_url;
+            thumbEl.appendChild(img);
+        }
+    }
+}
+
 function updateSamples(samples) {
     const el = document.getElementById('samplesSection');
     if (!el) return;
@@ -1214,13 +1437,22 @@ viewer = {
     // the side panel after the user has clicked a different sample/cluster.
     new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction(async (e) => {
         const picked = v.scene.pick(e.position);
-        if (!Cesium.defined(picked) || !picked.primitive || !picked.id) return;
+        if (!Cesium.defined(picked) || !picked.primitive || !picked.id) {
+            // Click on empty space → close the in-map card (deselect).
+            hideInMapCard();
+            return;
+        }
         const meta = picked.id;
         const isStale = freshSelectionToken(v);
 
         if (typeof meta === 'object' && meta.type === 'sample') {
             // --- Individual sample click ---
             updateSampleCard(meta);
+            // In-map floating card (issue #226). `e.position` is the
+            // Cesium canvas pixel coord of the click; .map-wrap is
+            // position:relative and #cesiumContainer fills it, so the
+            // same x/y serves as absolute coords inside .map-wrap.
+            showInMapCard(meta, { x: e.position.x, y: e.position.y });
             v._globeState.selectedPid = meta.pid;
             v._globeState.selectedH3 = null;
             history.pushState(null, '', buildHash(v));
@@ -1228,29 +1460,59 @@ viewer = {
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
 
-            // Stage 2: lazy-load full description from wide parquet
+            // Stage 2: lazy-load extended fields from wide parquet.
+            // Extended beyond the original description-only query to
+            // populate the in-map card (issue #226): thumbnail_url,
+            // has_feature_of_interest, plus IdentifiedConcept labels
+            // for material and specimen type via the wide row's
+            // p__has_material_category[] / p__has_sample_object_type[]
+            // arrays (DuckDB lists are 1-indexed).
             try {
+                const pidEsc = meta.pid.replace(/'/g, "''");
                 const detail = await db.query(`
-                    SELECT description
-                    FROM read_parquet('${wide_url}')
-                    WHERE pid = '${meta.pid.replace(/'/g, "''")}'
+                    SELECT
+                        s.description,
+                        s.thumbnail_url,
+                        s.has_feature_of_interest,
+                        mat_lbl.pref_label AS material_label,
+                        obj_lbl.pref_label AS object_type_label
+                    FROM read_parquet('${wide_url}') AS s
+                    LEFT JOIN read_parquet('${wide_url}') AS mat
+                      ON mat.row_id = s.p__has_material_category[1]
+                     AND mat.otype = 'IdentifiedConcept'
+                    LEFT JOIN read_parquet('${vocab_labels_url}') AS mat_lbl
+                      ON mat_lbl.uri = mat.pid
+                    LEFT JOIN read_parquet('${wide_url}') AS obj
+                      ON obj.row_id = s.p__has_sample_object_type[1]
+                     AND obj.otype = 'IdentifiedConcept'
+                    LEFT JOIN read_parquet('${vocab_labels_url}') AS obj_lbl
+                      ON obj_lbl.uri = obj.pid
+                    WHERE s.pid = '${pidEsc}'
+                      AND s.otype = 'MaterialSampleRecord'
                     LIMIT 1
                 `);
                 if (isStale()) return;
                 if (detail && detail.length > 0) {
                     updateSampleDetail(detail[0]);
+                    populateInMapCardDetail(detail[0]);
                 } else {
                     updateSampleDetail({ description: '' });
+                    populateInMapCardDetail(null);
                 }
             } catch(err) {
                 if (isStale()) return;
                 console.error("Detail query failed:", err);
                 updateSampleDetail(null);
+                populateInMapCardDetail(null);
             }
 
         } else if (typeof meta === 'object' && meta.count) {
             // --- Cluster click ---
             updateClusterCard(meta);
+            // Cluster click clears any prior sample selection; close
+            // the in-map sample card so it doesn't outlive the context
+            // that opened it (issue #226).
+            hideInMapCard();
             v._globeState.selectedPid = null;
             v._globeState.selectedH3 = meta.h3_cell || null;
             history.pushState(null, '', buildHash(v));
@@ -1555,10 +1817,17 @@ tableView = {
                 const lat = r.latitude != null ? Number(r.latitude).toFixed(5) : '';
                 const lng = r.longitude != null ? Number(r.longitude).toFixed(5) : '';
                 const label = r.label || r.pid || '';
-                const url = sourceUrl(r.pid);
-                const labelHtml = url
-                    ? `<a class="table-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
-                    : escapeHtml(label);
+                // #226: the title cell used to be an <a href={sourceUrl}>
+                // that opened the source record on click. The href
+                // contradicted the unified click-semantics goal (click
+                // = open card, external link lives inside card), so
+                // the element is now a role="button" span with the
+                // same visual styling. Screen readers announce it as
+                // a button, not as a misleading external link. The
+                // external link is preserved one hop away in the
+                // detail card's title.
+                const safeLabel = escapeHtml(label);
+                const labelHtml = `<span class="table-link" role="button" tabindex="0" aria-label="Open details for ${safeLabel}">${safeLabel}</span>`;
                 const pidAttr = escapeHtml(r.pid || '');
                 const selectedClass = (r.pid && r.pid === selectedPid) ? ' class="selected"' : '';
                 return `<tr data-pid="${pidAttr}"${selectedClass}>
@@ -1583,8 +1852,13 @@ tableView = {
             // selection path keeps the URL (`#pid=...`) and sidebar in sync
             // regardless of which surface initiated the selection.
             tableEl.querySelectorAll('tbody tr[data-pid]').forEach(tr => {
-                tr.addEventListener('click', async (e) => {
-                    if (e.target.tagName === 'A') return; // let label links work
+                // Row activation = open detail card. Pointer click on
+                // any cell, Enter/Space on the role="button" title span,
+                // and Enter on the row itself (when tab-focused on the
+                // title) all route through the same handler. Issue
+                // #226: there is no longer an <a href> in the row, so
+                // the activation is uniform across surfaces.
+                const activateRow = async (e) => {
                     const pid = tr.dataset.pid;
                     const sample = pid ? pageRowsByPid.get(pid) : null;
                     if (!sample || sample.latitude == null || sample.longitude == null) return;
@@ -1593,7 +1867,7 @@ tableView = {
                     const isStale = freshSelectionToken(viewer);
                     viewer._globeState.selectedPid = pid;
                     viewer._globeState.selectedH3 = null;
-                    updateSampleCard({
+                    const sampleMeta = {
                         pid: sample.pid,
                         label: sample.label,
                         source: sample.source,
@@ -1601,6 +1875,22 @@ tableView = {
                         lng: sample.longitude,
                         place_name: sample.place_name,
                         result_time: sample.result_time
+                    };
+                    updateSampleCard(sampleMeta);
+                    // Show the in-map card *immediately* (Codex review
+                    // of #226). Previously we deferred showInMapCard()
+                    // to flyTo.complete, but the lazy-load detail query
+                    // could return inside the 1.5s flight window and
+                    // populateInMapCardDetail() would either no-op
+                    // (card still hidden) or mutate the previous-still-
+                    // visible card. Anchoring at canvas centre is
+                    // correct: that's where the sample lands after
+                    // flyTo. The flight animates underneath the
+                    // already-visible card.
+                    const canvas = viewer.scene.canvas;
+                    showInMapCard(sampleMeta, {
+                        x: canvas.clientWidth / 2,
+                        y: canvas.clientHeight / 2
                     });
                     viewer.camera.flyTo({
                         destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
@@ -1616,19 +1906,60 @@ tableView = {
                     tr.classList.add('selected');
 
                     try {
+                        // Same extended lazy-load as the map-click
+                        // path — keeps the in-map card populated when
+                        // the click originates from the table (issue
+                        // #226). Wide-only via self-joins for material
+                        // and specimen-type concept labels.
+                        const pidEsc = pid.replace(/'/g, "''");
                         const detail = await db.query(`
-                            SELECT description
-                            FROM read_parquet('${wide_url}')
-                            WHERE pid = '${pid.replace(/'/g, "''")}'
+                            SELECT
+                                s.description,
+                                s.thumbnail_url,
+                                s.has_feature_of_interest,
+                                mat_lbl.pref_label AS material_label,
+                                obj_lbl.pref_label AS object_type_label
+                            FROM read_parquet('${wide_url}') AS s
+                            LEFT JOIN read_parquet('${wide_url}') AS mat
+                              ON mat.row_id = s.p__has_material_category[1]
+                             AND mat.otype = 'IdentifiedConcept'
+                            LEFT JOIN read_parquet('${vocab_labels_url}') AS mat_lbl
+                              ON mat_lbl.uri = mat.pid
+                            LEFT JOIN read_parquet('${wide_url}') AS obj
+                              ON obj.row_id = s.p__has_sample_object_type[1]
+                             AND obj.otype = 'IdentifiedConcept'
+                            LEFT JOIN read_parquet('${vocab_labels_url}') AS obj_lbl
+                              ON obj_lbl.uri = obj.pid
+                            WHERE s.pid = '${pidEsc}'
+                              AND s.otype = 'MaterialSampleRecord'
                             LIMIT 1
                         `);
                         if (isStale()) return;
-                        if (detail && detail.length > 0) updateSampleDetail(detail[0]);
-                        else updateSampleDetail({ description: '' });
+                        if (detail && detail.length > 0) {
+                            updateSampleDetail(detail[0]);
+                            populateInMapCardDetail(detail[0]);
+                        } else {
+                            updateSampleDetail({ description: '' });
+                            populateInMapCardDetail(null);
+                        }
                     } catch(err) {
                         if (isStale()) return;
                         console.error('Table-row detail query failed:', err);
                         updateSampleDetail(null);
+                        populateInMapCardDetail(null);
+                    }
+                };
+                tr.addEventListener('click', activateRow);
+                // Keyboard parity for the role="button" title span: Enter
+                // and Space activate the row. Scoped to .table-link so
+                // Tab through other interactive cells (none today, but
+                // future-proofing) isn't hijacked. Space's default
+                // page-scroll is suppressed.
+                tr.addEventListener('keydown', (ev) => {
+                    if (!ev.target.classList || !ev.target.classList.contains('table-link')) return;
+                    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+                        ev.preventDefault();
+                        activateRow(ev);
                     }
                 });
             });
