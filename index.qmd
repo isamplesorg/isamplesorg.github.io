@@ -68,4 +68,4 @@ All analysis happens in your browser. Only the data you need is downloaded — t
 
 ---
 
-[![](assets/moorea_cover.jpg){width="100%" group="showcase" fig-alt="iSamples data visualization from Moorea"}](https://youtu.be/JzNadmklzNs "Watch the iSamples data visualization video")
+[![](assets/moorea_video_image.png){width="100%" group="showcase" fig-alt="iSamples data visualization from Moorea"}](https://youtu.be/JzNadmklzNs "Watch the iSamples data visualization video")
