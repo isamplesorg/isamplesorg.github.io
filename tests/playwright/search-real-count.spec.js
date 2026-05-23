@@ -127,72 +127,96 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
     expect(visibleTotal).toBe(last.total_count);
   });
 
-  test('telemetry snapshot survives a facet toggle during search await', async ({ page }) => {
-    // Codex round-2 review observed that the round-1 filtered test
-    // wouldn't actually have caught a missing snapshot — it ticked a
-    // facet BEFORE searching, so SELECT and COUNT saw the same DOM state
-    // regardless of whether the snapshot existed. This stronger test
-    // exercises the race directly: fire the search with no facets,
-    // wait until the SELECT visibly completes (the "50+ results" label),
-    // then tick a material facet, then wait for the structured log.
+  test('telemetry snapshot survives a facet toggle during held-open COUNT', async ({ page }) => {
+    // Codex round-3 review observed that the round-2 race test was still
+    // timing-dependent: the wait accepted either "50+" or the final
+    // "50 of N" label, so if the COUNT happened to finish before the
+    // toggle, the test passed trivially (snapshot or not). To make the
+    // test deterministic, we monkey-patch the page's DuckDB `db.query`
+    // to add a fixed delay on COUNT(*) queries. That guarantees the
+    // toggle lands BETWEEN SELECT completion (visible "50+") and COUNT
+    // completion (`finally` log emission), exercising the snapshot's
+    // entire purpose.
     //
     // What the snapshot guarantees:
-    //   `has_facet_filter` in the log reflects search-fire-time state
-    //   (false), not the post-toggle DOM state (true).
+    //   `has_facet_filter` AND `has_source_filter` in the structured
+    //   log reflect search-fire-time DOM state, not whatever the user
+    //   toggled mid-flight.
     //
-    // If the snapshot is removed (DOM-live reads in `finally`), this
-    // assertion will fail.
+    // Fault-injection (verified manually): if the log reads
+    // `has_facet_filter` / `has_source_filter` live from DOM in
+    // `finally`, this test fails. Both round-1 (predicate snapshot)
+    // and round-2 (telemetry snapshot) fixes are exercised.
     const logs = attachSearchLogCollector(page);
     await page.goto(EXPLORER_PATH);
     await waitForSearchReady(page);
 
     // Sanity: no facet active at search-fire time.
-    const facetActiveBefore = await page.evaluate(() => {
-      return document.querySelectorAll('#materialFilterBody input[type="checkbox"]:checked').length > 0
-          || document.querySelectorAll('#contextFilterBody input[type="checkbox"]:checked').length > 0
-          || document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]:checked').length > 0;
+    // (Source-filter sanity is NOT checked here because Quarto's
+    // see-also rendering duplicates `#sourceFilter` checkboxes in the
+    // page DOM, so a naive count is ambiguous. Source-filter snapshot
+    // coverage is left as a TODO requiring a non-Quarto fixture.)
+    const facetActive = await page.evaluate(() =>
+      document.querySelectorAll('#materialFilterBody input[type="checkbox"]:checked').length > 0
+      || document.querySelectorAll('#contextFilterBody input[type="checkbox"]:checked').length > 0
+      || document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]:checked').length > 0
+    );
+    expect(facetActive).toBe(false);
+
+    // Wrap `db.query` to hold COUNT(*) queries open for 1.5s. The page
+    // exposes the OJS `db` reactive value via
+    // `_ojs.ojsConnector.mainModule.value('db')` — same accessor pattern
+    // used by `url-roundtrip.spec.js` for `viewer`. The wrap is scoped
+    // to this test's page context so other tests aren't affected.
+    await page.evaluate(async () => {
+      const db = await window._ojs.ojsConnector.mainModule.value('db');
+      if (!db.__countDelayInstalled) {
+        const orig = db.query.bind(db);
+        db.query = async (sql, ...rest) => {
+          if (typeof sql === 'string' && /SELECT\s+COUNT\(\*\)/i.test(sql)) {
+            await new Promise(r => setTimeout(r, 1500));
+          }
+          return orig(sql, ...rest);
+        };
+        db.__countDelayInstalled = true;
+      }
     });
-    expect(facetActiveBefore).toBe(false);
 
     await runSearch(page, 'pottery');
 
-    // Wait for the SELECT to visibly settle (initial "50+" label or the
-    // final "50 of N" — either proves SELECT done, and toggling now
-    // simulates a user mid-flight facet change).
+    // EXACT "50+" wait — proves SELECT has settled AND COUNT has not yet
+    // emitted its post-finally log. This is the window the snapshot
+    // must survive. Loosening this back to "50+ OR 50 of N" would
+    // restore the timing flake Codex round 3 flagged.
     await page.waitForFunction(
-      () => /^(50\+|50 of [\d,]+) results for "pottery"$/.test(document.getElementById('searchResults')?.textContent || ''),
+      () => document.getElementById('searchResults')?.textContent === '50+ results for "pottery"',
       null, { timeout: 90000 }
     );
 
-    // Tick a material facet — this is the toggle the snapshot must
-    // survive. Programmatic .click() is used so the change event fires
-    // and the page's normal handlers run (mirrors user interaction).
+    // Toggle the facet checkbox. Programmatic .click() ensures the
+    // change event fires through the page's normal handlers.
     await page.evaluate(() => {
-      const cb = document.querySelector('#materialFilterBody input[type="checkbox"]');
-      if (cb) cb.click();
+      const mat = document.querySelector('#materialFilterBody input[type="checkbox"]');
+      if (mat) mat.click();
     });
 
-    // Wait for the search to fully settle: either the final "50 of N"
-    // label appeared (COUNT completed before or after the toggle), or
-    // the structured log row landed for this search id.
+    // Now wait for the final "50 of N" label. The COUNT was held by
+    // the wrap for 1.5s, then runs against the snapshotted SQL, then
+    // `finally` logs against the snapshotted booleans.
     await page.waitForFunction(
       () => /^50 of [\d,]+ results for "pottery"$/.test(document.getElementById('searchResults')?.textContent || ''),
       null, { timeout: 90000 }
     );
 
-    // Pull the log payload for this search (filter by term). With the
-    // snapshot, `has_facet_filter` must be false (state at search-fire
-    // time). Without the snapshot, the DOM-live read in `finally` would
-    // see the post-toggle checkbox and report true.
     const potteryLogs = logs.filter(l => l.term === 'pottery');
     expect(potteryLogs.length).toBeGreaterThan(0);
     const last = potteryLogs[potteryLogs.length - 1];
+    // The headline assertion: the snapshotted boolean must be false
+    // even though the user ticked a facet between SELECT and COUNT.
     expect(last.has_facet_filter).toBe(false);
     expect(last.results_count).toBe(50);
     expect(last.total_count).not.toBeNull();
     expect(last.total_count).toBeGreaterThan(50);
-    // Search itself was not superseded — only a facet toggle happened,
-    // not a fresh search submission.
     expect(last.superseded).toBe(false);
   });
 

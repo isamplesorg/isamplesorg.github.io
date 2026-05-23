@@ -3193,6 +3193,17 @@ zoomWatcher = {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
 
+        // Bump the freshness token FIRST — even for invalid submits
+        // (empty / 1-char). Codex review of #236 round 3 caught the gap:
+        // if a valid search is in flight and the user clears the box and
+        // resubmits, the early-return below used to write "Type at least
+        // 2 characters" WITHOUT invalidating the in-flight search. When
+        // that older search later rejected, its catch would see
+        // `searchId === _searchSeq` and overwrite the "Type at least..."
+        // message with `Search error: ...`. Bumping first ensures any
+        // submission — valid or not — supersedes prior in-flight work.
+        const searchId = ++_searchSeq;
+
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
@@ -3210,7 +3221,6 @@ zoomWatcher = {
         // result count, and bytes transferred from data.isamples.org during
         // the search window. transferSize is 0 for cross-origin responses
         // missing Timing-Allow-Origin; we fall back to encodedBodySize.
-        const searchId = ++_searchSeq;
         const markStart = `search-${searchId}-start`;
         const markEnd = `search-${searchId}-end`;
         performance.mark(markStart);
