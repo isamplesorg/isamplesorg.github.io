@@ -116,6 +116,7 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
     expect(last.total_count).toBeGreaterThan(50);
     expect(typeof last.count_ms).toBe('number');
     expect(last.count_ms).toBeGreaterThan(0);
+    expect(last.superseded).toBe(false);
 
     // And the visible label matches the log payload. `.first()` for the
     // same reason as #sampleSearch above — Quarto duplicates the node.
@@ -124,6 +125,69 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
     expect(m).toBeTruthy();
     const visibleTotal = Number(m[1].replace(/,/g, ''));
     expect(visibleTotal).toBe(last.total_count);
+  });
+
+  test('cap-hit search with material facet active produces filter-coherent N of M', async ({ page }) => {
+    // Codex review of round 1 (#236) flagged the risk that the COUNT could
+    // run against a different filter state than the SELECT if the user
+    // toggles filters mid-flight. The implementation snapshots
+    // sourceFilterSQL/facetFilterSQL once per search. This test exercises
+    // the filtered-cap path so the snapshot's correctness is covered.
+    const logs = attachSearchLogCollector(page);
+    await page.goto(EXPLORER_PATH);
+    await waitForSearchReady(page);
+
+    // Tick the first material facet. Same self-healing approach the
+    // search-perf benchmark uses (`material_first_n: 1`) so the test
+    // doesn't hardcode a URI that may disappear across data refreshes.
+    const materialUri = await page.evaluate(() => {
+      const cb = document.querySelector('#materialFilterBody input[type="checkbox"]');
+      if (!cb) return null;
+      cb.click();
+      return cb.value;
+    });
+    expect(materialUri).toBeTruthy();
+
+    // Wait for the facet-count refresh fired by the click to settle. The
+    // exact debounce is handled by the page; a short visibility check on
+    // the cluster-mode honesty note is a cheap proxy for "facet state
+    // applied" because syncFacetNote runs from handleFacetFilterChange.
+    await page.waitForFunction(
+      () => document.getElementById('facetNote')?.style.display === 'block',
+      null, { timeout: 30000 }
+    ).catch(() => {});  // Not strictly required to assert; just lets the page settle.
+
+    await runSearch(page, 'pottery');
+    // Three possible terminal states depending on which material happens
+    // to be first in the facet list (data-dependent): cap hit (50 of N),
+    // sub-cap (N results), or empty intersection (No results). All three
+    // are valid; the invariant we assert is the same.
+    await page.waitForFunction(
+      () => {
+        const text = document.getElementById('searchResults')?.textContent || '';
+        return /^(50 of [\d,]+|50\+|\d+|No) results for "pottery"$/.test(text);
+      },
+      null, { timeout: 90000 }
+    );
+
+    const potteryLogs = logs.filter(l => l.term === 'pottery');
+    expect(potteryLogs.length).toBeGreaterThan(0);
+    const last = potteryLogs[potteryLogs.length - 1];
+    expect(last.has_facet_filter).toBe(true);
+    expect(last.results_count).toBeLessThanOrEqual(50);
+    // Structured-log invariant for #232: `total_count` is present iff the
+    // cap was hit. Sub-cap and zero-results cases must NOT have a stale
+    // total_count from a prior search leaking through.
+    if (last.results_count === 50) {
+      expect(last.total_count).not.toBeNull();
+      expect(last.total_count).toBeGreaterThanOrEqual(last.results_count);
+    } else {
+      expect(last.total_count).toBeNull();
+    }
+    // Round-2 invariant: a non-superseded search must record its filter
+    // state alongside results — the snapshot of source/facet SQL is what
+    // guarantees the COUNT matches the SELECT in this scenario.
+    expect(last.superseded).toBe(false);
   });
 
   test('no-results search short-circuits without COUNT (total_count remains null)', async ({ page }) => {

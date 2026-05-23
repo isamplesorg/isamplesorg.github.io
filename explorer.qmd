@@ -3219,6 +3219,7 @@ zoomWatcher = {
         let resultsCount = 0;
         let totalCount = null;     // Real count when cap is hit (#232); null otherwise.
         let countMs = 0;           // Duration of the follow-up COUNT scan, ms.
+        let wasSuperseded = false; // True when a newer search bumped _searchSeq mid-flight.
         let errorMessage = null;
 
         try {
@@ -3254,6 +3255,18 @@ zoomWatcher = {
                 { col: 'f.description',                 weight: 1 },
                 { col: 'CAST(f.place_name AS VARCHAR)', weight: 2 },
             ]);
+
+            // Snapshot the source / facet predicates ONCE per search so the
+            // follow-up COUNT(*) at the end of this try block uses the same
+            // filter state as the SELECT. Without this snapshot, a user who
+            // toggles a source checkbox or material facet while the SELECT
+            // is in flight would see a label like "50 of M" where M reflects
+            // the NEW filter state, not the rendered 50 rows (Codex review
+            // of PR #236 round 1). The string is captured here, before any
+            // `db.query` await, and re-used by both the SELECT and the
+            // COUNT below.
+            const sourceSQL = sourceFilterSQL('f.source');
+            const facetSQL = facetFilterSQL();
 
             // Two SQL shapes — one per scope. The fix per #179 round-2
             // review: in area mode, the viewport predicate MUST run BEFORE
@@ -3299,8 +3312,8 @@ zoomWatcher = {
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE ${searchWhere}
                           ${bboxSQL}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                         ORDER BY relevance_score DESC, f.label
                         LIMIT 50
                     `);
@@ -3318,8 +3331,8 @@ zoomWatcher = {
                                (${score}) AS relevance_score
                         FROM read_parquet('${facets_url}') f
                         WHERE ${searchWhere}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                         ORDER BY relevance_score DESC
                         LIMIT 50
                     )
@@ -3329,6 +3342,21 @@ zoomWatcher = {
                     LEFT JOIN read_parquet('${lite_url}') l USING (pid)
                     ORDER BY m.relevance_score DESC, m.label
                 `);
+            }
+
+            // Stale-search guard (Codex review of PR #236 round 1). A
+            // second search the user fires while this SELECT is in flight
+            // bumps `_searchSeq`. Without this early guard, the superseded
+            // search would still mutate `searchResults.textContent`,
+            // repaint `samplesSection`, trigger an unwanted `camera.flyTo`,
+            // and launch a wasted COUNT scan — even though a later guard
+            // would correctly suppress the COUNT result itself. Bail BEFORE
+            // any of that work. The later COUNT-specific guard remains as
+            // a second line of defense for the case where supersession
+            // happens between this check and the COUNT.
+            if (searchId !== _searchSeq) {
+                wasSuperseded = true;
+                return;
             }
             resultsCount = results.length;
             if (results.length === 0) {
@@ -3463,6 +3491,10 @@ zoomWatcher = {
             // entirely. The cost is logged via `count_ms` so #167 analysis
             // can track when the COUNT path runs.
             if (capReached) {
+                // Use the snapshotted `sourceSQL` / `facetSQL` so the COUNT
+                // matches the SELECT's filter state byte-for-byte even if
+                // the user has toggled source/facet filters during the
+                // SELECT await.
                 const countSQL = effectiveQueryShape === 'area'
                     ? `
                         SELECT COUNT(*) AS n
@@ -3470,15 +3502,15 @@ zoomWatcher = {
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE ${searchWhere}
                           ${effectiveBboxSQL}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                     `
                     : `
                         SELECT COUNT(*) AS n
                         FROM read_parquet('${facets_url}') f
                         WHERE ${searchWhere}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                     `;
                 const countStart = performance.now();
                 try {
@@ -3488,6 +3520,7 @@ zoomWatcher = {
                         // A newer search owns `searchResults.textContent`
                         // now; leaving `totalCount` null also keeps this
                         // stale COUNT out of the structured log.
+                        wasSuperseded = true;
                         return;
                     }
                     const total = Number(countRow[0]?.n ?? results.length);
@@ -3500,7 +3533,10 @@ zoomWatcher = {
                         : `${results.length} results for "${term}"`;
                 } catch(err) {
                     countMs = performance.now() - countStart;
-                    if (searchId !== _searchSeq) return;
+                    if (searchId !== _searchSeq) {
+                        wasSuperseded = true;
+                        return;
+                    }
                     console.warn("Search COUNT(*) failed; keeping '50+' label:", err);
                 }
             }
@@ -3543,6 +3579,13 @@ zoomWatcher = {
             // `elapsed_ms` continues to mark end-of-handler so it still
             // covers SELECT+render+COUNT for end-to-end user-perceived
             // latency.
+            //
+            // `superseded` (added round 2 of #236): a search whose work was
+            // abandoned mid-flight because the user fired a newer search.
+            // The log line still emits so downstream perf analysis can see
+            // how often this happens, but consumers should generally treat
+            // superseded rows as best-effort (results / counts may be
+            // partial and the UI never reflected them).
             try {
                 console.log(JSON.stringify({
                     event: 'isamples.search',
@@ -3559,6 +3602,7 @@ zoomWatcher = {
                     seen_urls: seenUrls,
                     has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
                     has_facet_filter: hasFacetFilters(),
+                    superseded: wasSuperseded,
                     error: errorMessage,
                 }));
             } catch (e) {}
