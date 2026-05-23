@@ -864,6 +864,26 @@ function hasFacetFilters() {
         || getCheckedValues('objectTypeFilterBody').length > 0;
 }
 
+// Single source of truth for #facetNote visibility. The note ("filter
+// takes effect at neighborhood zoom") explains the cluster-mode honesty
+// gap: H3 summary parquets only carry `dominant_source`, so material /
+// context / object_type filters cannot affect cluster counts. Invariant:
+//   visible ⇔ (any facet active) ∧ (mode === 'cluster')
+// Call sites that mutate either side of the conjunction MUST call this
+// to keep DOM and state in agreement:
+//   - facetFilters cell (URL deep-link restore, #234 step 1)
+//   - handleFacetFilterChange (user toggles a facet checkbox)
+//   - enterPointMode / exitPointMode (mode transitions)
+// `viewer` resolves late at call time per ojs reactive scoping, so this
+// helper is safe to define before the viewer cell runs.
+function syncFacetNote() {
+    const el = document.getElementById('facetNote');
+    if (!el) return;
+    const active = hasFacetFilters();
+    const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
+    el.style.display = (active && inCluster) ? 'block' : 'none';
+}
+
 function escSql(value) {
     return String(value).replace(/'/g, "''");
 }
@@ -1700,6 +1720,13 @@ facetFilters = {
         applyFacetCounts('source', null);
         applyQueryToFacetFilters();
 
+        // Sync #facetNote visibility for URL-loaded filters. Restoring
+        // checkbox state from `?material=…` does NOT fire `change`, so the
+        // cluster-mode "filter takes effect at neighborhood zoom" note
+        // would otherwise stay hidden on a shared deep-link even with
+        // active facets. See #234 (roadmap step 1).
+        syncFacetNote();
+
         console.log(`Facet filters loaded: ${grouped.material.length} materials, ${grouped.context.length} contexts, ${grouped.object_type.length} object types (vocab labels: ${vocabMap.size})`);
     } catch(err) {
         console.warn("Facet summaries failed to load:", err);
@@ -2472,6 +2499,8 @@ zoomWatcher = {
         viewer.h3Points.show = false;
         viewer.samplePoints.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        // #facetNote is only meaningful in cluster mode (#234 step 1).
+        syncFacetNote();
         loadViewportSamples();
         console.log('Entered point mode');
     }
@@ -2482,6 +2511,9 @@ zoomWatcher = {
         viewer.samplePoints.removeAll();
         viewer.h3Points.show = true;
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        // Returning to cluster mode: surface the honesty note if any
+        // facet filter is active (#234 step 1).
+        syncFacetNote();
 
         // Invalidate any in-flight `loadViewportSamples()` so a slow sample
         // query that returns after we've already restored cluster stats
@@ -2815,13 +2847,12 @@ zoomWatcher = {
     // `dominant_source`, so material / context / object_type filters cannot
     // affect cluster counts. When any of these is active in cluster mode,
     // surface the explanatory `#facetNote` so users understand the filter
-    // takes effect at neighborhood zoom. See issue #156, Phase 1.
-    const facetNote = document.getElementById('facetNote');
+    // takes effect at neighborhood zoom. See issue #156, Phase 1, and
+    // `syncFacetNote()` for the shared visibility invariant (#234 step 1).
     async function handleFacetFilterChange() {
         busyAcquire();
         try {
-            const active = hasFacetFilters();
-            if (facetNote) facetNote.style.display = (active && getMode() === 'cluster') ? 'block' : 'none';
+            syncFacetNote();
             writeQueryState();
             if (getMode() === 'point') {
                 await loadViewportSamples();
