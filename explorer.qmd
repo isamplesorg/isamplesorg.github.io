@@ -3224,6 +3224,17 @@ zoomWatcher = {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
 
+        // Bump the freshness token FIRST — even for invalid submits
+        // (empty / 1-char). Codex review of #236 round 3 caught the gap:
+        // if a valid search is in flight and the user clears the box and
+        // resubmits, the early-return below used to write "Type at least
+        // 2 characters" WITHOUT invalidating the in-flight search. When
+        // that older search later rejected, its catch would see
+        // `searchId === _searchSeq` and overwrite the "Type at least..."
+        // message with `Search error: ...`. Bumping first ensures any
+        // submission — valid or not — supersedes prior in-flight work.
+        const searchId = ++_searchSeq;
+
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
@@ -3241,13 +3252,22 @@ zoomWatcher = {
         // result count, and bytes transferred from data.isamples.org during
         // the search window. transferSize is 0 for cross-origin responses
         // missing Timing-Allow-Origin; we fall back to encodedBodySize.
-        const searchId = ++_searchSeq;
         const markStart = `search-${searchId}-start`;
         const markEnd = `search-${searchId}-end`;
         performance.mark(markStart);
         const tStart = performance.now();
         const terms = searchTerms(term);
+        // Snapshot the filter-state telemetry booleans here, BEFORE the
+        // try block, so they remain in scope through `finally`. They
+        // reflect the DOM state at search-fire time — independent of
+        // any toggles the user makes during the await chain (#167 + #236
+        // round 2 review).
+        const hadSourceFilter = getActiveSources().length !== SOURCE_VALUES.length;
+        const hadFacetFilter = hasFacetFilters();
         let resultsCount = 0;
+        let totalCount = null;     // Real count when cap is hit (#232); null otherwise.
+        let countMs = 0;           // Duration of the follow-up COUNT scan, ms.
+        let wasSuperseded = false; // True when a newer search bumped _searchSeq mid-flight.
         let errorMessage = null;
 
         try {
@@ -3284,6 +3304,22 @@ zoomWatcher = {
                 { col: 'CAST(f.place_name AS VARCHAR)', weight: 2 },
             ]);
 
+            // Snapshot the source / facet predicates ONCE per search so the
+            // follow-up COUNT(*) at the end of this try block uses the same
+            // filter state as the SELECT. Without this snapshot, a user who
+            // toggles a source checkbox or material facet while the SELECT
+            // is in flight would see a label like "50 of M" where M reflects
+            // the NEW filter state, not the rendered 50 rows (Codex review
+            // of PR #236 round 1). The string is captured here, before any
+            // `db.query` await, and re-used by both the SELECT and the
+            // COUNT below.
+            const sourceSQL = sourceFilterSQL('f.source');
+            const facetSQL = facetFilterSQL();
+            // Telemetry-equivalent of the SQL snapshots above (`hadSourceFilter`
+            // / `hadFacetFilter`) is declared OUTSIDE this try block so it
+            // remains in scope through `finally` — see comment near the
+            // function-level `let` declarations.
+
             // Two SQL shapes — one per scope. The fix per #179 round-2
             // review: in area mode, the viewport predicate MUST run BEFORE
             // the top-50 selection, otherwise we're searching only the
@@ -3303,7 +3339,14 @@ zoomWatcher = {
             // because area-scoped search by definition requires
             // coordinates. Drop coord-less samples before ranking; apply
             // the viewport predicate; THEN top-50.
+            //
+            // Track which shape actually ran so the follow-up COUNT(*)
+            // query for #232 uses the matching WHERE/JOIN. The area-scope
+            // path falls back to `world` when `viewerBboxSQL` returns null,
+            // so `effectiveScope === 'area'` is NOT a reliable predicate.
             let results;
+            let effectiveQueryShape = 'world';
+            let effectiveBboxSQL = null;
             if (effectiveScope === 'area') {
                 const bboxSQL = viewerBboxSQL('l.latitude', 'l.longitude');
                 if (!bboxSQL) {
@@ -3321,11 +3364,13 @@ zoomWatcher = {
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE ${searchWhere}
                           ${bboxSQL}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                         ORDER BY relevance_score DESC, f.label
                         LIMIT 50
                     `);
+                    effectiveQueryShape = 'area';
+                    effectiveBboxSQL = bboxSQL;
                 }
             } else {
                 results = await runWorldQuery();
@@ -3338,8 +3383,8 @@ zoomWatcher = {
                                (${score}) AS relevance_score
                         FROM read_parquet('${facets_url}') f
                         WHERE ${searchWhere}
-                        ${sourceFilterSQL('f.source')}
-                        ${facetFilterSQL()}
+                        ${sourceSQL}
+                        ${facetSQL}
                         ORDER BY relevance_score DESC
                         LIMIT 50
                     )
@@ -3350,12 +3395,38 @@ zoomWatcher = {
                     ORDER BY m.relevance_score DESC, m.label
                 `);
             }
+
+            // Stale-search guard (Codex review of PR #236 round 1). A
+            // second search the user fires while this SELECT is in flight
+            // bumps `_searchSeq`. Without this early guard, the superseded
+            // search would still mutate `searchResults.textContent`,
+            // repaint `samplesSection`, trigger an unwanted `camera.flyTo`,
+            // and launch a wasted COUNT scan — even though a later guard
+            // would correctly suppress the COUNT result itself. Bail BEFORE
+            // any of that work. The later COUNT-specific guard remains as
+            // a second line of defense for the case where supersession
+            // happens between this check and the COUNT.
+            if (searchId !== _searchSeq) {
+                wasSuperseded = true;
+                return;
+            }
             resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
                 return;
             }
-            searchResults.textContent = `${results.length}${results.length === 50 ? '+' : ''} results for "${term}"`;
+
+            // Initial render. The "+" indicates "more exist" when the cap was
+            // hit; if the cap was hit, the follow-up COUNT below replaces
+            // this with the real total ("50 of 7,124 results"). This keeps
+            // the user informed during cold-cache COUNT scans (where the
+            // second query can add a few hundred ms) rather than leaving the
+            // bare result-row count visible while the precise total
+            // resolves. See issue #232.
+            const capReached = results.length === 50;
+            searchResults.textContent = capReached
+                ? `${results.length}+ results for "${term}"`
+                : `${results.length} results for "${term}"`;
 
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
@@ -3450,10 +3521,95 @@ zoomWatcher = {
                     duration: 1.5
                 });
             }
+
+            // Real-count follow-up (#232). When the SELECT hit `LIMIT 50` we
+            // can't know whether the true result set is 51 or 50,000 — the
+            // legacy `50+` label hid this entirely. Mirror the pattern used
+            // by `loadViewportSamples()` (where this same kind of follow-up
+            // turned "Samples in View capped at 5,000" into a real count):
+            // re-run the WHERE clause as a `COUNT(*)` only when the cap was
+            // hit. Below the cap, `results.length` IS the truth and a second
+            // scan would be wasted.
+            //
+            // Cancellation: a second search the user fires while this COUNT
+            // is in flight bumps `_searchSeq`. The guard below ensures a
+            // stale COUNT can't overwrite the newer search's result text.
+            // We also skip the structured-log `total_count` update on stale
+            // returns so the #167 log line still reflects only the live
+            // search's measurements.
+            //
+            // Failure handling: a COUNT error leaves the initial `50+` text
+            // in place — better to under-disclose than to clear the line
+            // entirely. The cost is logged via `count_ms` so #167 analysis
+            // can track when the COUNT path runs.
+            if (capReached) {
+                // Use the snapshotted `sourceSQL` / `facetSQL` so the COUNT
+                // matches the SELECT's filter state byte-for-byte even if
+                // the user has toggled source/facet filters during the
+                // SELECT await.
+                const countSQL = effectiveQueryShape === 'area'
+                    ? `
+                        SELECT COUNT(*) AS n
+                        FROM read_parquet('${facets_url}') f
+                        INNER JOIN read_parquet('${lite_url}') l USING (pid)
+                        WHERE ${searchWhere}
+                          ${effectiveBboxSQL}
+                        ${sourceSQL}
+                        ${facetSQL}
+                    `
+                    : `
+                        SELECT COUNT(*) AS n
+                        FROM read_parquet('${facets_url}') f
+                        WHERE ${searchWhere}
+                        ${sourceSQL}
+                        ${facetSQL}
+                    `;
+                const countStart = performance.now();
+                try {
+                    const countRow = await db.query(countSQL);
+                    countMs = performance.now() - countStart;
+                    if (searchId !== _searchSeq) {
+                        // A newer search owns `searchResults.textContent`
+                        // now; leaving `totalCount` null also keeps this
+                        // stale COUNT out of the structured log.
+                        wasSuperseded = true;
+                        return;
+                    }
+                    const total = Number(countRow[0]?.n ?? results.length);
+                    totalCount = total;
+                    // When `total === results.length`, the cap happened to
+                    // catch exactly the full set — drop the "of N" to
+                    // avoid a redundant "50 of 50 results" reading.
+                    searchResults.textContent = total > results.length
+                        ? `${results.length} of ${total.toLocaleString()} results for "${term}"`
+                        : `${results.length} results for "${term}"`;
+                } catch(err) {
+                    countMs = performance.now() - countStart;
+                    if (searchId !== _searchSeq) {
+                        wasSuperseded = true;
+                        return;
+                    }
+                    console.warn("Search COUNT(*) failed; keeping '50+' label:", err);
+                }
+            }
         } catch(err) {
-            console.error("Search failed:", err);
-            searchResults.textContent = `Search error: ${err.message}`;
-            errorMessage = err.message || String(err);
+            // Stale-search guard for the error path (Codex review of #236
+            // round 2). Without this, a search whose SELECT later rejects
+            // would overwrite a newer search's UI with "Search error: …".
+            // The freshness-token check matches the success-path guard
+            // above so both paths are coherent: a superseded search is
+            // recorded in the structured log (with `superseded: true` and
+            // the original error captured in `error`) but does NOT mutate
+            // user-visible state.
+            if (searchId !== _searchSeq) {
+                wasSuperseded = true;
+                errorMessage = err?.message || String(err);
+                console.warn(`Stale search (id=${searchId}) rejected after supersession; suppressing UI write.`, err);
+            } else {
+                console.error("Search failed:", err);
+                searchResults.textContent = `Search error: ${err.message}`;
+                errorMessage = err.message || String(err);
+            }
         } finally {
             performance.mark(markEnd);
             try { performance.measure(`search-${searchId}`, markStart, markEnd); } catch (e) {}
@@ -3482,7 +3638,20 @@ zoomWatcher = {
                 }
             } catch (e) {}
 
-            // Structured log for Playwright capture (#167).
+            // Structured log for Playwright capture (#167). `total_count`
+            // and `count_ms` (added #232): null/0 when the cap wasn't hit
+            // or when the COUNT follow-up failed/was superseded; otherwise
+            // the real result-set size and the time it took to compute.
+            // `elapsed_ms` continues to mark end-of-handler so it still
+            // covers SELECT+render+COUNT for end-to-end user-perceived
+            // latency.
+            //
+            // `superseded` (added round 2 of #236): a search whose work was
+            // abandoned mid-flight because the user fired a newer search.
+            // The log line still emits so downstream perf analysis can see
+            // how often this happens, but consumers should generally treat
+            // superseded rows as best-effort (results / counts may be
+            // partial and the UI never reflected them).
             try {
                 console.log(JSON.stringify({
                     event: 'isamples.search',
@@ -3491,12 +3660,15 @@ zoomWatcher = {
                     terms_count: terms.length,
                     scope: effectiveScope,
                     results_count: resultsCount,
+                    total_count: totalCount,
                     elapsed_ms: Math.round(elapsedMs),
+                    count_ms: Math.round(countMs),
                     bytes_transfer: transferBytes,
                     bytes_body: bodyBytes,
                     seen_urls: seenUrls,
-                    has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
-                    has_facet_filter: hasFacetFilters(),
+                    has_source_filter: hadSourceFilter,
+                    has_facet_filter: hadFacetFilter,
+                    superseded: wasSuperseded,
                     error: errorMessage,
                 }));
             } catch (e) {}
