@@ -3216,6 +3216,13 @@ zoomWatcher = {
         performance.mark(markStart);
         const tStart = performance.now();
         const terms = searchTerms(term);
+        // Snapshot the filter-state telemetry booleans here, BEFORE the
+        // try block, so they remain in scope through `finally`. They
+        // reflect the DOM state at search-fire time — independent of
+        // any toggles the user makes during the await chain (#167 + #236
+        // round 2 review).
+        const hadSourceFilter = getActiveSources().length !== SOURCE_VALUES.length;
+        const hadFacetFilter = hasFacetFilters();
         let resultsCount = 0;
         let totalCount = null;     // Real count when cap is hit (#232); null otherwise.
         let countMs = 0;           // Duration of the follow-up COUNT scan, ms.
@@ -3267,6 +3274,10 @@ zoomWatcher = {
             // COUNT below.
             const sourceSQL = sourceFilterSQL('f.source');
             const facetSQL = facetFilterSQL();
+            // Telemetry-equivalent of the SQL snapshots above (`hadSourceFilter`
+            // / `hadFacetFilter`) is declared OUTSIDE this try block so it
+            // remains in scope through `finally` — see comment near the
+            // function-level `let` declarations.
 
             // Two SQL shapes — one per scope. The fix per #179 round-2
             // review: in area mode, the viewport predicate MUST run BEFORE
@@ -3541,9 +3552,23 @@ zoomWatcher = {
                 }
             }
         } catch(err) {
-            console.error("Search failed:", err);
-            searchResults.textContent = `Search error: ${err.message}`;
-            errorMessage = err.message || String(err);
+            // Stale-search guard for the error path (Codex review of #236
+            // round 2). Without this, a search whose SELECT later rejects
+            // would overwrite a newer search's UI with "Search error: …".
+            // The freshness-token check matches the success-path guard
+            // above so both paths are coherent: a superseded search is
+            // recorded in the structured log (with `superseded: true` and
+            // the original error captured in `error`) but does NOT mutate
+            // user-visible state.
+            if (searchId !== _searchSeq) {
+                wasSuperseded = true;
+                errorMessage = err?.message || String(err);
+                console.warn(`Stale search (id=${searchId}) rejected after supersession; suppressing UI write.`, err);
+            } else {
+                console.error("Search failed:", err);
+                searchResults.textContent = `Search error: ${err.message}`;
+                errorMessage = err.message || String(err);
+            }
         } finally {
             performance.mark(markEnd);
             try { performance.measure(`search-${searchId}`, markStart, markEnd); } catch (e) {}
@@ -3600,8 +3625,8 @@ zoomWatcher = {
                     bytes_transfer: transferBytes,
                     bytes_body: bodyBytes,
                     seen_urls: seenUrls,
-                    has_source_filter: getActiveSources().length !== SOURCE_VALUES.length,
-                    has_facet_filter: hasFacetFilters(),
+                    has_source_filter: hadSourceFilter,
+                    has_facet_filter: hadFacetFilter,
                     superseded: wasSuperseded,
                     error: errorMessage,
                 }));

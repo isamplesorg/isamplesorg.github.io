@@ -127,66 +127,72 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
     expect(visibleTotal).toBe(last.total_count);
   });
 
-  test('cap-hit search with material facet active produces filter-coherent N of M', async ({ page }) => {
-    // Codex review of round 1 (#236) flagged the risk that the COUNT could
-    // run against a different filter state than the SELECT if the user
-    // toggles filters mid-flight. The implementation snapshots
-    // sourceFilterSQL/facetFilterSQL once per search. This test exercises
-    // the filtered-cap path so the snapshot's correctness is covered.
+  test('telemetry snapshot survives a facet toggle during search await', async ({ page }) => {
+    // Codex round-2 review observed that the round-1 filtered test
+    // wouldn't actually have caught a missing snapshot — it ticked a
+    // facet BEFORE searching, so SELECT and COUNT saw the same DOM state
+    // regardless of whether the snapshot existed. This stronger test
+    // exercises the race directly: fire the search with no facets,
+    // wait until the SELECT visibly completes (the "50+ results" label),
+    // then tick a material facet, then wait for the structured log.
+    //
+    // What the snapshot guarantees:
+    //   `has_facet_filter` in the log reflects search-fire-time state
+    //   (false), not the post-toggle DOM state (true).
+    //
+    // If the snapshot is removed (DOM-live reads in `finally`), this
+    // assertion will fail.
     const logs = attachSearchLogCollector(page);
     await page.goto(EXPLORER_PATH);
     await waitForSearchReady(page);
 
-    // Tick the first material facet. Same self-healing approach the
-    // search-perf benchmark uses (`material_first_n: 1`) so the test
-    // doesn't hardcode a URI that may disappear across data refreshes.
-    const materialUri = await page.evaluate(() => {
-      const cb = document.querySelector('#materialFilterBody input[type="checkbox"]');
-      if (!cb) return null;
-      cb.click();
-      return cb.value;
+    // Sanity: no facet active at search-fire time.
+    const facetActiveBefore = await page.evaluate(() => {
+      return document.querySelectorAll('#materialFilterBody input[type="checkbox"]:checked').length > 0
+          || document.querySelectorAll('#contextFilterBody input[type="checkbox"]:checked').length > 0
+          || document.querySelectorAll('#objectTypeFilterBody input[type="checkbox"]:checked').length > 0;
     });
-    expect(materialUri).toBeTruthy();
-
-    // Wait for the facet-count refresh fired by the click to settle. The
-    // exact debounce is handled by the page; a short visibility check on
-    // the cluster-mode honesty note is a cheap proxy for "facet state
-    // applied" because syncFacetNote runs from handleFacetFilterChange.
-    await page.waitForFunction(
-      () => document.getElementById('facetNote')?.style.display === 'block',
-      null, { timeout: 30000 }
-    ).catch(() => {});  // Not strictly required to assert; just lets the page settle.
+    expect(facetActiveBefore).toBe(false);
 
     await runSearch(page, 'pottery');
-    // Three possible terminal states depending on which material happens
-    // to be first in the facet list (data-dependent): cap hit (50 of N),
-    // sub-cap (N results), or empty intersection (No results). All three
-    // are valid; the invariant we assert is the same.
+
+    // Wait for the SELECT to visibly settle (initial "50+" label or the
+    // final "50 of N" — either proves SELECT done, and toggling now
+    // simulates a user mid-flight facet change).
     await page.waitForFunction(
-      () => {
-        const text = document.getElementById('searchResults')?.textContent || '';
-        return /^(50 of [\d,]+|50\+|\d+|No) results for "pottery"$/.test(text);
-      },
+      () => /^(50\+|50 of [\d,]+) results for "pottery"$/.test(document.getElementById('searchResults')?.textContent || ''),
       null, { timeout: 90000 }
     );
 
+    // Tick a material facet — this is the toggle the snapshot must
+    // survive. Programmatic .click() is used so the change event fires
+    // and the page's normal handlers run (mirrors user interaction).
+    await page.evaluate(() => {
+      const cb = document.querySelector('#materialFilterBody input[type="checkbox"]');
+      if (cb) cb.click();
+    });
+
+    // Wait for the search to fully settle: either the final "50 of N"
+    // label appeared (COUNT completed before or after the toggle), or
+    // the structured log row landed for this search id.
+    await page.waitForFunction(
+      () => /^50 of [\d,]+ results for "pottery"$/.test(document.getElementById('searchResults')?.textContent || ''),
+      null, { timeout: 90000 }
+    );
+
+    // Pull the log payload for this search (filter by term). With the
+    // snapshot, `has_facet_filter` must be false (state at search-fire
+    // time). Without the snapshot, the DOM-live read in `finally` would
+    // see the post-toggle checkbox and report true.
     const potteryLogs = logs.filter(l => l.term === 'pottery');
     expect(potteryLogs.length).toBeGreaterThan(0);
     const last = potteryLogs[potteryLogs.length - 1];
-    expect(last.has_facet_filter).toBe(true);
-    expect(last.results_count).toBeLessThanOrEqual(50);
-    // Structured-log invariant for #232: `total_count` is present iff the
-    // cap was hit. Sub-cap and zero-results cases must NOT have a stale
-    // total_count from a prior search leaking through.
-    if (last.results_count === 50) {
-      expect(last.total_count).not.toBeNull();
-      expect(last.total_count).toBeGreaterThanOrEqual(last.results_count);
-    } else {
-      expect(last.total_count).toBeNull();
-    }
-    // Round-2 invariant: a non-superseded search must record its filter
-    // state alongside results — the snapshot of source/facet SQL is what
-    // guarantees the COUNT matches the SELECT in this scenario.
+    expect(last.has_facet_filter).toBe(false);
+    expect(last.results_count).toBe(50);
+    expect(last.total_count).not.toBeNull();
+    expect(last.total_count).toBeGreaterThan(50);
+    // Search itself was not superseded — only a facet toggle happened,
+    // not a fresh search submission.
     expect(last.superseded).toBe(false);
   });
 
