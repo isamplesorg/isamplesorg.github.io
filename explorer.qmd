@@ -3217,6 +3217,8 @@ zoomWatcher = {
         const tStart = performance.now();
         const terms = searchTerms(term);
         let resultsCount = 0;
+        let totalCount = null;     // Real count when cap is hit (#232); null otherwise.
+        let countMs = 0;           // Duration of the follow-up COUNT scan, ms.
         let errorMessage = null;
 
         try {
@@ -3272,7 +3274,14 @@ zoomWatcher = {
             // because area-scoped search by definition requires
             // coordinates. Drop coord-less samples before ranking; apply
             // the viewport predicate; THEN top-50.
+            //
+            // Track which shape actually ran so the follow-up COUNT(*)
+            // query for #232 uses the matching WHERE/JOIN. The area-scope
+            // path falls back to `world` when `viewerBboxSQL` returns null,
+            // so `effectiveScope === 'area'` is NOT a reliable predicate.
             let results;
+            let effectiveQueryShape = 'world';
+            let effectiveBboxSQL = null;
             if (effectiveScope === 'area') {
                 const bboxSQL = viewerBboxSQL('l.latitude', 'l.longitude');
                 if (!bboxSQL) {
@@ -3295,6 +3304,8 @@ zoomWatcher = {
                         ORDER BY relevance_score DESC, f.label
                         LIMIT 50
                     `);
+                    effectiveQueryShape = 'area';
+                    effectiveBboxSQL = bboxSQL;
                 }
             } else {
                 results = await runWorldQuery();
@@ -3324,7 +3335,18 @@ zoomWatcher = {
                 searchResults.textContent = `No results for "${term}"`;
                 return;
             }
-            searchResults.textContent = `${results.length}${results.length === 50 ? '+' : ''} results for "${term}"`;
+
+            // Initial render. The "+" indicates "more exist" when the cap was
+            // hit; if the cap was hit, the follow-up COUNT below replaces
+            // this with the real total ("50 of 7,124 results"). This keeps
+            // the user informed during cold-cache COUNT scans (where the
+            // second query can add a few hundred ms) rather than leaving the
+            // bare result-row count visible while the precise total
+            // resolves. See issue #232.
+            const capReached = results.length === 50;
+            searchResults.textContent = capReached
+                ? `${results.length}+ results for "${term}"`
+                : `${results.length} results for "${term}"`;
 
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
@@ -3419,6 +3441,69 @@ zoomWatcher = {
                     duration: 1.5
                 });
             }
+
+            // Real-count follow-up (#232). When the SELECT hit `LIMIT 50` we
+            // can't know whether the true result set is 51 or 50,000 — the
+            // legacy `50+` label hid this entirely. Mirror the pattern used
+            // by `loadViewportSamples()` (where this same kind of follow-up
+            // turned "Samples in View capped at 5,000" into a real count):
+            // re-run the WHERE clause as a `COUNT(*)` only when the cap was
+            // hit. Below the cap, `results.length` IS the truth and a second
+            // scan would be wasted.
+            //
+            // Cancellation: a second search the user fires while this COUNT
+            // is in flight bumps `_searchSeq`. The guard below ensures a
+            // stale COUNT can't overwrite the newer search's result text.
+            // We also skip the structured-log `total_count` update on stale
+            // returns so the #167 log line still reflects only the live
+            // search's measurements.
+            //
+            // Failure handling: a COUNT error leaves the initial `50+` text
+            // in place — better to under-disclose than to clear the line
+            // entirely. The cost is logged via `count_ms` so #167 analysis
+            // can track when the COUNT path runs.
+            if (capReached) {
+                const countSQL = effectiveQueryShape === 'area'
+                    ? `
+                        SELECT COUNT(*) AS n
+                        FROM read_parquet('${facets_url}') f
+                        INNER JOIN read_parquet('${lite_url}') l USING (pid)
+                        WHERE ${searchWhere}
+                          ${effectiveBboxSQL}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                    `
+                    : `
+                        SELECT COUNT(*) AS n
+                        FROM read_parquet('${facets_url}') f
+                        WHERE ${searchWhere}
+                        ${sourceFilterSQL('f.source')}
+                        ${facetFilterSQL()}
+                    `;
+                const countStart = performance.now();
+                try {
+                    const countRow = await db.query(countSQL);
+                    countMs = performance.now() - countStart;
+                    if (searchId !== _searchSeq) {
+                        // A newer search owns `searchResults.textContent`
+                        // now; leaving `totalCount` null also keeps this
+                        // stale COUNT out of the structured log.
+                        return;
+                    }
+                    const total = Number(countRow[0]?.n ?? results.length);
+                    totalCount = total;
+                    // When `total === results.length`, the cap happened to
+                    // catch exactly the full set — drop the "of N" to
+                    // avoid a redundant "50 of 50 results" reading.
+                    searchResults.textContent = total > results.length
+                        ? `${results.length} of ${total.toLocaleString()} results for "${term}"`
+                        : `${results.length} results for "${term}"`;
+                } catch(err) {
+                    countMs = performance.now() - countStart;
+                    if (searchId !== _searchSeq) return;
+                    console.warn("Search COUNT(*) failed; keeping '50+' label:", err);
+                }
+            }
         } catch(err) {
             console.error("Search failed:", err);
             searchResults.textContent = `Search error: ${err.message}`;
@@ -3451,7 +3536,13 @@ zoomWatcher = {
                 }
             } catch (e) {}
 
-            // Structured log for Playwright capture (#167).
+            // Structured log for Playwright capture (#167). `total_count`
+            // and `count_ms` (added #232): null/0 when the cap wasn't hit
+            // or when the COUNT follow-up failed/was superseded; otherwise
+            // the real result-set size and the time it took to compute.
+            // `elapsed_ms` continues to mark end-of-handler so it still
+            // covers SELECT+render+COUNT for end-to-end user-perceived
+            // latency.
             try {
                 console.log(JSON.stringify({
                     event: 'isamples.search',
@@ -3460,7 +3551,9 @@ zoomWatcher = {
                     terms_count: terms.length,
                     scope: effectiveScope,
                     results_count: resultsCount,
+                    total_count: totalCount,
                     elapsed_ms: Math.round(elapsedMs),
+                    count_ms: Math.round(countMs),
                     bytes_transfer: transferBytes,
                     bytes_body: bodyBytes,
                     seen_urls: seenUrls,
