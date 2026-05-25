@@ -88,22 +88,25 @@ async function waitForFacetCountsStable(page, ms = 60000) {
     );
 }
 
-/** Read the per-source counts off the DOM. Returns `{[uri]: integer}`.
+/** Read the per-value counts for a facet off the DOM. Returns `{[uri]: integer}`.
  *  Tolerates the `Number.toLocaleString()` thousands-grouping the renderer
- *  applies (en-US locale produces `1,234`; we strip commas).
- *  Source is the most stable facet for a viewport-aware assertion: only a
- *  handful of values, and `_baselineCounts.source` populates at boot. */
-async function readSourceCounts(page) {
-    return page.evaluate(() => {
+ *  applies (en-US locale produces `1,234`; we strip commas). */
+async function readFacetCounts(page, facet) {
+    return page.evaluate((facet) => {
         const out = {};
-        document.querySelectorAll('.facet-count[data-facet="source"]').forEach(el => {
+        document.querySelectorAll(`.facet-count[data-facet="${facet}"]`).forEach(el => {
             const val = el.getAttribute('data-value');
             const m = (el.textContent || '').match(/\(([\d,]+)\)/);
             if (m && val) out[val] = parseInt(m[1].replace(/,/g, ''), 10);
         });
         return out;
-    });
+    }, facet);
 }
+
+/** Source is the most stable facet for the unfiltered viewport-aware
+ *  assertion: only a handful of values, and `_baselineCounts.source`
+ *  populates at boot. */
+async function readSourceCounts(page) { return readFacetCounts(page, 'source'); }
 
 /** flyTo a destination, then wait for the post-moveEnd debounce + bbox query
  *  to settle. Uses a zero-duration flight to make the test deterministic. */
@@ -161,11 +164,82 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
         await flyToAndSettle(page, 0, 0, 15000000);
 
         const restoredCounts = await readSourceCounts(page);
-        const totalRestored = totalOf(restoredCounts);
-        // Should match global to within 1% (same parquet, same WHERE clause
-        // shape — the only difference is the bbox JOIN vs. no JOIN, which
-        // the isGlobalView() epsilon should collapse to "no JOIN").
-        expect(Math.abs(totalRestored - totalGlobal) / totalGlobal).toBeLessThan(0.01);
+        // At alt=15e6 the altitude shortcut in `isGlobalView()` forces the
+        // no-bbox baseline path, so restored counts must be VALUE-BY-VALUE
+        // EXACTLY equal to the first global capture — not a 1 % tolerance.
+        // Codex round-1 review of PR #237 caught that a loose tolerance
+        // could hide a real regression (e.g. a stale-read race writing a
+        // bbox-scoped count and us mistaking it for "close enough").
+        expect(restoredCounts).toEqual(globalCounts);
+    });
+
+    test('bbox-aware count under an active source filter (JOIN + filter)', async ({ page }) => {
+        // The most important new SQL shape: `buildCrossFilterWhere(d.key, 'f.')`
+        // emitted as `f.source IN (...)` joined to `lite_url l` for the
+        // bbox predicate. This guards against column-prefix regressions
+        // (e.g. dropping the `f.` qualifier → ambiguous-column error from
+        // DuckDB since `lite_url` also carries a `source` column) and
+        // against the JOIN inadvertently double-counting via duplicate pids.
+        // Codex round-1 review of PR #237 called out the coverage gap.
+        await page.goto(`${EXPLORER_PATH}${GLOBAL_HASH}`);
+        await waitForFacetUI(page);
+        await waitForFacetCountsStable(page);
+
+        // Pick the source with the most data in our viewport-baseline so the
+        // assertion has signal: bbox-scoped count > 0 and ≤ its global.
+        const globalCounts = await readSourceCounts(page);
+        const [topSource] = Object.entries(globalCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([uri]) => uri);
+        expect(topSource).toBeTruthy();
+
+        // Toggle the source-checkbox state so only `topSource` remains
+        // active. The sourceFilter change handler runs refreshFacetCounts;
+        // at global view the cube fast-path kicks in (single value selected).
+        await page.evaluate((keep) => {
+            document.querySelectorAll('#sourceFilter input[type="checkbox"]').forEach(cb => {
+                cb.checked = (cb.value === keep);
+            });
+            document.getElementById('sourceFilter').dispatchEvent(new Event('change', { bubbles: true }));
+        }, topSource);
+        await waitForFacetCountsStable(page);
+
+        // Capture filtered-but-global material counts. With source filtered
+        // to a single value (cube fast-path), these are the cube-derived
+        // material counts under that source.
+        const globalMaterialUnderFilter = await readFacetCounts(page, 'material');
+        const materialsPresent = Object.values(globalMaterialUnderFilter).filter(n => n > 0).length;
+        expect(materialsPresent).toBeGreaterThan(0);
+
+        // Fly to Cyprus. The slow path now runs WITH the JOIN AND the
+        // `f.source IN ('topSource')` predicate (this is the new shape
+        // Codex round-1 flagged as untested). Source-dim query has WHERE
+        // '1=1' (its own dim excluded) — no `f.` prefix appears — but the
+        // material/context/object_type queries DO emit `f.source IN (...)`.
+        await flyToAndSettle(page, CYPRUS_LAT, CYPRUS_LNG, CYPRUS_ALT);
+
+        const cyprusSourceCounts = await readSourceCounts(page);
+        // Top source must shrink from global (we're now in a small viewport)
+        // but remain > 0 (Cyprus carries data for the most-represented source).
+        expect(cyprusSourceCounts[topSource]).toBeGreaterThan(0);
+        expect(cyprusSourceCounts[topSource]).toBeLessThanOrEqual(globalCounts[topSource]);
+        for (const [uri, n] of Object.entries(cyprusSourceCounts)) {
+            const g = globalCounts[uri] ?? 0;
+            expect(n).toBeLessThanOrEqual(g);
+        }
+
+        // Material counts must come back from the JOIN+filter path and
+        // also shrink. A silent fallback to `applyFacetCounts(key, null)`
+        // (e.g. on an ambiguous-column SQL error) would write GLOBAL
+        // baseline counts here — those baselines are unfiltered, so the
+        // material total would actually GROW back to its global value,
+        // which violates the shrink assertion below. This is the JOIN-path
+        // smoke test Codex round-1 called for.
+        const cyprusMaterialUnderFilter = await readFacetCounts(page, 'material');
+        const filteredTotal = Object.values(globalMaterialUnderFilter).reduce((a, b) => a + b, 0);
+        const cyprusTotal = Object.values(cyprusMaterialUnderFilter).reduce((a, b) => a + b, 0);
+        expect(cyprusTotal).toBeGreaterThan(0);
+        expect(cyprusTotal).toBeLessThan(filteredTotal);
     });
 
     test('moveStart marks .recomputing before the debounce can run', async ({ page }) => {

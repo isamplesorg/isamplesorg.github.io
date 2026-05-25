@@ -3060,18 +3060,34 @@ zoomWatcher = {
     // the "Samples in View" stat / phase-msg stay in lockstep with the
     // table's row count even on small sub-10% pans that `camera.changed`
     // doesn't fire for.
-    // B1 (issue #234 step 3): mark facet counts as "recomputing" the moment
-    // the user starts a camera move, so the legend shows italic-stale state
-    // immediately instead of waiting for moveEnd + the 250ms debounce. The
-    // class is cleared only when `applyFacetCounts` runs, so it stays
-    // sticky-italic across a continuous pan/zoom — exactly the intended
-    // "we're checking if counts changed" affordance.
+    // B1 (issue #234 step 3): on the very first sign of a camera move,
+    // (a) mark the legend italic-stale so the user sees "checking…" the
+    //     moment they grab the globe (instead of waiting moveEnd + 250 ms);
+    // (b) bump `facetCountsReqId` and clear the pending debounce so any
+    //     in-flight or debounced `updateCrossFilteredCounts` for the
+    //     PRE-MOVE viewport is invalidated.
     //
-    // We skip the mark when there are no facet-count spans rendered yet
-    // (initial boot, before facet UI hydrates) to avoid touching DOM during
-    // the very first camera-position events.
+    // Without (b), a query that was already in flight at moveStart could
+    // resume after its SELECT lands, pass the stale guard, and call
+    // `applyFacetCounts` — which would WRITE OLD COUNTS for a viewport the
+    // user has already abandoned AND clear `.recomputing` before moveEnd
+    // schedules the new query, leaving the legend looking authoritative
+    // (no italic) but stale until moveEnd's 250 ms debounce fires.
+    // Codex round-1 review of PR #237 caught this.
+    //
+    // moveEnd's `refreshFacetCounts()` below will bump `facetCountsReqId`
+    // AGAIN — that's intentional and harmless: a second supersession of
+    // already-superseded work, debounce coalesced.
+    //
+    // We skip the mark/bump when there are no facet-count spans rendered
+    // yet (initial boot, before facet UI hydrates) to avoid DOM thrash
+    // and a no-op debounce reset during the very first camera-position
+    // events that fire before the OJS facet cells have settled.
     viewer.camera.moveStart.addEventListener(() => {
-        if (document.querySelector('.facet-count')) markFacetCountsRecomputing();
+        if (!document.querySelector('.facet-count')) return;
+        markFacetCountsRecomputing();
+        clearTimeout(facetCountsDebounce);
+        ++facetCountsReqId;
     });
 
     viewer.camera.moveEnd.addEventListener(() => {
