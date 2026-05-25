@@ -993,6 +993,50 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
     return ` AND ${latCol} BETWEEN ${south} AND ${north} AND ${lngClause}`;
 }
 
+// True when the current camera shows ≈the whole world (initial zoom-out
+// state), or when the camera can't compute a rectangle at all (off-globe).
+// In either case a viewport bbox predicate would be a no-op, so fast-paths
+// that depend on "no spatial constraint" (e.g. the pre-aggregated facet
+// cross-filter cube) remain valid and can be used.
+//
+// Used by `updateCrossFilteredCounts` (B1, issue #234 step 3) to decide
+// whether to gate the cube fast-path off and JOIN to `lite_url` for a
+// bbox-scoped slow-path query.
+//
+// Implementation note — why an altitude shortcut:
+//   At high altitudes Cesium's `computeViewRectangle` saturates at the
+//   sphere's extent for some camera angles but returns a tight bounding
+//   rect for others (e.g. at alt=5000 km over the equator the rect is
+//   ≈hemispheric, not full). The user's intuition is "max zoom-out = global
+//   counts," and at the explorer's default `globalRect` (which fits the
+//   `[-180,-60,180,80]` data extent and sits roughly at altitude ≈12000 km)
+//   the per-source legend totals should match the baselines, not jiggle on
+//   tiny camera rotations. The altitude check captures that "I'm zoomed all
+//   the way out" intent regardless of the exact rect Cesium reports. Below
+//   the altitude threshold we still let the rect vote "global" so flyTo
+//   to a true world-rect destination keeps working.
+//
+//   Constants live inside the function (not top-level `const`) because
+//   Quarto `{ojs}` cells reject top-level `const`/`let`/`var` and a bad
+//   declaration cascades — breaking every dependent cell (memory note
+//   `feedback_qmd_ojs_top_level`).
+function isGlobalView() {
+    const ALT_THRESHOLD_M = 1.0e7;  // 10,000 km
+    const LNG_PAD_DEG = 2;
+    const LAT_PAD_DEG = 2;
+    if (typeof viewer === 'undefined') return true;
+    let h = NaN;
+    try { h = viewer.camera.positionCartographic.height; } catch { /* mid-init */ }
+    if (Number.isFinite(h) && h > ALT_THRESHOLD_M) return true;
+    const b = paddedViewportBounds(0);
+    if (!b) return true;              // off-globe → no meaningful bbox
+    if (b.west > b.east) return false; // antimeridian-wrapping is never "global"
+    return b.west  <= -180 + LNG_PAD_DEG
+        && b.east  >=  180 - LNG_PAD_DEG
+        && b.south <=  -90 + LAT_PAD_DEG
+        && b.north >=   90 - LAT_PAD_DEG;
+}
+
 // === Cross-filter facet count UI helpers ===
 function applyFacetCounts(facetKey, countsMap) {
     const baseline = (viewer && viewer._baselineCounts) ? viewer._baselineCounts[facetKey] : null;
@@ -2644,7 +2688,10 @@ zoomWatcher = {
         };
     }
 
-    function buildCrossFilterWhere(excludeFacet) {
+    // `colPrefix` lets callers qualify column names when the WHERE is going
+    // to be used inside a JOIN (B1 bbox-aware path). Defaults to '' so the
+    // pre-B1 single-table call sites keep working unchanged.
+    function buildCrossFilterWhere(excludeFacet, colPrefix = '') {
         const { activeDims, sourceImpossible } = describeCrossFilters();
         if (sourceImpossible && excludeFacet !== 'source') return '1=0';
 
@@ -2652,7 +2699,7 @@ zoomWatcher = {
             .filter(d => d.key !== excludeFacet)
             .map(d => {
                 const list = d.values.map(v => `'${escSql(v)}'`).join(',');
-                return `${d.col} IN (${list})`;
+                return `${colPrefix}${d.col} IN (${list})`;
             });
 
         return conds.length > 0 ? conds.join(' AND ') : '1=1';
@@ -2662,17 +2709,40 @@ zoomWatcher = {
         if (myReq !== facetCountsReqId) return;
         const { dims, activeDims, totalActiveValues, sourceImpossible } = describeCrossFilters();
 
-        if (!sourceImpossible && activeDims.length === 0) {
+        // --- B1 (issue #234 step 3): bbox-aware counts ---
+        //
+        // Snapshot the viewport state at function entry. If the camera moves
+        // after this, a fresh `refreshFacetCounts()` call (from the moveEnd
+        // listener) bumps `facetCountsReqId` and supersedes this in-flight
+        // request — every `await` resume checks `myReq !== facetCountsReqId`.
+        //
+        // `isGlobalView()` true → no spatial constraint → cube fast-path and
+        // baseline early-return remain valid as before.
+        // `isGlobalView()` false → snapshot a bbox SQL fragment scoped to the
+        // `lite_url` lat/lon columns (which we JOIN to in the slow path,
+        // since `facets_url` carries no coordinates today). Cube fast-path
+        // is unconditionally gated off (it is pre-aggregated globally and
+        // can't answer viewport-scoped questions).
+        const isGlobal = isGlobalView();
+        const bboxSQL = isGlobal ? null : viewerBboxSQL('l.latitude', 'l.longitude', 0);
+
+        // Baseline early-return only applies when there is no filter AND no
+        // spatial constraint. In a non-global view with no facet filter, B1
+        // still wants per-value counts scoped to what's visible — fall
+        // through to the slow path with `where = '1=1'`.
+        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null) {
             for (const d of dims) applyFacetCounts(d.key, null);
             return;
         }
 
         markFacetCountsRecomputing();
 
+        // Cube fast-path: pre-aggregated globally, so it's valid only when
+        // the camera is at (or close to) the global view.
         const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
-        if (singleActiveDim && totalActiveValues === 1) {
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -2708,14 +2778,31 @@ zoomWatcher = {
         }
 
         await Promise.all(dims.map(async (d) => {
-            const where = buildCrossFilterWhere(d.key);
             try {
-                const rows = await db.query(`
-                    SELECT ${d.col} AS value, COUNT(*) AS count
-                    FROM read_parquet('${facets_url}')
-                    WHERE ${where} AND ${d.col} IS NOT NULL
-                    GROUP BY ${d.col}
-                `);
+                let rows;
+                if (bboxSQL) {
+                    // B1 bbox-scoped slow path: JOIN facets_url to lite_url
+                    // on pid so we can filter by lite.latitude / lite.longitude.
+                    // facets_url has no coordinates of its own. Per-PR follow-up:
+                    // if this JOIN turns out too slow in practice, bake a
+                    // pre-joined parquet (decision Q1 in plan).
+                    const where = buildCrossFilterWhere(d.key, 'f.');
+                    rows = await db.query(`
+                        SELECT f.${d.col} AS value, COUNT(*) AS count
+                        FROM read_parquet('${facets_url}') f
+                        JOIN read_parquet('${lite_url}') l ON l.pid = f.pid
+                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}
+                        GROUP BY f.${d.col}
+                    `);
+                } else {
+                    const where = buildCrossFilterWhere(d.key);
+                    rows = await db.query(`
+                        SELECT ${d.col} AS value, COUNT(*) AS count
+                        FROM read_parquet('${facets_url}')
+                        WHERE ${where} AND ${d.col} IS NOT NULL
+                        GROUP BY ${d.col}
+                    `);
+                }
                 if (myReq !== facetCountsReqId) return;
                 const map = new Map();
                 for (const r of rows) map.set(r.value, Number(r.count));
@@ -2723,6 +2810,8 @@ zoomWatcher = {
             } catch (err) {
                 if (myReq !== facetCountsReqId) return;
                 console.warn(`Cross-filter count query failed for ${d.key}:`, err);
+                // Q3 in plan: on bbox-query throw, fall back to global
+                // baseline rather than clobber with an error indicator.
                 applyFacetCounts(d.key, null);
             }
         }));
@@ -2971,10 +3060,29 @@ zoomWatcher = {
     // the "Samples in View" stat / phase-msg stay in lockstep with the
     // table's row count even on small sub-10% pans that `camera.changed`
     // doesn't fire for.
+    // B1 (issue #234 step 3): mark facet counts as "recomputing" the moment
+    // the user starts a camera move, so the legend shows italic-stale state
+    // immediately instead of waiting for moveEnd + the 250ms debounce. The
+    // class is cleared only when `applyFacetCounts` runs, so it stays
+    // sticky-italic across a continuous pan/zoom — exactly the intended
+    // "we're checking if counts changed" affordance.
+    //
+    // We skip the mark when there are no facet-count spans rendered yet
+    // (initial boot, before facet UI hydrates) to avoid touching DOM during
+    // the very first camera-position events.
+    viewer.camera.moveStart.addEventListener(() => {
+        if (document.querySelector('.facet-count')) markFacetCountsRecomputing();
+    });
+
     viewer.camera.moveEnd.addEventListener(() => {
         if (!viewer._suppressHashWrite) {
             history.replaceState(null, '', buildHash(viewer));
         }
+        // B1: viewport-aware facet counts. Bouncing through refreshFacetCounts
+        // reuses the existing 250ms debounce + facetCountsReqId stale-guard,
+        // so bursts of moveEnd (drag-pan, wheel-zoom) coalesce into one query
+        // and any in-flight superseded query discards its result on resume.
+        refreshFacetCounts();
         if (getMode() !== 'point') return;
         const h = viewer.camera.positionCartographic.height;
         if (h > EXIT_POINT_ALT) {
