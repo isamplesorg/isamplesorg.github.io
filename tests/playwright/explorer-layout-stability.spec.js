@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
-
-const BASE_URL = process.env.TEST_URL || 'http://localhost:5860';
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 const ALT_WORLD = 10000000;
 const ALT_POINT_CYPRUS = 62054;
@@ -95,7 +93,7 @@ async function resolveMapHeightPx(page) {
 test.describe('explorer layout stability', () => {
   test('desktop globe rect is stable across boot, status, and point-mode flight; table is permanent below', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -142,7 +140,7 @@ test.describe('explorer layout stability', () => {
   test('mobile globe height override is stable across boot and wrapped status', async ({ page }) => {
     const viewport = { width: 390, height: 844 };
     await page.setViewportSize(viewport);
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -172,7 +170,7 @@ test.describe('explorer layout stability', () => {
     // 50vh = 284px — below the 360px floor — so map height = 360px.
     // Covers the clamp-floor branch which the 390×844 case never exercises.
     await page.setViewportSize({ width: 320, height: 568 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });

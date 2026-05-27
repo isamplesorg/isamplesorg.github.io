@@ -16,7 +16,7 @@
 const { test, expect } = require('@playwright/test');
 
 // Configuration
-const BASE_URL = process.env.TEST_URL || 'http://localhost:5860';
+const { siteUrl } = require('./helpers/url');
 const PAGE_PATH = '/tutorials/parquet_cesium.html';
 
 // Test data - PKAP location with known samples
@@ -27,7 +27,7 @@ test.describe('Cesium Query Results UI', () => {
 
   test.beforeEach(async ({ page }) => {
     // Navigate to page
-    await page.goto(`${BASE_URL}${PAGE_PATH}`, {
+    await page.goto(siteUrl(PAGE_PATH), {
       waitUntil: 'domcontentloaded',
       timeout: 60000
     });

@@ -26,8 +26,7 @@
  *     unchanged from pre-#232 ("N results for term" with no "of M").
  */
 const { test, expect } = require('@playwright/test');
-
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 /** Wait until the explorer has rendered the search input. Boot sequence:
  *  phase1 (viewer + cluster cache) → facetFilters → search input wiring.
@@ -77,7 +76,7 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
 
   test('cap-hit search shows "N of M results" + structured log carries total_count', async ({ page }) => {
     const logs = attachSearchLogCollector(page);
-    await page.goto(EXPLORER_PATH);
+    await page.goto(explorerUrl());
     await waitForSearchReady(page);
 
     await runSearch(page, 'pottery');
@@ -148,7 +147,7 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
     // `finally`, this test fails. Both round-1 (predicate snapshot)
     // and round-2 (telemetry snapshot) fixes are exercised.
     const logs = attachSearchLogCollector(page);
-    await page.goto(EXPLORER_PATH);
+    await page.goto(explorerUrl());
     await waitForSearchReady(page);
 
     // Sanity: no facet active at search-fire time.
@@ -222,7 +221,7 @@ test.describe('Search real-count display (#232 / #234 step 2)', () => {
 
   test('no-results search short-circuits without COUNT (total_count remains null)', async ({ page }) => {
     const logs = attachSearchLogCollector(page);
-    await page.goto(EXPLORER_PATH);
+    await page.goto(explorerUrl());
     await waitForSearchReady(page);
 
     await runSearch(page, 'xyzzyqqqplugh');
