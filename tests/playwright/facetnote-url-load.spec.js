@@ -20,8 +20,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
-
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 // Cluster-altitude default (well above ENTER_POINT_ALT = 120000).
 const ALT_CLUSTER = 5000000;
@@ -60,7 +59,7 @@ test.describe('#facetNote URL deep-link visibility (issue #234 step 1)', () => {
     // Boot the page once to discover a real material URI from the rendered
     // checkboxes. Hardcoding a URI would couple the test to a specific
     // vocabulary version; reading the live data keeps it self-healing.
-    await page.goto(`${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`);
+    await page.goto(explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`));
     await waitForMode(page, 'cluster');
     await waitForFacetCheckboxes(page);
 
@@ -75,7 +74,7 @@ test.describe('#facetNote URL deep-link visibility (issue #234 step 1)', () => {
     // syncFacetNote() must run to flip #facetNote visible.
     const encoded = encodeURIComponent(materialUri);
     await page.goto(
-      `${EXPLORER_PATH}?material=${encoded}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`
+      explorerUrl(`?material=${encoded}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`)
     );
     await waitForMode(page, 'cluster');
     await waitForFacetCheckboxes(page);
@@ -112,7 +111,7 @@ test.describe('#facetNote URL deep-link visibility (issue #234 step 1)', () => {
     // Negative control: arriving with no facet params must keep the note
     // hidden. Guards against an over-eager `syncFacetNote()` that flips
     // visibility independent of `hasFacetFilters()`.
-    await page.goto(`${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`);
+    await page.goto(explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}`));
     await waitForMode(page, 'cluster');
     await waitForFacetCheckboxes(page);
 

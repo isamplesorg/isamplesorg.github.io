@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
-
-const BASE_URL = process.env.TEST_URL || 'http://localhost:5860';
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 // Cesium + OJS boot can be slow on CI; the in-map-overlay specs all wait
 // for #cesiumContainer + toolbar render before measuring.
@@ -31,7 +29,7 @@ async function waitForBootReady(page) {
 test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)', () => {
   test('desktop: overlay does not cover Cesium toolbar buttons', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -56,7 +54,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('mobile (390px): overlay does not cover Cesium toolbar', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -71,7 +69,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('iPhone SE (320px): overlay clears toolbar and search buttons do not overflow', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -102,7 +100,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('base-layer picker dropdown is clickable (not occluded) above the overlay', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -154,7 +152,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     await page.setViewportSize({ width: 1280, height: 900 });
 
     // Load at world zoom and read total.
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -203,7 +201,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('table v2: pagination is server-side, pager shows Page X of Y, Next loads new rows', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -236,7 +234,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('table v2: filter change clears pager text and re-fetches count', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -260,7 +258,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('clicking a table row selects the sample, updates #pid hash, and marks the row selected', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=10000000`, {
+    await page.goto(explorerUrl('#v=1&lat=20&lng=0&alt=10000000'), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -295,7 +293,7 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
 
   test('sidebar search input mirrors in-map search input', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}`, {
+    await page.goto(explorerUrl(), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });

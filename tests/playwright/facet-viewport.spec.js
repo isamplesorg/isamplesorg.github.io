@@ -40,8 +40,7 @@
  *     the implementation plan logs query latency for visibility.
  */
 const { test, expect } = require('@playwright/test');
-
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 // Global view position. alt=15000000 (15,000 km) is above the
 // `GLOBAL_VIEW_ALT_M = 1e7` shortcut in `isGlobalView()`, so the
@@ -133,7 +132,7 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
     test.setTimeout(180000);
 
     test('zoom in → counts shrink to viewport; zoom out → counts restore', async ({ page }) => {
-        await page.goto(`${EXPLORER_PATH}${GLOBAL_HASH}`);
+        await page.goto(explorerUrl(GLOBAL_HASH));
         await waitForFacetUI(page);
         await waitForFacetCountsStable(page);
 
@@ -181,7 +180,7 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
         // DuckDB since `lite_url` also carries a `source` column) and
         // against the JOIN inadvertently double-counting via duplicate pids.
         // Codex round-1 review of PR #237 called out the coverage gap.
-        await page.goto(`${EXPLORER_PATH}${GLOBAL_HASH}`);
+        await page.goto(explorerUrl(GLOBAL_HASH));
         await waitForFacetUI(page);
         await waitForFacetCountsStable(page);
 
@@ -243,7 +242,7 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
     });
 
     test('moveStart marks .recomputing before the debounce can run', async ({ page }) => {
-        await page.goto(`${EXPLORER_PATH}${GLOBAL_HASH}`);
+        await page.goto(explorerUrl(GLOBAL_HASH));
         await waitForFacetUI(page);
         await waitForFacetCountsStable(page);
 
@@ -289,7 +288,7 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
         // must NOT leave any `.recomputing` class behind. Guards against a
         // future refactor that moves `markFacetCountsRecomputing()` above
         // the early-return.
-        await page.goto(`${EXPLORER_PATH}${GLOBAL_HASH}`);
+        await page.goto(explorerUrl(GLOBAL_HASH));
         await waitForFacetUI(page);
         await waitForFacetCountsStable(page);
         const stuck = await page.evaluate(
