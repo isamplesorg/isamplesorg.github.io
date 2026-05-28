@@ -888,20 +888,26 @@ function hasFacetFilters() {
 // takes effect at neighborhood zoom") explains the cluster-mode honesty
 // gap: H3 summary parquets only carry `dominant_source`, so material /
 // context / object_type filters cannot affect cluster counts. Invariant:
-//   visible ⇔ (any facet active) ∧ (mode === 'cluster')
-// Call sites that mutate either side of the conjunction MUST call this
-// to keep DOM and state in agreement:
+//   visible ⇔ (any facet active) ∧ (mode === 'cluster') ∧ (heatmap off)
+// Call sites that mutate any conjunct MUST call this to keep DOM and
+// state in agreement:
 //   - facetFilters cell (URL deep-link restore, #234 step 1)
 //   - handleFacetFilterChange (user toggles a facet checkbox)
 //   - enterPointMode / exitPointMode (mode transitions)
-// `viewer` resolves late at call time per ojs reactive scoping, so this
-// helper is safe to define before the viewer cell runs.
+//   - heatmapToggle change handler (#233 phase 3)
+// The heatmap conjunct: when the heatmap overlay is on, it IS the
+// filter-aware density view (dots are generated from filtered data, not
+// pre-baked dominant_source), so the apology is false and must be hidden
+// (#233). The toggle state is read straight off the DOM rather than via
+// heatmapEnabled() so this helper stays reachable from cells that run
+// before the viewer cell defines that function.
 function syncFacetNote() {
     const el = document.getElementById('facetNote');
     if (!el) return;
     const active = hasFacetFilters();
     const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
-    el.style.display = (active && inCluster) ? 'block' : 'none';
+    const heatOn = document.getElementById('heatmapToggle')?.checked === true;
+    el.style.display = (active && inCluster && !heatOn) ? 'block' : 'none';
 }
 
 function escSql(value) {
@@ -2562,11 +2568,31 @@ zoomWatcher = {
         }
     }
 
+    // Single source of truth for marker-layer visibility (#233 phase 3).
+    //
+    // Cluster dots (h3Points) and individual sample points (samplePoints)
+    // are mutually exclusive with the heatmap overlay. When the heatmap is
+    // on it IS the density view, so painting the cluster dots on top of it
+    // produces the dots-vs-hotspots disagreement RY flagged 2026-05-27 —
+    // two layers telling contradictory spatial stories at once. Rule:
+    //   heatmap on  ⇒ both marker collections hidden (heatmap stands alone)
+    //   heatmap off ⇒ show whichever collection the altitude-driven mode
+    //                 calls for (cluster→h3Points, point→samplePoints)
+    // Aside from the one-time initializer (samplePoints starts hidden at
+    // creation), this is the ONLY place that writes `.show` on the two
+    // collections. Call it from every site that flips the mode or the
+    // heatmap toggle.
+    function applyLayerVisibility() {
+        const heat = heatmapEnabled();
+        const mode = getMode();
+        viewer.h3Points.show = !heat && mode === 'cluster';
+        viewer.samplePoints.show = !heat && mode === 'point';
+    }
+
     // --- Mode transitions ---
     function enterPointMode(pushHistory) {
         setExplorerMode('point');
-        viewer.h3Points.show = false;
-        viewer.samplePoints.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // #facetNote is only meaningful in cluster mode (#234 step 1).
         syncFacetNote();
@@ -2576,9 +2602,8 @@ zoomWatcher = {
 
     function exitPointMode(pushHistory) {
         setExplorerMode('cluster');
-        viewer.samplePoints.show = false;
         viewer.samplePoints.removeAll();
-        viewer.h3Points.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // Returning to cluster mode: surface the honesty note if any
         // facet filter is active (#234 step 1).
@@ -3158,6 +3183,13 @@ zoomWatcher = {
         } else {
             clearHeatmap();
         }
+        // #233 phase 3: heatmap is mutually exclusive with the marker
+        // layers, so flip dot visibility and re-evaluate the facet apology
+        // note (which is meaningless once the heatmap shows filtered
+        // density directly). Both helpers read live state, so order vs the
+        // refresh/clear above does not matter.
+        applyLayerVisibility();
+        syncFacetNote();
     });
     viewer._heatmapOverlay = { enabled: false, layer: null, lastRefreshAt: 0, lastPointCount: 0, lastKey: null };
 
