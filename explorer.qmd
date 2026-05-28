@@ -19,6 +19,7 @@ format:
 
 ```{=html}
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
     :root {
@@ -244,6 +245,23 @@ format:
     .legend-item.disabled { opacity: 0.3; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .legend-item input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+    .heatmap-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .heatmap-control input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+    #heatmapStatus {
+        display: none;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #888;
+        font-style: italic;
+    }
     .source-badge { color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; white-space: nowrap; }
     .cluster-card { border-left: 4px solid #ccc; padding: 10px 12px; background: white; border-radius: 0 6px 6px 0; }
     /* In-map detail card (Hana Figma node 225:1700). Anchored near the
@@ -595,6 +613,8 @@ Circle size = log(sample count). Color = dominant data source.
 <label class="legend-item facet-row" data-facet="source" data-value="GEOME"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="facet-count" data-facet="source" data-value="GEOME" style="color:#888"></span></label>
 <label class="legend-item facet-row" data-facet="source" data-value="SMITHSONIAN"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="facet-count" data-facet="source" data-value="SMITHSONIAN" style="color:#888"></span></label>
 </div>
+<label class="heatmap-control"><input type="checkbox" id="heatmapToggle"> Heatmap (filtered density)</label>
+<div id="heatmapStatus" aria-live="polite"></div>
 </div>
 <div class="filter-section" id="materialFilter">
 <div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
@@ -1082,6 +1102,7 @@ function readHash() {
         mode: params.get('mode') || null,
         pid: params.get('pid') || null,
         h3: params.get('h3') || null,
+        heatmap: params.get('heatmap') === '1',
     };
 }
 
@@ -1104,6 +1125,10 @@ function buildHash(v) {
     // priority in the hashchange handler.
     if (gs.selectedPid) params.set('pid', gs.selectedPid);
     else if (gs.selectedH3) params.set('h3', gs.selectedH3);
+    // #233 phase 1: encode heatmap toggle in URL hash so "Copy Link to
+    // Current View" preserves the overlay state. Reported by RY 2026-05-27
+    // while reviewing PR #240 on staging.
+    if (document.getElementById('heatmapToggle')?.checked) params.set('heatmap', '1');
     return '#' + params.toString();
 }
 
@@ -2825,6 +2850,277 @@ zoomWatcher = {
         }, 250);
     }
 
+    // === Heatmap overlay (issue #233 phase 1) ===
+    let heatmapInstance = null;
+    let heatmapImageryLayer = null;
+    let heatmapContainer = null;
+    let heatmapReqId = 0;
+    let heatmapDebounce = null;
+    let heatmapLastKey = null;
+    const HEATMAP_CANVAS_SIZE = 512;
+    const HEATMAP_LIMIT = 100000;
+
+    function heatmapEnabled() {
+        return document.getElementById('heatmapToggle')?.checked === true;
+    }
+
+    function setHeatmapStatus(text) {
+        const el = document.getElementById('heatmapStatus');
+        if (!el) return;
+        el.textContent = text || '';
+        el.style.display = text ? 'block' : 'none';
+    }
+
+    function ensureHeatmapContainer() {
+        if (heatmapContainer) return heatmapContainer;
+        heatmapContainer = document.createElement('div');
+        heatmapContainer.id = 'heatmapRenderSurface';
+        heatmapContainer.style.cssText = [
+            'position:absolute',
+            'left:-10000px',
+            'top:-10000px',
+            `width:${HEATMAP_CANVAS_SIZE}px`,
+            `height:${HEATMAP_CANVAS_SIZE}px`,
+            'pointer-events:none',
+        ].join(';');
+        document.body.appendChild(heatmapContainer);
+        return heatmapContainer;
+    }
+
+    function getHeatmapInstance() {
+        if (heatmapInstance) return heatmapInstance;
+        if (!window.h337) throw new Error('heatmap.js did not load');
+        heatmapInstance = window.h337.create({
+            container: ensureHeatmapContainer(),
+            radius: 25,
+        });
+        return heatmapInstance;
+    }
+
+    function heatmapFilterHash() {
+        return JSON.stringify({
+            sources: getActiveSources().slice().sort(),
+            material: getCheckedValues('materialFilterBody').slice().sort(),
+            context: getCheckedValues('contextFilterBody').slice().sort(),
+            object_type: getCheckedValues('objectTypeFilterBody').slice().sort(),
+        });
+    }
+
+    function heatmapBboxPredicate(bounds, latCol, lngCol) {
+        const lngClause = (bounds.west > bounds.east)
+            ? `(${lngCol} BETWEEN ${bounds.west} AND 180 OR ${lngCol} BETWEEN -180 AND ${bounds.east})`
+            : `${lngCol} BETWEEN ${bounds.west} AND ${bounds.east}`;
+        return `${latCol} BETWEEN ${bounds.south} AND ${bounds.north} AND ${lngClause}`;
+    }
+
+    function heatmapStringHash(value) {
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+            hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+        }
+        return String(hash);
+    }
+
+    function heatmapKey(bounds) {
+        const bbox = [bounds.south, bounds.north, bounds.west, bounds.east]
+            .map(v => Number(v).toFixed(4))
+            .join(',');
+        return `${bbox}:${heatmapFilterHash()}`;
+    }
+
+    function clearHeatmap() {
+        ++heatmapReqId;
+        clearTimeout(heatmapDebounce);
+        heatmapLastKey = null;
+        setHeatmapStatus('');
+        if (heatmapImageryLayer) {
+            viewer.imageryLayers.remove(heatmapImageryLayer, true);
+            heatmapImageryLayer = null;
+        }
+        viewer._heatmapOverlay = {
+            enabled: false,
+            layer: null,
+            lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+            lastPointCount: 0,
+            lastKey: null,
+        };
+    }
+
+    async function renderHeatmap(myReq, key, bounds) {
+        if (!heatmapEnabled()) return;
+        setHeatmapStatus('Rendering heatmap...');
+        try {
+            const rows = await db.query(`
+                SELECT latitude, longitude
+                FROM read_parquet('${lite_url}')
+                WHERE ${heatmapBboxPredicate(bounds, 'latitude', 'longitude')}
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                LIMIT ${HEATMAP_LIMIT}
+            `);
+            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
+
+            const width = HEATMAP_CANVAS_SIZE;
+            const height = HEATMAP_CANVAS_SIZE;
+            const west = bounds.west;
+            const eastNorm = bounds.west > bounds.east ? bounds.east + 360 : bounds.east;
+            const lngSpan = Math.max(1e-9, eastNorm - west);
+            const latSpan = Math.max(1e-9, bounds.north - bounds.south);
+            const bins = new Map();
+            let max = 1;
+
+            for (const row of rows) {
+                let lng = Number(row.longitude);
+                const lat = Number(row.latitude);
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+                if (bounds.west > bounds.east && lng < west) lng += 360;
+                const x = Math.max(0, Math.min(width - 1, Math.floor(((lng - west) / lngSpan) * width)));
+                const y = Math.max(0, Math.min(height - 1, Math.floor(((bounds.north - lat) / latSpan) * height)));
+                const binKey = `${x},${y}`;
+                const next = (bins.get(binKey) || 0) + 1;
+                bins.set(binKey, next);
+                if (next > max) max = next;
+            }
+
+            // Log-scale bin weights to defeat supersite max-bias.
+            // iSamples data has extreme power-law spatial distribution: at
+            // Cyprus medium zoom, one position carries 52,252 co-located
+            // samples (likely a museum aggregation) while the median
+            // position has 2 — a 26,000× ratio. Linear heatmap.js
+            // max-normalization makes the supersite bin full red and
+            // everything else essentially invisible (2/52252 = 0.004%
+            // intensity). log(1+n) compresses the supersite (log(52253) ≈
+            // 10.86) and lifts the median (log(3) ≈ 1.10), bringing the
+            // ratio to ~10× and revealing the actual density distribution
+            // the user expects to see. RY feedback 2026-05-27 on PR #240.
+            const points = [];
+            let logMax = 0;
+            for (const [binKey, value] of bins) {
+                const [x, y] = binKey.split(',').map(Number);
+                const logVal = Math.log1p(value);
+                if (logVal > logMax) logMax = logVal;
+                points.push({ x, y, value: logVal });
+            }
+
+            const hm = getHeatmapInstance();
+            hm.setData({ min: 0, max: logMax, data: points });
+            const canvas = heatmapContainer.querySelector('canvas');
+            if (!canvas) throw new Error('heatmap.js did not produce a canvas');
+            const url = canvas.toDataURL('image/png');
+            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
+
+            const eastForRectangle = bounds.west > bounds.east ? bounds.east + 360 : bounds.east;
+            const provider = new Cesium.SingleTileImageryProvider({
+                url,
+                rectangle: Cesium.Rectangle.fromDegrees(bounds.west, bounds.south, eastForRectangle, bounds.north),
+            });
+            const nextLayer = viewer.imageryLayers.addImageryProvider(provider);
+            nextLayer.alpha = 0.65;
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+            }
+            heatmapImageryLayer = nextLayer;
+            heatmapLastKey = key;  // success-only — see refreshHeatmap()
+            const refreshedAt = Date.now();
+            const capped = rows.length >= HEATMAP_LIMIT;
+            viewer._heatmapOverlay = {
+                enabled: true,
+                layer: heatmapImageryLayer,
+                lastRefreshAt: refreshedAt,
+                lastPointCount: rows.length,
+                lastBinnedPointCount: points.length,
+                lastImageHash: heatmapStringHash(url),
+                lastKey: key,
+                capped,
+            };
+            // Codex round-1 review of #240: silent cap is misleading on
+            // global views (lite parquet has ~6M rows; LIMIT 100k shows an
+            // arbitrary first 100k, not honest density). Phase 2 progressive
+            // refinement removes the cap; for phase 1, warn explicitly so
+            // the user knows the heatmap is a sample, not the full density.
+            setHeatmapStatus(capped
+                ? `Heatmap rendered from first ${HEATMAP_LIMIT.toLocaleString()} samples (capped — zoom or filter for full density).`
+                : `Heatmap rendered from ${rows.length.toLocaleString()} samples.`);
+        } catch (err) {
+            if (myReq !== heatmapReqId) return;
+            console.warn('Heatmap refresh failed:', err);
+            setHeatmapStatus('Heatmap unavailable for this view.');
+            // Clear dedupe key so a retry on the same (viewport, filter)
+            // actually re-attempts the render. Codex round-1 review of #240.
+            heatmapLastKey = null;
+            // Codex round-2 review of #240: also remove the prior imagery
+            // layer on failure. Without this, the user sees the OLD heatmap
+            // density alongside the "Heatmap unavailable" status — a UI lie
+            // that survives until the next successful render. Matches the
+            // no-bounds path which does the same.
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+                heatmapImageryLayer = null;
+            }
+            viewer._heatmapOverlay = {
+                enabled: heatmapEnabled(),
+                layer: null,
+                lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+                lastPointCount: 0,
+                error: String(err && err.message ? err.message : err),
+                lastKey: null,
+            };
+        }
+    }
+
+    function refreshHeatmap() {
+        if (!heatmapEnabled()) return;
+        // Match VIEWPORT_PAD_FACTOR used by the table, point-mode loader,
+        // and cluster-mode "Samples in View" stat. Phase-1 plan OQ4 chose
+        // exact-viewport (padding=0) on the theory of "what's in the
+        // rectangle you see"; but in practice RY (2026-05-27 staging
+        // review) noticed the table reports more samples than the heatmap
+        // for the same view, which is confusing. Matching the established
+        // padded-bbox contract makes the numbers agree across all surfaces
+        // that report "in view." Codex review of PR #240, follow-up.
+        const bounds = paddedViewportBounds(VIEWPORT_PAD_FACTOR);
+        if (!bounds) {
+            ++heatmapReqId;
+            clearTimeout(heatmapDebounce);
+            heatmapLastKey = null;
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+                heatmapImageryLayer = null;
+            }
+            setHeatmapStatus('Heatmap unavailable for this view.');
+            viewer._heatmapOverlay = {
+                enabled: true,
+                layer: null,
+                lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+                lastPointCount: 0,
+                lastKey: null,
+            };
+            return;
+        }
+        const key = heatmapKey(bounds);
+        if (key === heatmapLastKey) return;
+        // NOTE: heatmapLastKey is set ONLY after a successful layer swap in
+        // renderHeatmap(), and cleared on error/cancellation. Setting it here
+        // would let a moveStart-cancellation between the debounce schedule
+        // and the actual render leave the dedupe key set without a render
+        // having happened — the next moveEnd then early-returns and the
+        // overlay is wedged. Codex round-1 review of PR #240.
+        clearTimeout(heatmapDebounce);
+        const myReq = ++heatmapReqId;
+        heatmapDebounce = setTimeout(() => {
+            renderHeatmap(myReq, key, bounds);
+        }, 250);
+    }
+
+    document.getElementById('heatmapToggle')?.addEventListener('change', () => {
+        if (heatmapEnabled()) {
+            refreshHeatmap();
+        } else {
+            clearHeatmap();
+        }
+    });
+    viewer._heatmapOverlay = { enabled: false, layer: null, lastRefreshAt: 0, lastPointCount: 0, lastKey: null };
+
     // --- Busy-flag depth counter (#173 review round 2) ---
     //
     // body.classList 'explorer-busy' tracks "any change-triggered async
@@ -2864,6 +3160,7 @@ zoomWatcher = {
         try {
             updateSourceLegendState();
             writeQueryState();
+            refreshHeatmap();
             if (getMode() === 'cluster') {
                 loading = false;
                 const applied = await loadRes(currentRes, resUrls[currentRes]);
@@ -2943,6 +3240,7 @@ zoomWatcher = {
         try {
             syncFacetNote();
             writeQueryState();
+            refreshHeatmap();
             if (getMode() === 'point') {
                 await loadViewportSamples();
             }
@@ -3088,6 +3386,17 @@ zoomWatcher = {
         markFacetCountsRecomputing();
         clearTimeout(facetCountsDebounce);
         ++facetCountsReqId;
+        if (heatmapEnabled()) {
+            clearTimeout(heatmapDebounce);
+            ++heatmapReqId;
+            // Clear dedupe key — otherwise a moveStart-cancellation between
+            // refreshHeatmap()'s setTimeout and renderHeatmap()'s success
+            // could leave the key set without a render having happened,
+            // causing the next moveEnd to early-return and wedge the
+            // overlay. Codex round-1 review of #240.
+            heatmapLastKey = null;
+            setHeatmapStatus('Heatmap waiting for camera...');
+        }
     });
 
     viewer.camera.moveEnd.addEventListener(() => {
@@ -3099,6 +3408,7 @@ zoomWatcher = {
         // so bursts of moveEnd (drag-pan, wheel-zoom) coalesce into one query
         // and any in-flight superseded query discards its result on resume.
         refreshFacetCounts();
+        refreshHeatmap();
         if (getMode() !== 'point') return;
         const h = viewer.camera.positionCartographic.height;
         if (h > EXIT_POINT_ALT) {
@@ -3957,6 +4267,19 @@ zoomWatcher = {
         // pushHistory: false — boot should reconcile state without adding
         // a history entry (issue #207 item 3).
         await tryEnterPointModeIfNeeded({ pushHistory: false });
+    }
+
+    // #233 phase 1: hydrate heatmap overlay from `heatmap=1` URL param.
+    // Reported by RY 2026-05-27 on PR #240 staging — toggle state was
+    // missing from "Copy Link to Current View." `refreshHeatmap()` lives
+    // in a different OJS cell and isn't reachable from here; dispatch a
+    // 'change' event so the existing change-listener picks it up.
+    if (ih.heatmap) {
+        const toggle = document.getElementById('heatmapToggle');
+        if (toggle && !toggle.checked) {
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     return "active";
