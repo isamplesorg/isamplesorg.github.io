@@ -2882,6 +2882,17 @@ zoomWatcher = {
     let heatmapReqId = 0;
     let heatmapDebounce = null;
     let heatmapLastKey = null;
+    // Last SUCCESSFULLY-rendered view + filter (#233 loop fix, 2026-05-28).
+    // refreshHeatmap() dedupes against these with a tolerance so that
+    // sub-meaningful viewport jitter does NOT schedule a re-render. Set on
+    // render success; cleared in clearHeatmap(), the render-error path, and
+    // refreshHeatmap()'s no-bounds path. DELIBERATELY NOT cleared on
+    // moveStart (unlike heatmapLastKey): retaining the last-success snapshot
+    // across a moveStart/moveEnd cycle is what lets terrain/inertia jitter
+    // be measured against the committed overlay and ignored, instead of
+    // re-arming the loop. See heatmapViewMeaningfullyChanged().
+    let heatmapLastBounds = null;
+    let heatmapLastFilterHash = null;
     const HEATMAP_CANVAS_SIZE = 512;
 
     function heatmapEnabled() {
@@ -2974,10 +2985,63 @@ zoomWatcher = {
         return `${bbox}:${heatmapFilterHash()}`;
     }
 
+    // Normalized center + span of a viewport rectangle, antimeridian-aware
+    // (mirrors renderHeatmap's `eastNorm` shift). Used by the tolerance
+    // dedupe below.
+    function heatmapViewMetrics(b) {
+        const eastNorm = b.west > b.east ? b.east + 360 : b.east;
+        return {
+            cLat: (b.north + b.south) / 2,
+            cLng: (b.west + eastNorm) / 2,
+            spanLat: Math.max(1e-9, b.north - b.south),
+            spanLng: Math.max(1e-9, eastNorm - b.west),
+        };
+    }
+
+    // Did the view change enough to warrant a fresh heatmap render?
+    //
+    // #233 loop fix (RY 2026-05-28): the heatmap re-renders on `moveEnd`,
+    // keyed off `computeViewRectangle`. But that rectangle is sensitive to
+    // tiny camera-height changes, and with Cesium World Terrain enabled the
+    // camera height keeps settling for a beat after a move (terrain-collision
+    // adjustment as tiles stream in) — plus inertial drift after mouse-up.
+    // Each tiny settle fired `moveEnd` → re-render → the render's frame
+    // nudged terrain again → another `moveEnd`: a self-sustaining refresh
+    // loop with no user input. Exact-key equality (`toFixed(4)`, ~11 m) let
+    // that jitter through.
+    //
+    // Fix: only re-render when the view center or span moved by more than a
+    // small fraction of the current span. Real pans/zooms blow past this;
+    // terrain-settle / inertial micro-jitter stays under it and is ignored.
+    const HEATMAP_VIEW_TOLERANCE = 0.02; // 2% of span
+    // Shortest angular distance between two longitudes (degrees), result in
+    // [0, 180]. Without this, a wrapped bbox near the antimeridian (cLng≈180
+    // via the eastNorm +360 shift) compared to a settled non-wrapped bbox
+    // (cLng≈-177) would read as a ~357° "move" and wrongly pass the
+    // meaningful-change test — preserving the loop exactly at the dateline.
+    // Codex review 2026-05-28.
+    function lngDelta(a, b) {
+        let d = Math.abs(a - b) % 360;
+        return d > 180 ? 360 - d : d;
+    }
+    function heatmapViewMeaningfullyChanged(curr, prev) {
+        if (!prev) return true;
+        const a = heatmapViewMetrics(curr);
+        const b = heatmapViewMetrics(prev);
+        const tolLat = a.spanLat * HEATMAP_VIEW_TOLERANCE;
+        const tolLng = a.spanLng * HEATMAP_VIEW_TOLERANCE;
+        return Math.abs(a.cLat - b.cLat) > tolLat
+            || lngDelta(a.cLng, b.cLng) > tolLng
+            || Math.abs(a.spanLat - b.spanLat) > tolLat
+            || Math.abs(a.spanLng - b.spanLng) > tolLng;
+    }
+
     function clearHeatmap() {
         ++heatmapReqId;
         clearTimeout(heatmapDebounce);
         heatmapLastKey = null;
+        heatmapLastBounds = null;
+        heatmapLastFilterHash = null;
         setHeatmapStatus('');
         if (heatmapImageryLayer) {
             viewer.imageryLayers.remove(heatmapImageryLayer, true);
@@ -3089,6 +3153,11 @@ zoomWatcher = {
             }
             heatmapImageryLayer = nextLayer;
             heatmapLastKey = key;  // success-only — see refreshHeatmap()
+            // Snapshot the view + filter this render committed to, for the
+            // tolerance dedupe in refreshHeatmap() (#233 loop fix). Same
+            // success-only discipline as heatmapLastKey.
+            heatmapLastBounds = bounds;
+            heatmapLastFilterHash = heatmapFilterHash();
             const refreshedAt = Date.now();
             // With SQL pre-aggregation, every sample in the bbox is counted
             // into its pixel cell — no more arbitrary LIMIT cap. `capped` is
@@ -3110,9 +3179,11 @@ zoomWatcher = {
             if (myReq !== heatmapReqId) return;
             console.warn('Heatmap refresh failed:', err);
             setHeatmapStatus('Heatmap unavailable for this view.');
-            // Clear dedupe key so a retry on the same (viewport, filter)
+            // Clear dedupe state so a retry on the same (viewport, filter)
             // actually re-attempts the render. Codex round-1 review of #240.
             heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
             // Codex round-2 review of #240: also remove the prior imagery
             // layer on failure. Without this, the user sees the OLD heatmap
             // density alongside the "Heatmap unavailable" status — a UI lie
@@ -3148,6 +3219,8 @@ zoomWatcher = {
             ++heatmapReqId;
             clearTimeout(heatmapDebounce);
             heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
             if (heatmapImageryLayer) {
                 viewer.imageryLayers.remove(heatmapImageryLayer, true);
                 heatmapImageryLayer = null;
@@ -3163,13 +3236,41 @@ zoomWatcher = {
             return;
         }
         const key = heatmapKey(bounds);
-        if (key === heatmapLastKey) return;
-        // NOTE: heatmapLastKey is set ONLY after a successful layer swap in
-        // renderHeatmap(), and cleared on error/cancellation. Setting it here
-        // would let a moveStart-cancellation between the debounce schedule
-        // and the actual render leave the dedupe key set without a render
-        // having happened — the next moveEnd then early-returns and the
-        // overlay is wedged. Codex round-1 review of PR #240.
+        // Tolerance dedupe (#233 loop fix, RY 2026-05-28). Re-render only on
+        // a filter change OR a meaningful view change. Sub-meaningful
+        // viewport jitter (terrain-collision height settling, inertial
+        // micro-drift) keeps the same filter and stays within the view
+        // tolerance, so it is ignored here instead of driving a render that
+        // would nudge terrain and sustain the loop. The previous exact-key
+        // equality (`toFixed(4)`, ~11 m) let that jitter through.
+        const filterHash = heatmapFilterHash();
+        if (filterHash === heatmapLastFilterHash
+            && !heatmapViewMeaningfullyChanged(bounds, heatmapLastBounds)) {
+            // View only jittered (terrain settle / inertia); the existing
+            // overlay is still correct. A moveStart may have flipped the
+            // status to "waiting for camera" — restore the truthful
+            // "rendered" line so it doesn't get stuck mid-loop. Gate on
+            // heatmapLastBounds (set only on a successful render) rather than
+            // a truthy count, so a valid ZERO-sample overlay also restores
+            // its status instead of sticking at "waiting" (Codex review).
+            if (heatmapLastBounds) {
+                const n = Number(viewer._heatmapOverlay?.lastPointCount || 0);
+                setHeatmapStatus(`Heatmap rendered from ${n.toLocaleString()} samples.`);
+            }
+            // Test-only signal: count tolerance skips so the regression test
+            // can PROVE the skip branch ran (a real moveEnd reached here),
+            // rather than relying on the vacuous "lastRefreshAt unchanged"
+            // assertion (Codex review 2026-05-28).
+            viewer._heatmapSkips = (viewer._heatmapSkips || 0) + 1;
+            return;
+        }
+        // NOTE: heatmapLast{Key,Bounds,FilterHash} are set ONLY after a
+        // successful layer swap in renderHeatmap(), and cleared on
+        // error/cancellation. Setting them here would let a moveStart-
+        // cancellation between the debounce schedule and the actual render
+        // leave the dedupe state set without a render having happened — the
+        // next moveEnd then early-returns and the overlay is wedged. Codex
+        // round-1 review of PR #240.
         clearTimeout(heatmapDebounce);
         const myReq = ++heatmapReqId;
         heatmapDebounce = setTimeout(() => {
@@ -3192,6 +3293,7 @@ zoomWatcher = {
         syncFacetNote();
     });
     viewer._heatmapOverlay = { enabled: false, layer: null, lastRefreshAt: 0, lastPointCount: 0, lastKey: null };
+    viewer._heatmapSkips = 0;  // tolerance-dedupe skip counter (test signal)
 
     // --- Busy-flag depth counter (#173 review round 2) ---
     //

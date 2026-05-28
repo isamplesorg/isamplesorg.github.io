@@ -276,4 +276,68 @@ test.describe('Heatmap overlay (#233 phase 1)', () => {
     });
     expect(cappedRaw).toBe(false);
   });
+
+  // Helper: shift the camera by a longitude delta (degrees), keeping lat/
+  // height, and return the resulting padded-viewport span so the test can
+  // reason about the tolerance threshold.
+  async function nudgeLongitude(page, deltaDeg) {
+    await page.evaluate(async (d) => {
+      const Cesium = window.Cesium;
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      const cc = v.camera.positionCartographic;
+      v.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          Cesium.Math.toDegrees(cc.longitude) + d,
+          Cesium.Math.toDegrees(cc.latitude),
+          cc.height),
+      });
+    }, deltaDeg);
+  }
+
+  test('loop fix: sub-threshold viewport jitter does NOT re-render; a real move does', async ({ page }) => {
+    // #233 loop fix (RY 2026-05-28): with Cesium World Terrain on, the
+    // camera height keeps settling for a beat after a move, firing moveEnd
+    // with a slightly-shifted computeViewRectangle. The old exact-key
+    // dedupe (toFixed(4)) let that jitter through → re-render → terrain
+    // nudge → moveEnd → … a self-sustaining refresh loop. The tolerance
+    // dedupe ignores view changes under 2% of span. This test simulates
+    // the two ends of that spectrum: a tiny nudge (jitter-class, must be
+    // ignored) and a large move (real, must re-render).
+    await openExplorer(page);
+    await enableHeatmap(page);
+    const first = await heatmapState(page);
+    expect(first.lastRefreshAt).toBeGreaterThan(0);
+
+    const skipsAndLng = async () => page.evaluate(async () => {
+      const Cesium = window.Cesium;
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      return { skips: v._heatmapSkips || 0, lng: Cesium.Math.toDegrees(v.camera.positionCartographic.longitude) };
+    });
+    const before = await skipsAndLng();
+
+    // Tiny nudge (~0.01° on a multi-degree span ≪ 2% tolerance). Fires
+    // moveEnd but must NOT bump lastRefreshAt. Crucially we ALSO assert the
+    // skip counter incremented — that PROVES a real moveEnd reached the
+    // tolerance branch and was skipped, rather than the negative assertion
+    // passing vacuously because no moveEnd fired (Codex review 2026-05-28).
+    await nudgeLongitude(page, 0.01);
+    await expect.poll(async () => (await skipsAndLng()).skips, {
+      timeout: 10000,
+      intervals: [100, 250, 500],
+    }).toBeGreaterThan(before.skips);
+    const afterJitter = await skipsAndLng();
+    // The camera really moved (so computeViewRectangle differed)…
+    expect(Math.abs(afterJitter.lng - before.lng)).toBeGreaterThan(0.005);
+    // …yet no re-render happened, and the overlay is still present.
+    const jitterState = await heatmapState(page);
+    expect(jitterState.lastRefreshAt).toBe(first.lastRefreshAt);
+    expect(jitterState.hasLayer).toBe(true);
+
+    // Real move (~6°, far beyond tolerance) must trigger a fresh render.
+    await nudgeLongitude(page, 6);
+    await expect.poll(async () => (await heatmapState(page)).lastRefreshAt, {
+      timeout: 90000,
+      intervals: [250, 500, 1000],
+    }).toBeGreaterThan(first.lastRefreshAt);
+  });
 });
