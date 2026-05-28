@@ -2890,11 +2890,33 @@ zoomWatcher = {
     function getHeatmapInstance() {
         if (heatmapInstance) return heatmapInstance;
         if (!window.h337) throw new Error('heatmap.js did not load');
+        // maxOpacity caps the rendered alpha so dense areas don't fully
+        // wash out the satellite imagery underneath. Without this, world
+        // view (35k+ pixel cells with overlapping blur radii) saturates
+        // to solid red. RY feedback 2026-05-27 on PR #240 follow-up.
         heatmapInstance = window.h337.create({
             container: ensureHeatmapContainer(),
             radius: 25,
+            maxOpacity: 0.6,
         });
         return heatmapInstance;
+    }
+
+    // Adaptive per-point radius. heatmap.js applies a Gaussian blur of
+    // size `radius` around each data point; overlapping blurs add
+    // linearly, so at high cell density (world view: 35k cells on 512²
+    // canvas, each cell's default 25-pixel blur covering ~1% of canvas)
+    // the sum exceeds 1.0 across most of the canvas and everything
+    // saturates to full red regardless of underlying density.
+    //
+    // Empirical scaling: at world view (35k cells) want ~6 px; at small
+    // viewports (~300 cells) want ~30 px to fill space smoothly.
+    // sqrt(canvas_pixels / cell_count) gives ~3 at world, ~30 at small —
+    // double it and clamp to [6, 30].
+    function heatmapRadiusFor(cellCount) {
+        const canvasPx = HEATMAP_CANVAS_SIZE * HEATMAP_CANVAS_SIZE;
+        const raw = Math.sqrt(canvasPx / Math.max(1, cellCount)) * 2;
+        return Math.max(6, Math.min(30, Math.round(raw)));
     }
 
     function heatmapFilterHash() {
@@ -2950,57 +2972,79 @@ zoomWatcher = {
         if (!heatmapEnabled()) return;
         setHeatmapStatus('Rendering heatmap...');
         try {
-            const rows = await db.query(`
-                SELECT latitude, longitude
-                FROM read_parquet('${lite_url}')
-                WHERE ${heatmapBboxPredicate(bounds, 'latitude', 'longitude')}
-                  ${sourceFilterSQL('source')}
-                  ${facetFilterSQL()}
-                LIMIT ${HEATMAP_LIMIT}
-            `);
-            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
-
+            // SQL pre-aggregation at pixel resolution (issue #233 phase 1.5).
+            //
+            // Previous approach: SELECT latitude, longitude LIMIT 100000 then
+            // bin per pixel in JS. Two problems:
+            //   (1) LIMIT 100000 picks an arbitrary first 100k rows in parquet
+            //       storage order — NOT geographic random. At world view, the
+            //       heatmap silently showed whichever source happened to be
+            //       physically first in the file (likely SESAR).
+            //   (2) For sample sets above the cap, the density was unfaithful.
+            //
+            // This approach: push the binning into DuckDB. The SQL groups by
+            // pixel-cell coordinates derived from the bbox + canvas size, so
+            // each row returned is one (x, y, count) tuple. Result cardinality
+            // is bounded by canvas pixels (≤ 512² = 262k), independent of how
+            // many samples the bbox contains. No LIMIT needed — every sample
+            // counted into its true pixel bucket.
+            //
+            // Antimeridian handling: when bbox wraps (west > east), the SQL
+            // shifts longitudes < west by +360 so the pixel arithmetic works
+            // in a continuous coordinate space, matching what the old JS loop
+            // did at line 2976. Same `eastForRectangle` adjustment downstream.
             const width = HEATMAP_CANVAS_SIZE;
             const height = HEATMAP_CANVAS_SIZE;
             const west = bounds.west;
             const eastNorm = bounds.west > bounds.east ? bounds.east + 360 : bounds.east;
             const lngSpan = Math.max(1e-9, eastNorm - west);
             const latSpan = Math.max(1e-9, bounds.north - bounds.south);
-            const bins = new Map();
-            let max = 1;
+            const wraps = bounds.west > bounds.east;
+            // SQL-side pixel coordinate computation. CAST(... AS INTEGER) is
+            // explicit so DuckDB groups by integer keys, not floats.
+            const lngExprBase = `(longitude ${wraps ? `+ CASE WHEN longitude < ${west} THEN 360 ELSE 0 END` : ``})`;
+            const xExpr = `CAST(LEAST(${width - 1}, GREATEST(0, FLOOR((${lngExprBase} - ${west}) / ${lngSpan} * ${width}))) AS INTEGER)`;
+            const yExpr = `CAST(LEAST(${height - 1}, GREATEST(0, FLOOR((${bounds.north} - latitude) / ${latSpan} * ${height}))) AS INTEGER)`;
+            const aggregated = await db.query(`
+                SELECT
+                    ${xExpr} AS x,
+                    ${yExpr} AS y,
+                    COUNT(*) AS n
+                FROM read_parquet('${lite_url}')
+                WHERE ${heatmapBboxPredicate(bounds, 'latitude', 'longitude')}
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                GROUP BY x, y
+            `);
+            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
 
-            for (const row of rows) {
-                let lng = Number(row.longitude);
-                const lat = Number(row.latitude);
-                if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-                if (bounds.west > bounds.east && lng < west) lng += 360;
-                const x = Math.max(0, Math.min(width - 1, Math.floor(((lng - west) / lngSpan) * width)));
-                const y = Math.max(0, Math.min(height - 1, Math.floor(((bounds.north - lat) / latSpan) * height)));
-                const binKey = `${x},${y}`;
-                const next = (bins.get(binKey) || 0) + 1;
-                bins.set(binKey, next);
-                if (next > max) max = next;
-            }
-
-            // Log-scale bin weights to defeat supersite max-bias.
-            // iSamples data has extreme power-law spatial distribution: at
-            // Cyprus medium zoom, one position carries 52,252 co-located
-            // samples (likely a museum aggregation) while the median
-            // position has 2 — a 26,000× ratio. Linear heatmap.js
-            // max-normalization makes the supersite bin full red and
-            // everything else essentially invisible (2/52252 = 0.004%
-            // intensity). log(1+n) compresses the supersite (log(52253) ≈
-            // 10.86) and lifts the median (log(3) ≈ 1.10), bringing the
-            // ratio to ~10× and revealing the actual density distribution
-            // the user expects to see. RY feedback 2026-05-27 on PR #240.
-            const points = [];
+            // SQL did the binning. Convert each row to a heatmap.js point.
+            // Log-scale bin weights to defeat supersite max-bias. iSamples
+            // data has extreme power-law spatial distribution: at Cyprus
+            // medium zoom, one position carries 52,252 co-located samples
+            // (likely a museum aggregation) while the median position has
+            // 2 — a 26,000× ratio. Linear heatmap.js max-normalization
+            // makes the supersite bin full red and everything else
+            // essentially invisible (2/52252 = 0.004% intensity). log(1+n)
+            // compresses the supersite (log(52253) ≈ 10.86) and lifts the
+            // median (log(3) ≈ 1.10), bringing the ratio to ~10× and
+            // revealing the actual density distribution the user expects
+            // to see. RY feedback 2026-05-27 on PR #240.
+            const pointsRaw = [];
             let logMax = 0;
-            for (const [binKey, value] of bins) {
-                const [x, y] = binKey.split(',').map(Number);
-                const logVal = Math.log1p(value);
+            let totalSamples = 0;
+            for (const row of aggregated) {
+                const n = Number(row.n);
+                totalSamples += n;
+                const logVal = Math.log1p(n);
                 if (logVal > logMax) logMax = logVal;
-                points.push({ x, y, value: logVal });
+                pointsRaw.push({ x: Number(row.x), y: Number(row.y), value: logVal });
             }
+            // Adaptive radius: tight at high cell counts (world view) to
+            // avoid blur-overlap saturation; wide at low cell counts to
+            // fill space smoothly.
+            const radius = heatmapRadiusFor(pointsRaw.length);
+            const points = pointsRaw.map(p => ({ ...p, radius }));
 
             const hm = getHeatmapInstance();
             hm.setData({ min: 0, max: logMax, data: points });
@@ -3022,25 +3066,22 @@ zoomWatcher = {
             heatmapImageryLayer = nextLayer;
             heatmapLastKey = key;  // success-only — see refreshHeatmap()
             const refreshedAt = Date.now();
-            const capped = rows.length >= HEATMAP_LIMIT;
+            // With SQL pre-aggregation, every sample in the bbox is counted
+            // into its pixel cell — no more arbitrary LIMIT cap. `capped` is
+            // kept on the state shape (for spec back-compat) but always
+            // false. `lastPointCount` is now the true sample total, not the
+            // capped raw-row count.
             viewer._heatmapOverlay = {
                 enabled: true,
                 layer: heatmapImageryLayer,
                 lastRefreshAt: refreshedAt,
-                lastPointCount: rows.length,
+                lastPointCount: totalSamples,
                 lastBinnedPointCount: points.length,
                 lastImageHash: heatmapStringHash(url),
                 lastKey: key,
-                capped,
+                capped: false,
             };
-            // Codex round-1 review of #240: silent cap is misleading on
-            // global views (lite parquet has ~6M rows; LIMIT 100k shows an
-            // arbitrary first 100k, not honest density). Phase 2 progressive
-            // refinement removes the cap; for phase 1, warn explicitly so
-            // the user knows the heatmap is a sample, not the full density.
-            setHeatmapStatus(capped
-                ? `Heatmap rendered from first ${HEATMAP_LIMIT.toLocaleString()} samples (capped — zoom or filter for full density).`
-                : `Heatmap rendered from ${rows.length.toLocaleString()} samples.`);
+            setHeatmapStatus(`Heatmap rendered from ${totalSamples.toLocaleString()} samples.`);
         } catch (err) {
             if (myReq !== heatmapReqId) return;
             console.warn('Heatmap refresh failed:', err);
