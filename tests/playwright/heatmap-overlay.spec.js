@@ -135,4 +135,36 @@ test.describe('Heatmap overlay (#233 phase 1)', () => {
     // Also assert the toggle DOM reflects the hydrated state.
     await expect(page.locator('#heatmapToggle')).toBeChecked();
   });
+
+  test('world view counts every sample (no LIMIT cap — phase 1.5)', async ({ page }) => {
+    // PR #241 (SQL pre-aggregation) removed the 100k LIMIT that PR #240
+    // had. This test pins that property: world view at alt=15Mkm should
+    // see > 100k samples (true count is ~6M) AND `capped` must be false.
+    // Codex round-1 review of #241 suggested this assertion to lock in
+    // the architectural promise that LIMIT is gone for good.
+    const WORLD_HASH = '#v=1&lat=20&lng=0&alt=15000000';
+    await page.goto(explorerUrl(WORLD_HASH + '&heatmap=1'), {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+    await page.waitForFunction(() => !!window._ojs?.ojsConnector?.mainModule, null, { timeout: 60000 });
+    await expect.poll(async () => {
+      const state = await heatmapState(page);
+      return state.enabled && state.hasLayer && state.lastPointCount > 0;
+    }, {
+      timeout: 120000,
+      intervals: [500, 1000, 2000],
+    }).toBeTruthy();
+    const state = await heatmapState(page);
+    expect(state.lastPointCount).toBeGreaterThan(100000);
+    // Codex round-2 polish: assert the raw `capped` field value (must be
+    // strictly false), not just "not-true" (which would also pass for
+    // undefined / null / etc).
+    const cappedRaw = await page.evaluate(async () => {
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      return v?._heatmapOverlay?.capped;
+    });
+    expect(cappedRaw).toBe(false);
+  });
 });
