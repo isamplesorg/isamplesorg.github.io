@@ -57,6 +57,7 @@ cite `https://data.isamples.org/<file>`.
 | Aggregate map clusters by zoom | [`h3_summary_res{4,6,8}.parquet`](https://data.isamples.org/isamples_202601_h3_summary_res4.parquet) | ≤ 2.4 MB each |
 | Filter by material / context / object-type | [`sample_facets_v2.parquet`](https://data.isamples.org/isamples_202601_sample_facets_v2.parquet) | 63 MB |
 | Walk relationships (graph queries) | [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 820 MB |
+| Browse / filter by collection (e.g. an OpenContext project) | [`collections.parquet`](https://data.isamples.org/isamples_202604_collections.parquet) + [`sample_collections.parquet`](https://data.isamples.org/isamples_202604_sample_collections.parquet) | 3 MB + 13 MB |
 | Translate vocabulary URIs to human-readable labels | [`vocab_labels.parquet`](https://data.isamples.org/vocab_labels.parquet) | 58 KB |
 
 ## 3. Copy-pasteable DuckDB snippets
