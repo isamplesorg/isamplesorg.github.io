@@ -35,9 +35,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
-
-const BASE_URL = process.env.TEST_URL || 'http://localhost:5860';
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 // Phrases written by `updatePhaseMsg` we check for in tests.
 const FETCHING_SAMPLE_INDEX = 'Fetching sample index';   // the helper's loadingMsg
@@ -218,7 +216,7 @@ async function flyCameraTo(page, lat, lng, alt) {
 test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', () => {
 
   test('boot to cluster mode reaches a done message with cluster counts', async ({ page }) => {
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -235,7 +233,7 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // helper after its own loadRes settles; at world altitude the chase
     // should bail at the altitude check WITHOUT painting "Fetching sample
     // index…".
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -277,7 +275,7 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // and paints "Fetching sample index…"; warm-cache: currentRes is
     // already 8 so the helper short-circuits its loadRes and goes
     // straight to enterPointMode → "Loading individual samples…".)
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
@@ -316,7 +314,7 @@ test.describe('explorer: tryEnterPointModeIfNeeded short-circuit invariants', ()
     // wires a chase in, the short-circuit must keep the helper's
     // loadingMsg ("Fetching sample index…") suppressed because we're
     // already in point mode.
-    await page.goto(`${BASE_URL}${EXPLORER_PATH}#v=1&lat=20&lng=0&alt=${ALT_WORLD}`, {
+    await page.goto(explorerUrl(`#v=1&lat=20&lng=0&alt=${ALT_WORLD}`), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });

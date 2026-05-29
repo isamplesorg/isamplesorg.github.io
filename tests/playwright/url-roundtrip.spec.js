@@ -24,8 +24,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
-
-const EXPLORER_PATH = '/explorer.html';
+const { explorerUrl } = require('./helpers/url');
 
 // Cyprus / Polis — confirmed dense region (~23k samples), used in #206/#210.
 const LAT = 34.9957;
@@ -145,7 +144,7 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
 
 
   test('deep-link with mode=point enters point mode (Bug B from #203)', async ({ page }) => {
-    const url = `${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`;
+    const url = explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`);
     await page.goto(url);
     await waitForMode(page, 'point');
     await waitForPointModeSettled(page);
@@ -156,7 +155,7 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
 
   test('deep-link with low altitude AND no mode=point still enters point mode (#207 item 4)', async ({ page }) => {
     // No `mode=point` in URL. Boot should enter point based on altitude alone.
-    const url = `${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT}`;
+    const url = explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT}`);
     await page.goto(url);
     // Wait for the settled point-mode done message — more reliable than
     // waitForMode alone, which can match a transient mode flip during boot
@@ -169,7 +168,7 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
 
   test('sub-threshold pan updates URL hash via moveEnd (#205)', async ({ page }) => {
     // Start at a settled point-mode view.
-    const url = `${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`;
+    const url = explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`);
     await page.goto(url);
     await waitForMode(page, 'point');
     await waitForPointModeSettled(page);
@@ -205,7 +204,7 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
     let ctxB;
     try {
       const pageA = await ctxA.newPage();
-      await pageA.goto(`${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`);
+      await pageA.goto(explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_POINT_DEEP}&mode=point`));
       await waitForMode(pageA, 'point');
       await waitForPointModeSettled(pageA);
 
@@ -266,7 +265,7 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
     // by then the handler has executed past line 2272 (which writes a new
     // non-null selectedH3) AND reached line 2285 (the null-clear branch).
     const invalidH3 = '0deadbeefffffff';  // 15 chars but not a real h3 cell
-    await page.goto(`${EXPLORER_PATH}#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}&h3=${invalidH3}`);
+    await page.goto(explorerUrl(`#v=1&lat=${LAT}&lng=${LNG}&alt=${ALT_CLUSTER}&h3=${invalidH3}`));
     await waitForMode(page, 'cluster');
     // `_globeState.mode` is initialized at explorer.qmd:871, well before the
     // hashchange listener is registered at line 2210; wait for boot settle.

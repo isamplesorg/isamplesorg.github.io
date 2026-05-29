@@ -19,6 +19,7 @@ format:
 
 ```{=html}
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Cesium.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.127/Build/Cesium/Widgets/widgets.css" rel="stylesheet"></link>
 <style>
     :root {
@@ -244,6 +245,23 @@ format:
     .legend-item.disabled { opacity: 0.3; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .legend-item input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+    .heatmap-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .heatmap-control input[type="checkbox"] { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+    #heatmapStatus {
+        display: none;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #888;
+        font-style: italic;
+    }
     .source-badge { color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; white-space: nowrap; }
     .cluster-card { border-left: 4px solid #ccc; padding: 10px 12px; background: white; border-radius: 0 6px 6px 0; }
     /* In-map detail card (Hana Figma node 225:1700). Anchored near the
@@ -595,6 +613,8 @@ Circle size = log(sample count). Color = dominant data source.
 <label class="legend-item facet-row" data-facet="source" data-value="GEOME"><input type="checkbox" value="GEOME" checked><span class="legend-dot" style="background:#109618"></span> GEOME <span class="facet-count" data-facet="source" data-value="GEOME" style="color:#888"></span></label>
 <label class="legend-item facet-row" data-facet="source" data-value="SMITHSONIAN"><input type="checkbox" value="SMITHSONIAN" checked><span class="legend-dot" style="background:#FF9900"></span> Smithsonian <span class="facet-count" data-facet="source" data-value="SMITHSONIAN" style="color:#888"></span></label>
 </div>
+<label class="heatmap-control"><input type="checkbox" id="heatmapToggle"> Heatmap (filtered density)</label>
+<div id="heatmapStatus" aria-live="polite"></div>
 </div>
 <div class="filter-section" id="materialFilter">
 <div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
@@ -868,20 +888,26 @@ function hasFacetFilters() {
 // takes effect at neighborhood zoom") explains the cluster-mode honesty
 // gap: H3 summary parquets only carry `dominant_source`, so material /
 // context / object_type filters cannot affect cluster counts. Invariant:
-//   visible ⇔ (any facet active) ∧ (mode === 'cluster')
-// Call sites that mutate either side of the conjunction MUST call this
-// to keep DOM and state in agreement:
+//   visible ⇔ (any facet active) ∧ (mode === 'cluster') ∧ (heatmap off)
+// Call sites that mutate any conjunct MUST call this to keep DOM and
+// state in agreement:
 //   - facetFilters cell (URL deep-link restore, #234 step 1)
 //   - handleFacetFilterChange (user toggles a facet checkbox)
 //   - enterPointMode / exitPointMode (mode transitions)
-// `viewer` resolves late at call time per ojs reactive scoping, so this
-// helper is safe to define before the viewer cell runs.
+//   - heatmapToggle change handler (#233 phase 3)
+// The heatmap conjunct: when the heatmap overlay is on, it IS the
+// filter-aware density view (dots are generated from filtered data, not
+// pre-baked dominant_source), so the apology is false and must be hidden
+// (#233). The toggle state is read straight off the DOM rather than via
+// heatmapEnabled() so this helper stays reachable from cells that run
+// before the viewer cell defines that function.
 function syncFacetNote() {
     const el = document.getElementById('facetNote');
     if (!el) return;
     const active = hasFacetFilters();
     const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
-    el.style.display = (active && inCluster) ? 'block' : 'none';
+    const heatOn = document.getElementById('heatmapToggle')?.checked === true;
+    el.style.display = (active && inCluster && !heatOn) ? 'block' : 'none';
 }
 
 function escSql(value) {
@@ -993,6 +1019,50 @@ function viewerBboxSQL(latCol, lngCol, padFactor) {
     return ` AND ${latCol} BETWEEN ${south} AND ${north} AND ${lngClause}`;
 }
 
+// True when the current camera shows ≈the whole world (initial zoom-out
+// state), or when the camera can't compute a rectangle at all (off-globe).
+// In either case a viewport bbox predicate would be a no-op, so fast-paths
+// that depend on "no spatial constraint" (e.g. the pre-aggregated facet
+// cross-filter cube) remain valid and can be used.
+//
+// Used by `updateCrossFilteredCounts` (B1, issue #234 step 3) to decide
+// whether to gate the cube fast-path off and JOIN to `lite_url` for a
+// bbox-scoped slow-path query.
+//
+// Implementation note — why an altitude shortcut:
+//   At high altitudes Cesium's `computeViewRectangle` saturates at the
+//   sphere's extent for some camera angles but returns a tight bounding
+//   rect for others (e.g. at alt=5000 km over the equator the rect is
+//   ≈hemispheric, not full). The user's intuition is "max zoom-out = global
+//   counts," and at the explorer's default `globalRect` (which fits the
+//   `[-180,-60,180,80]` data extent and sits roughly at altitude ≈12000 km)
+//   the per-source legend totals should match the baselines, not jiggle on
+//   tiny camera rotations. The altitude check captures that "I'm zoomed all
+//   the way out" intent regardless of the exact rect Cesium reports. Below
+//   the altitude threshold we still let the rect vote "global" so flyTo
+//   to a true world-rect destination keeps working.
+//
+//   Constants live inside the function (not top-level `const`) because
+//   Quarto `{ojs}` cells reject top-level `const`/`let`/`var` and a bad
+//   declaration cascades — breaking every dependent cell (memory note
+//   `feedback_qmd_ojs_top_level`).
+function isGlobalView() {
+    const ALT_THRESHOLD_M = 1.0e7;  // 10,000 km
+    const LNG_PAD_DEG = 2;
+    const LAT_PAD_DEG = 2;
+    if (typeof viewer === 'undefined') return true;
+    let h = NaN;
+    try { h = viewer.camera.positionCartographic.height; } catch { /* mid-init */ }
+    if (Number.isFinite(h) && h > ALT_THRESHOLD_M) return true;
+    const b = paddedViewportBounds(0);
+    if (!b) return true;              // off-globe → no meaningful bbox
+    if (b.west > b.east) return false; // antimeridian-wrapping is never "global"
+    return b.west  <= -180 + LNG_PAD_DEG
+        && b.east  >=  180 - LNG_PAD_DEG
+        && b.south <=  -90 + LAT_PAD_DEG
+        && b.north >=   90 - LAT_PAD_DEG;
+}
+
 // === Cross-filter facet count UI helpers ===
 function applyFacetCounts(facetKey, countsMap) {
     const baseline = (viewer && viewer._baselineCounts) ? viewer._baselineCounts[facetKey] : null;
@@ -1038,6 +1108,7 @@ function readHash() {
         mode: params.get('mode') || null,
         pid: params.get('pid') || null,
         h3: params.get('h3') || null,
+        heatmap: params.get('heatmap') === '1',
     };
 }
 
@@ -1060,6 +1131,10 @@ function buildHash(v) {
     // priority in the hashchange handler.
     if (gs.selectedPid) params.set('pid', gs.selectedPid);
     else if (gs.selectedH3) params.set('h3', gs.selectedH3);
+    // #233 phase 1: encode heatmap toggle in URL hash so "Copy Link to
+    // Current View" preserves the overlay state. Reported by RY 2026-05-27
+    // while reviewing PR #240 on staging.
+    if (document.getElementById('heatmapToggle')?.checked) params.set('heatmap', '1');
     return '#' + params.toString();
 }
 
@@ -2493,11 +2568,31 @@ zoomWatcher = {
         }
     }
 
+    // Single source of truth for marker-layer visibility (#233 phase 3).
+    //
+    // Cluster dots (h3Points) and individual sample points (samplePoints)
+    // are mutually exclusive with the heatmap overlay. When the heatmap is
+    // on it IS the density view, so painting the cluster dots on top of it
+    // produces the dots-vs-hotspots disagreement RY flagged 2026-05-27 —
+    // two layers telling contradictory spatial stories at once. Rule:
+    //   heatmap on  ⇒ both marker collections hidden (heatmap stands alone)
+    //   heatmap off ⇒ show whichever collection the altitude-driven mode
+    //                 calls for (cluster→h3Points, point→samplePoints)
+    // Aside from the one-time initializer (samplePoints starts hidden at
+    // creation), this is the ONLY place that writes `.show` on the two
+    // collections. Call it from every site that flips the mode or the
+    // heatmap toggle.
+    function applyLayerVisibility() {
+        const heat = heatmapEnabled();
+        const mode = getMode();
+        viewer.h3Points.show = !heat && mode === 'cluster';
+        viewer.samplePoints.show = !heat && mode === 'point';
+    }
+
     // --- Mode transitions ---
     function enterPointMode(pushHistory) {
         setExplorerMode('point');
-        viewer.h3Points.show = false;
-        viewer.samplePoints.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // #facetNote is only meaningful in cluster mode (#234 step 1).
         syncFacetNote();
@@ -2507,9 +2602,8 @@ zoomWatcher = {
 
     function exitPointMode(pushHistory) {
         setExplorerMode('cluster');
-        viewer.samplePoints.show = false;
         viewer.samplePoints.removeAll();
-        viewer.h3Points.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // Returning to cluster mode: surface the honesty note if any
         // facet filter is active (#234 step 1).
@@ -2644,7 +2738,10 @@ zoomWatcher = {
         };
     }
 
-    function buildCrossFilterWhere(excludeFacet) {
+    // `colPrefix` lets callers qualify column names when the WHERE is going
+    // to be used inside a JOIN (B1 bbox-aware path). Defaults to '' so the
+    // pre-B1 single-table call sites keep working unchanged.
+    function buildCrossFilterWhere(excludeFacet, colPrefix = '') {
         const { activeDims, sourceImpossible } = describeCrossFilters();
         if (sourceImpossible && excludeFacet !== 'source') return '1=0';
 
@@ -2652,7 +2749,7 @@ zoomWatcher = {
             .filter(d => d.key !== excludeFacet)
             .map(d => {
                 const list = d.values.map(v => `'${escSql(v)}'`).join(',');
-                return `${d.col} IN (${list})`;
+                return `${colPrefix}${d.col} IN (${list})`;
             });
 
         return conds.length > 0 ? conds.join(' AND ') : '1=1';
@@ -2662,17 +2759,40 @@ zoomWatcher = {
         if (myReq !== facetCountsReqId) return;
         const { dims, activeDims, totalActiveValues, sourceImpossible } = describeCrossFilters();
 
-        if (!sourceImpossible && activeDims.length === 0) {
+        // --- B1 (issue #234 step 3): bbox-aware counts ---
+        //
+        // Snapshot the viewport state at function entry. If the camera moves
+        // after this, a fresh `refreshFacetCounts()` call (from the moveEnd
+        // listener) bumps `facetCountsReqId` and supersedes this in-flight
+        // request — every `await` resume checks `myReq !== facetCountsReqId`.
+        //
+        // `isGlobalView()` true → no spatial constraint → cube fast-path and
+        // baseline early-return remain valid as before.
+        // `isGlobalView()` false → snapshot a bbox SQL fragment scoped to the
+        // `lite_url` lat/lon columns (which we JOIN to in the slow path,
+        // since `facets_url` carries no coordinates today). Cube fast-path
+        // is unconditionally gated off (it is pre-aggregated globally and
+        // can't answer viewport-scoped questions).
+        const isGlobal = isGlobalView();
+        const bboxSQL = isGlobal ? null : viewerBboxSQL('l.latitude', 'l.longitude', 0);
+
+        // Baseline early-return only applies when there is no filter AND no
+        // spatial constraint. In a non-global view with no facet filter, B1
+        // still wants per-value counts scoped to what's visible — fall
+        // through to the slow path with `where = '1=1'`.
+        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null) {
             for (const d of dims) applyFacetCounts(d.key, null);
             return;
         }
 
         markFacetCountsRecomputing();
 
+        // Cube fast-path: pre-aggregated globally, so it's valid only when
+        // the camera is at (or close to) the global view.
         const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
-        if (singleActiveDim && totalActiveValues === 1) {
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -2708,14 +2828,31 @@ zoomWatcher = {
         }
 
         await Promise.all(dims.map(async (d) => {
-            const where = buildCrossFilterWhere(d.key);
             try {
-                const rows = await db.query(`
-                    SELECT ${d.col} AS value, COUNT(*) AS count
-                    FROM read_parquet('${facets_url}')
-                    WHERE ${where} AND ${d.col} IS NOT NULL
-                    GROUP BY ${d.col}
-                `);
+                let rows;
+                if (bboxSQL) {
+                    // B1 bbox-scoped slow path: JOIN facets_url to lite_url
+                    // on pid so we can filter by lite.latitude / lite.longitude.
+                    // facets_url has no coordinates of its own. Per-PR follow-up:
+                    // if this JOIN turns out too slow in practice, bake a
+                    // pre-joined parquet (decision Q1 in plan).
+                    const where = buildCrossFilterWhere(d.key, 'f.');
+                    rows = await db.query(`
+                        SELECT f.${d.col} AS value, COUNT(*) AS count
+                        FROM read_parquet('${facets_url}') f
+                        JOIN read_parquet('${lite_url}') l ON l.pid = f.pid
+                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}
+                        GROUP BY f.${d.col}
+                    `);
+                } else {
+                    const where = buildCrossFilterWhere(d.key);
+                    rows = await db.query(`
+                        SELECT ${d.col} AS value, COUNT(*) AS count
+                        FROM read_parquet('${facets_url}')
+                        WHERE ${where} AND ${d.col} IS NOT NULL
+                        GROUP BY ${d.col}
+                    `);
+                }
                 if (myReq !== facetCountsReqId) return;
                 const map = new Map();
                 for (const r of rows) map.set(r.value, Number(r.count));
@@ -2723,6 +2860,8 @@ zoomWatcher = {
             } catch (err) {
                 if (myReq !== facetCountsReqId) return;
                 console.warn(`Cross-filter count query failed for ${d.key}:`, err);
+                // Q3 in plan: on bbox-query throw, fall back to global
+                // baseline rather than clobber with an error indicator.
                 applyFacetCounts(d.key, null);
             }
         }));
@@ -2735,6 +2874,426 @@ zoomWatcher = {
             updateCrossFilteredCounts(myReq);
         }, 250);
     }
+
+    // === Heatmap overlay (issue #233 phase 1) ===
+    let heatmapInstance = null;
+    let heatmapImageryLayer = null;
+    let heatmapContainer = null;
+    let heatmapReqId = 0;
+    let heatmapDebounce = null;
+    let heatmapLastKey = null;
+    // Last SUCCESSFULLY-rendered view + filter (#233 loop fix, 2026-05-28).
+    // refreshHeatmap() dedupes against these with a tolerance so that
+    // sub-meaningful viewport jitter does NOT schedule a re-render. Set on
+    // render success; cleared in clearHeatmap(), the render-error path, and
+    // refreshHeatmap()'s no-bounds path. DELIBERATELY NOT cleared on
+    // moveStart (unlike heatmapLastKey): retaining the last-success snapshot
+    // across a moveStart/moveEnd cycle is what lets terrain/inertia jitter
+    // be measured against the committed overlay and ignored, instead of
+    // re-arming the loop. See heatmapViewMeaningfullyChanged().
+    let heatmapLastBounds = null;
+    let heatmapLastFilterHash = null;
+    const HEATMAP_CANVAS_SIZE = 512;
+
+    function heatmapEnabled() {
+        return document.getElementById('heatmapToggle')?.checked === true;
+    }
+
+    function setHeatmapStatus(text) {
+        const el = document.getElementById('heatmapStatus');
+        if (!el) return;
+        el.textContent = text || '';
+        el.style.display = text ? 'block' : 'none';
+    }
+
+    function ensureHeatmapContainer() {
+        if (heatmapContainer) return heatmapContainer;
+        heatmapContainer = document.createElement('div');
+        heatmapContainer.id = 'heatmapRenderSurface';
+        heatmapContainer.style.cssText = [
+            'position:absolute',
+            'left:-10000px',
+            'top:-10000px',
+            `width:${HEATMAP_CANVAS_SIZE}px`,
+            `height:${HEATMAP_CANVAS_SIZE}px`,
+            'pointer-events:none',
+        ].join(';');
+        document.body.appendChild(heatmapContainer);
+        return heatmapContainer;
+    }
+
+    function getHeatmapInstance() {
+        if (heatmapInstance) return heatmapInstance;
+        if (!window.h337) throw new Error('heatmap.js did not load');
+        // maxOpacity caps the rendered alpha so dense areas don't fully
+        // wash out the satellite imagery underneath. Without this, world
+        // view (35k+ pixel cells with overlapping blur radii) saturates
+        // to solid red. RY feedback 2026-05-27 on PR #240 follow-up.
+        heatmapInstance = window.h337.create({
+            container: ensureHeatmapContainer(),
+            radius: 25,
+            maxOpacity: 0.6,
+        });
+        return heatmapInstance;
+    }
+
+    // Adaptive per-point radius. heatmap.js applies a Gaussian blur of
+    // size `radius` around each data point; overlapping blurs add
+    // linearly, so at high cell density (world view: 35k cells on 512²
+    // canvas, each cell's default 25-pixel blur covering ~1% of canvas)
+    // the sum exceeds 1.0 across most of the canvas and everything
+    // saturates to full red regardless of underlying density.
+    //
+    // Empirical scaling: at world view (35k cells) want ~6 px; at small
+    // viewports (~300 cells) want ~30 px to fill space smoothly.
+    // sqrt(canvas_pixels / cell_count) gives ~3 at world, ~30 at small —
+    // double it and clamp to [6, 30].
+    function heatmapRadiusFor(cellCount) {
+        const canvasPx = HEATMAP_CANVAS_SIZE * HEATMAP_CANVAS_SIZE;
+        const raw = Math.sqrt(canvasPx / Math.max(1, cellCount)) * 2;
+        return Math.max(6, Math.min(30, Math.round(raw)));
+    }
+
+    function heatmapFilterHash() {
+        return JSON.stringify({
+            sources: getActiveSources().slice().sort(),
+            material: getCheckedValues('materialFilterBody').slice().sort(),
+            context: getCheckedValues('contextFilterBody').slice().sort(),
+            object_type: getCheckedValues('objectTypeFilterBody').slice().sort(),
+        });
+    }
+
+    function heatmapBboxPredicate(bounds, latCol, lngCol) {
+        const lngClause = (bounds.west > bounds.east)
+            ? `(${lngCol} BETWEEN ${bounds.west} AND 180 OR ${lngCol} BETWEEN -180 AND ${bounds.east})`
+            : `${lngCol} BETWEEN ${bounds.west} AND ${bounds.east}`;
+        return `${latCol} BETWEEN ${bounds.south} AND ${bounds.north} AND ${lngClause}`;
+    }
+
+    function heatmapStringHash(value) {
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+            hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+        }
+        return String(hash);
+    }
+
+    function heatmapKey(bounds) {
+        const bbox = [bounds.south, bounds.north, bounds.west, bounds.east]
+            .map(v => Number(v).toFixed(4))
+            .join(',');
+        return `${bbox}:${heatmapFilterHash()}`;
+    }
+
+    // Normalized center + span of a viewport rectangle, antimeridian-aware
+    // (mirrors renderHeatmap's `eastNorm` shift). Used by the tolerance
+    // dedupe below.
+    function heatmapViewMetrics(b) {
+        const eastNorm = b.west > b.east ? b.east + 360 : b.east;
+        return {
+            cLat: (b.north + b.south) / 2,
+            cLng: (b.west + eastNorm) / 2,
+            spanLat: Math.max(1e-9, b.north - b.south),
+            spanLng: Math.max(1e-9, eastNorm - b.west),
+        };
+    }
+
+    // Did the view change enough to warrant a fresh heatmap render?
+    //
+    // #233 loop fix (RY 2026-05-28): the heatmap re-renders on `moveEnd`,
+    // keyed off `computeViewRectangle`. But that rectangle is sensitive to
+    // tiny camera-height changes, and with Cesium World Terrain enabled the
+    // camera height keeps settling for a beat after a move (terrain-collision
+    // adjustment as tiles stream in) — plus inertial drift after mouse-up.
+    // Each tiny settle fired `moveEnd` → re-render → the render's frame
+    // nudged terrain again → another `moveEnd`: a self-sustaining refresh
+    // loop with no user input. Exact-key equality (`toFixed(4)`, ~11 m) let
+    // that jitter through.
+    //
+    // Fix: only re-render when the view center or span moved by more than a
+    // small fraction of the current span. Real pans/zooms blow past this;
+    // terrain-settle / inertial micro-jitter stays under it and is ignored.
+    const HEATMAP_VIEW_TOLERANCE = 0.02; // 2% of span
+    // Shortest angular distance between two longitudes (degrees), result in
+    // [0, 180]. Without this, a wrapped bbox near the antimeridian (cLng≈180
+    // via the eastNorm +360 shift) compared to a settled non-wrapped bbox
+    // (cLng≈-177) would read as a ~357° "move" and wrongly pass the
+    // meaningful-change test — preserving the loop exactly at the dateline.
+    // Codex review 2026-05-28.
+    function lngDelta(a, b) {
+        let d = Math.abs(a - b) % 360;
+        return d > 180 ? 360 - d : d;
+    }
+    function heatmapViewMeaningfullyChanged(curr, prev) {
+        if (!prev) return true;
+        const a = heatmapViewMetrics(curr);
+        const b = heatmapViewMetrics(prev);
+        const tolLat = a.spanLat * HEATMAP_VIEW_TOLERANCE;
+        const tolLng = a.spanLng * HEATMAP_VIEW_TOLERANCE;
+        return Math.abs(a.cLat - b.cLat) > tolLat
+            || lngDelta(a.cLng, b.cLng) > tolLng
+            || Math.abs(a.spanLat - b.spanLat) > tolLat
+            || Math.abs(a.spanLng - b.spanLng) > tolLng;
+    }
+
+    function clearHeatmap() {
+        ++heatmapReqId;
+        clearTimeout(heatmapDebounce);
+        heatmapLastKey = null;
+        heatmapLastBounds = null;
+        heatmapLastFilterHash = null;
+        setHeatmapStatus('');
+        if (heatmapImageryLayer) {
+            viewer.imageryLayers.remove(heatmapImageryLayer, true);
+            heatmapImageryLayer = null;
+        }
+        viewer._heatmapOverlay = {
+            enabled: false,
+            layer: null,
+            lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+            lastPointCount: 0,
+            lastKey: null,
+        };
+    }
+
+    async function renderHeatmap(myReq, key, bounds) {
+        if (!heatmapEnabled()) return;
+        setHeatmapStatus('Rendering heatmap...');
+        try {
+            // SQL pre-aggregation at pixel resolution (issue #233 phase 1.5).
+            //
+            // Previous approach: SELECT latitude, longitude LIMIT 100000 then
+            // bin per pixel in JS. Two problems:
+            //   (1) LIMIT 100000 picks an arbitrary first 100k rows in parquet
+            //       storage order — NOT geographic random. At world view, the
+            //       heatmap silently showed whichever source happened to be
+            //       physically first in the file (likely SESAR).
+            //   (2) For sample sets above the cap, the density was unfaithful.
+            //
+            // This approach: push the binning into DuckDB. The SQL groups by
+            // pixel-cell coordinates derived from the bbox + canvas size, so
+            // each row returned is one (x, y, count) tuple. Result cardinality
+            // is bounded by canvas pixels (≤ 512² = 262k), independent of how
+            // many samples the bbox contains. No LIMIT needed — every sample
+            // counted into its true pixel bucket.
+            //
+            // Antimeridian handling: when bbox wraps (west > east), the SQL
+            // shifts longitudes < west by +360 so the pixel arithmetic works
+            // in a continuous coordinate space, matching what the old JS loop
+            // did at line 2976. Same `eastForRectangle` adjustment downstream.
+            const width = HEATMAP_CANVAS_SIZE;
+            const height = HEATMAP_CANVAS_SIZE;
+            const west = bounds.west;
+            const eastNorm = bounds.west > bounds.east ? bounds.east + 360 : bounds.east;
+            const lngSpan = Math.max(1e-9, eastNorm - west);
+            const latSpan = Math.max(1e-9, bounds.north - bounds.south);
+            const wraps = bounds.west > bounds.east;
+            // SQL-side pixel coordinate computation. CAST(... AS INTEGER) is
+            // explicit so DuckDB groups by integer keys, not floats.
+            const lngExprBase = `(longitude ${wraps ? `+ CASE WHEN longitude < ${west} THEN 360 ELSE 0 END` : ``})`;
+            const xExpr = `CAST(LEAST(${width - 1}, GREATEST(0, FLOOR((${lngExprBase} - ${west}) / ${lngSpan} * ${width}))) AS INTEGER)`;
+            const yExpr = `CAST(LEAST(${height - 1}, GREATEST(0, FLOOR((${bounds.north} - latitude) / ${latSpan} * ${height}))) AS INTEGER)`;
+            const aggregated = await db.query(`
+                SELECT
+                    ${xExpr} AS x,
+                    ${yExpr} AS y,
+                    COUNT(*) AS n
+                FROM read_parquet('${lite_url}')
+                WHERE ${heatmapBboxPredicate(bounds, 'latitude', 'longitude')}
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                GROUP BY x, y
+            `);
+            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
+
+            // SQL did the binning. Convert each row to a heatmap.js point.
+            // Log-scale bin weights to defeat supersite max-bias. iSamples
+            // data has extreme power-law spatial distribution: at Cyprus
+            // medium zoom, one position carries 52,252 co-located samples
+            // (likely a museum aggregation) while the median position has
+            // 2 — a 26,000× ratio. Linear heatmap.js max-normalization
+            // makes the supersite bin full red and everything else
+            // essentially invisible (2/52252 = 0.004% intensity). log(1+n)
+            // compresses the supersite (log(52253) ≈ 10.86) and lifts the
+            // median (log(3) ≈ 1.10), bringing the ratio to ~10× and
+            // revealing the actual density distribution the user expects
+            // to see. RY feedback 2026-05-27 on PR #240.
+            const pointsRaw = [];
+            let logMax = 0;
+            let totalSamples = 0;
+            for (const row of aggregated) {
+                const n = Number(row.n);
+                totalSamples += n;
+                const logVal = Math.log1p(n);
+                if (logVal > logMax) logMax = logVal;
+                pointsRaw.push({ x: Number(row.x), y: Number(row.y), value: logVal });
+            }
+            // Adaptive radius: tight at high cell counts (world view) to
+            // avoid blur-overlap saturation; wide at low cell counts to
+            // fill space smoothly.
+            const radius = heatmapRadiusFor(pointsRaw.length);
+            const points = pointsRaw.map(p => ({ ...p, radius }));
+
+            const hm = getHeatmapInstance();
+            hm.setData({ min: 0, max: logMax, data: points });
+            const canvas = heatmapContainer.querySelector('canvas');
+            if (!canvas) throw new Error('heatmap.js did not produce a canvas');
+            const url = canvas.toDataURL('image/png');
+            if (myReq !== heatmapReqId || !heatmapEnabled()) return;
+
+            const eastForRectangle = bounds.west > bounds.east ? bounds.east + 360 : bounds.east;
+            const provider = new Cesium.SingleTileImageryProvider({
+                url,
+                rectangle: Cesium.Rectangle.fromDegrees(bounds.west, bounds.south, eastForRectangle, bounds.north),
+            });
+            const nextLayer = viewer.imageryLayers.addImageryProvider(provider);
+            nextLayer.alpha = 0.65;
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+            }
+            heatmapImageryLayer = nextLayer;
+            heatmapLastKey = key;  // success-only — see refreshHeatmap()
+            // Snapshot the view + filter this render committed to, for the
+            // tolerance dedupe in refreshHeatmap() (#233 loop fix). Same
+            // success-only discipline as heatmapLastKey.
+            heatmapLastBounds = bounds;
+            heatmapLastFilterHash = heatmapFilterHash();
+            const refreshedAt = Date.now();
+            // With SQL pre-aggregation, every sample in the bbox is counted
+            // into its pixel cell — no more arbitrary LIMIT cap. `capped` is
+            // kept on the state shape (for spec back-compat) but always
+            // false. `lastPointCount` is now the true sample total, not the
+            // capped raw-row count.
+            viewer._heatmapOverlay = {
+                enabled: true,
+                layer: heatmapImageryLayer,
+                lastRefreshAt: refreshedAt,
+                lastPointCount: totalSamples,
+                lastBinnedPointCount: points.length,
+                lastImageHash: heatmapStringHash(url),
+                lastKey: key,
+                capped: false,
+            };
+            setHeatmapStatus(`Heatmap rendered from ${totalSamples.toLocaleString()} samples.`);
+        } catch (err) {
+            if (myReq !== heatmapReqId) return;
+            console.warn('Heatmap refresh failed:', err);
+            setHeatmapStatus('Heatmap unavailable for this view.');
+            // Clear dedupe state so a retry on the same (viewport, filter)
+            // actually re-attempts the render. Codex round-1 review of #240.
+            heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
+            // Codex round-2 review of #240: also remove the prior imagery
+            // layer on failure. Without this, the user sees the OLD heatmap
+            // density alongside the "Heatmap unavailable" status — a UI lie
+            // that survives until the next successful render. Matches the
+            // no-bounds path which does the same.
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+                heatmapImageryLayer = null;
+            }
+            viewer._heatmapOverlay = {
+                enabled: heatmapEnabled(),
+                layer: null,
+                lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+                lastPointCount: 0,
+                error: String(err && err.message ? err.message : err),
+                lastKey: null,
+            };
+        }
+    }
+
+    function refreshHeatmap() {
+        if (!heatmapEnabled()) return;
+        // Match VIEWPORT_PAD_FACTOR used by the table, point-mode loader,
+        // and cluster-mode "Samples in View" stat. Phase-1 plan OQ4 chose
+        // exact-viewport (padding=0) on the theory of "what's in the
+        // rectangle you see"; but in practice RY (2026-05-27 staging
+        // review) noticed the table reports more samples than the heatmap
+        // for the same view, which is confusing. Matching the established
+        // padded-bbox contract makes the numbers agree across all surfaces
+        // that report "in view." Codex review of PR #240, follow-up.
+        const bounds = paddedViewportBounds(VIEWPORT_PAD_FACTOR);
+        if (!bounds) {
+            ++heatmapReqId;
+            clearTimeout(heatmapDebounce);
+            heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
+            if (heatmapImageryLayer) {
+                viewer.imageryLayers.remove(heatmapImageryLayer, true);
+                heatmapImageryLayer = null;
+            }
+            setHeatmapStatus('Heatmap unavailable for this view.');
+            viewer._heatmapOverlay = {
+                enabled: true,
+                layer: null,
+                lastRefreshAt: viewer._heatmapOverlay?.lastRefreshAt || 0,
+                lastPointCount: 0,
+                lastKey: null,
+            };
+            return;
+        }
+        const key = heatmapKey(bounds);
+        // Tolerance dedupe (#233 loop fix, RY 2026-05-28). Re-render only on
+        // a filter change OR a meaningful view change. Sub-meaningful
+        // viewport jitter (terrain-collision height settling, inertial
+        // micro-drift) keeps the same filter and stays within the view
+        // tolerance, so it is ignored here instead of driving a render that
+        // would nudge terrain and sustain the loop. The previous exact-key
+        // equality (`toFixed(4)`, ~11 m) let that jitter through.
+        const filterHash = heatmapFilterHash();
+        if (filterHash === heatmapLastFilterHash
+            && !heatmapViewMeaningfullyChanged(bounds, heatmapLastBounds)) {
+            // View only jittered (terrain settle / inertia); the existing
+            // overlay is still correct. A moveStart may have flipped the
+            // status to "waiting for camera" — restore the truthful
+            // "rendered" line so it doesn't get stuck mid-loop. Gate on
+            // heatmapLastBounds (set only on a successful render) rather than
+            // a truthy count, so a valid ZERO-sample overlay also restores
+            // its status instead of sticking at "waiting" (Codex review).
+            if (heatmapLastBounds) {
+                const n = Number(viewer._heatmapOverlay?.lastPointCount || 0);
+                setHeatmapStatus(`Heatmap rendered from ${n.toLocaleString()} samples.`);
+            }
+            // Test-only signal: count tolerance skips so the regression test
+            // can PROVE the skip branch ran (a real moveEnd reached here),
+            // rather than relying on the vacuous "lastRefreshAt unchanged"
+            // assertion (Codex review 2026-05-28).
+            viewer._heatmapSkips = (viewer._heatmapSkips || 0) + 1;
+            return;
+        }
+        // NOTE: heatmapLast{Key,Bounds,FilterHash} are set ONLY after a
+        // successful layer swap in renderHeatmap(), and cleared on
+        // error/cancellation. Setting them here would let a moveStart-
+        // cancellation between the debounce schedule and the actual render
+        // leave the dedupe state set without a render having happened — the
+        // next moveEnd then early-returns and the overlay is wedged. Codex
+        // round-1 review of PR #240.
+        clearTimeout(heatmapDebounce);
+        const myReq = ++heatmapReqId;
+        heatmapDebounce = setTimeout(() => {
+            renderHeatmap(myReq, key, bounds);
+        }, 250);
+    }
+
+    document.getElementById('heatmapToggle')?.addEventListener('change', () => {
+        if (heatmapEnabled()) {
+            refreshHeatmap();
+        } else {
+            clearHeatmap();
+        }
+        // #233 phase 3: heatmap is mutually exclusive with the marker
+        // layers, so flip dot visibility and re-evaluate the facet apology
+        // note (which is meaningless once the heatmap shows filtered
+        // density directly). Both helpers read live state, so order vs the
+        // refresh/clear above does not matter.
+        applyLayerVisibility();
+        syncFacetNote();
+    });
+    viewer._heatmapOverlay = { enabled: false, layer: null, lastRefreshAt: 0, lastPointCount: 0, lastKey: null };
+    viewer._heatmapSkips = 0;  // tolerance-dedupe skip counter (test signal)
 
     // --- Busy-flag depth counter (#173 review round 2) ---
     //
@@ -2775,6 +3334,7 @@ zoomWatcher = {
         try {
             updateSourceLegendState();
             writeQueryState();
+            refreshHeatmap();
             if (getMode() === 'cluster') {
                 loading = false;
                 const applied = await loadRes(currentRes, resUrls[currentRes]);
@@ -2854,6 +3414,7 @@ zoomWatcher = {
         try {
             syncFacetNote();
             writeQueryState();
+            refreshHeatmap();
             if (getMode() === 'point') {
                 await loadViewportSamples();
             }
@@ -2971,10 +3532,57 @@ zoomWatcher = {
     // the "Samples in View" stat / phase-msg stay in lockstep with the
     // table's row count even on small sub-10% pans that `camera.changed`
     // doesn't fire for.
+    // B1 (issue #234 step 3): on the very first sign of a camera move,
+    // (a) mark the legend italic-stale so the user sees "checking…" the
+    //     moment they grab the globe (instead of waiting moveEnd + 250 ms);
+    // (b) bump `facetCountsReqId` and clear the pending debounce so any
+    //     in-flight or debounced `updateCrossFilteredCounts` for the
+    //     PRE-MOVE viewport is invalidated.
+    //
+    // Without (b), a query that was already in flight at moveStart could
+    // resume after its SELECT lands, pass the stale guard, and call
+    // `applyFacetCounts` — which would WRITE OLD COUNTS for a viewport the
+    // user has already abandoned AND clear `.recomputing` before moveEnd
+    // schedules the new query, leaving the legend looking authoritative
+    // (no italic) but stale until moveEnd's 250 ms debounce fires.
+    // Codex round-1 review of PR #237 caught this.
+    //
+    // moveEnd's `refreshFacetCounts()` below will bump `facetCountsReqId`
+    // AGAIN — that's intentional and harmless: a second supersession of
+    // already-superseded work, debounce coalesced.
+    //
+    // We skip the mark/bump when there are no facet-count spans rendered
+    // yet (initial boot, before facet UI hydrates) to avoid DOM thrash
+    // and a no-op debounce reset during the very first camera-position
+    // events that fire before the OJS facet cells have settled.
+    viewer.camera.moveStart.addEventListener(() => {
+        if (!document.querySelector('.facet-count')) return;
+        markFacetCountsRecomputing();
+        clearTimeout(facetCountsDebounce);
+        ++facetCountsReqId;
+        if (heatmapEnabled()) {
+            clearTimeout(heatmapDebounce);
+            ++heatmapReqId;
+            // Clear dedupe key — otherwise a moveStart-cancellation between
+            // refreshHeatmap()'s setTimeout and renderHeatmap()'s success
+            // could leave the key set without a render having happened,
+            // causing the next moveEnd to early-return and wedge the
+            // overlay. Codex round-1 review of #240.
+            heatmapLastKey = null;
+            setHeatmapStatus('Heatmap waiting for camera...');
+        }
+    });
+
     viewer.camera.moveEnd.addEventListener(() => {
         if (!viewer._suppressHashWrite) {
             history.replaceState(null, '', buildHash(viewer));
         }
+        // B1: viewport-aware facet counts. Bouncing through refreshFacetCounts
+        // reuses the existing 250ms debounce + facetCountsReqId stale-guard,
+        // so bursts of moveEnd (drag-pan, wheel-zoom) coalesce into one query
+        // and any in-flight superseded query discards its result on resume.
+        refreshFacetCounts();
+        refreshHeatmap();
         if (getMode() !== 'point') return;
         const h = viewer.camera.positionCartographic.height;
         if (h > EXIT_POINT_ALT) {
@@ -3833,6 +4441,19 @@ zoomWatcher = {
         // pushHistory: false — boot should reconcile state without adding
         // a history entry (issue #207 item 3).
         await tryEnterPointModeIfNeeded({ pushHistory: false });
+    }
+
+    // #233 phase 1: hydrate heatmap overlay from `heatmap=1` URL param.
+    // Reported by RY 2026-05-27 on PR #240 staging — toggle state was
+    // missing from "Copy Link to Current View." `refreshHeatmap()` lives
+    // in a different OJS cell and isn't reachable from here; dispatch a
+    // 'change' event so the existing change-listener picks it up.
+    if (ih.heatmap) {
+        const toggle = document.getElementById('heatmapToggle');
+        if (toggle && !toggle.checked) {
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     return "active";
