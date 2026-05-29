@@ -1448,6 +1448,38 @@ db = {
 //| echo: false
 //| output: false
 
+// === A1 dev probe (#234 Step 4) — TEMPORARY, remove before PR ===
+// Confirms the linchpin of the search-as-global-filter design: a NON-TEMP
+// table created in one db.query() call is visible to a LATER db.query()
+// call. Observable's DuckDBClient opens a fresh connection per query(), so a
+// connection-local TEMP table would NOT survive — but a regular table in the
+// shared in-memory database does. Also checks TEMP for contrast.
+a1PersistenceProbe = {
+    try {
+        await db.query(`CREATE OR REPLACE TABLE __a1_probe AS SELECT 42 AS x`);
+        const r = Array.from(await db.query(`SELECT x FROM __a1_probe`));
+        const nonTempOK = r.length === 1 && Number(r[0].x) === 42;
+        console.log(`[A1probe] NON-TEMP table persists across db.query():`, nonTempOK);
+        let tempOK = null;
+        try {
+            await db.query(`CREATE OR REPLACE TEMP TABLE __a1_probe_t AS SELECT 7 AS x`);
+            const rt = Array.from(await db.query(`SELECT x FROM __a1_probe_t`));
+            tempOK = rt.length === 1 && Number(rt[0].x) === 7;
+        } catch (e) { tempOK = `threw: ${e.message}`; }
+        console.log(`[A1probe] TEMP table persists across db.query():`, tempOK);
+        await db.query(`DROP TABLE IF EXISTS __a1_probe`);
+        return { nonTempOK, tempOK };
+    } catch (e) {
+        console.log(`[A1probe] FAILED:`, e.message);
+        return { error: e.message };
+    }
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
 // === Cesium Viewer (created once, never re-created) ===
 viewer = {
     performance.mark('viewer-init-start');
@@ -1834,6 +1866,15 @@ tableView = {
     let pageGen = 0;               // bumped on any new load; in-flight callbacks check this
     let lastPageFailed = false;    // surfaces a sentinel table state when loadPage errors
 
+    // A1 (#234 Step 4): semi-join predicate against the materialized
+    // search_pids set, published by the search cell on window. Empty string
+    // when no search is committed, so non-search queries are unchanged. Read
+    // at query-build time (not cell-definition time), so it picks up a search
+    // committed after this cell first ran.
+    const searchFilterSQL = (col = 'pid') =>
+        (typeof window !== 'undefined' && window.searchFilterSQL)
+            ? window.searchFilterSQL(col) : '';
+
     const prevBtn = document.getElementById('tablePrev');
     const nextBtn = document.getElementById('tableNext');
     const metaEl = document.getElementById('tableMeta');
@@ -2101,6 +2142,7 @@ tableView = {
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                   ${bboxSQL}
+                  ${searchFilterSQL('pid')}
             `);
             if (genAtStart !== pageGen) return true;
             // DuckDB-WASM returns BigInt for COUNT(*); coerce safely.
@@ -2132,6 +2174,7 @@ tableView = {
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                   ${bboxSQL}
+                  ${searchFilterSQL('pid')}
                 ORDER BY pid
                 LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
             `);
@@ -2156,25 +2199,25 @@ tableView = {
 
     function summaryText() {
         if (totalRows == null) return 'Counting samples...';
-        // Honesty fix (#247): when a free-text search is committed, the
-        // table still reflects ONLY the viewport + source/facet filters —
-        // the search term is NOT a table predicate (pre-A1; see #234 Step
-        // 4 / axis A1). Disclose that explicitly and point to the side
-        // panel, instead of claiming these rows "match the current filters"
-        // (which after a search-fly can be e.g. 43,803 GEOME mollusks for a
-        // "bucchero" search). `__explorerActiveSearch` is maintained by
-        // doSearch; null when no search is committed. setMeta uses
-        // textContent, so the term needs no HTML-escaping here.
-        const activeSearch = (typeof window !== 'undefined') ? window.__explorerActiveSearch : null;
+        // A1 (#234 Step 4): when a search is committed, the table IS now
+        // filtered by it (semi-join on search_pids), so totalRows already
+        // counts only `searchTerm ∩ viewport ∩ source/facet`. Report that
+        // honestly as "N of M matches in this map view", where M is the
+        // global match total stashed on window.__searchFilter. (The probe
+        // confirmed every searchable sample has coordinates, so M is also the
+        // count of mappable matches — no coordinate-less caveat needed.)
+        const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+        const activeSearch = sf && sf.active ? sf.term : null;
         if (totalRows === 0) {
             return activeSearch
-                ? `No samples in this map view and current non-search filters. Search results for "${activeSearch}" are shown in the panel →`
+                ? `No "${activeSearch}" matches in this map view (of ${(sf.total || 0).toLocaleString()} total — pan or zoom out).`
                 : 'No samples match the current filters.';
         }
         const total = totalRows.toLocaleString();
         const plural = totalRows === 1 ? '' : 's';
         if (activeSearch) {
-            return `${total} sample${plural} in this map view and current non-search filters. Search results for "${activeSearch}" are shown in the panel →`;
+            const matchTotal = (sf.total || totalRows).toLocaleString();
+            return `${total} of ${matchTotal} "${activeSearch}" match${sf.total === 1 ? '' : 'es'} in this map view.`;
         }
         return `${total} sample${plural} match the current filters.`;
     }
@@ -3846,6 +3889,68 @@ zoomWatcher = {
         }
     }
 
+    // === A1: search-as-global-filter pid-set (#234 Step 4) ===
+    //
+    // Strategy B: materialize the set of pids matching the committed search
+    // term ONCE (one ILIKE scan over facets_url), then let every count
+    // surface (table, points, facet legend, stats) constrain itself with a
+    // cheap `pid IN (SELECT pid FROM search_pids)` semi-join — instead of
+    // re-running the expensive ILIKE per surface per camera move.
+    //
+    // `search_pids` is a NON-TEMP table: Observable's DuckDBClient opens a
+    // fresh connection per db.query(), so a connection-local TEMP table would
+    // not survive to the next query(); a regular table in the shared
+    // in-memory database persists across those connections (verified by the
+    // a1PersistenceProbe cell during development).
+    //
+    // Build into `search_pids_next` then atomically swap, so a surface
+    // refresh can never read a half-built set. `_searchFilterToken` versions
+    // each build so a superseded one (newer search fired mid-build) discards
+    // its swap. State is published on `window.__searchFilter` so the
+    // separate `tableView` OJS cell (and others) can read it; the SQL
+    // predicate is exposed as `window.searchFilterSQL(pidCol)`.
+    let _searchFilterToken = 0;
+    if (typeof window !== 'undefined' && !window.__searchFilter) {
+        window.__searchFilter = { active: false, term: null, token: 0, total: 0 };
+        // Surfaces append this to their WHERE. Empty string when no search is
+        // committed, so non-search queries are byte-for-byte unchanged.
+        window.searchFilterSQL = (pidCol = 'pid') =>
+            (window.__searchFilter && window.__searchFilter.active)
+                ? ` AND ${pidCol} IN (SELECT pid FROM search_pids)`
+                : '';
+    }
+
+    async function buildSearchFilter(terms, term) {
+        const token = ++_searchFilterToken;
+        const searchWhere = textSearchWhere(terms, [
+            'label',
+            'description',
+            'CAST(place_name AS VARCHAR)',
+        ]);
+        // DISTINCT + NOT NULL: pid is unique in facets_url today, but DISTINCT
+        // is cheap insurance against a future facet-shaped projection.
+        await db.query(`
+            CREATE OR REPLACE TABLE search_pids_next AS
+            SELECT DISTINCT pid
+            FROM read_parquet('${facets_url}')
+            WHERE pid IS NOT NULL AND ${searchWhere}
+        `);
+        if (token !== _searchFilterToken) return false;   // superseded mid-build
+        await db.query(`CREATE OR REPLACE TABLE search_pids AS SELECT pid FROM search_pids_next`);
+        if (token !== _searchFilterToken) return false;
+        const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
+        const total = cnt.length ? Number(cnt[0].n) : 0;
+        if (token !== _searchFilterToken) return false;
+        window.__searchFilter = { active: true, term, token, total };
+        return true;
+    }
+
+    async function clearSearchFilter() {
+        _searchFilterToken++;
+        window.__searchFilter = { active: false, term: null, token: _searchFilterToken, total: 0 };
+        try { await db.query(`DROP TABLE IF EXISTS search_pids`); } catch (e) { /* best effort */ }
+    }
+
     async function doSearch(scope) {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
@@ -3864,34 +3969,20 @@ zoomWatcher = {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
-            // Honesty fix (#247): the samples-table meta line keys off this
-            // flag. An empty / too-short submit means no committed search, so
-            // clear it and refresh the table to revert to the plain "match
-            // the current filters" copy.
-            if (typeof window !== 'undefined') {
-                window.__explorerActiveSearch = null;
-                window.refreshSamplesTable?.();
-            }
+            // A1 (#234 Step 4): an empty / too-short submit means no committed
+            // search — drop the pid-set filter and refresh surfaces so they
+            // revert to the unfiltered "match the current filters" state.
+            await clearSearchFilter();
+            if (typeof window !== 'undefined') window.refreshSamplesTable?.();
             writeQueryState();
             persistSearchScope(effectiveScope);
             return;
         }
         writeQueryState();
         persistSearchScope(effectiveScope);
-        // Honesty fix (#247): record the committed search term so the
-        // samples-table meta line can disclose that the table reflects the
-        // map view + source/facet filters only — NOT this search. Free-text
-        // search is not yet a table/globe predicate (pre-A1; see #234 Step
-        // 4). Set at fire-time (independent of result success) so the meta is
-        // honest the moment the search commits.
-        if (typeof window !== 'undefined') window.__explorerActiveSearch = term;
-        // Refresh the table now so the meta copy updates immediately. World-
-        // scope searches fly the camera (moveEnd → refreshAll covers it), but
-        // area-scope searches do NOT move the camera, so without this nudge
-        // the meta would stay stale until the next interaction. Triggers the
-        // SAME refreshAll that moveEnd/filter-change already use (no new query
-        // shape); pageGen dedups against the fly-triggered refresh.
-        if (typeof window !== 'undefined') window.refreshSamplesTable?.();
+        // A1 (#234 Step 4): the pid-set filter is built below (after `terms`
+        // is parsed) and the dependent surfaces are refreshed against it; the
+        // table/legend/points then reflect this search, not just the viewport.
         // Shared, prominent + sticky search-results heading, reused by the
         // success / zero-result / error paths so the side panel ALWAYS
         // reflects the committed search the table meta points at ("…shown in
@@ -3912,6 +4003,29 @@ zoomWatcher = {
         performance.mark(markStart);
         const tStart = performance.now();
         const terms = searchTerms(term);
+
+        // A1 (#234 Step 4): materialize the search pid-set ONCE, then refresh
+        // the table (and, in later increments, points / facet counts / stats)
+        // so every count surface constrains to this search via a cheap
+        // semi-join. One ILIKE scan here warms the text columns in the DuckDB
+        // buffer, so the LIMIT-50 side-panel query below reads them warm.
+        // (Follow-up: derive the side-panel list from search_pids to drop the
+        // second scan entirely.) Failure leaves surfaces unfiltered, not broken.
+        const buildingMsg = effectiveScope === 'area'
+            ? 'Building search filter for selected areas…'
+            : 'Building search filter…';
+        searchResults.textContent = buildingMsg;
+        try {
+            await buildSearchFilter(terms, term);
+        } catch (e) {
+            console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
+            await clearSearchFilter();
+        }
+        // Superseded by a newer search while building? Bail before mutating UI.
+        if (searchId === _searchSeq && typeof window !== 'undefined') {
+            window.refreshSamplesTable?.();
+        }
+
         // Snapshot the filter-state telemetry booleans here, BEFORE the
         // try block, so they remain in scope through `finally`. They
         // reflect the DOM state at search-fire time — independent of
