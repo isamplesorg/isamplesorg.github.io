@@ -68,4 +68,17 @@ All analysis happens in your browser. Only the data you need is downloaded — t
 
 ---
 
-[![](assets/moorea_video_image.png){width="100%" group="showcase" fig-alt="iSamples data visualization from Moorea"}](https://youtu.be/JzNadmklzNs "Watch the iSamples data visualization video")
+<br/>
+
+::: {.column-page style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%;"}
+
+<video autoplay muted playsinline controls style="max-width: 100%; display: block;" aria-label="iSamples data visualization from Moorea">
+<source src="assets/mdvunmuted.mp4" type="video/mp4"/>
+Your browser does not support the video tag.
+</video>
+
+<p style="font-size: 1.9rem; font-style: italic; text-align: center; margin-top: 1rem">
+  Data visualization from the island of Moorea in French Polynesia.
+</p>
+
+:::
