@@ -703,6 +703,16 @@ Specimen Type <span>▾</span>
 <em style="font-size: 11px; color: #999;">Loading...</em>
 </div>
 </div>
+<div class="filter-section" id="collectionFilter">
+<div class="filter-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+Collection <span>▾</span>
+</div>
+<div class="filter-body" style="display: none;" id="collectionFilterWrap">
+<input type="text" id="collectionSearch" placeholder="Search collections…" autocomplete="off" aria-label="Search collections" style="width: 100%; box-sizing: border-box; margin-bottom: 6px; font-size: 12px; padding: 3px 5px;">
+<div id="collectionSearchResults" style="display: none; max-height: 160px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 6px;"></div>
+<div id="collectionFilterBody"><em style="font-size: 11px; color: #999;">Loading...</em></div>
+</div>
+</div>
 <div id="facetNote" style="display: none; font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
 Material / feature / specimen filters apply at sample zoom level — zoom in or click a cluster.
 </div>
@@ -797,6 +807,18 @@ cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
 // SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels_202608.parquet`
+// Collection facet (#243). Additive files built by scripts/build_collections.py
+// from the wide parquet's Sample→Event→Site traversal — they touch none of the
+// existing facet files. `collections` is the dimension (collection_id, label,
+// source, n_samples, centroid_lat/lng, bbox); `sample_collections` maps
+// pid → collection_id. A "collection" is a SamplingSite *label* (e.g. the
+// OpenContext project "PKAP Survey Area"), keyed by a stable hash of
+// (source, label).
+collections_url = `${R2_BASE}/isamples_202604_collections.parquet`
+sample_collections_url = `${R2_BASE}/isamples_202604_sample_collections.parquet`
+// How many top collections (by sample count) render as checkboxes; the long
+// tail (~60K) is reachable via the search box.
+COLLECTION_FACET_TOPN = 100
 
 // #281/#282/#291 facet hierarchy — SHIPPED, default ON. Material, Sampled Feature
 // (context) and Specimen Type (object_type) render as expandable trees backed by the
@@ -953,6 +975,10 @@ function applyQueryToFacetFilters() {
     // #291: restored ?material=/?context=/?object_type= URIs are minimal nodes —
     // fill in each tree's inherited descendants + indeterminate ancestors.
     for (const key of TREE_DIM_KEYS) syncTreeVisual(TREE_DIM_BODY[key]);
+    // Collection checkboxes are rendered as the union of top-N and the URL's
+    // collection ids (see facetFilters cell), so the values below already have
+    // matching rows by the time this runs.
+    setCheckedValues('collectionFilterBody', csvParamValues(params, 'collection'));
 }
 
 
@@ -1002,6 +1028,7 @@ function writeQueryState(opts = {}) {
         ['material', 'materialFilterBody'],
         ['context', 'contextFilterBody'],
         ['object_type', 'objectTypeFilterBody'],
+        ['collection', 'collectionFilterBody'],
     ].forEach(([key, containerId]) => {
         // #291: serialize the MINIMAL tree selection (parent URIs, not expanded
         // descendants) for any tree dim; treeSelection falls back to all checked
@@ -1037,7 +1064,8 @@ function getCheckedValues(containerId) {
 function hasFacetFilters() {
     return getCheckedValues('materialFilterBody').length > 0
         || getCheckedValues('contextFilterBody').length > 0
-        || getCheckedValues('objectTypeFilterBody').length > 0;
+        || getCheckedValues('objectTypeFilterBody').length > 0
+        || getCheckedValues('collectionFilterBody').length > 0;
 }
 
 // #281/#282/#291: the MINIMAL selection for tree dim `key` — the top-most checked
@@ -1220,6 +1248,15 @@ function facetFilterSQL() {
     }
     if (facetsConds.length > 0) {
         parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${facetsConds.join(' AND ')})`);
+    }
+    // Collection facet (#243) lives in its own membership file, so it appends
+    // a standalone `pid IN (...)` predicate rather than a column in
+    // `facets_url`. Multiple checked collections are OR'd (IN list); the
+    // predicate ANDs with the rest of `parts` like every other facet here.
+    const coll = getCheckedValues('collectionFilterBody');
+    if (coll.length > 0) {
+        const list = coll.map(s => `'${escSql(s)}'`).join(',');
+        parts.push(`pid IN (SELECT pid FROM read_parquet('${sample_collections_url}') WHERE collection_id IN (${list}))`);
     }
     if (parts.length === 0) return '';
     return ' AND ' + parts.map(p => `(${p})`).join(' AND ');
@@ -2409,6 +2446,102 @@ facetFilters = {
             if (FACET_TREE) await renderTreeFacet(key, bodyId, grouped[key], TREE_ALL_LABEL[key]);
             else renderFilter(bodyId, key, grouped[key]);
         }
+
+        // --- Collection facet (#243): top-N checkboxes + search-the-tail ---
+        // Reads from the additive collections.parquet dimension. Counts here are
+        // the collection's total sample count (static); unlike material/context/
+        // object_type they are NOT cross-filtered (no cross_filter cache for
+        // collections yet) — the dots and table still respect the filter via
+        // facetFilterSQL(). data-facet="collection" keeps applyFacetCounts() from
+        // touching these rows.
+        try {
+            const collBody = document.getElementById('collectionFilterBody');
+            const collSearch = document.getElementById('collectionSearch');
+            const collResults = document.getElementById('collectionSearchResults');
+            const urlCollIds = csvParamValues(new URLSearchParams(location.search), 'collection') || [];
+
+            const collRowHtml = (id, label, count) =>
+                `<label class="facet-row" data-facet="collection" data-value="${escAttr(id)}" title="${escAttr(label)}"><input type="checkbox" value="${escAttr(id)}"> ${escText(label)} <span class="facet-count" data-facet="collection" data-value="${escAttr(id)}" style="color:#999">(${Number(count).toLocaleString()})</span></label>`;
+
+            // Top-N by sample count, plus any ids named in the URL so deep links
+            // restore long-tail selections that aren't in the top-N.
+            const topRows = await db.query(`
+                SELECT collection_id, label, n_samples
+                FROM read_parquet('${collections_url}')
+                ORDER BY n_samples DESC
+                LIMIT ${COLLECTION_FACET_TOPN}
+            `);
+            const seen = new Set(topRows.map(r => r.collection_id));
+            let extraRows = [];
+            const missing = urlCollIds.filter(id => !seen.has(id));
+            if (missing.length) {
+                const list = missing.map(s => `'${escSql(s)}'`).join(',');
+                extraRows = await db.query(`
+                    SELECT collection_id, label, n_samples
+                    FROM read_parquet('${collections_url}')
+                    WHERE collection_id IN (${list})
+                `);
+            }
+            const allRows = extraRows.concat(topRows);
+            if (collBody) {
+                collBody.innerHTML = allRows.length
+                    ? allRows.map(r => collRowHtml(r.collection_id, r.label, r.n_samples)).join('')
+                    : '<em style="font-size: 11px; color: #999;">No collections</em>';
+            }
+
+            // Search box → query the full dimension by label; clicking a result
+            // injects a checked row into the body (if absent) and fires the same
+            // change event the checkboxes do, so the existing handler reruns.
+            if (collSearch && collResults && collBody) {
+                let collSearchTimer = null;
+                const runCollSearch = async () => {
+                    const term = collSearch.value.trim();
+                    if (term.length < 2) { collResults.style.display = 'none'; collResults.innerHTML = ''; return; }
+                    const esc = escapeIlikePattern(term);
+                    const rows = await db.query(`
+                        SELECT collection_id, label, n_samples
+                        FROM read_parquet('${collections_url}')
+                        WHERE label ILIKE '%${esc}%' ESCAPE '\\'
+                        ORDER BY n_samples DESC
+                        LIMIT 25
+                    `);
+                    collResults.innerHTML = rows.length
+                        ? rows.map(r =>
+                            `<div class="collection-search-row" data-id="${escAttr(r.collection_id)}" data-label="${escAttr(r.label)}" data-count="${Number(r.n_samples)}" style="padding: 3px 5px; cursor: pointer; font-size: 12px;">${escText(r.label)} <span style="color:#999">(${Number(r.n_samples).toLocaleString()})</span></div>`
+                          ).join('')
+                        : '<em style="font-size: 11px; color: #999; padding: 4px; display:block;">No matches</em>';
+                    collResults.style.display = 'block';
+                };
+                collSearch.addEventListener('input', () => {
+                    clearTimeout(collSearchTimer);
+                    collSearchTimer = setTimeout(runCollSearch, 250);
+                });
+                collResults.addEventListener('click', (ev) => {
+                    const row = ev.target.closest('.collection-search-row');
+                    if (!row) return;
+                    const id = row.getAttribute('data-id');
+                    const selector = `input[type="checkbox"][value="${id}"]`;
+                    let cb = collBody.querySelector(selector);
+                    if (!cb) {
+                        collBody.insertAdjacentHTML('afterbegin',
+                            collRowHtml(id, row.getAttribute('data-label'), row.getAttribute('data-count')));
+                        cb = collBody.querySelector(selector);
+                    }
+                    if (cb && !cb.checked) {
+                        cb.checked = true;
+                        collBody.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    collSearch.value = '';
+                    collResults.style.display = 'none';
+                    collResults.innerHTML = '';
+                });
+            }
+        } catch (err) {
+            console.warn('collection facet setup failed:', err);
+            const collBody = document.getElementById('collectionFilterBody');
+            if (collBody) collBody.innerHTML = '<em style="font-size: 11px; color: #999;">Collections unavailable</em>';
+        }
+
         applyFacetCounts('source', null);
         applyQueryToFacetFilters();
 
@@ -4046,6 +4179,7 @@ zoomWatcher = {
             // every other surface filters (Codex review 2026-05-30, #234).
             search: (typeof window !== 'undefined' && window.__searchFilter && window.__searchFilter.active)
                 ? window.__searchFilter.token : null,
+            collection: getCheckedValues('collectionFilterBody').slice().sort(),
         });
     }
 
@@ -4639,6 +4773,7 @@ zoomWatcher = {
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
+    document.getElementById('collectionFilterBody')?.addEventListener('change', handleFacetFilterChange);
 
     // #300: filtered clusters may become usable AFTER the page already has a facet
     // active — the lite preflight resolves asynchronously, or a republished lite
