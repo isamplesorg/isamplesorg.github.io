@@ -2368,6 +2368,16 @@ zoomWatcher = {
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
+    // A1 (#234 Step 4): accessors for the search-as-global-filter state the
+    // search machinery publishes on window.__searchFilter. searchFilterSQL()
+    // returns the semi-join predicate (or '' when no search is committed) so
+    // the point loader and facet-count queries scope to `searchTerm ∩ …` the
+    // same way the samples table does.
+    const searchIsActive = () =>
+        (typeof window !== 'undefined' && window.__searchFilter && window.__searchFilter.active);
+    const searchFilterSQL = (col = 'pid') =>
+        searchIsActive() ? ` AND ${col} IN (SELECT pid FROM search_pids)` : '';
+
     // No viewport cache: the samples table (PR #219) re-queries on every
     // `moveEnd` against the current padded bbox, so reusing a cached
     // `cachedTotalCount` here would have point-mode show a stale count
@@ -2529,6 +2539,7 @@ zoomWatcher = {
                   AND longitude BETWEEN ${padded.west} AND ${padded.east}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+                  ${searchFilterSQL('pid')}
             `;
             const query = `
                 SELECT pid, label, source, latitude, longitude,
@@ -2841,7 +2852,9 @@ zoomWatcher = {
         // spatial constraint. In a non-global view with no facet filter, B1
         // still wants per-value counts scoped to what's visible — fall
         // through to the slow path with `where = '1=1'`.
-        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null) {
+        // A1 (#234 Step 4): an active search is itself a constraint, so even a
+        // global view with no facet filter must take the slow (filtered) path.
+        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null && !searchIsActive()) {
             for (const d of dims) applyFacetCounts(d.key, null);
             return;
         }
@@ -2849,11 +2862,14 @@ zoomWatcher = {
         markFacetCountsRecomputing();
 
         // Cube fast-path: pre-aggregated globally, so it's valid only when
-        // the camera is at (or close to) the global view.
+        // the camera is at (or close to) the global view — AND no search is
+        // active (A1 #234 Step 4): the cube is pre-aggregated over the whole
+        // corpus and cannot be constrained to a free-text pid-set, so a
+        // committed search must fall through to the on-the-fly slow path.
         const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
-        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null) {
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive()) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -2902,7 +2918,7 @@ zoomWatcher = {
                         SELECT f.${d.col} AS value, COUNT(*) AS count
                         FROM read_parquet('${facets_url}') f
                         JOIN read_parquet('${lite_url}') l ON l.pid = f.pid
-                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}
+                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}${searchFilterSQL('f.pid')}
                         GROUP BY f.${d.col}
                     `);
                 } else {
@@ -2910,7 +2926,7 @@ zoomWatcher = {
                     rows = await db.query(`
                         SELECT ${d.col} AS value, COUNT(*) AS count
                         FROM read_parquet('${facets_url}')
-                        WHERE ${where} AND ${d.col} IS NOT NULL
+                        WHERE ${where} AND ${d.col} IS NOT NULL${searchFilterSQL('pid')}
                         GROUP BY ${d.col}
                     `);
                 }
@@ -3485,6 +3501,51 @@ zoomWatcher = {
             busyRelease();
         }
     }
+
+    // A1 (#234 Step 4): push the just-built (or just-cleared) search pid-set
+    // through every dynamic surface. Mirrors handleFacetFilterChange, plus
+    // the C3 globe-mode rule:
+    //   - search active → FORCE point mode. Clusters are pre-aggregated H3
+    //     summaries that cannot be text-filtered, so showing them while the
+    //     table/legend ARE filtered is the incoherent half-state we must
+    //     avoid. Point mode renders the actual filtered samples (capped at
+    //     POINT_BUDGET with an honest "showing N — zoom in" note for very
+    //     broad terms — that cap is the density-fallback, in lieu of
+    //     reverting to dishonest clusters).
+    //   - search cleared → restore the mode the current altitude implies.
+    // The camera-changed handler keeps point mode latched while a search is
+    // active (its targetMode is overridden below), so panning/zooming during
+    // a search won't bounce back to clusters.
+    async function applySearchFilterChange() {
+        busyAcquire();
+        try {
+            syncFacetNote();
+            refreshHeatmap();
+            if (searchIsActive()) {
+                if (getMode() !== 'point') {
+                    enterPointMode(false);   // forces point; loads filtered viewport samples
+                } else {
+                    await loadViewportSamples();
+                }
+            } else {
+                // Search cleared: revert to the altitude-appropriate mode.
+                const h = viewer.camera.positionCartographic.height;
+                if (getMode() === 'point' && h >= EXIT_POINT_ALT) {
+                    exitPointMode(false);
+                    const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                    if (target !== currentRes) {
+                        await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    }
+                } else if (getMode() === 'point') {
+                    await loadViewportSamples();  // still point altitude — reload now-unfiltered points
+                }
+            }
+            refreshFacetCounts();
+            if (typeof window !== 'undefined') window.refreshSamplesTable?.();
+        } finally {
+            busyRelease();
+        }
+    }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
@@ -3508,18 +3569,29 @@ zoomWatcher = {
                 history.replaceState(null, '', buildHash(viewer));
             }
 
-            // Determine target mode with hysteresis
-            const targetMode = h < ENTER_POINT_ALT ? 'point'
+            // Determine target mode with hysteresis.
+            // A1 (#234 Step 4) / C3: while a search is active, latch point
+            // mode regardless of altitude — clusters can't be text-filtered,
+            // so we keep showing the filtered sample dots even when zoomed out.
+            const targetMode = searchIsActive() ? 'point'
+                             : h < ENTER_POINT_ALT ? 'point'
                              : h > EXIT_POINT_ALT ? 'cluster'
                              : getMode();
 
             if (targetMode === 'point' && getMode() !== 'point') {
-                // Cold-cache deep-link: the res8 + samples_map_lite fetches
-                // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
-                // HTTP read; see issue #190). Delegate to the shared helper
-                // so the source-filter handler can call the same path on
-                // supersession recovery.
-                await tryEnterPointModeIfNeeded();
+                if (searchIsActive()) {
+                    // Search forces point mode even above ENTER_POINT_ALT,
+                    // where tryEnterPointModeIfNeeded() would refuse; enter
+                    // directly so the filtered dots render at any zoom.
+                    enterPointMode(false);
+                } else {
+                    // Cold-cache deep-link: the res8 + samples_map_lite fetches
+                    // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
+                    // HTTP read; see issue #190). Delegate to the shared helper
+                    // so the source-filter handler can call the same path on
+                    // supersession recovery.
+                    await tryEnterPointModeIfNeeded();
+                }
             } else if (targetMode === 'cluster' && getMode() !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
@@ -3970,10 +4042,11 @@ zoomWatcher = {
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
             // A1 (#234 Step 4): an empty / too-short submit means no committed
-            // search — drop the pid-set filter and refresh surfaces so they
-            // revert to the unfiltered "match the current filters" state.
+            // search — drop the pid-set filter and refresh every surface
+            // (table, points, facet counts) plus revert the globe mode so the
+            // page returns to its unfiltered state.
             await clearSearchFilter();
-            if (typeof window !== 'undefined') window.refreshSamplesTable?.();
+            await applySearchFilterChange();
             writeQueryState();
             persistSearchScope(effectiveScope);
             return;
@@ -4022,8 +4095,11 @@ zoomWatcher = {
             await clearSearchFilter();
         }
         // Superseded by a newer search while building? Bail before mutating UI.
-        if (searchId === _searchSeq && typeof window !== 'undefined') {
-            window.refreshSamplesTable?.();
+        // Otherwise push the freshly-built filter through every surface: table,
+        // points, facet counts, and the globe mode (C3 — switch to filtered
+        // point dots, since clusters can't be text-filtered).
+        if (searchId === _searchSeq) {
+            await applySearchFilterChange();
         }
 
         // Snapshot the filter-state telemetry booleans here, BEFORE the
