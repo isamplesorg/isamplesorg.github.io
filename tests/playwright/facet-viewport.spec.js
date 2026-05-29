@@ -107,8 +107,24 @@ async function readFacetCounts(page, facet) {
  *  populates at boot. */
 async function readSourceCounts(page) { return readFacetCounts(page, 'source'); }
 
-/** flyTo a destination, then wait for the post-moveEnd debounce + bbox query
- *  to settle. Uses a zero-duration flight to make the test deterministic. */
+/** flyTo a destination, then wait for the facet counts to actually reflect
+ *  the new viewport — not merely for `.recomputing` to clear.
+ *
+ *  Hardened 2026-05-28: the old wait (`waitForTimeout(50)` + one
+ *  `.recomputing`-clear check) could observe a transient "no-recomputing"
+ *  instant *before* the new viewport's counts applied, or capture a stale
+ *  prior-viewport result. It was already intermittently flaky on baseline;
+ *  the #234 padding fix (facet counts now scan the 30%-padded bbox, ~1.69×
+ *  the rows → slower query) widened the race and made it fail reliably.
+ *
+ *  Robust synchronization keys on the recompute CYCLE (not a value change,
+ *  which would hang for moves that leave the counts unchanged): wait for
+ *  `.recomputing` to (a) APPEAR — so we can't sample the pre-query
+ *  transient — then (b) CLEAR (query applied), then (c) hold steady across
+ *  two consecutive reads, so a late-landing query can't shift the values
+ *  after we return. If a real product stale-overwrite race exists, the
+ *  steady state will be the wrong value and the caller's assertion will
+ *  (correctly) fail rather than flake. */
 async function flyToAndSettle(page, lat, lng, alt) {
     await page.evaluate(async ({ lat, lng, alt }) => {
         const v = await window._ojs?.ojsConnector?.mainModule?.value('viewer');
@@ -118,10 +134,30 @@ async function flyToAndSettle(page, lat, lng, alt) {
             duration: 0,
         });
     }, { lat, lng, alt });
-    // Give the debounce + query a chance to land. waitForFacetCountsStable
-    // is the real synchronization point; this just kicks the event loop.
-    await page.waitForTimeout(50);
+    // Synchronize on the recompute CYCLE, not on a value change — so this
+    // helper is correct even for moves that leave the counts unchanged
+    // (Codex review 2026-05-28). `moveStart` sets `.recomputing`
+    // synchronously and the 250 ms debounce keeps it observable; wait for
+    // it to APPEAR so we can't sample the pre-query transient, then for it
+    // to CLEAR (query applied). The `.catch` tolerates the rare case where
+    // the cycle is missed/instant — we still fall through to the stability
+    // gate below rather than hang.
+    await page.waitForFunction(
+        () => document.querySelector('.facet-count.recomputing') !== null,
+        null, { timeout: 10000 }
+    ).catch(() => {});
     await waitForFacetCountsStable(page);
+    // Stability gate: two consecutive equal source-count reads, so a
+    // late-landing query can't shift the values after we return. If a real
+    // product stale-overwrite race existed, the steady state would be the
+    // wrong value and the caller's assertion would (correctly) fail.
+    let prev = null;
+    await expect.poll(async () => {
+        const cur = JSON.stringify(await readSourceCounts(page));
+        const settled = cur === prev;
+        prev = cur;
+        return settled;
+    }, { timeout: 30000, intervals: [400, 600, 800] }).toBe(true);
 }
 
 function totalOf(counts) {
@@ -239,6 +275,39 @@ test.describe('B1 viewport-aware facet counts (#234 step 3)', () => {
         const cyprusTotal = Object.values(cyprusMaterialUnderFilter).reduce((a, b) => a + b, 0);
         expect(cyprusTotal).toBeGreaterThan(0);
         expect(cyprusTotal).toBeLessThan(filteredTotal);
+    });
+
+    test('coherence: active-material legend count == table "N match" count (#234 padding)', async ({ page }) => {
+        // Regression for the off-by-one RY found 2026-05-28. Facet counts
+        // used exact-viewport (pad 0) while the samples-table COUNT uses
+        // VIEWPORT_PAD_FACTOR (0.3); a matching sample in the 30% margin
+        // made the legend read one low — at this exact Cyprus deep-zoom,
+        // material=mineral showed 13 on the legend but 14 in "samples match
+        // the current filters." With facet counts on the same padded bbox
+        // as the table/heatmap/point-loader/stat, the two must agree.
+        const MINERAL = 'https://w3id.org/isample/vocabulary/material/1.0/mineral';
+        const suffix = `?material=${encodeURIComponent(MINERAL)}#v=1&lat=35.0900&lng=32.8900&alt=50000&mode=point`;
+        await page.goto(explorerUrl(suffix));
+        await page.waitForSelector('#cesiumContainer', { timeout: 30000 });
+        await waitForFacetUI(page);
+        await waitForFacetCountsStable(page);
+
+        // Poll until both the legend count for the active material and the
+        // table meta "N match" line have resolved, then assert equality via
+        // a backreference (`14/14` matches, `13/14` does not). Both numbers
+        // are viewport-scoped, so they must be identical for the same view.
+        await expect.poll(async () => {
+            return await page.evaluate((mineral) => {
+                const f = document.querySelector(`.facet-count[data-facet="material"][data-value="${mineral}"]`);
+                const fm = f && (f.textContent || '').match(/\(([\d,]+)\)/);
+                const meta = document.getElementById('tableMeta')?.textContent || '';
+                const tm = meta.match(/([\d,]+)\s+samples?\s+match/);
+                if (!fm || !tm) return 'pending';
+                const fv = parseInt(fm[1].replace(/,/g, ''), 10);
+                const tv = parseInt(tm[1].replace(/,/g, ''), 10);
+                return `${fv}/${tv}`;
+            }, MINERAL);
+        }, { timeout: 60000, intervals: [500, 1000, 2000] }).toMatch(/^(\d+)\/\1$/);
     });
 
     test('moveStart marks .recomputing before the debounce can run', async ({ page }) => {
