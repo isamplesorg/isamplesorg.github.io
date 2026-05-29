@@ -2156,9 +2156,27 @@ tableView = {
 
     function summaryText() {
         if (totalRows == null) return 'Counting samples...';
-        if (totalRows === 0) return 'No samples match the current filters.';
+        // Honesty fix (#247): when a free-text search is committed, the
+        // table still reflects ONLY the viewport + source/facet filters —
+        // the search term is NOT a table predicate (pre-A1; see #234 Step
+        // 4 / axis A1). Disclose that explicitly and point to the side
+        // panel, instead of claiming these rows "match the current filters"
+        // (which after a search-fly can be e.g. 43,803 GEOME mollusks for a
+        // "bucchero" search). `__explorerActiveSearch` is maintained by
+        // doSearch; null when no search is committed. setMeta uses
+        // textContent, so the term needs no HTML-escaping here.
+        const activeSearch = (typeof window !== 'undefined') ? window.__explorerActiveSearch : null;
+        if (totalRows === 0) {
+            return activeSearch
+                ? `No samples in this map view and current non-search filters. Search results for "${activeSearch}" are shown in the panel →`
+                : 'No samples match the current filters.';
+        }
         const total = totalRows.toLocaleString();
-        return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
+        const plural = totalRows === 1 ? '' : 's';
+        if (activeSearch) {
+            return `${total} sample${plural} in this map view and current non-search filters. Search results for "${activeSearch}" are shown in the panel →`;
+        }
+        return `${total} sample${plural} match the current filters.`;
     }
 
     async function refreshAll() {
@@ -3846,12 +3864,41 @@ zoomWatcher = {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
+            // Honesty fix (#247): the samples-table meta line keys off this
+            // flag. An empty / too-short submit means no committed search, so
+            // clear it and refresh the table to revert to the plain "match
+            // the current filters" copy.
+            if (typeof window !== 'undefined') {
+                window.__explorerActiveSearch = null;
+                window.refreshSamplesTable?.();
+            }
             writeQueryState();
             persistSearchScope(effectiveScope);
             return;
         }
         writeQueryState();
         persistSearchScope(effectiveScope);
+        // Honesty fix (#247): record the committed search term so the
+        // samples-table meta line can disclose that the table reflects the
+        // map view + source/facet filters only — NOT this search. Free-text
+        // search is not yet a table/globe predicate (pre-A1; see #234 Step
+        // 4). Set at fire-time (independent of result success) so the meta is
+        // honest the moment the search commits.
+        if (typeof window !== 'undefined') window.__explorerActiveSearch = term;
+        // Refresh the table now so the meta copy updates immediately. World-
+        // scope searches fly the camera (moveEnd → refreshAll covers it), but
+        // area-scope searches do NOT move the camera, so without this nudge
+        // the meta would stay stale until the next interaction. Triggers the
+        // SAME refreshAll that moveEnd/filter-change already use (no new query
+        // shape); pageGen dedups against the fly-triggered refresh.
+        if (typeof window !== 'undefined') window.refreshSamplesTable?.();
+        // Shared, prominent + sticky search-results heading, reused by the
+        // success / zero-result / error paths so the side panel ALWAYS
+        // reflects the committed search the table meta points at ("…shown in
+        // the panel →"). z-index keeps it above scrolled rows. term is the
+        // user's own input, rendered as-is to match the prior heading.
+        const searchHeadingHTML = (suffix) =>
+            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #e3f2fd; color: #1565c0; border-radius: 4px;">Search results: "${term}"${suffix}</h4>`;
         searchResults.textContent = effectiveScope === 'area'
             ? 'Searching selected areas...'
             : 'Searching entire world...';
@@ -4021,6 +4068,13 @@ zoomWatcher = {
             resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
+                // Honesty fix (#247): the table meta points "→ panel", so the
+                // panel must reflect THIS (empty) search rather than whatever
+                // it showed before. Without this, a zero-result search left
+                // stale prior content under a pointer claiming otherwise.
+                const sampEl0 = document.getElementById('samplesSection');
+                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(' (0)')
+                    + '<div class="empty-state" style="padding: 8px;">No samples matched this search.</div>';
                 return;
             }
 
@@ -4039,7 +4093,9 @@ zoomWatcher = {
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) {
-                let h = `<h4>Search: "${term}" (${results.length})</h4>`;
+                // Prominent + sticky heading via the shared helper (see its
+                // definition above). No page/camera scroll — heading only.
+                let h = searchHeadingHTML(` (${results.length})`);
                 for (const s of results) {
                     const color = SOURCE_COLORS[s.source] || '#666';
                     const name = SOURCE_NAMES[s.source] || s.source;
@@ -4217,6 +4273,12 @@ zoomWatcher = {
                 console.error("Search failed:", err);
                 searchResults.textContent = `Search error: ${err.message}`;
                 errorMessage = err.message || String(err);
+                // Honesty fix (#247): keep the side panel consistent with the
+                // table meta's "→ panel" pointer on failure too, instead of
+                // leaving stale results under a pointer that now lies.
+                const sampElErr = document.getElementById('samplesSection');
+                if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
+                    + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
             }
         } finally {
             performance.mark(markEnd);
