@@ -25,7 +25,11 @@ const TERM = process.env.A1_TERM || 'bucchero';
 // point mode from cluster via an in-page search (the failing case).
 const URL = `${BASE}#v=1&lat=43.15&lng=11.40&alt=9000000`;
 
-const browser = await chromium.launch({ headless: false });
+// Default headed (real flyTo, what the A1 work is verified against). Set
+// HEADLESS=1 for reliable automated/CI runs — headless pages are always
+// "active", so they're immune to the backgrounded-window rAF freeze that
+// hangs an unfocused headed window mid-init.
+const browser = await chromium.launch({ headless: process.env.HEADLESS === '1' });
 const page = await browser.newPage();
 page.on('console', (m) => { if (/A1|point mode|Discarding/.test(m.text())) console.log('  page>', m.text()); });
 
