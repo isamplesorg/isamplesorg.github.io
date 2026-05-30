@@ -1463,37 +1463,6 @@ db = {
 }
 ```
 
-```{ojs}
-//| echo: false
-//| output: false
-
-// === A1 dev probe (#234 Step 4) — TEMPORARY, remove before PR ===
-// Confirms the linchpin of the search-as-global-filter design: a NON-TEMP
-// table created in one db.query() call is visible to a LATER db.query()
-// call. Observable's DuckDBClient opens a fresh connection per query(), so a
-// connection-local TEMP table would NOT survive — but a regular table in the
-// shared in-memory database does. Also checks TEMP for contrast.
-a1PersistenceProbe = {
-    try {
-        await db.query(`CREATE OR REPLACE TABLE __a1_probe AS SELECT 42 AS x`);
-        const r = Array.from(await db.query(`SELECT x FROM __a1_probe`));
-        const nonTempOK = r.length === 1 && Number(r[0].x) === 42;
-        console.log(`[A1probe] NON-TEMP table persists across db.query():`, nonTempOK);
-        let tempOK = null;
-        try {
-            await db.query(`CREATE OR REPLACE TEMP TABLE __a1_probe_t AS SELECT 7 AS x`);
-            const rt = Array.from(await db.query(`SELECT x FROM __a1_probe_t`));
-            tempOK = rt.length === 1 && Number(rt[0].x) === 7;
-        } catch (e) { tempOK = `threw: ${e.message}`; }
-        console.log(`[A1probe] TEMP table persists across db.query():`, tempOK);
-        await db.query(`DROP TABLE IF EXISTS __a1_probe`);
-        return { nonTempOK, tempOK };
-    } catch (e) {
-        console.log(`[A1probe] FAILED:`, e.message);
-        return { error: e.message };
-    }
-}
-```
 
 ```{ojs}
 //| echo: false
@@ -4043,45 +4012,51 @@ zoomWatcher = {
                 ? ` AND ${pidCol} IN (SELECT pid FROM search_pids)`
                 : '';
 
-        // DEV: deterministic A1 observability. console capture races the
-        // automation harness; instead a1dbg() appends to window.__a1log and
-        // stamps window.__a1state[event] so a test can POLL state (and read
-        // an optional on-page panel via ?debug=a1) rather than chase console.
-        if (!window.a1dbg) {
-            window.__a1log = [];
-            window.__a1state = {};
-            let _a1panel = null;
-            if (new URLSearchParams(location.search).get('debug') === 'a1' && document.body) {
-                _a1panel = document.createElement('div');
-                _a1panel.id = 'a1DebugPanel';
-                _a1panel.style.cssText = 'position:fixed;bottom:0;right:0;width:520px;max-height:42vh;overflow:auto;background:#111;color:#3f3;font:11px/1.35 monospace;z-index:99999;padding:4px;opacity:.92';
-                document.body.appendChild(_a1panel);
-            }
-            window.a1dbg = (event, data = {}) => {
-                const row = { t: Math.round(performance.now()), event, ...data };
-                window.__a1log.push(row);
-                window.__a1state[event] = row;
-                if (_a1panel) {
-                    const line = document.createElement('div');
-                    line.textContent = `[A1] +${row.t}ms ${event} ${JSON.stringify(data)}`;
-                    _a1panel.appendChild(line);
-                    _a1panel.scrollTop = _a1panel.scrollHeight;
+        // DEV: deterministic A1 observability, gated behind ?debug=a1 so
+        // production users get a clean global namespace and zero overhead.
+        // The Playwright harness (a1-verify.mjs) loads with ?debug=a1 to opt
+        // in. Every a1dbg?.() call site uses optional chaining, so they are
+        // no-ops when this block doesn't run. a1dbg() appends to
+        // window.__a1log and stamps window.__a1state[event] so a test can
+        // POLL state (and read an optional on-page panel) rather than chase
+        // console; __a1globe() exposes just what a coherence assertion needs.
+        if (new URLSearchParams(location.search).get('debug') === 'a1') {
+            if (!window.a1dbg) {
+                window.__a1log = [];
+                window.__a1state = {};
+                let _a1panel = null;
+                if (document.body) {
+                    _a1panel = document.createElement('div');
+                    _a1panel.id = 'a1DebugPanel';
+                    _a1panel.style.cssText = 'position:fixed;bottom:0;right:0;width:520px;max-height:42vh;overflow:auto;background:#111;color:#3f3;font:11px/1.35 monospace;z-index:99999;padding:4px;opacity:.92';
+                    document.body.appendChild(_a1panel);
                 }
+                window.a1dbg = (event, data = {}) => {
+                    const row = { t: Math.round(performance.now()), event, ...data };
+                    window.__a1log.push(row);
+                    window.__a1state[event] = row;
+                    if (_a1panel) {
+                        const line = document.createElement('div');
+                        line.textContent = `[A1] +${row.t}ms ${event} ${JSON.stringify(data)}`;
+                        _a1panel.appendChild(line);
+                        _a1panel.scrollTop = _a1panel.scrollHeight;
+                    }
+                };
+            }
+            // Globe-state accessor for the Playwright harness — exposes just
+            // what a coherence assertion needs, not the whole Cesium viewer.
+            // Lazily reads `viewer` (in this cell's scope).
+            window.__a1globe = () => {
+                try {
+                    return {
+                        mode: viewer._globeState.mode,
+                        samplePointsLen: viewer.samplePoints.length,
+                        samplePointsShown: viewer.samplePoints.show,
+                        h3PointsShown: viewer.h3Points.show,
+                    };
+                } catch (e) { return { error: String(e) }; }
             };
         }
-        // Globe-state accessor for the Playwright harness — exposes just what
-        // a coherence assertion needs, not the whole Cesium viewer. Lazily
-        // reads `viewer` (in this cell's scope) so it's safe to define here.
-        window.__a1globe = () => {
-            try {
-                return {
-                    mode: viewer._globeState.mode,
-                    samplePointsLen: viewer.samplePoints.length,
-                    samplePointsShown: viewer.samplePoints.show,
-                    h3PointsShown: viewer.h3Points.show,
-                };
-            } catch (e) { return { error: String(e) }; }
-        };
     }
 
     async function buildSearchFilter(terms, term) {
