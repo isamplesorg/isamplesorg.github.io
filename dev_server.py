@@ -24,6 +24,13 @@ import re
 
 
 class RangeHandler(http.server.SimpleHTTPRequestHandler):
+    # DuckDB-WASM's httpfs range reader expects HTTP/1.1 (keep-alive +
+    # persistent connections for its many small footer/row-group range GETs).
+    # Python's http.server defaults to HTTP/1.0, under which DuckDB falls back
+    # to whole-file GET 200s — so the local mirror never exercises the 206
+    # range path that production (Cloudflare R2, HTTP/2) uses. Pin 1.1.
+    protocol_version = "HTTP/1.1"
+
     def end_headers(self):
         # CORS + always-Accept-Ranges so a cross-origin data_base also works.
         self.send_header("Access-Control-Allow-Origin", "*")

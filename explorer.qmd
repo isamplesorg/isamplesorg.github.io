@@ -688,9 +688,18 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //                                DuckDB-WASM partial reads; use dev_server.py)
 //   localStorage ISAMPLES_DATA_BASE  (sticky per-browser override)
 // Defaults to the production R2 origin, so shipped builds are unchanged.
-R2_BASE = new URLSearchParams(location.search).get('data_base')
-    || (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_DATA_BASE'))
-    || "https://data.isamples.org"
+R2_BASE = (() => {
+    const raw = new URLSearchParams(location.search).get('data_base')
+        || (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_DATA_BASE'))
+        || "https://data.isamples.org";
+    // DuckDB-WASM's httpfs only range-fetches ABSOLUTE http(s) URLs. A root-
+    // relative override (?data_base=/data) is read as a virtual-filesystem
+    // glob and fails with "No files found that match the pattern" — silently,
+    // before any network fetch. Resolve a relative override against the page
+    // origin so the ergonomic ?data_base=/data form actually works. The prod
+    // default and absolute overrides (http://localhost:8099/data) pass through.
+    return raw.startsWith('/') ? new URL(raw, location.origin).href : raw;
+})()
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
