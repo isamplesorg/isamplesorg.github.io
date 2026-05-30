@@ -2852,8 +2852,24 @@ zoomWatcher = {
         // since `facets_url` carries no coordinates today). Cube fast-path
         // is unconditionally gated off (it is pre-aggregated globally and
         // can't answer viewport-scoped questions).
+        //
+        // VIEWPORT_PAD_FACTOR (not 0): the facet counts must use the SAME
+        // padded viewport as every other "in view" surface — the samples
+        // table COUNT (loadCount), the point-mode sample loader, the
+        // "samples in view" stat, and the heatmap all pad by
+        // VIEWPORT_PAD_FACTOR (0.3). B1 originally shipped this at pad 0
+        // (exact viewport), which left the facet count one (or more) low
+        // versus the table whenever a matching sample sat in the 30% pad
+        // margin — e.g. material=mineral at a Cyprus deep-zoom read 13 on
+        // the legend but 14 in "samples match the current filters" (RY,
+        // 2026-05-28); at a wide view (alt≈900 km, material=rock over the
+        // Red Sea) the same mismatch reads ~166 vs ~481 because the margin
+        // is huge. The heatmap hit the identical mismatch earlier and was
+        // moved to the padded contract; this aligns the last surface. The
+        // deeper fix (one shared "in view" bbox source so these can't drift
+        // again) is tracked on #234.
         const isGlobal = isGlobalView();
-        const bboxSQL = isGlobal ? null : viewerBboxSQL('l.latitude', 'l.longitude', 0);
+        const bboxSQL = isGlobal ? null : viewerBboxSQL('l.latitude', 'l.longitude', VIEWPORT_PAD_FACTOR);
 
         // Baseline early-return only applies when there is no filter AND no
         // spatial constraint. In a non-global view with no facet filter, B1
