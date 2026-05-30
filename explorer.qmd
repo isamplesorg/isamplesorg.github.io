@@ -4067,16 +4067,34 @@ zoomWatcher = {
             'description',
             'CAST(place_name AS VARCHAR)',
         ]);
-        // DISTINCT + NOT NULL: pid is unique in facets_url today, but DISTINCT
-        // is cheap insurance against a future facet-shaped projection.
+        // Compute the side-panel relevance score in the SAME scan that builds
+        // the pid-set, and materialize the columns doSearch's results list
+        // needs (label / source / place_name + score). This lets doSearch read
+        // the small search_pids table instead of RE-scanning the 63 MB facets
+        // parquet — the old double-scan that pushed broad terms like "pottery"
+        // past CI's 90s smoke budget. search_pids stays pid-keyed (one row per
+        // unique pid), so every other surface's `pid IN (SELECT pid FROM
+        // search_pids)` semi-join and the COUNT(*) total are unchanged.
+        const score = textSearchScore(terms, [
+            { col: 'label',                       weight: 3 },
+            { col: 'description',                 weight: 1 },
+            { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
+        ]);
+        // pid is unique in facets_url (verified in A1 scoping), so the build
+        // is naturally one row per pid — no DISTINCT needed. (The previous
+        // `SELECT DISTINCT pid` deduped a single column; a 5-column DISTINCT
+        // would be both slower and weaker — it dedupes identical full rows,
+        // not pids — so we rely on the established uniqueness instead. This
+        // keeps COUNT(*) == match count and the side-panel free of dup rows.)
         await db.query(`
             CREATE OR REPLACE TABLE search_pids_next AS
-            SELECT DISTINCT pid
+            SELECT pid, label, source, place_name, (${score}) AS relevance_score
             FROM read_parquet('${facets_url}')
             WHERE pid IS NOT NULL AND ${searchWhere}
         `);
         if (token !== _searchFilterToken) return false;   // superseded mid-build
-        await db.query(`CREATE OR REPLACE TABLE search_pids AS SELECT pid FROM search_pids_next`);
+        await db.query(`CREATE OR REPLACE TABLE search_pids AS
+            SELECT pid, label, source, place_name, relevance_score FROM search_pids_next`);
         if (token !== _searchFilterToken) return false;
         const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
         const total = cnt.length ? Number(cnt[0].n) : 0;
@@ -4201,24 +4219,14 @@ zoomWatcher = {
             // hash-partitioned BM25 indexes that fixes both recall AND
             // latency. This code path goes away when #171 lands.
             //
-            // CTE-then-keyed-join shape (NOT a naive LEFT JOIN). Native
-            // DuckDB benchmark: naive 4.2 s vs CTE 0.5 s for `pottery`.
-            // The browser DuckDB-WASM penalty makes the difference even
-            // more pronounced; the naive form times out on `pottery` cold.
-            // Use `f.`-qualified columns so the same searchWhere/score
-            // strings work for both the world-mode CTE (single table aliased
-            // f) and the area-mode INNER JOIN (f + l, both via USING (pid)).
-            const searchWhere = textSearchWhere(terms, [
-                'f.label',
-                'f.description',
-                'CAST(f.place_name AS VARCHAR)',
-            ]);
-            const score = textSearchScore(terms, [
-                { col: 'f.label',                       weight: 3 },
-                { col: 'f.description',                 weight: 1 },
-                { col: 'CAST(f.place_name AS VARCHAR)', weight: 2 },
-            ]);
-
+            // The search-term match + relevance score are already materialized
+            // in `search_pids` by buildSearchFilter (aliased `s` below), so the
+            // results SELECT and the follow-up COUNT both read that small table
+            // instead of re-scanning the 63 MB facets parquet — the old
+            // double-scan (one in buildSearchFilter, one here) that pushed
+            // broad terms like `pottery` past CI's 90s smoke budget. The single
+            // remaining facets scan lives in buildSearchFilter.
+            //
             // Snapshot the source / facet predicates ONCE per search so the
             // follow-up COUNT(*) at the end of this try block uses the same
             // filter state as the SELECT. Without this snapshot, a user who
@@ -4228,7 +4236,7 @@ zoomWatcher = {
             // of PR #236 round 1). The string is captured here, before any
             // `db.query` await, and re-used by both the SELECT and the
             // COUNT below.
-            const sourceSQL = sourceFilterSQL('f.source');
+            const sourceSQL = sourceFilterSQL('s.source');
             const facetSQL = facetFilterSQL();
             // Telemetry-equivalent of the SQL snapshots above (`hadSourceFilter`
             // / `hadFacetFilter`) is declared OUTSIDE this try block so it
@@ -4273,15 +4281,15 @@ zoomWatcher = {
                     results = await runWorldQuery();
                 } else {
                     results = await db.query(`
-                        SELECT f.pid, f.label, f.source, l.latitude, l.longitude,
-                               f.place_name, (${score}) AS relevance_score
-                        FROM read_parquet('${facets_url}') f
+                        SELECT s.pid, s.label, s.source, l.latitude, l.longitude,
+                               s.place_name, s.relevance_score
+                        FROM search_pids s
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
-                        WHERE ${searchWhere}
+                        WHERE 1=1
                           ${bboxSQL}
                         ${sourceSQL}
                         ${facetSQL}
-                        ORDER BY relevance_score DESC, f.label
+                        ORDER BY s.relevance_score DESC, s.label
                         LIMIT 50
                     `);
                     effectiveQueryShape = 'area';
@@ -4294,13 +4302,13 @@ zoomWatcher = {
             async function runWorldQuery() {
                 return db.query(`
                     WITH matches AS (
-                        SELECT f.pid, f.label, f.source, f.place_name,
-                               (${score}) AS relevance_score
-                        FROM read_parquet('${facets_url}') f
-                        WHERE ${searchWhere}
+                        SELECT s.pid, s.label, s.source, s.place_name,
+                               s.relevance_score
+                        FROM search_pids s
+                        WHERE 1=1
                         ${sourceSQL}
                         ${facetSQL}
-                        ORDER BY relevance_score DESC
+                        ORDER BY s.relevance_score DESC
                         LIMIT 50
                     )
                     SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
@@ -4474,17 +4482,17 @@ zoomWatcher = {
                 const countSQL = effectiveQueryShape === 'area'
                     ? `
                         SELECT COUNT(*) AS n
-                        FROM read_parquet('${facets_url}') f
+                        FROM search_pids s
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
-                        WHERE ${searchWhere}
+                        WHERE 1=1
                           ${effectiveBboxSQL}
                         ${sourceSQL}
                         ${facetSQL}
                     `
                     : `
                         SELECT COUNT(*) AS n
-                        FROM read_parquet('${facets_url}') f
-                        WHERE ${searchWhere}
+                        FROM search_pids s
+                        WHERE 1=1
                         ${sourceSQL}
                         ${facetSQL}
                     `;
