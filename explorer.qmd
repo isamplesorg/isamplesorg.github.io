@@ -680,7 +680,26 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //| output: false
 
 // === Constants ===
-R2_BASE = "https://data.isamples.org"
+// DEV: override the data origin to a fast local parquet mirror so the
+// verify loop doesn't pay 40-90s of remote range-fetch per cold load.
+//   ?data_base=/data            (same-origin mirror under docs/data, served
+//                                by a RANGE-capable server — stock python
+//                                http.server returns 200 not 206, breaking
+//                                DuckDB-WASM partial reads; use dev_server.py)
+//   localStorage ISAMPLES_DATA_BASE  (sticky per-browser override)
+// Defaults to the production R2 origin, so shipped builds are unchanged.
+R2_BASE = (() => {
+    const raw = new URLSearchParams(location.search).get('data_base')
+        || (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_DATA_BASE'))
+        || "https://data.isamples.org";
+    // DuckDB-WASM's httpfs only range-fetches ABSOLUTE http(s) URLs. A root-
+    // relative override (?data_base=/data) is read as a virtual-filesystem
+    // glob and fails with "No files found that match the pattern" — silently,
+    // before any network fetch. Resolve a relative override against the page
+    // origin so the ergonomic ?data_base=/data form actually works. The prod
+    // default and absolute overrides (http://localhost:8099/data) pass through.
+    return raw.startsWith('/') ? new URL(raw, location.origin).href : raw;
+})()
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
@@ -888,20 +907,26 @@ function hasFacetFilters() {
 // takes effect at neighborhood zoom") explains the cluster-mode honesty
 // gap: H3 summary parquets only carry `dominant_source`, so material /
 // context / object_type filters cannot affect cluster counts. Invariant:
-//   visible ⇔ (any facet active) ∧ (mode === 'cluster')
-// Call sites that mutate either side of the conjunction MUST call this
-// to keep DOM and state in agreement:
+//   visible ⇔ (any facet active) ∧ (mode === 'cluster') ∧ (heatmap off)
+// Call sites that mutate any conjunct MUST call this to keep DOM and
+// state in agreement:
 //   - facetFilters cell (URL deep-link restore, #234 step 1)
 //   - handleFacetFilterChange (user toggles a facet checkbox)
 //   - enterPointMode / exitPointMode (mode transitions)
-// `viewer` resolves late at call time per ojs reactive scoping, so this
-// helper is safe to define before the viewer cell runs.
+//   - heatmapToggle change handler (#233 phase 3)
+// The heatmap conjunct: when the heatmap overlay is on, it IS the
+// filter-aware density view (dots are generated from filtered data, not
+// pre-baked dominant_source), so the apology is false and must be hidden
+// (#233). The toggle state is read straight off the DOM rather than via
+// heatmapEnabled() so this helper stays reachable from cells that run
+// before the viewer cell defines that function.
 function syncFacetNote() {
     const el = document.getElementById('facetNote');
     if (!el) return;
     const active = hasFacetFilters();
     const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
-    el.style.display = (active && inCluster) ? 'block' : 'none';
+    const heatOn = document.getElementById('heatmapToggle')?.checked === true;
+    el.style.display = (active && inCluster && !heatOn) ? 'block' : 'none';
 }
 
 function escSql(value) {
@@ -1438,6 +1463,7 @@ db = {
 }
 ```
 
+
 ```{ojs}
 //| echo: false
 //| output: false
@@ -1828,6 +1854,15 @@ tableView = {
     let pageGen = 0;               // bumped on any new load; in-flight callbacks check this
     let lastPageFailed = false;    // surfaces a sentinel table state when loadPage errors
 
+    // A1 (#234 Step 4): semi-join predicate against the materialized
+    // search_pids set, published by the search cell on window. Empty string
+    // when no search is committed, so non-search queries are unchanged. Read
+    // at query-build time (not cell-definition time), so it picks up a search
+    // committed after this cell first ran.
+    const searchFilterSQL = (col = 'pid') =>
+        (typeof window !== 'undefined' && window.searchFilterSQL)
+            ? window.searchFilterSQL(col) : '';
+
     const prevBtn = document.getElementById('tablePrev');
     const nextBtn = document.getElementById('tableNext');
     const metaEl = document.getElementById('tableMeta');
@@ -2095,6 +2130,7 @@ tableView = {
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                   ${bboxSQL}
+                  ${searchFilterSQL('pid')}
             `);
             if (genAtStart !== pageGen) return true;
             // DuckDB-WASM returns BigInt for COUNT(*); coerce safely.
@@ -2126,6 +2162,7 @@ tableView = {
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                   ${bboxSQL}
+                  ${searchFilterSQL('pid')}
                 ORDER BY pid
                 LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
             `);
@@ -2150,9 +2187,27 @@ tableView = {
 
     function summaryText() {
         if (totalRows == null) return 'Counting samples...';
-        if (totalRows === 0) return 'No samples match the current filters.';
+        // A1 (#234 Step 4): when a search is committed, the table IS now
+        // filtered by it (semi-join on search_pids), so totalRows already
+        // counts only `searchTerm ∩ viewport ∩ source/facet`. Report that
+        // honestly as "N of M matches in this map view", where M is the
+        // global match total stashed on window.__searchFilter. (The probe
+        // confirmed every searchable sample has coordinates, so M is also the
+        // count of mappable matches — no coordinate-less caveat needed.)
+        const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+        const activeSearch = sf && sf.active ? sf.term : null;
+        if (totalRows === 0) {
+            return activeSearch
+                ? `No "${activeSearch}" matches in this map view (of ${(sf.total || 0).toLocaleString()} total — pan or zoom out).`
+                : 'No samples match the current filters.';
+        }
         const total = totalRows.toLocaleString();
-        return `${total} sample${totalRows === 1 ? '' : 's'} match the current filters.`;
+        const plural = totalRows === 1 ? '' : 's';
+        if (activeSearch) {
+            const matchTotal = (sf.total || totalRows).toLocaleString();
+            return `${total} of ${matchTotal} "${activeSearch}" match${sf.total === 1 ? '' : 'es'} in this map view.`;
+        }
+        return `${total} sample${plural} match the current filters.`;
     }
 
     async function refreshAll() {
@@ -2301,6 +2356,16 @@ zoomWatcher = {
     const EXIT_POINT_ALT = 180000;   // 180 km → exit point mode
     const POINT_BUDGET = DEFAULT_POINT_BUDGET;
 
+    // A1 (#234 Step 4): accessors for the search-as-global-filter state the
+    // search machinery publishes on window.__searchFilter. searchFilterSQL()
+    // returns the semi-join predicate (or '' when no search is committed) so
+    // the point loader and facet-count queries scope to `searchTerm ∩ …` the
+    // same way the samples table does.
+    const searchIsActive = () =>
+        (typeof window !== 'undefined' && window.__searchFilter && window.__searchFilter.active);
+    const searchFilterSQL = (col = 'pid') =>
+        searchIsActive() ? ` AND ${col} IN (SELECT pid FROM search_pids)` : '';
+
     // No viewport cache: the samples table (PR #219) re-queries on every
     // `moveEnd` against the current padded bbox, so reusing a cached
     // `cachedTotalCount` here would have point-mode show a stale count
@@ -2432,6 +2497,15 @@ zoomWatcher = {
     // --- Load individual samples for current viewport ---
     async function loadViewportSamples() {
         const myReqId = ++requestId;
+        // A1 (#234 Step 4): snapshot the search generation too. `requestId`
+        // only orders point loads against each other; it does NOT know that a
+        // load was built under a given search filter. Without this, an
+        // unfiltered boot load (search not yet built), a stale filtered load,
+        // or a post-clear load can render after the search generation changed.
+        // Every post-await resume below re-checks BOTH tokens.
+        const mySearchToken = (typeof window !== 'undefined' && window.__searchFilter) ? window.__searchFilter.token : 0;
+        const isStaleLoad = () => myReqId !== requestId
+            || mySearchToken !== ((typeof window !== 'undefined' && window.__searchFilter) ? window.__searchFilter.token : 0);
         const bounds = getViewportBounds();
         if (!bounds) return;
 
@@ -2462,6 +2536,7 @@ zoomWatcher = {
                   AND longitude BETWEEN ${padded.west} AND ${padded.east}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+                  ${searchFilterSQL('pid')}
             `;
             const query = `
                 SELECT pid, label, source, latitude, longitude,
@@ -2476,8 +2551,10 @@ zoomWatcher = {
             performance.measure('sp', 'sp-s', 'sp-e');
             const elapsed = performance.getEntriesByName('sp').pop().duration;
 
-            // Stale guard: discard if a newer request was issued
-            if (myReqId !== requestId) {
+            // Stale guard: discard if a newer point load OR a newer search
+            // generation superseded this one (A1 #234 Step 4).
+            if (isStaleLoad()) {
+                window.a1dbg?.('point-load-discard', { myReqId, requestId, mySearchToken, curToken: window.__searchFilter?.token });
                 console.log(`Discarding stale sample response (req ${myReqId}, current ${requestId})`);
                 return;
             }
@@ -2497,14 +2574,14 @@ zoomWatcher = {
                         FROM read_parquet('${lite_url}')
                         ${whereClause}
                     `);
-                    if (myReqId !== requestId) return;  // stale guard
+                    if (isStaleLoad()) return;  // stale guard (req + search gen)
                     totalCount = Number(countRow[0]?.n ?? data.length);
                     capReached = totalCount > data.length;
                 } catch(err) {
                     // Stale guard before any state mutation/logging:
                     // a newer request may have started while count was in
                     // flight (Codex review of PR #210).
-                    if (myReqId !== requestId) return;
+                    if (isStaleLoad()) return;
                     // Don't fail the whole load if the count query fails;
                     // just fall back to the displayed-count behavior.
                     console.warn("Real-count query failed; falling back to rendered count:", err);
@@ -2524,10 +2601,11 @@ zoomWatcher = {
                 ? `${totalCount.toLocaleString()} samples in view (showing ${samples.length.toLocaleString()} — zoom in for more). Click one for details.`
                 : `${samples.length.toLocaleString()} individual samples. Click one for details.`;
             updatePhaseMsg(phaseMsg, 'done');
+            window.a1dbg?.('point-load-render', { rendered: samples.length, totalCount, searchActive: searchIsActive(), searchFiltered: !!searchFilterSQL('pid') });
             console.log(`Point mode: rendered ${samples.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
-            if (myReqId !== requestId) return;
+            if (isStaleLoad()) return;
             console.error("Viewport sample query failed:", err);
             updatePhaseMsg('Sample query failed — try again.', 'loading');
         }
@@ -2562,23 +2640,48 @@ zoomWatcher = {
         }
     }
 
+    // Single source of truth for marker-layer visibility (#233 phase 3).
+    //
+    // Cluster dots (h3Points) and individual sample points (samplePoints)
+    // are mutually exclusive with the heatmap overlay. When the heatmap is
+    // on it IS the density view, so painting the cluster dots on top of it
+    // produces the dots-vs-hotspots disagreement RY flagged 2026-05-27 —
+    // two layers telling contradictory spatial stories at once. Rule:
+    //   heatmap on  ⇒ both marker collections hidden (heatmap stands alone)
+    //   heatmap off ⇒ show whichever collection the altitude-driven mode
+    //                 calls for (cluster→h3Points, point→samplePoints)
+    // Aside from the one-time initializer (samplePoints starts hidden at
+    // creation), this is the ONLY place that writes `.show` on the two
+    // collections. Call it from every site that flips the mode or the
+    // heatmap toggle.
+    function applyLayerVisibility() {
+        const heat = heatmapEnabled();
+        const mode = getMode();
+        viewer.h3Points.show = !heat && mode === 'cluster';
+        viewer.samplePoints.show = !heat && mode === 'point';
+    }
+
     // --- Mode transitions ---
-    function enterPointMode(pushHistory) {
+    // async + awaits loadViewportSamples so callers (notably
+    // applySearchFilterChange under A1 #234 Step 4) have one real completion
+    // point — otherwise the point load is fire-and-forget and can lose a
+    // requestId race to a stale unfiltered load. Fire-and-forget callers can
+    // still call it without awaiting; the load just resolves later.
+    async function enterPointMode(pushHistory) {
         setExplorerMode('point');
-        viewer.h3Points.show = false;
-        viewer.samplePoints.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // #facetNote is only meaningful in cluster mode (#234 step 1).
         syncFacetNote();
-        loadViewportSamples();
         console.log('Entered point mode');
+        window.a1dbg?.('mode-change', { to: 'point', searchActive: searchIsActive() });
+        await loadViewportSamples();
     }
 
     function exitPointMode(pushHistory) {
         setExplorerMode('cluster');
-        viewer.samplePoints.show = false;
         viewer.samplePoints.removeAll();
-        viewer.h3Points.show = true;
+        applyLayerVisibility();
         if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
         // Returning to cluster mode: surface the honesty note if any
         // facet filter is active (#234 step 1).
@@ -2602,6 +2705,7 @@ zoomWatcher = {
             updateStats(`H3 Res${currentRes}`, viewer.h3Points.length, '—', '—', 'Clusters Loaded', 'Samples Loaded');
         }
         updatePhaseMsg(`${inView.clusters.toLocaleString()} clusters in view. Zoom closer for individual samples.`, 'done');
+        window.a1dbg?.('mode-change', { to: 'cluster', searchActive: searchIsActive(), via: new Error().stack?.split('\n')[2]?.trim() });
         console.log('Exited point mode');
     }
 
@@ -2677,7 +2781,7 @@ zoomWatcher = {
         if (res8Ready && getMode() !== 'point' && hNow < ENTER_POINT_ALT) {
             // Propagate `pushHistory` so boot/hash hydration callers can
             // avoid growing the browser history stack (issue #207 item 3).
-            enterPointMode(opts && opts.pushHistory);
+            await enterPointMode(opts && opts.pushHistory);
         }
     }
 
@@ -2755,7 +2859,9 @@ zoomWatcher = {
         // spatial constraint. In a non-global view with no facet filter, B1
         // still wants per-value counts scoped to what's visible — fall
         // through to the slow path with `where = '1=1'`.
-        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null) {
+        // A1 (#234 Step 4): an active search is itself a constraint, so even a
+        // global view with no facet filter must take the slow (filtered) path.
+        if (!sourceImpossible && activeDims.length === 0 && bboxSQL === null && !searchIsActive()) {
             for (const d of dims) applyFacetCounts(d.key, null);
             return;
         }
@@ -2763,11 +2869,14 @@ zoomWatcher = {
         markFacetCountsRecomputing();
 
         // Cube fast-path: pre-aggregated globally, so it's valid only when
-        // the camera is at (or close to) the global view.
+        // the camera is at (or close to) the global view — AND no search is
+        // active (A1 #234 Step 4): the cube is pre-aggregated over the whole
+        // corpus and cannot be constrained to a free-text pid-set, so a
+        // committed search must fall through to the on-the-fly slow path.
         const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
-        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null) {
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive()) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -2816,7 +2925,7 @@ zoomWatcher = {
                         SELECT f.${d.col} AS value, COUNT(*) AS count
                         FROM read_parquet('${facets_url}') f
                         JOIN read_parquet('${lite_url}') l ON l.pid = f.pid
-                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}
+                        WHERE ${where} AND f.${d.col} IS NOT NULL${bboxSQL}${searchFilterSQL('f.pid')}
                         GROUP BY f.${d.col}
                     `);
                 } else {
@@ -2824,7 +2933,7 @@ zoomWatcher = {
                     rows = await db.query(`
                         SELECT ${d.col} AS value, COUNT(*) AS count
                         FROM read_parquet('${facets_url}')
-                        WHERE ${where} AND ${d.col} IS NOT NULL
+                        WHERE ${where} AND ${d.col} IS NOT NULL${searchFilterSQL('pid')}
                         GROUP BY ${d.col}
                     `);
                 }
@@ -2857,8 +2966,18 @@ zoomWatcher = {
     let heatmapReqId = 0;
     let heatmapDebounce = null;
     let heatmapLastKey = null;
+    // Last SUCCESSFULLY-rendered view + filter (#233 loop fix, 2026-05-28).
+    // refreshHeatmap() dedupes against these with a tolerance so that
+    // sub-meaningful viewport jitter does NOT schedule a re-render. Set on
+    // render success; cleared in clearHeatmap(), the render-error path, and
+    // refreshHeatmap()'s no-bounds path. DELIBERATELY NOT cleared on
+    // moveStart (unlike heatmapLastKey): retaining the last-success snapshot
+    // across a moveStart/moveEnd cycle is what lets terrain/inertia jitter
+    // be measured against the committed overlay and ignored, instead of
+    // re-arming the loop. See heatmapViewMeaningfullyChanged().
+    let heatmapLastBounds = null;
+    let heatmapLastFilterHash = null;
     const HEATMAP_CANVAS_SIZE = 512;
-    const HEATMAP_LIMIT = 100000;
 
     function heatmapEnabled() {
         return document.getElementById('heatmapToggle')?.checked === true;
@@ -2950,10 +3069,63 @@ zoomWatcher = {
         return `${bbox}:${heatmapFilterHash()}`;
     }
 
+    // Normalized center + span of a viewport rectangle, antimeridian-aware
+    // (mirrors renderHeatmap's `eastNorm` shift). Used by the tolerance
+    // dedupe below.
+    function heatmapViewMetrics(b) {
+        const eastNorm = b.west > b.east ? b.east + 360 : b.east;
+        return {
+            cLat: (b.north + b.south) / 2,
+            cLng: (b.west + eastNorm) / 2,
+            spanLat: Math.max(1e-9, b.north - b.south),
+            spanLng: Math.max(1e-9, eastNorm - b.west),
+        };
+    }
+
+    // Did the view change enough to warrant a fresh heatmap render?
+    //
+    // #233 loop fix (RY 2026-05-28): the heatmap re-renders on `moveEnd`,
+    // keyed off `computeViewRectangle`. But that rectangle is sensitive to
+    // tiny camera-height changes, and with Cesium World Terrain enabled the
+    // camera height keeps settling for a beat after a move (terrain-collision
+    // adjustment as tiles stream in) — plus inertial drift after mouse-up.
+    // Each tiny settle fired `moveEnd` → re-render → the render's frame
+    // nudged terrain again → another `moveEnd`: a self-sustaining refresh
+    // loop with no user input. Exact-key equality (`toFixed(4)`, ~11 m) let
+    // that jitter through.
+    //
+    // Fix: only re-render when the view center or span moved by more than a
+    // small fraction of the current span. Real pans/zooms blow past this;
+    // terrain-settle / inertial micro-jitter stays under it and is ignored.
+    const HEATMAP_VIEW_TOLERANCE = 0.02; // 2% of span
+    // Shortest angular distance between two longitudes (degrees), result in
+    // [0, 180]. Without this, a wrapped bbox near the antimeridian (cLng≈180
+    // via the eastNorm +360 shift) compared to a settled non-wrapped bbox
+    // (cLng≈-177) would read as a ~357° "move" and wrongly pass the
+    // meaningful-change test — preserving the loop exactly at the dateline.
+    // Codex review 2026-05-28.
+    function lngDelta(a, b) {
+        let d = Math.abs(a - b) % 360;
+        return d > 180 ? 360 - d : d;
+    }
+    function heatmapViewMeaningfullyChanged(curr, prev) {
+        if (!prev) return true;
+        const a = heatmapViewMetrics(curr);
+        const b = heatmapViewMetrics(prev);
+        const tolLat = a.spanLat * HEATMAP_VIEW_TOLERANCE;
+        const tolLng = a.spanLng * HEATMAP_VIEW_TOLERANCE;
+        return Math.abs(a.cLat - b.cLat) > tolLat
+            || lngDelta(a.cLng, b.cLng) > tolLng
+            || Math.abs(a.spanLat - b.spanLat) > tolLat
+            || Math.abs(a.spanLng - b.spanLng) > tolLng;
+    }
+
     function clearHeatmap() {
         ++heatmapReqId;
         clearTimeout(heatmapDebounce);
         heatmapLastKey = null;
+        heatmapLastBounds = null;
+        heatmapLastFilterHash = null;
         setHeatmapStatus('');
         if (heatmapImageryLayer) {
             viewer.imageryLayers.remove(heatmapImageryLayer, true);
@@ -3065,6 +3237,11 @@ zoomWatcher = {
             }
             heatmapImageryLayer = nextLayer;
             heatmapLastKey = key;  // success-only — see refreshHeatmap()
+            // Snapshot the view + filter this render committed to, for the
+            // tolerance dedupe in refreshHeatmap() (#233 loop fix). Same
+            // success-only discipline as heatmapLastKey.
+            heatmapLastBounds = bounds;
+            heatmapLastFilterHash = heatmapFilterHash();
             const refreshedAt = Date.now();
             // With SQL pre-aggregation, every sample in the bbox is counted
             // into its pixel cell — no more arbitrary LIMIT cap. `capped` is
@@ -3086,9 +3263,11 @@ zoomWatcher = {
             if (myReq !== heatmapReqId) return;
             console.warn('Heatmap refresh failed:', err);
             setHeatmapStatus('Heatmap unavailable for this view.');
-            // Clear dedupe key so a retry on the same (viewport, filter)
+            // Clear dedupe state so a retry on the same (viewport, filter)
             // actually re-attempts the render. Codex round-1 review of #240.
             heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
             // Codex round-2 review of #240: also remove the prior imagery
             // layer on failure. Without this, the user sees the OLD heatmap
             // density alongside the "Heatmap unavailable" status — a UI lie
@@ -3124,6 +3303,8 @@ zoomWatcher = {
             ++heatmapReqId;
             clearTimeout(heatmapDebounce);
             heatmapLastKey = null;
+            heatmapLastBounds = null;
+            heatmapLastFilterHash = null;
             if (heatmapImageryLayer) {
                 viewer.imageryLayers.remove(heatmapImageryLayer, true);
                 heatmapImageryLayer = null;
@@ -3139,13 +3320,41 @@ zoomWatcher = {
             return;
         }
         const key = heatmapKey(bounds);
-        if (key === heatmapLastKey) return;
-        // NOTE: heatmapLastKey is set ONLY after a successful layer swap in
-        // renderHeatmap(), and cleared on error/cancellation. Setting it here
-        // would let a moveStart-cancellation between the debounce schedule
-        // and the actual render leave the dedupe key set without a render
-        // having happened — the next moveEnd then early-returns and the
-        // overlay is wedged. Codex round-1 review of PR #240.
+        // Tolerance dedupe (#233 loop fix, RY 2026-05-28). Re-render only on
+        // a filter change OR a meaningful view change. Sub-meaningful
+        // viewport jitter (terrain-collision height settling, inertial
+        // micro-drift) keeps the same filter and stays within the view
+        // tolerance, so it is ignored here instead of driving a render that
+        // would nudge terrain and sustain the loop. The previous exact-key
+        // equality (`toFixed(4)`, ~11 m) let that jitter through.
+        const filterHash = heatmapFilterHash();
+        if (filterHash === heatmapLastFilterHash
+            && !heatmapViewMeaningfullyChanged(bounds, heatmapLastBounds)) {
+            // View only jittered (terrain settle / inertia); the existing
+            // overlay is still correct. A moveStart may have flipped the
+            // status to "waiting for camera" — restore the truthful
+            // "rendered" line so it doesn't get stuck mid-loop. Gate on
+            // heatmapLastBounds (set only on a successful render) rather than
+            // a truthy count, so a valid ZERO-sample overlay also restores
+            // its status instead of sticking at "waiting" (Codex review).
+            if (heatmapLastBounds) {
+                const n = Number(viewer._heatmapOverlay?.lastPointCount || 0);
+                setHeatmapStatus(`Heatmap rendered from ${n.toLocaleString()} samples.`);
+            }
+            // Test-only signal: count tolerance skips so the regression test
+            // can PROVE the skip branch ran (a real moveEnd reached here),
+            // rather than relying on the vacuous "lastRefreshAt unchanged"
+            // assertion (Codex review 2026-05-28).
+            viewer._heatmapSkips = (viewer._heatmapSkips || 0) + 1;
+            return;
+        }
+        // NOTE: heatmapLast{Key,Bounds,FilterHash} are set ONLY after a
+        // successful layer swap in renderHeatmap(), and cleared on
+        // error/cancellation. Setting them here would let a moveStart-
+        // cancellation between the debounce schedule and the actual render
+        // leave the dedupe state set without a render having happened — the
+        // next moveEnd then early-returns and the overlay is wedged. Codex
+        // round-1 review of PR #240.
         clearTimeout(heatmapDebounce);
         const myReq = ++heatmapReqId;
         heatmapDebounce = setTimeout(() => {
@@ -3159,8 +3368,16 @@ zoomWatcher = {
         } else {
             clearHeatmap();
         }
+        // #233 phase 3: heatmap is mutually exclusive with the marker
+        // layers, so flip dot visibility and re-evaluate the facet apology
+        // note (which is meaningless once the heatmap shows filtered
+        // density directly). Both helpers read live state, so order vs the
+        // refresh/clear above does not matter.
+        applyLayerVisibility();
+        syncFacetNote();
     });
     viewer._heatmapOverlay = { enabled: false, layer: null, lastRefreshAt: 0, lastPointCount: 0, lastKey: null };
+    viewer._heatmapSkips = 0;  // tolerance-dedupe skip counter (test signal)
 
     // --- Busy-flag depth counter (#173 review round 2) ---
     //
@@ -3291,6 +3508,52 @@ zoomWatcher = {
             busyRelease();
         }
     }
+
+    // A1 (#234 Step 4): push the just-built (or just-cleared) search pid-set
+    // through every dynamic surface. Mirrors handleFacetFilterChange, plus
+    // the C3 globe-mode rule:
+    //   - search active → FORCE point mode. Clusters are pre-aggregated H3
+    //     summaries that cannot be text-filtered, so showing them while the
+    //     table/legend ARE filtered is the incoherent half-state we must
+    //     avoid. Point mode renders the actual filtered samples (capped at
+    //     POINT_BUDGET with an honest "showing N — zoom in" note for very
+    //     broad terms — that cap is the density-fallback, in lieu of
+    //     reverting to dishonest clusters).
+    //   - search cleared → restore the mode the current altitude implies.
+    // The camera-changed handler keeps point mode latched while a search is
+    // active (its targetMode is overridden below), so panning/zooming during
+    // a search won't bounce back to clusters.
+    async function applySearchFilterChange() {
+        window.a1dbg?.('apply-search-change', { active: searchIsActive(), mode: getMode() });
+        busyAcquire();
+        try {
+            syncFacetNote();
+            refreshHeatmap();
+            if (searchIsActive()) {
+                if (getMode() !== 'point') {
+                    await enterPointMode(false);   // forces point; awaits filtered viewport load
+                } else {
+                    await loadViewportSamples();
+                }
+            } else {
+                // Search cleared: revert to the altitude-appropriate mode.
+                const h = viewer.camera.positionCartographic.height;
+                if (getMode() === 'point' && h >= EXIT_POINT_ALT) {
+                    exitPointMode(false);
+                    const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                    if (target !== currentRes) {
+                        await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    }
+                } else if (getMode() === 'point') {
+                    await loadViewportSamples();  // still point altitude — reload now-unfiltered points
+                }
+            }
+            refreshFacetCounts();
+            if (typeof window !== 'undefined') window.refreshSamplesTable?.();
+        } finally {
+            busyRelease();
+        }
+    }
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
@@ -3314,18 +3577,29 @@ zoomWatcher = {
                 history.replaceState(null, '', buildHash(viewer));
             }
 
-            // Determine target mode with hysteresis
-            const targetMode = h < ENTER_POINT_ALT ? 'point'
+            // Determine target mode with hysteresis.
+            // A1 (#234 Step 4) / C3: while a search is active, latch point
+            // mode regardless of altitude — clusters can't be text-filtered,
+            // so we keep showing the filtered sample dots even when zoomed out.
+            const targetMode = searchIsActive() ? 'point'
+                             : h < ENTER_POINT_ALT ? 'point'
                              : h > EXIT_POINT_ALT ? 'cluster'
                              : getMode();
 
             if (targetMode === 'point' && getMode() !== 'point') {
-                // Cold-cache deep-link: the res8 + samples_map_lite fetches
-                // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
-                // HTTP read; see issue #190). Delegate to the shared helper
-                // so the source-filter handler can call the same path on
-                // supersession recovery.
-                await tryEnterPointModeIfNeeded();
+                if (searchIsActive()) {
+                    // Search forces point mode even above ENTER_POINT_ALT,
+                    // where tryEnterPointModeIfNeeded() would refuse; enter
+                    // directly so the filtered dots render at any zoom.
+                    await enterPointMode(false);
+                } else {
+                    // Cold-cache deep-link: the res8 + samples_map_lite fetches
+                    // can take 60-90s (DuckDB-WASM 1.24.0 falls back to a full
+                    // HTTP read; see issue #190). Delegate to the shared helper
+                    // so the source-filter handler can call the same path on
+                    // supersession recovery.
+                    await tryEnterPointModeIfNeeded();
+                }
             } else if (targetMode === 'cluster' && getMode() !== 'cluster') {
                 exitPointMode();
                 // Reload appropriate resolution
@@ -3452,7 +3726,12 @@ zoomWatcher = {
         refreshHeatmap();
         if (getMode() !== 'point') return;
         const h = viewer.camera.positionCartographic.height;
-        if (h > EXIT_POINT_ALT) {
+        // A1 (#234 Step 4) / C3: while a search is active, point mode is
+        // LATCHED (clusters can't be text-filtered), so a high-altitude
+        // moveEnd must NOT exit to clusters — otherwise the post-search
+        // flyTo (200 km, above EXIT_POINT_ALT) would immediately undo the
+        // forced point mode and the globe would show unfiltered clusters.
+        if (h > EXIT_POINT_ALT && !searchIsActive()) {
             // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't
             // fire `camera.changed`, so without driving the exit here we'd
             // be stuck in point mode above `EXIT_POINT_ALT` until a larger
@@ -3586,11 +3865,14 @@ zoomWatcher = {
         // (issue #207 item 4 → Codex follow-up): without this, back/forward
         // through a `#alt=8000` URL with no `mode=point` would exit point
         // mode here even though boot would have entered it.
-        viewer._suppressTimer = setTimeout(() => {
+        viewer._suppressTimer = setTimeout(async () => {
             viewer._suppressHashWrite = false;
             const s = readHash();
-            const wantsPoint = s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
-            if (wantsPoint && getMode() !== 'point') enterPointMode(false);
+            // A1 (#234 Step 4): an active search forces point mode regardless
+            // of the restored altitude, so the back/forward globe state stays
+            // coherent with the (still-filtered) table/legend.
+            const wantsPoint = searchIsActive() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            if (wantsPoint && getMode() !== 'point') await enterPointMode(false);
             else if (!wantsPoint && getMode() === 'point') exitPointMode(false);
         }, 2000);
 
@@ -3695,6 +3977,121 @@ zoomWatcher = {
         }
     }
 
+    // === A1: search-as-global-filter pid-set (#234 Step 4) ===
+    //
+    // Strategy B: materialize the set of pids matching the committed search
+    // term ONCE (one ILIKE scan over facets_url), then let every count
+    // surface (table, points, facet legend, stats) constrain itself with a
+    // cheap `pid IN (SELECT pid FROM search_pids)` semi-join — instead of
+    // re-running the expensive ILIKE per surface per camera move.
+    //
+    // `search_pids` is a NON-TEMP table: Observable's DuckDBClient opens a
+    // fresh connection per db.query(), so a connection-local TEMP table would
+    // not survive to the next query(); a regular table in the shared
+    // in-memory database persists across those connections (verified by the
+    // a1PersistenceProbe cell during development).
+    //
+    // Build into `search_pids_next` then atomically swap, so a surface
+    // refresh can never read a half-built set. `_searchFilterToken` versions
+    // each build so a superseded one (newer search fired mid-build) discards
+    // its swap. State is published on `window.__searchFilter` so the
+    // separate `tableView` OJS cell (and others) can read it; the SQL
+    // predicate is exposed as `window.searchFilterSQL(pidCol)`.
+    let _searchFilterToken = 0;
+    if (typeof window !== 'undefined') {
+        // Preserve existing state across an OJS hot re-run of this cell, but
+        // ALWAYS (re)install the helper so it can't go missing while
+        // __searchFilter persists (Codex review).
+        if (!window.__searchFilter) {
+            window.__searchFilter = { active: false, term: null, token: 0, total: 0 };
+        }
+        // Surfaces append this to their WHERE. Empty string when no search is
+        // committed, so non-search queries are byte-for-byte unchanged.
+        window.searchFilterSQL = (pidCol = 'pid') =>
+            (window.__searchFilter && window.__searchFilter.active)
+                ? ` AND ${pidCol} IN (SELECT pid FROM search_pids)`
+                : '';
+
+        // DEV: deterministic A1 observability, gated behind ?debug=a1 so
+        // production users get a clean global namespace and zero overhead.
+        // The Playwright harness (a1-verify.mjs) loads with ?debug=a1 to opt
+        // in. Every a1dbg?.() call site uses optional chaining, so they are
+        // no-ops when this block doesn't run. a1dbg() appends to
+        // window.__a1log and stamps window.__a1state[event] so a test can
+        // POLL state (and read an optional on-page panel) rather than chase
+        // console; __a1globe() exposes just what a coherence assertion needs.
+        if (new URLSearchParams(location.search).get('debug') === 'a1') {
+            if (!window.a1dbg) {
+                window.__a1log = [];
+                window.__a1state = {};
+                let _a1panel = null;
+                if (document.body) {
+                    _a1panel = document.createElement('div');
+                    _a1panel.id = 'a1DebugPanel';
+                    _a1panel.style.cssText = 'position:fixed;bottom:0;right:0;width:520px;max-height:42vh;overflow:auto;background:#111;color:#3f3;font:11px/1.35 monospace;z-index:99999;padding:4px;opacity:.92';
+                    document.body.appendChild(_a1panel);
+                }
+                window.a1dbg = (event, data = {}) => {
+                    const row = { t: Math.round(performance.now()), event, ...data };
+                    window.__a1log.push(row);
+                    window.__a1state[event] = row;
+                    if (_a1panel) {
+                        const line = document.createElement('div');
+                        line.textContent = `[A1] +${row.t}ms ${event} ${JSON.stringify(data)}`;
+                        _a1panel.appendChild(line);
+                        _a1panel.scrollTop = _a1panel.scrollHeight;
+                    }
+                };
+            }
+            // Globe-state accessor for the Playwright harness — exposes just
+            // what a coherence assertion needs, not the whole Cesium viewer.
+            // Lazily reads `viewer` (in this cell's scope).
+            window.__a1globe = () => {
+                try {
+                    return {
+                        mode: viewer._globeState.mode,
+                        samplePointsLen: viewer.samplePoints.length,
+                        samplePointsShown: viewer.samplePoints.show,
+                        h3PointsShown: viewer.h3Points.show,
+                    };
+                } catch (e) { return { error: String(e) }; }
+            };
+        }
+    }
+
+    async function buildSearchFilter(terms, term) {
+        const token = ++_searchFilterToken;
+        window.a1dbg?.('search-build-start', { term, token });
+        const searchWhere = textSearchWhere(terms, [
+            'label',
+            'description',
+            'CAST(place_name AS VARCHAR)',
+        ]);
+        // DISTINCT + NOT NULL: pid is unique in facets_url today, but DISTINCT
+        // is cheap insurance against a future facet-shaped projection.
+        await db.query(`
+            CREATE OR REPLACE TABLE search_pids_next AS
+            SELECT DISTINCT pid
+            FROM read_parquet('${facets_url}')
+            WHERE pid IS NOT NULL AND ${searchWhere}
+        `);
+        if (token !== _searchFilterToken) return false;   // superseded mid-build
+        await db.query(`CREATE OR REPLACE TABLE search_pids AS SELECT pid FROM search_pids_next`);
+        if (token !== _searchFilterToken) return false;
+        const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
+        const total = cnt.length ? Number(cnt[0].n) : 0;
+        if (token !== _searchFilterToken) return false;
+        window.__searchFilter = { active: true, term, token, total };
+        window.a1dbg?.('search-build-end', { term, token, total });
+        return true;
+    }
+
+    async function clearSearchFilter() {
+        _searchFilterToken++;
+        window.__searchFilter = { active: false, term: null, token: _searchFilterToken, total: 0 };
+        try { await db.query(`DROP TABLE IF EXISTS search_pids`); } catch (e) { /* best effort */ }
+    }
+
     async function doSearch(scope) {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
@@ -3713,12 +4110,28 @@ zoomWatcher = {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
+            // A1 (#234 Step 4): an empty / too-short submit means no committed
+            // search — drop the pid-set filter and refresh every surface
+            // (table, points, facet counts) plus revert the globe mode so the
+            // page returns to its unfiltered state.
+            await clearSearchFilter();
+            await applySearchFilterChange();
             writeQueryState();
             persistSearchScope(effectiveScope);
             return;
         }
         writeQueryState();
         persistSearchScope(effectiveScope);
+        // A1 (#234 Step 4): the pid-set filter is built below (after `terms`
+        // is parsed) and the dependent surfaces are refreshed against it; the
+        // table/legend/points then reflect this search, not just the viewport.
+        // Shared, prominent + sticky search-results heading, reused by the
+        // success / zero-result / error paths so the side panel ALWAYS
+        // reflects the committed search the table meta points at ("…shown in
+        // the panel →"). z-index keeps it above scrolled rows. term is the
+        // user's own input, rendered as-is to match the prior heading.
+        const searchHeadingHTML = (suffix) =>
+            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #e3f2fd; color: #1565c0; border-radius: 4px;">Search results: "${term}"${suffix}</h4>`;
         searchResults.textContent = effectiveScope === 'area'
             ? 'Searching selected areas...'
             : 'Searching entire world...';
@@ -3732,6 +4145,33 @@ zoomWatcher = {
         performance.mark(markStart);
         const tStart = performance.now();
         const terms = searchTerms(term);
+
+        // A1 (#234 Step 4): materialize the search pid-set ONCE, then refresh
+        // the table (and, in later increments, points / facet counts / stats)
+        // so every count surface constrains to this search via a cheap
+        // semi-join. One ILIKE scan here warms the text columns in the DuckDB
+        // buffer, so the LIMIT-50 side-panel query below reads them warm.
+        // (Follow-up: derive the side-panel list from search_pids to drop the
+        // second scan entirely.) Failure leaves surfaces unfiltered, not broken.
+        const buildingMsg = effectiveScope === 'area'
+            ? 'Building search filter for selected areas…'
+            : 'Building search filter…';
+        searchResults.textContent = buildingMsg;
+        try {
+            await buildSearchFilter(terms, term);
+        } catch (e) {
+            console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
+            await clearSearchFilter();
+        }
+        // Superseded by a newer search while building? Bail before mutating UI.
+        // Otherwise push the freshly-built filter through every surface: table,
+        // points, facet counts, and the globe mode (C3 — switch to filtered
+        // point dots, since clusters can't be text-filtered).
+        window.a1dbg?.('post-build', { searchId, searchSeq: _searchSeq, active: window.__searchFilter?.active, total: window.__searchFilter?.total });
+        if (searchId === _searchSeq) {
+            await applySearchFilterChange();
+        }
+
         // Snapshot the filter-state telemetry booleans here, BEFORE the
         // try block, so they remain in scope through `finally`. They
         // reflect the DOM state at search-fire time — independent of
@@ -3888,6 +4328,13 @@ zoomWatcher = {
             resultsCount = results.length;
             if (results.length === 0) {
                 searchResults.textContent = `No results for "${term}"`;
+                // Honesty fix (#247): the table meta points "→ panel", so the
+                // panel must reflect THIS (empty) search rather than whatever
+                // it showed before. Without this, a zero-result search left
+                // stale prior content under a pointer claiming otherwise.
+                const sampEl0 = document.getElementById('samplesSection');
+                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(' (0)')
+                    + '<div class="empty-state" style="padding: 8px;">No samples matched this search.</div>';
                 return;
             }
 
@@ -3906,7 +4353,9 @@ zoomWatcher = {
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) {
-                let h = `<h4>Search: "${term}" (${results.length})</h4>`;
+                // Prominent + sticky heading via the shared helper (see its
+                // definition above). No page/camera scroll — heading only.
+                let h = searchHeadingHTML(` (${results.length})`);
                 for (const s of results) {
                     const color = SOURCE_COLORS[s.source] || '#666';
                     const name = SOURCE_NAMES[s.source] || s.source;
@@ -4084,6 +4533,12 @@ zoomWatcher = {
                 console.error("Search failed:", err);
                 searchResults.textContent = `Search error: ${err.message}`;
                 errorMessage = err.message || String(err);
+                // Honesty fix (#247): keep the side panel consistent with the
+                // table meta's "→ panel" pointer on failure too, instead of
+                // leaving stale results under a pointer that now lies.
+                const sampElErr = document.getElementById('samplesSection');
+                if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
+                    + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
             }
         } finally {
             performance.mark(markEnd);
