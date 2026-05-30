@@ -680,7 +680,17 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //| output: false
 
 // === Constants ===
-R2_BASE = "https://data.isamples.org"
+// DEV: override the data origin to a fast local parquet mirror so the
+// verify loop doesn't pay 40-90s of remote range-fetch per cold load.
+//   ?data_base=/data            (same-origin mirror under docs/data, served
+//                                by a RANGE-capable server — stock python
+//                                http.server returns 200 not 206, breaking
+//                                DuckDB-WASM partial reads; use dev_server.py)
+//   localStorage ISAMPLES_DATA_BASE  (sticky per-browser override)
+// Defaults to the production R2 origin, so shipped builds are unchanged.
+R2_BASE = new URLSearchParams(location.search).get('data_base')
+    || (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_DATA_BASE'))
+    || "https://data.isamples.org"
 h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
@@ -2566,6 +2576,7 @@ zoomWatcher = {
             // Stale guard: discard if a newer point load OR a newer search
             // generation superseded this one (A1 #234 Step 4).
             if (isStaleLoad()) {
+                window.a1dbg?.('point-load-discard', { myReqId, requestId, mySearchToken, curToken: window.__searchFilter?.token });
                 console.log(`Discarding stale sample response (req ${myReqId}, current ${requestId})`);
                 return;
             }
@@ -2612,6 +2623,7 @@ zoomWatcher = {
                 ? `${totalCount.toLocaleString()} samples in view (showing ${samples.length.toLocaleString()} — zoom in for more). Click one for details.`
                 : `${samples.length.toLocaleString()} individual samples. Click one for details.`;
             updatePhaseMsg(phaseMsg, 'done');
+            window.a1dbg?.('point-load-render', { rendered: samples.length, totalCount, searchActive: searchIsActive(), searchFiltered: !!searchFilterSQL('pid') });
             console.log(`Point mode: rendered ${samples.length} of ${totalCount} samples in ${elapsed.toFixed(0)}ms${capReached ? ' (cap reached)' : ''}`);
 
         } catch(err) {
@@ -2684,6 +2696,7 @@ zoomWatcher = {
         // #facetNote is only meaningful in cluster mode (#234 step 1).
         syncFacetNote();
         console.log('Entered point mode');
+        window.a1dbg?.('mode-change', { to: 'point', searchActive: searchIsActive() });
         await loadViewportSamples();
     }
 
@@ -2714,7 +2727,8 @@ zoomWatcher = {
             updateStats(`H3 Res${currentRes}`, viewer.h3Points.length, '—', '—', 'Clusters Loaded', 'Samples Loaded');
         }
         updatePhaseMsg(`${inView.clusters.toLocaleString()} clusters in view. Zoom closer for individual samples.`, 'done');
-        console.log('[A1dbg] Exited point mode (searchActive=' + searchIsActive() + ')', new Error().stack?.split('\n').slice(1,4).join(' | '));
+        window.a1dbg?.('mode-change', { to: 'cluster', searchActive: searchIsActive(), via: new Error().stack?.split('\n')[2]?.trim() });
+        console.log('Exited point mode');
     }
 
     // --- Boot→point-mode transition (issue #190 fix 2) ---
@@ -3532,7 +3546,7 @@ zoomWatcher = {
     // active (its targetMode is overridden below), so panning/zooming during
     // a search won't bounce back to clusters.
     async function applySearchFilterChange() {
-        console.log('[A1dbg] applySearchFilterChange entry: active=', searchIsActive(), 'mode=', getMode());
+        window.a1dbg?.('apply-search-change', { active: searchIsActive(), mode: getMode() });
         busyAcquire();
         try {
             syncFacetNote();
@@ -4019,10 +4033,51 @@ zoomWatcher = {
             (window.__searchFilter && window.__searchFilter.active)
                 ? ` AND ${pidCol} IN (SELECT pid FROM search_pids)`
                 : '';
+
+        // DEV: deterministic A1 observability. console capture races the
+        // automation harness; instead a1dbg() appends to window.__a1log and
+        // stamps window.__a1state[event] so a test can POLL state (and read
+        // an optional on-page panel via ?debug=a1) rather than chase console.
+        if (!window.a1dbg) {
+            window.__a1log = [];
+            window.__a1state = {};
+            let _a1panel = null;
+            if (new URLSearchParams(location.search).get('debug') === 'a1' && document.body) {
+                _a1panel = document.createElement('div');
+                _a1panel.id = 'a1DebugPanel';
+                _a1panel.style.cssText = 'position:fixed;bottom:0;right:0;width:520px;max-height:42vh;overflow:auto;background:#111;color:#3f3;font:11px/1.35 monospace;z-index:99999;padding:4px;opacity:.92';
+                document.body.appendChild(_a1panel);
+            }
+            window.a1dbg = (event, data = {}) => {
+                const row = { t: Math.round(performance.now()), event, ...data };
+                window.__a1log.push(row);
+                window.__a1state[event] = row;
+                if (_a1panel) {
+                    const line = document.createElement('div');
+                    line.textContent = `[A1] +${row.t}ms ${event} ${JSON.stringify(data)}`;
+                    _a1panel.appendChild(line);
+                    _a1panel.scrollTop = _a1panel.scrollHeight;
+                }
+            };
+        }
+        // Globe-state accessor for the Playwright harness — exposes just what
+        // a coherence assertion needs, not the whole Cesium viewer. Lazily
+        // reads `viewer` (in this cell's scope) so it's safe to define here.
+        window.__a1globe = () => {
+            try {
+                return {
+                    mode: viewer._globeState.mode,
+                    samplePointsLen: viewer.samplePoints.length,
+                    samplePointsShown: viewer.samplePoints.show,
+                    h3PointsShown: viewer.h3Points.show,
+                };
+            } catch (e) { return { error: String(e) }; }
+        };
     }
 
     async function buildSearchFilter(terms, term) {
         const token = ++_searchFilterToken;
+        window.a1dbg?.('search-build-start', { term, token });
         const searchWhere = textSearchWhere(terms, [
             'label',
             'description',
@@ -4043,6 +4098,7 @@ zoomWatcher = {
         const total = cnt.length ? Number(cnt[0].n) : 0;
         if (token !== _searchFilterToken) return false;
         window.__searchFilter = { active: true, term, token, total };
+        window.a1dbg?.('search-build-end', { term, token, total });
         return true;
     }
 
@@ -4127,7 +4183,7 @@ zoomWatcher = {
         // Otherwise push the freshly-built filter through every surface: table,
         // points, facet counts, and the globe mode (C3 — switch to filtered
         // point dots, since clusters can't be text-filtered).
-        console.log('[A1dbg] post-build: searchId=', searchId, '_searchSeq=', _searchSeq, 'active=', window.__searchFilter?.active);
+        window.a1dbg?.('post-build', { searchId, searchSeq: _searchSeq, active: window.__searchFilter?.active, total: window.__searchFilter?.total });
         if (searchId === _searchSeq) {
             await applySearchFilterChange();
         }
