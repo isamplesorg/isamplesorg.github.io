@@ -4141,12 +4141,20 @@ zoomWatcher = {
     async function clearSearchFilter() {
         _searchFilterToken++;
         window.__searchFilter = { active: false, term: null, token: _searchFilterToken, total: 0 };
-        // Don't DROP search_pids here: a surface query built while the search
-        // was active may still be in flight and reference it, and dropping
-        // under that reader throws. Flipping active=false makes every NEW query
-        // omit the semi-join (searchFilterSQL returns ''), so the stale table is
-        // simply unreferenced until the next search's CREATE OR REPLACE
-        // replaces it. (Codex review 2026-05-30.)
+        // Replace search_pids with an EMPTY same-shape table rather than
+        // DROPping it. Two readers touch this table without gating on
+        // __searchFilter.active: an in-flight semi-join surface query, and
+        // doSearch's side-panel SELECT that reads `FROM search_pids` directly.
+        // DROP would make those throw on a missing table; simply leaving the old
+        // table would let the side panel render the PREVIOUS search's rows under
+        // a new/cleared term (Codex review 2026-05-30). An empty table makes
+        // both readers safely see zero rows; the next search's
+        // CREATE OR REPLACE ... AS SELECT swaps in the real rows.
+        try {
+            await db.query(`CREATE OR REPLACE TABLE search_pids (
+                pid VARCHAR, label VARCHAR, source VARCHAR, place_name VARCHAR, relevance_score DOUBLE
+            )`);
+        } catch (e) { /* best effort */ }
     }
 
     async function doSearch(scope) {
