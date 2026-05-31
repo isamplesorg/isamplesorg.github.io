@@ -4222,10 +4222,16 @@ zoomWatcher = {
             ? 'Building search filter for selected areas…'
             : 'Building search filter…';
         searchResults.textContent = buildingMsg;
+        // Distinguishes a genuine build failure (DuckDB error) from a real
+        // empty result set: clearSearchFilter() leaves search_pids EMPTY, so the
+        // side-panel SELECT below returns 0 rows either way; this flag lets the
+        // empty-results branch say "Search error" rather than "No results".
+        let searchFilterBuildFailed = false;
         try {
             await buildSearchFilter(terms, term);
         } catch (e) {
             console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
+            searchFilterBuildFailed = true;
             await clearSearchFilter();
         }
         // Superseded by a newer search while building? Bail before mutating UI.
@@ -4382,14 +4388,18 @@ zoomWatcher = {
             }
             resultsCount = results.length;
             if (results.length === 0) {
-                searchResults.textContent = `No results for "${term}"`;
+                // A build failure also empties search_pids → 0 rows here, so
+                // distinguish a genuine error from a true empty result set.
+                searchResults.textContent = searchFilterBuildFailed
+                    ? `Search error: couldn't build the filter for "${term}". Please try again.`
+                    : `No results for "${term}"`;
                 // Honesty fix (#247): the table meta points "→ panel", so the
                 // panel must reflect THIS (empty) search rather than whatever
                 // it showed before. Without this, a zero-result search left
                 // stale prior content under a pointer claiming otherwise.
                 const sampEl0 = document.getElementById('samplesSection');
-                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(' (0)')
-                    + '<div class="empty-state" style="padding: 8px;">No samples matched this search.</div>';
+                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(searchFilterBuildFailed ? '' : ' (0)')
+                    + `<div class="empty-state" style="padding: 8px;">${searchFilterBuildFailed ? 'Search failed to build — please try again.' : 'No samples matched this search.'}</div>`;
                 return;
             }
 
