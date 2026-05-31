@@ -3060,6 +3060,12 @@ zoomWatcher = {
             material: getCheckedValues('materialFilterBody').slice().sort(),
             context: getCheckedValues('contextFilterBody').slice().sort(),
             object_type: getCheckedValues('objectTypeFilterBody').slice().sort(),
+            // A1: include the committed search so the heatmap recomputes (and
+            // re-keys) when a search is committed or cleared — otherwise the
+            // "filtered density" overlay stays unfiltered under search while
+            // every other surface filters (Codex review 2026-05-30, #234).
+            search: (typeof window !== 'undefined' && window.__searchFilter && window.__searchFilter.active)
+                ? window.__searchFilter.token : null,
         });
     }
 
@@ -3202,6 +3208,7 @@ zoomWatcher = {
                 WHERE ${heatmapBboxPredicate(bounds, 'latitude', 'longitude')}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
+                  ${(typeof window !== 'undefined' && window.searchFilterSQL) ? window.searchFilterSQL('pid') : ''}
                 GROUP BY x, y
             `);
             if (myReq !== heatmapReqId || !heatmapEnabled()) return;
@@ -4102,28 +4109,52 @@ zoomWatcher = {
         // would be both slower and weaker — it dedupes identical full rows,
         // not pids — so we rely on the established uniqueness instead. This
         // keeps COUNT(*) == match count and the side-panel free of dup rows.)
-        await db.query(`
-            CREATE OR REPLACE TABLE search_pids_next AS
-            SELECT pid, label, source, place_name, (${score}) AS relevance_score
-            FROM read_parquet('${facets_url}')
-            WHERE pid IS NOT NULL AND ${searchWhere}
-        `);
-        if (token !== _searchFilterToken) return false;   // superseded mid-build
-        await db.query(`CREATE OR REPLACE TABLE search_pids AS
-            SELECT pid, label, source, place_name, relevance_score FROM search_pids_next`);
-        if (token !== _searchFilterToken) return false;
-        const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
-        const total = cnt.length ? Number(cnt[0].n) : 0;
-        if (token !== _searchFilterToken) return false;
-        window.__searchFilter = { active: true, term, token, total };
-        window.a1dbg?.('search-build-end', { term, token, total });
-        return true;
+        // Token-scoped staging table: a fixed `search_pids_next` name lets two
+        // overlapping searches clobber each other's staging rows, so a later
+        // search could swap the EARLIER search's pids into `search_pids` under
+        // its own term — the token checks guard the publish, not the shared
+        // staging object. Naming the staging table per-token isolates
+        // concurrent builds; it's dropped in `finally`. (Codex review 2026-05-30.)
+        const staging = `search_pids_next_${token}`;
+        try {
+            await db.query(`
+                CREATE OR REPLACE TABLE ${staging} AS
+                SELECT pid, label, source, place_name, (${score}) AS relevance_score
+                FROM read_parquet('${facets_url}')
+                WHERE pid IS NOT NULL AND ${searchWhere}
+            `);
+            if (token !== _searchFilterToken) return false;   // superseded mid-build
+            await db.query(`CREATE OR REPLACE TABLE search_pids AS
+                SELECT pid, label, source, place_name, relevance_score FROM ${staging}`);
+            if (token !== _searchFilterToken) return false;
+            const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
+            const total = cnt.length ? Number(cnt[0].n) : 0;
+            if (token !== _searchFilterToken) return false;
+            window.__searchFilter = { active: true, term, token, total };
+            window.a1dbg?.('search-build-end', { term, token, total });
+            return true;
+        } finally {
+            try { await db.query(`DROP TABLE IF EXISTS ${staging}`); } catch (e) { /* best effort */ }
+        }
     }
 
     async function clearSearchFilter() {
         _searchFilterToken++;
         window.__searchFilter = { active: false, term: null, token: _searchFilterToken, total: 0 };
-        try { await db.query(`DROP TABLE IF EXISTS search_pids`); } catch (e) { /* best effort */ }
+        // Replace search_pids with an EMPTY same-shape table rather than
+        // DROPping it. Two readers touch this table without gating on
+        // __searchFilter.active: an in-flight semi-join surface query, and
+        // doSearch's side-panel SELECT that reads `FROM search_pids` directly.
+        // DROP would make those throw on a missing table; simply leaving the old
+        // table would let the side panel render the PREVIOUS search's rows under
+        // a new/cleared term (Codex review 2026-05-30). An empty table makes
+        // both readers safely see zero rows; the next search's
+        // CREATE OR REPLACE ... AS SELECT swaps in the real rows.
+        try {
+            await db.query(`CREATE OR REPLACE TABLE search_pids (
+                pid VARCHAR, label VARCHAR, source VARCHAR, place_name VARCHAR, relevance_score DOUBLE
+            )`);
+        } catch (e) { /* best effort */ }
     }
 
     async function doSearch(scope) {
@@ -4191,10 +4222,16 @@ zoomWatcher = {
             ? 'Building search filter for selected areas…'
             : 'Building search filter…';
         searchResults.textContent = buildingMsg;
+        // Distinguishes a genuine build failure (DuckDB error) from a real
+        // empty result set: clearSearchFilter() leaves search_pids EMPTY, so the
+        // side-panel SELECT below returns 0 rows either way; this flag lets the
+        // empty-results branch say "Search error" rather than "No results".
+        let searchFilterBuildFailed = false;
         try {
             await buildSearchFilter(terms, term);
         } catch (e) {
             console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
+            searchFilterBuildFailed = true;
             await clearSearchFilter();
         }
         // Superseded by a newer search while building? Bail before mutating UI.
@@ -4351,14 +4388,18 @@ zoomWatcher = {
             }
             resultsCount = results.length;
             if (results.length === 0) {
-                searchResults.textContent = `No results for "${term}"`;
+                // A build failure also empties search_pids → 0 rows here, so
+                // distinguish a genuine error from a true empty result set.
+                searchResults.textContent = searchFilterBuildFailed
+                    ? `Search error: couldn't build the filter for "${term}". Please try again.`
+                    : `No results for "${term}"`;
                 // Honesty fix (#247): the table meta points "→ panel", so the
                 // panel must reflect THIS (empty) search rather than whatever
                 // it showed before. Without this, a zero-result search left
                 // stale prior content under a pointer claiming otherwise.
                 const sampEl0 = document.getElementById('samplesSection');
-                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(' (0)')
-                    + '<div class="empty-state" style="padding: 8px;">No samples matched this search.</div>';
+                if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(searchFilterBuildFailed ? '' : ' (0)')
+                    + `<div class="empty-state" style="padding: 8px;">${searchFilterBuildFailed ? 'Search failed to build — please try again.' : 'No samples matched this search.'}</div>`;
                 return;
             }
 
