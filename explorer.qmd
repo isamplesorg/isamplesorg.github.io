@@ -231,6 +231,8 @@ format:
         grid-template-columns: 1fr 1fr;
         gap: 6px;
     }
+    .stats-disclosure { border-top: 0; padding-top: 0; margin-top: 0; }
+    .stats-body { padding: 4px 0 0; }
     .stat-box {
         background: #1a1a2e;
         color: white;
@@ -600,11 +602,18 @@ Circle size = log(sample count). Color = dominant data source.
 <div class="sidebar-search-hint">Enter searches the entire world. Use the in-map controls for area-limited search.</div>
 </div>
 <div class="panel-section">
+<div class="filter-section stats-disclosure">
+<div class="filter-header" role="button" tabindex="0" aria-expanded="false" aria-controls="statsPanelBody" onclick="const body = this.nextElementSibling; const open = body.style.display === 'none'; body.style.display = open ? 'block' : 'none'; this.setAttribute('aria-expanded', open ? 'true' : 'false'); this.querySelector('span').textContent = open ? '▾' : '▸';" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">
+Stats <span>▸</span>
+</div>
+<div class="filter-body stats-body" style="display: none;" id="statsPanelBody">
 <div class="stats-compact">
 <div class="stat-box"><span id="sPhase" class="val">Loading...</span><span class="lbl">Resolution</span></div>
 <div class="stat-box"><span id="sPoints" class="val">0</span><span id="sPointsLbl" class="lbl">Clusters Loaded</span></div>
 <div class="stat-box"><span id="sSamples" class="val">0</span><span id="sSamplesLbl" class="lbl">Samples Loaded</span></div>
 <div class="stat-box"><span id="sTime" class="val">-</span><span class="lbl">Load Time</span></div>
+</div>
+</div>
 </div>
 <div style="margin-top: 8px;">
 <div class="legend" id="sourceFilter">
