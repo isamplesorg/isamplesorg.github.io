@@ -68,6 +68,18 @@ format:
         min-height: 0;
         aspect-ratio: auto;
     }
+    /* Busy indicator over the map while a filter/search/facet update is in
+       flight. `progress` (arrow + spinner), NOT `wait` (hourglass): the map
+       stays fully interactive — we're signaling "updating", not "frozen". The
+       body.explorer-busy class is toggled by the depth-counted busyAcquire/
+       busyRelease around the facet-change, source-change, and search/concept
+       commit paths. Cesium sets its own cursor on the canvas during camera
+       interaction, so override with !important. (Pan/zoom viewport reloads run
+       in separate cells that don't touch this class yet — see follow-up.) */
+    body.explorer-busy #cesiumContainer,
+    body.explorer-busy #cesiumContainer canvas {
+        cursor: progress !important;
+    }
     /* Slim top-right search overlay (Hana Figma node 222:456). The earlier
        multi-row treatment (M-1A, PR #200) ate ~480px × ~100px on the left
        side of the map; this collapses to one row at the right. The
@@ -3446,13 +3458,36 @@ zoomWatcher = {
     // whole point of the flag. Depth-counted: class is added on the
     // 0 → 1 transition and removed on the 1 → 0 transition.
     let _busyDepth = 0;
+    // Failsafe so the `progress` cursor (CSS on body.explorer-busy) can NEVER
+    // stick. Every busyRelease is already in a `finally`, so a throw can't
+    // strand the flag — but a HUNG promise (a load that never settles/rejects)
+    // would never reach that finally. This watchdog force-clears the busy
+    // state after a window far longer than any real update, incl. cold-cache
+    // loads (which the code notes can take 60–90s). It's re-armed on each
+    // acquire, so it only ever fires on a genuine leak — and the cursor is
+    // purely cosmetic, so an early clear is harmless (the map never freezes).
+    let _busyWatchdog = null;
+    const BUSY_WATCHDOG_MS = 120000;
+    function _clearBusyWatchdog() {
+        if (_busyWatchdog) { clearTimeout(_busyWatchdog); _busyWatchdog = null; }
+    }
     function busyAcquire() {
         if (_busyDepth === 0) document.body.classList.add('explorer-busy');
         _busyDepth++;
+        _clearBusyWatchdog();
+        _busyWatchdog = setTimeout(() => {
+            _busyDepth = 0;
+            document.body.classList.remove('explorer-busy');
+            _busyWatchdog = null;
+            console.warn('explorer-busy watchdog fired — force-cleared a stuck busy cursor.');
+        }, BUSY_WATCHDOG_MS);
     }
     function busyRelease() {
         _busyDepth = Math.max(0, _busyDepth - 1);
-        if (_busyDepth === 0) document.body.classList.remove('explorer-busy');
+        if (_busyDepth === 0) {
+            document.body.classList.remove('explorer-busy');
+            _clearBusyWatchdog();
+        }
     }
 
     // --- Source filter change handler ---
