@@ -831,8 +831,27 @@ function writeQueryState() {
     const params = new URLSearchParams(location.search);
     const searchInput = document.getElementById('sampleSearch');
     const q = searchInput ? searchInput.value.trim() : '';
-    if (q) params.set('search', q);
-    else params.delete('search');
+    // #248 Flavor A: `search=` (free text) and `described-by=` (concept URI)
+    // both produce the singleton search_pids and are mutually exclusive.
+    // Key the choice off the TEXT INPUT, not window.__searchFilter — doSearch
+    // calls writeQueryState() EARLY (before buildSearchFilter flips
+    // __searchFilter.kind to 'text'), so __searchFilter is stale at that call
+    // site. The input value is always current: a non-empty box means a text
+    // search is being committed → `search=` wins, drop `described-by=`.
+    // doDescribedBy CLEARS the box before it calls writeQueryState, so there
+    // the box is empty and we fall through to the concept branch.
+    const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+    const conceptActive = !!(sf && sf.active && sf.kind === 'concept' && sf.uri);
+    if (q) {
+        params.set('search', q);
+        params.delete('described-by');
+    } else if (conceptActive) {
+        params.set('described-by', sf.uri);
+        params.delete('search');
+    } else {
+        params.delete('search');
+        params.delete('described-by');
+    }
 
     const activeSources = getActiveSources();
     if (activeSources.length === SOURCE_VALUES.length) params.delete('sources');
@@ -4741,6 +4760,187 @@ zoomWatcher = {
         }
     }
 
+    // #248 Flavor A: commit a concept-URI filter. This is the SECOND entry
+    // point into the shared `search_pids` machinery — `buildConceptFilter`
+    // is the producer, `applySearchFilterChange` pushes the result to every
+    // surface (table / points / facet counts / globe mode), exactly as a text
+    // search does. It deliberately does NOT reuse doSearch's body: doSearch
+    // carries A1's text-search stale-guard + COUNT logic shipped in #251, and
+    // we keep that hot path untouched (RY decision, 2026-06-01). It renders its
+    // own, simpler side panel instead. Mutually exclusive with the free-text
+    // search: committing a concept clears the text box and the `search=` param.
+    async function doDescribedBy(uri) {
+        if (!uri) return;
+        // Share doSearch's freshness counter so a text search and a concept
+        // filter can't clobber each other's side-panel render mid-flight.
+        const searchId = ++_searchSeq;
+
+        // Mutual exclusivity: a committed concept filter OWNS search_pids, so
+        // clear the free-text box (and its sidebar mirror) before building.
+        if (searchInput) searchInput.value = '';
+        const sidebarInput = document.getElementById('sampleSearchSidebar');
+        if (sidebarInput) sidebarInput.value = '';
+
+        if (searchResults) searchResults.textContent = 'Filtering by concept…';
+
+        // Build the pid-set. buildConceptFilter mirrors buildSearchFilter's
+        // token-scoped staging + finally-drop guards and publishes the result
+        // (label, total, kind:'concept', uri) on window.__searchFilter. A build
+        // failure empties search_pids via clearSearchFilter (same as doSearch),
+        // so downstream readers see zero rows rather than a missing table.
+        let buildFailed = false;
+        try {
+            await buildConceptFilter(uri);
+        } catch (e) {
+            console.warn('#248 concept-filter build failed; surfaces stay unfiltered:', e);
+            buildFailed = true;
+            await clearSearchFilter();
+        }
+        // Superseded by a newer search/concept while building? Bail before
+        // mutating any surface. Otherwise push the filter through everything.
+        window.a1dbg?.('concept-post-build', { searchId, searchSeq: _searchSeq, active: window.__searchFilter?.active, total: window.__searchFilter?.total });
+        if (searchId === _searchSeq) {
+            await applySearchFilterChange();
+        }
+        // Persist `described-by=` (and drop `search=`) now that __searchFilter
+        // reflects the concept — writeQueryState reads window.__searchFilter.
+        writeQueryState();
+
+        // Anything past here only paints the side panel / camera; if a newer
+        // action superseded us during applySearchFilterChange, stop.
+        if (searchId !== _searchSeq) return;
+
+        const sf = window.__searchFilter;
+        const label = (sf && sf.term) ? sf.term
+            : (typeof window !== 'undefined' && window.conceptLabelForUri) ? window.conceptLabelForUri(uri) : uri;
+        const total = (sf && sf.active && sf.kind === 'concept') ? sf.total : 0;
+
+        // Sticky heading mirrors doSearch's, recolored (purple) to distinguish a
+        // concept filter from a text search. Label is vocab-resolved, not a URL.
+        const headingHTML = (suffix) =>
+            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #ede7f6; color: #5e35b1; border-radius: 4px;">Samples described by: ${label}${suffix}</h4>`;
+
+        if (buildFailed) {
+            if (searchResults) searchResults.textContent = `Concept filter failed for "${label}". Please try again.`;
+            const sElF = document.getElementById('samplesSection');
+            if (sElF) sElF.innerHTML = headingHTML('')
+                + '<div class="empty-state" style="padding: 8px;">Filter failed to build — please try again.</div>';
+            return;
+        }
+        if (total === 0) {
+            if (searchResults) searchResults.textContent = `No samples described by "${label}"`;
+            const sEl0 = document.getElementById('samplesSection');
+            if (sEl0) sEl0.innerHTML = headingHTML(' (0)')
+                + '<div class="empty-state" style="padding: 8px;">No samples matched this concept.</div>';
+            return;
+        }
+
+        // Side-panel list: read the LIMIT-50 head straight off search_pids
+        // (already built + ranked by buildConceptFilter: object_type > material
+        // > context, then label), LEFT JOIN lite for coords so coord-less
+        // samples still list (null lat/lng; the click handler guards on null).
+        let results;
+        try {
+            results = await db.query(`
+                SELECT s.pid, s.label, s.source, l.latitude, l.longitude,
+                       s.place_name, s.relevance_score
+                FROM search_pids s
+                LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                ORDER BY s.relevance_score DESC, s.label
+                LIMIT 50
+            `);
+        } catch (err) {
+            if (searchId !== _searchSeq) return;
+            console.error('#248 concept side-panel query failed:', err);
+            if (searchResults) searchResults.textContent = `Concept filter error: ${err.message}`;
+            return;
+        }
+        if (searchId !== _searchSeq) return;
+
+        const shown = results.length;
+        const ofTotal = total > shown ? `${shown} of ${total.toLocaleString()}` : `${shown}`;
+        if (searchResults) searchResults.textContent = total > shown
+            ? `${shown} of ${total.toLocaleString()} samples described by "${label}"`
+            : `${shown} sample${shown === 1 ? '' : 's'} described by "${label}"`;
+
+        const sampEl = document.getElementById('samplesSection');
+        if (sampEl) {
+            let h = headingHTML(` (${ofTotal})`);
+            for (const s of results) {
+                const color = SOURCE_COLORS[s.source] || '#666';
+                const name = SOURCE_NAMES[s.source] || s.source;
+                const sUrl = sourceUrl(s.pid);
+                h += `<div class="sample-row" style="cursor: pointer;" data-lat="${s.latitude}" data-lng="${s.longitude}" data-pid="${s.pid}">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
+                        <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
+                    </div>
+                </div>`;
+            }
+            sampEl.innerHTML = h;
+
+            // Click a concept-result row → same full selection ceremony as a
+            // text-search row (freshness bump, card hydration, flight, lazy
+            // detail) so a slow prior load can't repaint over the navigation.
+            const resultsByPid = new Map(results.map(s => [s.pid, s]));
+            sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
+                row.addEventListener('click', async (e) => {
+                    if (e.target.tagName === 'A') return; // let links work
+                    const pid = row.dataset.pid;
+                    const sample = pid ? resultsByPid.get(pid) : null;
+                    if (!sample || sample.latitude == null || sample.longitude == null) return;
+
+                    const isStale = freshSelectionToken(viewer);
+                    viewer._globeState.selectedPid = pid;
+                    viewer._globeState.selectedH3 = null;
+                    updateSampleCard({
+                        pid: sample.pid,
+                        label: sample.label,
+                        source: sample.source,
+                        lat: sample.latitude,
+                        lng: sample.longitude,
+                        place_name: sample.place_name,
+                        result_time: sample.result_time
+                    });
+                    viewer.camera.flyTo({
+                        destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
+                        duration: 1.5
+                    });
+                    try {
+                        const detail = await db.query(`
+                            SELECT description
+                            FROM read_parquet('${wide_url}')
+                            WHERE pid = '${pid.replace(/'/g, "''")}'
+                            LIMIT 1
+                        `);
+                        if (isStale()) return;
+                        if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+                        else updateSampleDetail({ description: '' });
+                    } catch(err) {
+                        if (isStale()) return;
+                        console.error("Concept-row detail query failed:", err);
+                        updateSampleDetail(null);
+                    }
+                });
+            });
+        }
+
+        // Fly to the first LOCATED result (a nudge, not a selection — clear any
+        // prior pid/h3 so the URL doesn't carry stale selection across flight).
+        // Mirrors doSearch's world-scope auto-flight.
+        const firstLocated = results.find(r => r.latitude != null && r.longitude != null);
+        if (firstLocated) {
+            viewer._globeState.selectedPid = null;
+            viewer._globeState.selectedH3 = null;
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(firstLocated.longitude, firstLocated.latitude, 200000),
+                duration: 1.5
+            });
+        }
+    }
+    // Expose for the boot trigger + debug console (mirrors window.conceptLabelForUri).
+    if (typeof window !== 'undefined') window.doDescribedBy = doDescribedBy;
+
     if (searchAreaBtn) searchAreaBtn.addEventListener('click', () => doSearch('area'));
     if (searchWorldBtn) searchWorldBtn.addEventListener('click', () => doSearch('world'));
     // Slim-overlay submit button — same behavior as Enter on `#sampleSearch`.
@@ -4784,7 +4984,13 @@ zoomWatcher = {
         }
     });
 
-    if (searchInput && searchInput.value.trim().length >= 2) {
+    // #248 Flavor A boot: a `described-by=<concept-uri>` deep link commits the
+    // concept filter. It WINS over `search=` if a hand-crafted URL carries both
+    // (they're mutually exclusive; doDescribedBy clears the text box + param).
+    const _describedByUri = new URLSearchParams(location.search).get('described-by');
+    if (_describedByUri) {
+        doDescribedBy(_describedByUri);
+    } else if (searchInput && searchInput.value.trim().length >= 2) {
         doSearch(_searchScope);
     }
 
