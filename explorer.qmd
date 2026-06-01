@@ -4059,6 +4059,37 @@ zoomWatcher = {
         new URLSearchParams(location.search).get('search_scope') === 'area'
     ) ? 'area' : 'world';
 
+    function refreshFacetCountsAfterSearchFlight(searchId) {
+        // A world-scope committed search auto-flies to the first result. That
+        // camera flight emits its own moveStart/moveEnd count refreshes, which
+        // can supersede the search refresh kicked off by applySearchFilterChange.
+        // Register this one-shot after the shared moveEnd listener exists; when
+        // the flight settles, this runs after the normal moveEnd refresh and
+        // becomes the final search-aware facet-count request for the committed
+        // search.
+        let remove = null;
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            if (remove) remove();
+            setTimeout(() => {
+                if (searchId !== _searchSeq || !searchIsActive()) return;
+                window.a1dbg?.('search-flyto-final-facet-refresh', {
+                    searchId,
+                    token: window.__searchFilter?.token,
+                });
+                refreshFacetCounts();
+            }, 0);
+        };
+        remove = viewer.camera.moveEnd.addEventListener(finish);
+        return () => {
+            if (done) return;
+            done = true;
+            if (remove) remove();
+        };
+    }
+
     function persistSearchScope(scope) {
         // writeQueryState() doesn't know about scope; keep the URL param
         // honest by manipulating directly. 'world' is default, omitted from
@@ -4617,11 +4648,13 @@ zoomWatcher = {
             // (issue #207 item 8). User clicks on a specific row to
             // establish a new selection.
             if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+                const cancelFinalFacetRefresh = refreshFacetCountsAfterSearchFlight(searchId);
                 viewer._globeState.selectedPid = null;
                 viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
-                    duration: 1.5
+                    duration: 1.5,
+                    cancel: cancelFinalFacetRefresh,
                 });
             }
 
