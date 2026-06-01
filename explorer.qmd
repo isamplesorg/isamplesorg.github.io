@@ -68,16 +68,19 @@ format:
         min-height: 0;
         aspect-ratio: auto;
     }
-    /* Busy indicator over the map while a filter/search/facet update is in
-       flight. `progress` (arrow + spinner), NOT `wait` (hourglass): the map
-       stays fully interactive — we're signaling "updating", not "frozen". The
+    /* Busy indicator while a filter/search/facet update is in flight.
+       `progress` (arrow + spinner), NOT `wait` (hourglass): nothing freezes —
+       we're signaling "updating", not "blocked". PAGE-WIDE on purpose: a CSS
+       cursor only shows where the pointer actually is, and these updates are
+       triggered with the pointer OFF the map (in the search box / sidebar
+       checkboxes), so a map-only rule was invisible in practice. The `*` with
+       !important overrides per-element cursors (text inputs, the Cesium canvas,
+       buttons) so the signal shows wherever the pointer rests. The
        body.explorer-busy class is toggled by the depth-counted busyAcquire/
        busyRelease around the facet-change, source-change, and search/concept
-       commit paths. Cesium sets its own cursor on the canvas during camera
-       interaction, so override with !important. (Pan/zoom viewport reloads run
-       in separate cells that don't touch this class yet — see follow-up.) */
-    body.explorer-busy #cesiumContainer,
-    body.explorer-busy #cesiumContainer canvas {
+       commit paths (with a 120s watchdog failsafe so it can never stick).
+       Pan/zoom viewport reloads don't set the class yet — deferred follow-up. */
+    body.explorer-busy, body.explorer-busy * {
         cursor: progress !important;
     }
     /* Slim top-right search overlay (Hana Figma node 222:456). The earlier
