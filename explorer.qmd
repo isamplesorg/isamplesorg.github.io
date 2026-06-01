@@ -219,6 +219,45 @@ format:
         max-height: var(--explorer-map-height);
         overflow-y: auto;
     }
+    .filter-chip-host {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+    .filter-chip-host[hidden] { display: none; }
+    .described-by-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        background: #ede7f6;
+        border: 1px solid #d1c4e9;
+        border-radius: 6px;
+        color: #5e35b1;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 10px;
+    }
+    .described-by-chip-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .described-by-chip-clear {
+        flex: 0 0 auto;
+        background: transparent;
+        border: 0;
+        border-radius: 4px;
+        color: inherit;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+    .described-by-chip-clear:hover,
+    .described-by-chip-clear:focus {
+        background: rgba(94, 53, 177, 0.12);
+        outline: none;
+    }
     .panel-section {
         background: #f8f9fa;
         border-radius: 6px;
@@ -595,6 +634,7 @@ Circle size = log(sample count). Color = dominant data source.
 <div id="inMapCard" class="in-map-card" hidden role="dialog" aria-label="Sample details"></div>
 </div>
 <div class="side-panel">
+<div id="activeSearchChipHost" class="filter-chip-host" hidden></div>
 <div class="panel-section sidebar-search">
 <input type="text" id="sampleSearchSidebar" placeholder="Search samples (press Enter to search globally)" aria-label="Search samples globally" />
 <div class="sidebar-search-hint">Enter searches the entire world. Use the in-map controls for area-limited search.</div>
@@ -3585,6 +3625,7 @@ zoomWatcher = {
         window.a1dbg?.('apply-search-change', { active: searchIsActive(), mode: getMode() });
         busyAcquire();
         try {
+            syncSearchPanelState();
             syncFacetNote();
             refreshHeatmap();
             if (searchIsActive()) {
@@ -4231,6 +4272,47 @@ zoomWatcher = {
                 pid VARCHAR, label VARCHAR, source VARCHAR, place_name VARCHAR, relevance_score DOUBLE
             )`);
         } catch (e) { /* best effort */ }
+    }
+
+    async function clearActiveSearchFilter() {
+        // Same clear path as an empty search submit, without entering doSearch().
+        _searchSeq++;
+        if (searchInput) searchInput.value = '';
+        const sidebarInput = document.getElementById('sampleSearchSidebar');
+        if (sidebarInput) sidebarInput.value = '';
+        if (searchResults) searchResults.textContent = '';
+        await clearSearchFilter();
+        await applySearchFilterChange();
+        writeQueryState({ commitText: '' });
+    }
+
+    function renderDescribedByChip() {
+        const host = document.getElementById('activeSearchChipHost');
+        if (!host) return;
+
+        const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+        const conceptActive = !!(sf && sf.active && sf.kind === 'concept');
+        if (!conceptActive) {
+            host.hidden = true;
+            host.innerHTML = '';
+            return;
+        }
+
+        const label = sf.term || sf.uri || '';
+        host.hidden = false;
+        host.innerHTML = `<div class="described-by-chip" data-filter-kind="concept">
+            <span class="described-by-chip-label">Described by: ${escapeHtml(label)}</span>
+            <button type="button" class="described-by-chip-clear" data-clear-search-filter aria-label="Clear described-by filter" title="Clear described-by filter">✕</button>
+        </div>`;
+
+        const clearBtn = host.querySelector('[data-clear-search-filter]');
+        if (clearBtn) clearBtn.addEventListener('click', clearActiveSearchFilter);
+    }
+
+    function syncSearchPanelState() {
+        renderDescribedByChip();
+        const clusterEl = document.getElementById('clusterSection');
+        if (clusterEl) clusterEl.hidden = searchIsActive();
     }
 
     async function doSearch(scope) {
