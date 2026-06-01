@@ -92,6 +92,33 @@ console.log(conceptOk
   ? '\n✅ #248 CONCEPT COHERENT: globe + panel + URL all reflect the concept filter.'
   : '\n❌ #248 INCOHERENT: see fields above.');
 
+// Codex finding #1 regression: with an active concept filter, DRAFT (un-
+// submitted) text in the box + a passive writeQueryState (fired by a source/
+// facet toggle) must NOT clobber `described-by=` with a phantom `search=`.
+await page.fill('#sampleSearch', 'draftNotSubmitted');   // type, do NOT press Enter
+const firstSource = page.locator('#sourceFilter input[type="checkbox"]').first();
+await firstSource.uncheck();                              // fires the passive source-change writeQueryState
+await page.waitForFunction(() => !document.body.classList.contains('explorer-busy'),
+  null, { timeout: 60_000 }).catch(() => {});
+const draftState = await page.evaluate(() => ({
+  kind: window.__searchFilter?.kind,
+  urlSearch: location.search,
+}));
+console.log('\n=== DRAFT-TEXT + SOURCE TOGGLE (Codex #1) ===');
+console.log(JSON.stringify(draftState, null, 2));
+const draftOk =
+  draftState.kind === 'concept' &&
+  /described-by=/.test(draftState.urlSearch) &&
+  !/[?&]search=/.test(draftState.urlSearch);
+console.log(draftOk
+  ? '\n✅ DRAFT-TEXT SAFE: described-by= survived draft text + source toggle.'
+  : '\n❌ DRAFT-TEXT BUG: described-by= was clobbered by un-submitted text.');
+// Restore clean state for the next check.
+await firstSource.check();
+await page.fill('#sampleSearch', '');
+await page.waitForFunction(() => !document.body.classList.contains('explorer-busy'),
+  null, { timeout: 60_000 }).catch(() => {});
+
 // Mutual exclusivity: now commit a free-text search; described-by= must drop
 // out of the URL and the filter kind must flip to 'text'.
 await page.fill('#sampleSearch', 'pottery');
@@ -119,7 +146,7 @@ console.log(mutexOk
   ? '\n✅ MUTUAL EXCLUSIVITY: text search took over; described-by= cleared from URL.'
   : '\n❌ MUTUAL EXCLUSIVITY FAILED: see fields above.');
 
-const ok = conceptOk && mutexOk;
+const ok = conceptOk && draftOk && mutexOk;
 console.log(ok ? '\n✅✅ #248 FLAVOR A VERIFIED.' : '\n❌ #248 verify FAILED.');
 
 if (process.env.A1_CLOSE) await browser.close();

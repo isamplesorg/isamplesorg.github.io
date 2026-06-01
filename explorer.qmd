@@ -827,30 +827,42 @@ function applyQueryToFacetFilters() {
 }
 
 
-function writeQueryState() {
+function writeQueryState(opts = {}) {
     const params = new URLSearchParams(location.search);
     const searchInput = document.getElementById('sampleSearch');
     const q = searchInput ? searchInput.value.trim() : '';
     // #248 Flavor A: `search=` (free text) and `described-by=` (concept URI)
     // both produce the singleton search_pids and are mutually exclusive.
-    // Key the choice off the TEXT INPUT, not window.__searchFilter — doSearch
-    // calls writeQueryState() EARLY (before buildSearchFilter flips
-    // __searchFilter.kind to 'text'), so __searchFilter is stale at that call
-    // site. The input value is always current: a non-empty box means a text
-    // search is being committed → `search=` wins, drop `described-by=`.
-    // doDescribedBy CLEARS the box before it calls writeQueryState, so there
-    // the box is empty and we fall through to the concept branch.
+    //
+    // doSearch passes `opts.commitText` to AUTHORITATIVELY persist (a term) or
+    // clear ('') a text search: it calls writeQueryState EARLY, before
+    // buildSearchFilter flips __searchFilter.kind to 'text', so it can't read
+    // filter state — its committed term is the source of truth.
+    //
+    // Every OTHER caller (facet-change + source-change handlers, doDescribedBy)
+    // omits commitText, so the URL mirrors the COMMITTED filter in
+    // window.__searchFilter, NOT the raw text box. This is Codex finding #1:
+    // with an active concept filter, draft (un-submitted) text in the box plus
+    // a facet/source toggle must NOT clobber `described-by=` with a phantom
+    // `search=`. Keying passive writes off __searchFilter (concept) vs. the box
+    // (text) keeps the URL honest about what's actually filtering.
     const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
     const conceptActive = !!(sf && sf.active && sf.kind === 'concept' && sf.uri);
-    if (q) {
-        params.set('search', q);
+    if (opts.commitText !== undefined) {
+        if (opts.commitText) params.set('search', opts.commitText);
+        else params.delete('search');
         params.delete('described-by');
     } else if (conceptActive) {
         params.set('described-by', sf.uri);
         params.delete('search');
     } else {
-        params.delete('search');
+        // No concept filter and no explicit text commit: preserve the prior
+        // (pre-#248) behavior — reflect the text box. A committed text search
+        // keeps its term across facet/source toggles (the box still holds it);
+        // an inactive/empty state clears `search=`.
         params.delete('described-by');
+        if (q) params.set('search', q);
+        else params.delete('search');
     }
 
     const activeSources = getActiveSources();
@@ -4245,11 +4257,11 @@ zoomWatcher = {
             // page returns to its unfiltered state.
             await clearSearchFilter();
             await applySearchFilterChange();
-            writeQueryState();
+            writeQueryState({ commitText: '' });   // authoritative clear (#248)
             persistSearchScope(effectiveScope);
             return;
         }
-        writeQueryState();
+        writeQueryState({ commitText: term });     // authoritative text commit (#248)
         persistSearchScope(effectiveScope);
         // A1 (#234 Step 4): the pid-set filter is built below (after `terms`
         // is parsed) and the dependent surfaces are refreshed against it; the
@@ -4796,19 +4808,19 @@ zoomWatcher = {
             buildFailed = true;
             await clearSearchFilter();
         }
-        // Superseded by a newer search/concept while building? Bail before
-        // mutating any surface. Otherwise push the filter through everything.
         window.a1dbg?.('concept-post-build', { searchId, searchSeq: _searchSeq, active: window.__searchFilter?.active, total: window.__searchFilter?.total });
-        if (searchId === _searchSeq) {
-            await applySearchFilterChange();
-        }
-        // Persist `described-by=` (and drop `search=`) now that __searchFilter
-        // reflects the concept — writeQueryState reads window.__searchFilter.
-        writeQueryState();
-
-        // Anything past here only paints the side panel / camera; if a newer
-        // action superseded us during applySearchFilterChange, stop.
+        // Superseded during build? Bail before touching ANY shared state. The
+        // winning producer owns the surfaces AND the URL (Codex finding #2: a
+        // stale producer must not run writeQueryState off another's filter).
         if (searchId !== _searchSeq) return;
+        await applySearchFilterChange();
+        // Re-check after the async surface refresh, BEFORE writeQueryState: if a
+        // newer search/concept superseded us mid-refresh, it — not this stale
+        // producer — must be the one that writes the URL.
+        if (searchId !== _searchSeq) return;
+        // Persist `described-by=` (drops `search=`) now that __searchFilter
+        // reflects this concept and we're confirmed the current producer.
+        writeQueryState();
 
         const sf = window.__searchFilter;
         const label = (sf && sf.term) ? sf.term
@@ -4816,9 +4828,14 @@ zoomWatcher = {
         const total = (sf && sf.active && sf.kind === 'concept') ? sf.total : 0;
 
         // Sticky heading mirrors doSearch's, recolored (purple) to distinguish a
-        // concept filter from a text search. Label is vocab-resolved, not a URL.
+        // concept filter from a text search. `label` is usually a vocab pref
+        // label, but for an unknown URI it falls back to the URI tail — i.e. it
+        // can be attacker-controlled via the `described-by=` URL param. Escape
+        // it before innerHTML to close the reflected-XSS path (Codex finding #3).
+        // `suffix` is internal (counts) and safe.
+        const safeLabel = escapeHtml(label);
         const headingHTML = (suffix) =>
-            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #ede7f6; color: #5e35b1; border-radius: 4px;">Samples described by: ${label}${suffix}</h4>`;
+            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #ede7f6; color: #5e35b1; border-radius: 4px;">Samples described by: ${safeLabel}${suffix}</h4>`;
 
         if (buildFailed) {
             if (searchResults) searchResults.textContent = `Concept filter failed for "${label}". Please try again.`;
@@ -4867,12 +4884,18 @@ zoomWatcher = {
         if (sampEl) {
             let h = headingHTML(` (${ofTotal})`);
             for (const s of results) {
-                const color = SOURCE_COLORS[s.source] || '#666';
-                const name = SOURCE_NAMES[s.source] || s.source;
+                // Escape every interpolated value (Codex finding #3): label/pid
+                // come from the parquet, color/name from controlled maps, sUrl
+                // into an href attribute — escapeHtml handles both text and
+                // attribute contexts (it escapes quotes). lat/lng are numeric.
+                const color = escapeHtml(SOURCE_COLORS[s.source] || '#666');
+                const name = escapeHtml(SOURCE_NAMES[s.source] || s.source);
                 const sUrl = sourceUrl(s.pid);
-                h += `<div class="sample-row" style="cursor: pointer;" data-lat="${s.latitude}" data-lng="${s.longitude}" data-pid="${s.pid}">
+                const labelText = escapeHtml(s.label || s.pid);
+                const pidAttr = escapeHtml(s.pid || '');
+                h += `<div class="sample-row" style="cursor: pointer;" data-lat="${s.latitude}" data-lng="${s.longitude}" data-pid="${pidAttr}">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
+                        ${sUrl ? `<a class="sample-label" href="${escapeHtml(sUrl)}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${labelText}</a>` : `<span class="sample-label">${labelText}</span>`}
                         <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
                     </div>
                 </div>`;
