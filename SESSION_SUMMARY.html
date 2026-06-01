@@ -23,41 +23,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -255,19 +220,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#session_summary-explorer-search-as-global-filter-a1-234-step-4" id="toc-session_summary-explorer-search-as-global-filter-a1-234-step-4" class="nav-link active" data-scroll-target="#session_summary-explorer-search-as-global-filter-a1-234-step-4"><span class="header-section-number">1</span> SESSION_SUMMARY — explorer search-as-global-filter (A1, #234 Step 4)</a>
+  <li><a href="#session-summary" id="toc-session-summary" class="nav-link active" data-scroll-target="#session-summary"><span class="header-section-number">1</span> Session Summary</a>
   <ul>
-  <li><a href="#external-content-processed-sanitization-note-verify-dont-blind-trust" id="toc-external-content-processed-sanitization-note-verify-dont-blind-trust" class="nav-link" data-scroll-target="#external-content-processed-sanitization-note-verify-dont-blind-trust"><span class="header-section-number">1.0.1</span> External Content Processed (sanitization note — verify, don’t blind-trust)</a></li>
-  <li><a href="#open-collaborator-threads-new-this-session-not-yet-acted-on" id="toc-open-collaborator-threads-new-this-session-not-yet-acted-on" class="nav-link" data-scroll-target="#open-collaborator-threads-new-this-session-not-yet-acted-on"><span class="header-section-number">1.0.2</span> Open collaborator threads (new this session, NOT yet acted on)</a></li>
-  <li><a href="#tldr" id="toc-tldr" class="nav-link" data-scroll-target="#tldr"><span class="header-section-number">1.1</span> TL;DR</a></li>
-  <li><a href="#branch-commits" id="toc-branch-commits" class="nav-link" data-scroll-target="#branch-commits"><span class="header-section-number">1.2</span> Branch &amp; commits</a></li>
-  <li><a href="#the-a1-design-strategy-b-agreed-codex-approved" id="toc-the-a1-design-strategy-b-agreed-codex-approved" class="nav-link" data-scroll-target="#the-a1-design-strategy-b-agreed-codex-approved"><span class="header-section-number">1.3</span> The A1 design (Strategy B — agreed + Codex-approved)</a></li>
-  <li><a href="#the-logjam-start-here-tomorrow" id="toc-the-logjam-start-here-tomorrow" class="nav-link" data-scroll-target="#the-logjam-start-here-tomorrow"><span class="header-section-number">1.4</span> THE LOGJAM (start here tomorrow)</a></li>
-  <li><a href="#performance-model-why-the-ui-hides-the-40s-and-what-a1-does-to-it" id="toc-performance-model-why-the-ui-hides-the-40s-and-what-a1-does-to-it" class="nav-link" data-scroll-target="#performance-model-why-the-ui-hides-the-40s-and-what-a1-does-to-it"><span class="header-section-number">1.5</span> PERFORMANCE MODEL — why the UI hides the 40s, and what A1 does to it</a></li>
-  <li><a href="#fast-verify-loop-built-today-use-it-tomorrow" id="toc-fast-verify-loop-built-today-use-it-tomorrow" class="nav-link" data-scroll-target="#fast-verify-loop-built-today-use-it-tomorrow"><span class="header-section-number">1.6</span> FAST VERIFY LOOP (built today — use it tomorrow)</a></li>
-  <li><a href="#collaboration-plan-for-tomorrow-agreed" id="toc-collaboration-plan-for-tomorrow-agreed" class="nav-link" data-scroll-target="#collaboration-plan-for-tomorrow-agreed"><span class="header-section-number">1.7</span> Collaboration plan for tomorrow (agreed)</a></li>
-  <li><a href="#cleanup-before-the-a1-pr-is-opened-dont-ship-these" id="toc-cleanup-before-the-a1-pr-is-opened-dont-ship-these" class="nav-link" data-scroll-target="#cleanup-before-the-a1-pr-is-opened-dont-ship-these"><span class="header-section-number">1.8</span> Cleanup before the A1 PR is opened (don’t ship these)</a></li>
-  <li><a href="#key-references" id="toc-key-references" class="nav-link" data-scroll-target="#key-references"><span class="header-section-number">1.9</span> Key references</a></li>
+  <li><a href="#session-2026-05-3031-evening" id="toc-session-2026-05-3031-evening" class="nav-link" data-scroll-target="#session-2026-05-3031-evening"><span class="header-section-number">1.1</span> Session: 2026-05-30/31 (evening)</a></li>
+  <li><a href="#what-happened" id="toc-what-happened" class="nav-link" data-scroll-target="#what-happened"><span class="header-section-number">1.2</span> What Happened</a></li>
+  <li><a href="#safe-to-carry-forward" id="toc-safe-to-carry-forward" class="nav-link" data-scroll-target="#safe-to-carry-forward"><span class="header-section-number">1.3</span> Safe to Carry Forward</a>
+  <ul class="collapse">
+  <li><a href="#key-decisions" id="toc-key-decisions" class="nav-link" data-scroll-target="#key-decisions"><span class="header-section-number">1.3.1</span> Key Decisions</a></li>
+  <li><a href="#branch-ship-state" id="toc-branch-ship-state" class="nav-link" data-scroll-target="#branch-ship-state"><span class="header-section-number">1.3.2</span> Branch / ship state</a></li>
+  <li><a href="#files-changed-this-session-across-a1-248" id="toc-files-changed-this-session-across-a1-248" class="nav-link" data-scroll-target="#files-changed-this-session-across-a1-248"><span class="header-section-number">1.3.3</span> Files Changed (this session, across A1 + #248)</a></li>
+  <li><a href="#patternslearnings" id="toc-patternslearnings" class="nav-link" data-scroll-target="#patternslearnings"><span class="header-section-number">1.3.4</span> Patterns/Learnings</a></li>
+  </ul></li>
+  <li><a href="#external-content-processed" id="toc-external-content-processed" class="nav-link" data-scroll-target="#external-content-processed"><span class="header-section-number">1.4</span> External Content Processed</a></li>
+  <li><a href="#open-threads" id="toc-open-threads" class="nav-link" data-scroll-target="#open-threads"><span class="header-section-number">1.5</span> Open Threads</a></li>
+  <li><a href="#next-session-entry-point" id="toc-next-session-entry-point" class="nav-link" data-scroll-target="#next-session-entry-point"><span class="header-section-number">1.6</span> Next Session Entry Point</a></li>
+  <li><a href="#session-history" id="toc-session-history" class="nav-link" data-scroll-target="#session-history"><span class="header-section-number">1.7</span> Session History</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/SESSION_SUMMARY.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -278,14 +245,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="session_summary-explorer-search-as-global-filter-a1-234-step-4" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> SESSION_SUMMARY — explorer search-as-global-filter (A1, #234 Step 4)</h1>
-<p><strong>Date:</strong> 2026-05-29 · <strong>Directory:</strong> <code>~/C/src/iSamples/isamplesorg.github.io</code> · <strong>Trust Level:</strong> <code>external-content</code> <strong>Next session goal:</strong> break the A1-globe logjam with <strong>higher effort + Codex co-authoring</strong> (Codex codes the reconciler, Claude reviews + runs the now-fast verify loop).</p>
-<blockquote class="blockquote">
-<p><strong>Next session entry point:</strong> run the shakedown (see FAST VERIFY LOOP → “Shakedown TODO”); then have Codex author the one-reconciler refactor (THE LOGJAM → Codex’s reconciler spec) and verify with <code>tests/playwright/a1-verify.mjs</code>.</p>
-</blockquote>
-<section id="external-content-processed-sanitization-note-verify-dont-blind-trust" class="level3" data-number="1.0.1">
-<h3 data-number="1.0.1" data-anchor-id="external-content-processed-sanitization-note-verify-dont-blind-trust"><span class="header-section-number">1.0.1</span> External Content Processed (sanitization note — verify, don’t blind-trust)</h3>
+<section id="session-summary" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Session Summary</h1>
+<section id="session-2026-05-3031-evening" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="session-2026-05-3031-evening"><span class="header-section-number">1.1</span> Session: 2026-05-30/31 (evening)</h2>
+<p><strong>Directory</strong>: <code>~/C/src/iSamples/isamplesorg.github.io</code> <strong>Trust Level</strong>: external-content</p>
+<hr>
+</section>
+<section id="what-happened" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="what-happened"><span class="header-section-number">1.2</span> What Happened</h2>
+<p>A long, productive session. Started as “tackle the fast-verify shakedown”; ended with <strong>A1 shipped to production (isamples.org)</strong> and <strong>#248 underway</strong>.</p>
+<ol type="1">
+<li><strong>Shakedown root-caused &amp; fixed.</strong> The dev <code>?data_base=/data</code> override produced root-relative parquet URLs that DuckDB-WASM’s httpfs can’t fetch (read as a virtual-FS glob → zero fetches). Resolved to absolute against <code>location.origin</code>. This unblocked the fast verify loop (~2.3s to live).</li>
+<li><strong>The “globe logjam” was never real</strong> — it was a <strong>backgrounded-Chrome-MCP-tab artifact</strong> (Chrome freezes rAF in hidden tabs → Cesium camera never settles → “globe won’t enter point mode”). In any foreground/headless context the C3 fixes work. The reconciler refactor was unnecessary. <strong>Lesson: drive the verify loop with <code>HEADLESS=1</code> Playwright, never the MCP tab.</strong></li>
+<li><strong>Fixed an A1 search perf regression</strong> the CI smoke gate caught (double facets scan → materialize side-panel columns+score into <code>search_pids</code>, one scan).</li>
+<li><strong>Fixed the live facet-padding mismatch</strong> RY hit (legend pad-0 vs table 0.3 → facet read low; e.g.&nbsp;material=rock ~166 vs ~481). Now facet == table.</li>
+<li><strong>Shipped A1</strong>: opened <strong>PR #251</strong>, ran a 3-round <strong>Codex review/revise loop to dual approval</strong> (Codex caught a real <code>search_pids</code> staging-table race, heatmap search-blindness, and a stale-reader follow-on — all fixed), then <strong>squash-merged to upstream → deployed to isamples.org</strong> (smoke gate green).</li>
+<li><strong>Started #248 (Eric Kansa’s concept-URI search)</strong>: posted a connecting comment, Codex plan-reviewed (“mostly sound + guardrails”), and committed the <strong>foundation</strong> on <code>feat/described-by-concept</code>.</li>
+<li><strong>Investigated a transient camera freeze</strong> (RY’s <code>h3=</code>+<code>heading=</code> deep-link, also on isamples.org). Ruled out locked controller / tracked-entity / refresh-loop via a new <code>?debug=a1</code> <code>__a1camera</code> hook; <strong>resolved on its own → likely transient WebGL context-loss / network</strong>. Surfaced a real <strong>testing gap</strong>: no gate asserts post-hydration <em>interactivity</em>.</li>
+</ol>
+<hr>
+</section>
+<section id="safe-to-carry-forward" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="safe-to-carry-forward"><span class="header-section-number">1.3</span> Safe to Carry Forward</h2>
+<section id="key-decisions" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="key-decisions"><span class="header-section-number">1.3.1</span> Key Decisions</h3>
+<ul>
+<li>A1 ships on plain ILIKE; <strong>BM25 (#168–172) is a perceived-perf follow-up, not a correctness blocker.</strong></li>
+<li><code>search_pids</code> is a <strong>singleton</strong>; any new producer (#248) shares one <code>_searchFilterToken</code>/<code>_searchSeq</code> and the <code>kind: 'text'|'concept'</code> tag.</li>
+<li>Codex-reviewed A1 invariants to preserve: <strong>token-scoped staging table</strong>, <strong>empty-table clear</strong> (never DROP the live table), <strong>build-failure distinguished from empty results</strong>.</li>
+<li><code>?debug=a1</code>-gated hooks: <code>__a1globe</code>, <code>__a1log</code>/<code>__a1state</code>, and (new, uncommitted/diagnostic) <code>__a1camera</code>.</li>
+</ul>
+</section>
+<section id="branch-ship-state" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="branch-ship-state"><span class="header-section-number">1.3.2</span> Branch / ship state</h3>
+<ul>
+<li><strong>A1</strong>: merged to upstream <code>main</code> as <strong><code>e6f9def</code></strong> (PR #251), live on isamples.org + rdhyee. Local <code>feat/search-global-filter-a1</code> is now redundant (squash-merged).</li>
+<li><strong>#248</strong>: branch <strong><code>feat/described-by-concept</code></strong> off merged main; foundation commit <strong><code>f2eac35</code></strong> (<code>conceptLabelForUri</code> + <code>buildConceptFilter</code>, behavior-neutral, verified).</li>
+</ul>
+</section>
+<section id="files-changed-this-session-across-a1-248" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="files-changed-this-session-across-a1-248"><span class="header-section-number">1.3.3</span> Files Changed (this session, across A1 + #248)</h3>
+<ul>
+<li><code>explorer.qmd</code> — A1 data_base fix, double-scan collapse, facet-padding, Codex fixes (staging race / heatmap / empty-clear / build-failure msg), <code>?debug=a1</code> gating; #248 <code>conceptLabelForUri</code> + <code>buildConceptFilter</code>.</li>
+<li><code>dev_server.py</code> — HTTP/1.1; <code>tests/playwright/a1-verify.mjs</code> — <code>HEADLESS=1</code> flag; new probes <code>globe-points-probe.mjs</code>, <code>shakedown-206.mjs</code>; <code>tests/playwright/facet-viewport.spec.js</code> — coherence test.</li>
+</ul>
+</section>
+<section id="patternslearnings" class="level3" data-number="1.3.4">
+<h3 data-number="1.3.4" data-anchor-id="patternslearnings"><span class="header-section-number">1.3.4</span> Patterns/Learnings</h3>
+<ul>
+<li><strong>Backgrounded tabs freeze rAF</strong> → corrupts every globe/camera observation. Headless Playwright is the reliable instrument.</li>
+<li><strong>Don’t pile up runs</strong>: accumulated hung browsers hold HTTP/1.1 keep-alive + peg CPU and starve <code>dev_server.py</code>. Restart between batches.</li>
+<li><strong>Local mirror full-downloads</strong> (GET 200, not 206) — fine on localhost; validate range/perf on the deploy, not the mirror.</li>
+<li>Codex’s <code>codex exec ... -o FILE</code> often fails to capture the final message when the diff is large; read the verdict from the streamed <code>.log</code> instead (resume the session for continuity).</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="external-content-processed" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="external-content-processed"><span class="header-section-number">1.4</span> External Content Processed</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -301,162 +319,77 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>Codex (<code>codex exec</code>, gpt-5.4) ×5</td>
-<td>AI tool output</td>
-<td>Diagnosis + code suggestions. <strong>Reviewed before applying</strong>; treat its future output as advisory, not authoritative.</td>
+<td>GitHub (gh) — issues/PRs #234/#242/#244/#245/#246/#247/#248/#250/#251, CI logs</td>
+<td>web/API</td>
+<td>Read issue bodies as data. <strong>Authored</strong>: PR #251 + its review comment, #248 comment. <strong>Merged</strong> #251 to upstream production (RY-authorized “push to isamples”).</td>
 </tr>
 <tr class="even">
-<td>isamples.org + localhost explorer</td>
-<td>browser DOM</td>
-<td>Read the live explorer UI/state via Chrome automation (our own app).</td>
+<td>Codex CLI (gpt-5.4), session <code>019e7c8d…</code></td>
+<td>AI tool output</td>
+<td>3-round code review + #248 plan review. Findings <strong>verified before applying</strong>; treat as advisory.</td>
 </tr>
 <tr class="odd">
-<td>GitHub issues/PRs (#234, #247, #248, #249, #250) via <code>gh</code></td>
-<td>web/API</td>
-<td>Issue/PR bodies are untrusted text; created #247, opened+merged #250, posted comments, triggered deploys — all user-authorized. <strong>Read</strong> Eric Kansa’s <strong>#248</strong> (feature request, treated as data not instructions).</td>
+<td>isamples.org / rdhyee.github.io / localhost explorer</td>
+<td>browser DOM (headless + 1 MCP tab)</td>
+<td>Our own app. The MCP tab is what misled earlier sessions (rAF freeze).</td>
 </tr>
 <tr class="even">
-<td><code>data.isamples.org/*.parquet</code></td>
-<td>remote data</td>
-<td>Downloaded 128MB mirror to <code>docs/data/</code> (our own data; data, not code).</td>
+<td><code>data.isamples.org</code>, local <code>docs/data/*.parquet</code></td>
+<td>remote/local data</td>
+<td>Our own data.</td>
 </tr>
 </tbody>
 </table>
-<p>No emails, no secrets accessed, no untrusted code executed (Codex suggestions were hand-applied + reviewed).</p>
+<p>No secrets accessed, no untrusted code executed (Codex output hand-reviewed).</p>
+<hr>
 </section>
-<section id="open-collaborator-threads-new-this-session-not-yet-acted-on" class="level3" data-number="1.0.2">
-<h3 data-number="1.0.2" data-anchor-id="open-collaborator-threads-new-this-session-not-yet-acted-on"><span class="header-section-number">1.0.2</span> Open collaborator threads (new this session, NOT yet acted on)</h3>
+<section id="open-threads" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="open-threads"><span class="header-section-number">1.5</span> Open Threads</h2>
 <ul class="task-list">
-<li><label><input type="checkbox"><strong>#248 (Eric Kansa)</strong> — “search material samples described by a concept URI/PID”, proposes a <code>described-by=</code> URL param. Two flavors: object-type URI (≈ already supported by the <code>object_type</code> facet, which is URI-valued) and arbitrary concept URI like Getty AAT (= concept-anchored A1 search — would ride the <strong>same <code>search_pids</code> materialize-once machinery</strong>). Squarely in #234; a second producer of the A1 pid-set. <em>Decision pending: comment on #248 connecting it to A1/#234?</em></label></li>
-<li><label><input type="checkbox"><strong>#249 (rdhyee, not from this session)</strong> — “should we refactor explorer.qmd before the next big feature?” The A1 globe logjam is evidence FOR this; the reconciler refactor (tomorrow) is a <em>local</em> version of the <em>global</em> question #249 raises. <strong>Read #249 before committing to tomorrow’s approach</strong> — it may argue for a bigger refactor than the one-reconciler patch.</label></li>
+<li><label><input type="checkbox"><strong>#248 Flavor A — finish the wiring</strong> (the delicate half): <code>doDescribedBy(uri)</code> + extract shared <code>runPidSetResults({heading,emptyText,orderBy})</code> from <code>doSearch</code> (touches the just-reviewed stale-guards); <code>described-by=</code> URL param boot-trigger (search-ready timing) + <code>writeQueryState</code> kind-preservation; mutual exclusivity with <code>search=</code>; Playwright deep-link coherence test; Codex code-review; open PR. (Codex guardrails are in commit <code>f2eac35</code>’s message + the plan in <code>/tmp/p248.md</code>.)</label></li>
+<li><label><input type="checkbox"><strong>Close #245</strong> (facet-padding) — superseded by #251 (RY hadn’t confirmed; do at pickup).</label></li>
+<li><label><input type="checkbox"><strong>#244</strong> (collection-facet DRAFT) and <strong>#246</strong> (points-over-heatmap) — need rebase on the new <code>main</code> (A1 + facet-padding); #246 worth checking points-over-heatmap <em>under a search</em>.</label></li>
+<li><label><input type="checkbox"><strong>#248 Flavor B</strong> (arbitrary/Getty URIs) — needs URI→label resolution + free-text fallback; follow-up.</label></li>
+<li><label><input type="checkbox"><strong>Testing-gap follow-up</strong>: add a deep-link <strong>interactivity</strong> regression test (assert <code>enableInputs</code>/no-trackedEntity + camera actually moves), using the <code>__a1camera</code> hook. (Hook is uncommitted/local; re-add when building the test.)</label></li>
+<li><label><input type="checkbox">Deferred A1 items: selection revalidation on search change; BM25 substrate (#168–172).</label></li>
 </ul>
 <hr>
 </section>
-<section id="tldr" class="level2" data-number="1.1">
-<h2 data-number="1.1" data-anchor-id="tldr"><span class="header-section-number">1.1</span> TL;DR</h2>
-<ol type="1">
-<li><strong>Shipped to production</strong> (isamples.org): bug <strong>#247</strong> filed + interim honesty fix <strong>PR #250</strong> (merged). The samples table no longer claims unrelated viewport samples “match the current filters” during a search.</li>
-<li><strong>A1 (search as a real global filter)</strong> scoped, Codex-reviewed (PROCEED-WITH-CHANGES), and probed against live data. Branch <code>feat/search-global-filter-a1</code>.
-<ul>
-<li>✅ <strong>Table surface filters correctly</strong> (e.g.&nbsp;<code>bucchero</code> → “2,693 of 2,693 matches in this map view”, OpenContext rows only).</li>
-<li>✅ Facet counts + cube-gating wired; pid-set machinery + persistence proven.</li>
-<li>❌ <strong>GLOBE still won’t enter point mode</strong> on a committed search (table filters, but the map stays unfiltered clusters). This is the logjam.</li>
-</ul></li>
-<li><strong>Built a fast/deterministic verify-loop</strong> (local parquet mirror + range server + <code>window.__a1state</code>/<code>__a1globe</code> observability + Playwright harness) so tomorrow’s iteration isn’t 40–90s/cycle. Range-verified; full speedup run still needs a shakedown.</li>
-</ol>
+<section id="next-session-entry-point" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="next-session-entry-point"><span class="header-section-number">1.6</span> Next Session Entry Point</h2>
+<blockquote class="blockquote">
+<p>Start here: continue <strong>#248 Flavor A</strong> on <code>feat/described-by-concept</code> (foundation <code>f2eac35</code> done). Next concrete step is <code>doDescribedBy</code> + extracting <code>runPidSetResults</code> from <code>doSearch</code>, then the <code>described-by=</code> URL plumbing + mutual-exclusivity, then test → Codex review → PR. Verify loop: <code>python3 dev_server.py --dir docs --port 8099</code> + <code>HEADLESS=1 node tests/playwright/a1-verify.mjs</code>.</p>
+</blockquote>
 <hr>
 </section>
-<section id="branch-commits" class="level2" data-number="1.2">
-<h2 data-number="1.2" data-anchor-id="branch-commits"><span class="header-section-number">1.2</span> Branch &amp; commits</h2>
-<p><code>feat/search-global-filter-a1</code> (off <code>upstream/main</code> which already has #250): - <code>204d2df</code> table surface (pid-set + semi-join + summaryText) - <code>936f1f3</code> points/facets/cube-gate/C3 wired — globe buggy - <code>4e79830</code> Codex’s C3 fixes (moveEnd latch, awaitable enterPointMode, search-token staleness) — globe STILL not entering point mode - <code>62d5500</code> dev verify-loop infra (mirror support + dev_server.py + a1dbg/__a1state/__a1globe)</p>
-<p>Production (already merged, do NOT redo): upstream <code>a4da97b</code> (#250).</p>
-<hr>
-</section>
-<section id="the-a1-design-strategy-b-agreed-codex-approved" class="level2" data-number="1.3">
-<h2 data-number="1.3" data-anchor-id="the-a1-design-strategy-b-agreed-codex-approved"><span class="header-section-number">1.3</span> The A1 design (Strategy B — agreed + Codex-approved)</h2>
-<p>On a committed search, <code>buildSearchFilter()</code> materializes a <strong>non-temp</strong> DuckDB table <code>search_pids</code> (one <code>ILIKE</code> scan over <code>facets_url</code>), then every surface constrains with a cheap semi-join <code>AND pid IN (SELECT pid FROM search_pids)</code>. State on <code>window.__searchFilter {active,term,token,total}</code>; predicate via <code>window.searchFilterSQL(col)</code>.</p>
-<p><strong>Probe findings (de-risked the design):</strong> pid is unique (no dup), facets ⊆ lite so <strong>no coordinate-less matches</strong> (table count == mappable matches — simple “N of M in view” copy), broadest realistic term ~82k pids (no million-row blowup). Full scoping + Codex resolutions in <strong><code>A1_SCOPING.md</code></strong>.</p>
-<p>Surfaces wired: <code>loadCount</code>/<code>loadPage</code> (table) ✅ verified; <code>loadViewportSamples</code> (points); <code>updateCrossFilteredCounts</code> (facet legend, + gate cube fast-path &amp; global-baseline when search active); <code>summaryText</code> copy.</p>
-<hr>
-</section>
-<section id="the-logjam-start-here-tomorrow" class="level2" data-number="1.4">
-<h2 data-number="1.4" data-anchor-id="the-logjam-start-here-tomorrow"><span class="header-section-number">1.4</span> THE LOGJAM (start here tomorrow)</h2>
-<p><strong>Symptom:</strong> search <code>bucchero</code> → table = “2,693 of 2,693 matches” (✅), but globe phaseMsg/stat stay <strong>cluster</strong> and <code>exitPointMode</code> runs. Even a clean <strong>manual</strong> search (not just boot) fails → it’s a real state-machine bug, not a boot race.</p>
-<p><strong>Codex’s diagnosis (correct, partially fixed in <code>4e79830</code>):</strong> 1. ✅ FIXED — post-search <code>flyTo</code> lands at <strong>200 km &gt; EXIT_POINT_ALT (180 km)</strong>, and the <code>moveEnd</code> handler exited point mode without checking <code>searchIsActive()</code>. Latched now. 2. ✅ FIXED — <code>enterPointMode</code> was fire-and-forget; now <code>async</code> + <code>await loadViewportSamples()</code>, awaited at all call sites. 3. ✅ FIXED — <code>loadViewportSamples</code> staleness was <code>requestId</code>-only; now also keys on the search token (<code>isStaleLoad()</code>). 4. ⏳ <strong>NOT DONE — the actual remaining fix:</strong> <code>applySearchFilterChange()</code> is a <strong>parallel</strong> mode-entry path racing the camera/mode machinery. Codex recommends <strong>replacing it with ONE reconciler</strong> that both the camera handler and search call, so “search forces point” and “altitude decides mode” live in one predicate with one set of staleness tokens.</p>
-<p><strong>Codex’s reconciler spec (implement this):</strong></p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">reconcileGlobeForCurrentFilters</span>(pushHistory <span class="op">=</span> <span class="kw">false</span>) {</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">syncFacetNote</span>()<span class="op">;</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">refreshHeatmap</span>()<span class="op">;</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">searchIsActive</span>()) {</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">getMode</span>() <span class="op">!==</span> <span class="st">'point'</span>) <span class="cf">await</span> <span class="fu">enterPointMode</span>(pushHistory)<span class="op">;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">await</span> <span class="fu">loadViewportSamples</span>()<span class="op">;</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// existing altitude-driven cluster/point behavior</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">refreshFacetCounts</span>()<span class="op">;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">window</span><span class="op">.</span><span class="at">refreshSamplesTable</span><span class="op">?.</span>()<span class="op">;</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Call it from search completion AND the relevant camera paths; delete the bespoke <code>applySearchFilterChange</code> mini-state-machine. <strong>Open question to nail with the new observability:</strong> why does <code>enterPointMode</code> not stick on a manual search? (<code>[A1dbg]</code> events <code>apply-search-change</code>, <code>mode-change</code>, <code>post-build</code> will show the sequence — see below.)</p>
-<p><strong>Other bugs Codex flagged (not yet addressed):</strong> - Heatmap <code>renderHeatmap()</code> omits <code>searchFilterSQL</code> and <code>heatmapFilterHash()</code> omits the search token → heatmap (labeled “filtered density”) stays unfiltered under search. (PR#2 or fix now.) - Selection revalidation (<code>~L3457</code>) checks only source, not the search filter — clear/revalidate selection on search change.</p>
-<hr>
-</section>
-<section id="performance-model-why-the-ui-hides-the-40s-and-what-a1-does-to-it" class="level2" data-number="1.5">
-<h2 data-number="1.5" data-anchor-id="performance-model-why-the-ui-hides-the-40s-and-what-a1-does-to-it"><span class="header-section-number">1.5</span> PERFORMANCE MODEL — why the UI hides the 40s, and what A1 does to it</h2>
-<p>(RY’s framing, 2026-05-29 — worth keeping front-of-mind for the substrate-vs-progress-UI call.)</p>
-<p>The explorer never <em>feels</em> like a 40–90s app because the whole design is <strong>“never fetch big data over a wide area.”</strong> Data is tiered by zoom, smallest-first, and the tiny tiers are <strong>preloaded</strong> (<code>explorer.qmd</code> L14–17: <code>&lt;link rel=preload&gt;</code> for h3 res4 + facet_summaries + vocab_labels):</p>
+<section id="session-history" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="session-history"><span class="header-section-number">1.7</span> Session History</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>User action</th>
-<th>Fetched</th>
-<th>Size</th>
-<th>Felt</th>
+<th>Date</th>
+<th>Trust</th>
+<th>Summary</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Land on globe (zoomed out)</td>
-<td>H3 res4</td>
-<td><strong>580 KB</strong> (preloaded)</td>
-<td>instant (<code>Load Time 0.4s</code>)</td>
+<td>2026-05-30/31</td>
+<td>external-content</td>
+<td>Shakedown root-caused; A1 logjam = backgrounded-tab artifact; A1 perf + facet-padding fixed; Codex loop → dual approval; <strong>A1 merged &amp; deployed to isamples.org</strong> (#251); #248 started (<code>feat/described-by-concept</code> foundation).</td>
 </tr>
 <tr class="even">
-<td>Zoom in / more</td>
-<td>H3 res6 / res8</td>
-<td>1.6 / 2.5 MB</td>
-<td>fast</td>
-</tr>
-<tr class="odd">
-<td>Zoom <strong>deep</strong> → point mode</td>
-<td><code>samples_map_lite</code></td>
-<td>60 MB file…</td>
-<td><strong>still fast</strong> ↓</td>
+<td>2026-05-29</td>
+<td>external-content</td>
+<td>(prior) A1 scoping + globe logjam framing (superseded — there was no logjam).</td>
 </tr>
 </tbody>
 </table>
-<p>The trick on that last row: by the time <code>samples_map_lite</code> (60 MB) is touched, the camera is deep (alt &lt; <code>ENTER_POINT_ALT</code> 120 km), so the bbox is tiny. DuckDB-WASM does <strong>HTTP range requests</strong> and pulls only the parquet <strong>row groups</strong> overlapping that small bbox (a few MB), never the whole file. So the big files are only ever read in slivers. UX masking on top: instant res4 globe, phase messages, stale-while-loading (dimmed old rows).</p>
-<p><strong>The two operations with NO spatial narrowing</strong> (= the only ones that can hit the full 40s; both were what I kept triggering in dev): 1. <strong>Free-text search</strong> — <code>ILIKE '%term%'</code> over <code>label/description/place_name</code> across the <em>whole</em> <code>sample_facets_v2.parquet</code> (63 MB text). ILIKE can’t skip row groups; it’s a full column scan. Irreducible without an index. 2. <strong>Samples table at a wide viewport</strong> — <code>loadCount</code> over a world-sized bbox counts ~everything (normal users zoom in first, shrinking it).</p>
-<p><strong>The A1 implication (the load-bearing point):</strong> A1 takes operation #1 — the single slowest thing in the app — and moves it to the <strong>front of the common flow.</strong> Today search is an optional side-panel lookup; A1 makes every committed search run that full 63 MB scan <em>first</em> and gates the filtered view on it. So A1 risks importing the one 40s wait into exactly the place the rest of the UI worked to avoid it. That’s why: - The <strong>“Building search filter…”</strong> affordance matters (honest masking, like the rest of the app). - <strong>BM25 substrate (#168–172)</strong> is the thing that makes a <em>cold</em> search feel as snappy as zooming — NOT a correctness blocker (the pid-set abstraction works on plain ILIKE), but the perceived-perf fix. - The <strong>materialize-once</strong> design is the mitigation: pay the un-narrowable full scan <em>one time</em> per term, then every pan/zoom/facet-toggle is a cheap <code>pid IN (…)</code> semi-join that DOES narrow spatially — folding search back into the fast tier after the first hit.</p>
-<p>(This also reframes the cold-load floor below: init ~40s is one thing, but the search scan is the <em>product-facing</em> slow path, and it’s the one A1 must manage.)</p>
-<hr>
-</section>
-<section id="fast-verify-loop-built-today-use-it-tomorrow" class="level2" data-number="1.6">
-<h2 data-number="1.6" data-anchor-id="fast-verify-loop-built-today-use-it-tomorrow"><span class="header-section-number">1.6</span> FAST VERIFY LOOP (built today — use it tomorrow)</h2>
-<p><strong>Why today was slow:</strong> every iteration was a cold reload. Cold cost is <strong>init-dominated</strong> — DuckDB-WASM (from CDN) + Cesium + the OJS reactive graph take ~40s <strong>before any data query</strong>, and the search <code>ILIKE</code> then downloaded ~60MB of text columns over the network. Console capture from the automation harness was also flaky.</p>
-<p><strong>The fix (set up, committed in <code>62d5500</code>):</strong> 1. <strong>Local parquet mirror</strong> — <code>docs/data/*.parquet</code> (128MB, gitignored via <code>docs</code> + <code>*.parquet</code>). Re-fetch with: <code>for f in isamples_202601_{samples_map_lite,sample_facets_v2,h3_summary_res4,h3_summary_res6,h3_summary_res8,facet_cross_filter,facet_summaries}.parquet vocab_labels.parquet; do curl -s -o docs/data/$f https://data.isamples.org/$f; done</code> (⚠️ <code>current/wide.parquet</code> came back <strong>0 bytes</strong> — used only for sample-click detail; may be the cause of the init hang — investigate.) 2. <strong><code>R2_BASE</code> override</strong> — load with <code>?data_base=/data</code> (or <code>localStorage.ISAMPLES_DATA_BASE</code>). Defaults to prod, so shipped builds are unchanged. 3. <strong>Range-capable server</strong> — <code>python3 dev_server.py --dir docs --port 8099</code>. <strong>Stock <code>python3 -m http.server</code> returns 200 not 206</strong> and breaks DuckDB-WASM partial reads — do NOT use it. Verify: <code>curl -r 0-99 -i http://localhost:8099/data/isamples_202601_samples_map_lite.parquet</code> → must be <strong>206</strong> (confirmed working). 4. <strong>LOAD ONCE, then mutate IN-PAGE</strong> — this is the real lever, since init (~40s) can’t be sped up. Pay init once; then drive searches via the search box (or <code>page.fill</code>) without reloading. Each in-page search hits the local mirror (fast data). 5. <strong>Deterministic observability</strong> (replaces flaky console): <code>window.__a1log</code> (ordered events), <code>window.__a1state[event]</code> (latest), <code>window.__a1globe()</code> → <code>{mode, samplePointsLen, samplePointsShown, h3PointsShown}</code>. On-page panel via <code>?debug=a1</code>. Events: <code>search-build-start/end</code>, <code>apply-search-change</code>, <code>mode-change {to,searchActive,via}</code>, <code>post-build</code>, <code>point-load-render {rendered,total,searchActive,searchFiltered}</code>, <code>point-load-discard</code>. 6. <strong>Playwright harness</strong> — <code>tests/playwright/a1-verify.mjs</code> (condition-based waits, asserts the table+globe coherence invariant). <code>node tests/playwright/a1-verify.mjs</code> (needs <code>npm i -D playwright</code> / <code>npx playwright install chromium</code>).</p>
-<p><strong>Loop URL example:</strong> <code>http://localhost:8099/explorer.html?data_base=/data&amp;debug=a1&amp;sources=OPENCONTEXT%2CGEOME%2CSMITHSONIAN#v=1&amp;lat=43.15&amp;lng=11.40&amp;alt=9000000</code></p>
-<p><strong>Shakedown TODO (tomorrow, first thing):</strong> a full mirror load hung in init (~50s, zero <code>/data</code> fetches). Check whether the 0-byte <code>current/wide.parquet</code> or some preload is the cause; confirm the in-page search is genuinely fast against the mirror; then the loop is ready.</p>
-<hr>
-</section>
-<section id="collaboration-plan-for-tomorrow-agreed" class="level2" data-number="1.7">
-<h2 data-number="1.7" data-anchor-id="collaboration-plan-for-tomorrow-agreed"><span class="header-section-number">1.7</span> Collaboration plan for tomorrow (agreed)</h2>
-<p>Flip the loop for the reconciler refactor: <strong>Codex authors</strong> (it out-diagnosed Claude’s debugging and designed the fix), <strong>Claude reviews line-by-line + owns the runtime verify loop + git/PR/deploy</strong>. Iterate: Codex edits → Claude renders + runs <code>a1-verify.mjs</code> / in-page → feeds <code>__a1log</code> back to Codex → repeat. Higher effort both sides.</p>
-<hr>
-</section>
-<section id="cleanup-before-the-a1-pr-is-opened-dont-ship-these" class="level2" data-number="1.8">
-<h2 data-number="1.8" data-anchor-id="cleanup-before-the-a1-pr-is-opened-dont-ship-these"><span class="header-section-number">1.8</span> Cleanup before the A1 PR is opened (don’t ship these)</h2>
-<ul>
-<li>Remove the <strong><code>a1PersistenceProbe</code></strong> dev cell (right after the <code>db</code> cell) — persistence already proven.</li>
-<li>Decide on <code>a1dbg</code>/<code>__a1log</code>/<code>__a1state</code>/<code>__a1globe</code> + <code>?debug=a1</code> panel: gate behind a dev flag or strip. The <code>R2_BASE ?data_base=</code> override and <code>dev_server.py</code> are worth KEEPING (useful, safe defaults).</li>
-<li>The double-scan in <code>doSearch</code> (pid-set build + the existing LIMIT-50 side-panel query both scan facets) — follow-up: derive the side-panel list from <code>search_pids</code>.</li>
-<li>Heatmap + selection-revalidation search-awareness (above).</li>
-</ul>
-<hr>
-</section>
-<section id="key-references" class="level2" data-number="1.9">
-<h2 data-number="1.9" data-anchor-id="key-references"><span class="header-section-number">1.9</span> Key references</h2>
-<ul>
-<li><code>explorer.qmd</code> anchors: <code>buildSearchFilter</code>/<code>clearSearchFilter</code>/<code>applySearchFilterChange</code> (~L3534), <code>loadViewportSamples</code> (~L2510), <code>enterPointMode</code>/<code>exitPointMode</code> (~L2680/2700), camera <code>moveEnd</code> handler (~L3709), camera <code>changed</code> handler (~L3560), <code>summaryText</code>/<code>loadCount</code>/<code>loadPage</code> (tableView cell ~L2123), <code>R2_BASE</code> (~L683), a1dbg/<code>__a1globe</code> install (~L4028).</li>
-<li><code>A1_SCOPING.md</code> — full scope + probe + Codex resolutions.</li>
-<li><code>dev_server.py</code>, <code>tests/playwright/a1-verify.mjs</code> — the loop.</li>
-<li>Issues: #234 (umbrella, A1 = Step 4), #247 (the bug, interim fixed by #250), #168–172 (FTS substrate — optional latency win, NOT a blocker for A1).</li>
-</ul>
 
 
 </section>
