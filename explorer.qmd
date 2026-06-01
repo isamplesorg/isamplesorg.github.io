@@ -1763,6 +1763,10 @@ facetFilters = {
         const parts = s.replace(/[#?].*$/, "").split("/").filter(Boolean);
         return parts.length ? parts[parts.length - 1] : s;
     };
+    // #248: expose the URI→prefLabel resolver so the concept-filter producer
+    // (buildConceptFilter, in the zoomWatcher cell) can label a `described-by=`
+    // URI without re-querying vocab_labels. Best-effort: falls back to URI tail.
+    if (typeof window !== 'undefined') window.conceptLabelForUri = prettyLabel;
 
     try {
         const summaries = await db.query(`
@@ -4130,8 +4134,49 @@ zoomWatcher = {
             const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
             const total = cnt.length ? Number(cnt[0].n) : 0;
             if (token !== _searchFilterToken) return false;
-            window.__searchFilter = { active: true, term, token, total };
+            window.__searchFilter = { active: true, term, token, total, kind: 'text' };
             window.a1dbg?.('search-build-end', { term, token, total });
+            return true;
+        } finally {
+            try { await db.query(`DROP TABLE IF EXISTS ${staging}`); } catch (e) { /* best effort */ }
+        }
+    }
+
+    // #248 Flavor A: a SECOND producer of `search_pids` — selects samples whose
+    // iSamples-vocabulary concept (the URI-valued object_type / material /
+    // context columns in sample_facets_v2) exactly matches `uri`. Mirrors
+    // buildSearchFilter's token-scoped staging + finally-drop + token guards,
+    // sharing the same _searchFilterToken (the pid-set is a singleton). Every
+    // surface then filters via the same `pid IN (SELECT pid FROM search_pids)`
+    // semi-join, for free. Flavor B (arbitrary external/Getty URIs needing
+    // URI→label resolution + free-text) is a follow-up.
+    async function buildConceptFilter(uri) {
+        const token = ++_searchFilterToken;
+        const label = (typeof window !== 'undefined' && window.conceptLabelForUri)
+            ? window.conceptLabelForUri(uri) : uri;
+        window.a1dbg?.('search-build-start', { term: label, token, kind: 'concept' });
+        const u = escSql(uri);
+        // Rank object_type matches above material above context, then by label
+        // (Codex plan-review suggestion — cheap, no extra scan).
+        const rank = `CASE WHEN object_type = '${u}' THEN 3 WHEN material = '${u}' THEN 2 WHEN context = '${u}' THEN 1 ELSE 0 END`;
+        const staging = `search_pids_next_${token}`;
+        try {
+            await db.query(`
+                CREATE OR REPLACE TABLE ${staging} AS
+                SELECT pid, label, source, place_name, (${rank}) AS relevance_score
+                FROM read_parquet('${facets_url}')
+                WHERE pid IS NOT NULL
+                  AND (object_type = '${u}' OR material = '${u}' OR context = '${u}')
+            `);
+            if (token !== _searchFilterToken) return false;   // superseded mid-build
+            await db.query(`CREATE OR REPLACE TABLE search_pids AS
+                SELECT pid, label, source, place_name, relevance_score FROM ${staging}`);
+            if (token !== _searchFilterToken) return false;
+            const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
+            const total = cnt.length ? Number(cnt[0].n) : 0;
+            if (token !== _searchFilterToken) return false;
+            window.__searchFilter = { active: true, term: label, token, total, kind: 'concept', uri };
+            window.a1dbg?.('search-build-end', { term: label, token, total, kind: 'concept' });
             return true;
         } finally {
             try { await db.query(`DROP TABLE IF EXISTS ${staging}`); } catch (e) { /* best effort */ }
