@@ -68,6 +68,21 @@ format:
         min-height: 0;
         aspect-ratio: auto;
     }
+    /* Busy indicator while a filter/search/facet update is in flight.
+       `progress` (arrow + spinner), NOT `wait` (hourglass): nothing freezes —
+       we're signaling "updating", not "blocked". PAGE-WIDE on purpose: a CSS
+       cursor only shows where the pointer actually is, and these updates are
+       triggered with the pointer OFF the map (in the search box / sidebar
+       checkboxes), so a map-only rule was invisible in practice. The `*` with
+       !important overrides per-element cursors (text inputs, the Cesium canvas,
+       buttons) so the signal shows wherever the pointer rests. The
+       body.explorer-busy class is toggled by the depth-counted busyAcquire/
+       busyRelease around the facet-change, source-change, and search/concept
+       commit paths (with a 120s watchdog failsafe so it can never stick).
+       Pan/zoom viewport reloads don't set the class yet — deferred follow-up. */
+    body.explorer-busy, body.explorer-busy * {
+        cursor: progress !important;
+    }
     /* Slim top-right search overlay (Hana Figma node 222:456). The earlier
        multi-row treatment (M-1A, PR #200) ate ~480px × ~100px on the left
        side of the map; this collapses to one row at the right. The
@@ -219,6 +234,45 @@ format:
         max-height: var(--explorer-map-height);
         overflow-y: auto;
     }
+    .filter-chip-host {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+    .filter-chip-host[hidden] { display: none; }
+    .described-by-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        background: #ede7f6;
+        border: 1px solid #d1c4e9;
+        border-radius: 6px;
+        color: #5e35b1;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 10px;
+    }
+    .described-by-chip-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .described-by-chip-clear {
+        flex: 0 0 auto;
+        background: transparent;
+        border: 0;
+        border-radius: 4px;
+        color: inherit;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+    .described-by-chip-clear:hover,
+    .described-by-chip-clear:focus {
+        background: rgba(94, 53, 177, 0.12);
+        outline: none;
+    }
     .panel-section {
         background: #f8f9fa;
         border-radius: 6px;
@@ -231,6 +285,8 @@ format:
         grid-template-columns: 1fr 1fr;
         gap: 6px;
     }
+    .stats-disclosure { border-top: 0; padding-top: 0; margin-top: 0; }
+    .stats-body { padding: 4px 0 0; }
     .stat-box {
         background: #1a1a2e;
         color: white;
@@ -595,16 +651,24 @@ Circle size = log(sample count). Color = dominant data source.
 <div id="inMapCard" class="in-map-card" hidden role="dialog" aria-label="Sample details"></div>
 </div>
 <div class="side-panel">
+<div id="activeSearchChipHost" class="filter-chip-host" hidden></div>
 <div class="panel-section sidebar-search">
 <input type="text" id="sampleSearchSidebar" placeholder="Search samples (press Enter to search globally)" aria-label="Search samples globally" />
 <div class="sidebar-search-hint">Enter searches the entire world. Use the in-map controls for area-limited search.</div>
 </div>
 <div class="panel-section">
+<div class="filter-section stats-disclosure">
+<div class="filter-header" role="button" tabindex="0" aria-expanded="false" aria-controls="statsPanelBody" onclick="const body = this.nextElementSibling; const open = body.style.display === 'none'; body.style.display = open ? 'block' : 'none'; this.setAttribute('aria-expanded', open ? 'true' : 'false'); this.querySelector('span').textContent = open ? '▾' : '▸';" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">
+Stats <span>▸</span>
+</div>
+<div class="filter-body stats-body" style="display: none;" id="statsPanelBody">
 <div class="stats-compact">
 <div class="stat-box"><span id="sPhase" class="val">Loading...</span><span class="lbl">Resolution</span></div>
 <div class="stat-box"><span id="sPoints" class="val">0</span><span id="sPointsLbl" class="lbl">Clusters Loaded</span></div>
 <div class="stat-box"><span id="sSamples" class="val">0</span><span id="sSamplesLbl" class="lbl">Samples Loaded</span></div>
 <div class="stat-box"><span id="sTime" class="val">-</span><span class="lbl">Load Time</span></div>
+</div>
+</div>
 </div>
 <div style="margin-top: 8px;">
 <div class="legend" id="sourceFilter">
@@ -3446,13 +3510,36 @@ zoomWatcher = {
     // whole point of the flag. Depth-counted: class is added on the
     // 0 → 1 transition and removed on the 1 → 0 transition.
     let _busyDepth = 0;
+    // Failsafe so the `progress` cursor (CSS on body.explorer-busy) can NEVER
+    // stick. Every busyRelease is already in a `finally`, so a throw can't
+    // strand the flag — but a HUNG promise (a load that never settles/rejects)
+    // would never reach that finally. This watchdog force-clears the busy
+    // state after a window far longer than any real update, incl. cold-cache
+    // loads (which the code notes can take 60–90s). It's re-armed on each
+    // acquire, so it only ever fires on a genuine leak — and the cursor is
+    // purely cosmetic, so an early clear is harmless (the map never freezes).
+    let _busyWatchdog = null;
+    const BUSY_WATCHDOG_MS = 120000;
+    function _clearBusyWatchdog() {
+        if (_busyWatchdog) { clearTimeout(_busyWatchdog); _busyWatchdog = null; }
+    }
     function busyAcquire() {
         if (_busyDepth === 0) document.body.classList.add('explorer-busy');
         _busyDepth++;
+        _clearBusyWatchdog();
+        _busyWatchdog = setTimeout(() => {
+            _busyDepth = 0;
+            document.body.classList.remove('explorer-busy');
+            _busyWatchdog = null;
+            console.warn('explorer-busy watchdog fired — force-cleared a stuck busy cursor.');
+        }, BUSY_WATCHDOG_MS);
     }
     function busyRelease() {
         _busyDepth = Math.max(0, _busyDepth - 1);
-        if (_busyDepth === 0) document.body.classList.remove('explorer-busy');
+        if (_busyDepth === 0) {
+            document.body.classList.remove('explorer-busy');
+            _clearBusyWatchdog();
+        }
     }
 
     // --- Source filter change handler ---
@@ -3585,6 +3672,7 @@ zoomWatcher = {
         window.a1dbg?.('apply-search-change', { active: searchIsActive(), mode: getMode() });
         busyAcquire();
         try {
+            syncSearchPanelState();
             syncFacetNote();
             refreshHeatmap();
             if (searchIsActive()) {
@@ -4021,6 +4109,37 @@ zoomWatcher = {
         new URLSearchParams(location.search).get('search_scope') === 'area'
     ) ? 'area' : 'world';
 
+    function refreshFacetCountsAfterSearchFlight(searchId) {
+        // A world-scope committed search auto-flies to the first result. That
+        // camera flight emits its own moveStart/moveEnd count refreshes, which
+        // can supersede the search refresh kicked off by applySearchFilterChange.
+        // Register this one-shot after the shared moveEnd listener exists; when
+        // the flight settles, this runs after the normal moveEnd refresh and
+        // becomes the final search-aware facet-count request for the committed
+        // search.
+        let remove = null;
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            if (remove) remove();
+            setTimeout(() => {
+                if (searchId !== _searchSeq || !searchIsActive()) return;
+                window.a1dbg?.('search-flyto-final-facet-refresh', {
+                    searchId,
+                    token: window.__searchFilter?.token,
+                });
+                refreshFacetCounts();
+            }, 0);
+        };
+        remove = viewer.camera.moveEnd.addEventListener(finish);
+        return () => {
+            if (done) return;
+            done = true;
+            if (remove) remove();
+        };
+    }
+
     function persistSearchScope(scope) {
         // writeQueryState() doesn't know about scope; keep the URL param
         // honest by manipulating directly. 'world' is default, omitted from
@@ -4231,6 +4350,47 @@ zoomWatcher = {
                 pid VARCHAR, label VARCHAR, source VARCHAR, place_name VARCHAR, relevance_score DOUBLE
             )`);
         } catch (e) { /* best effort */ }
+    }
+
+    async function clearActiveSearchFilter() {
+        // Same clear path as an empty search submit, without entering doSearch().
+        _searchSeq++;
+        if (searchInput) searchInput.value = '';
+        const sidebarInput = document.getElementById('sampleSearchSidebar');
+        if (sidebarInput) sidebarInput.value = '';
+        if (searchResults) searchResults.textContent = '';
+        await clearSearchFilter();
+        await applySearchFilterChange();
+        writeQueryState({ commitText: '' });
+    }
+
+    function renderDescribedByChip() {
+        const host = document.getElementById('activeSearchChipHost');
+        if (!host) return;
+
+        const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+        const conceptActive = !!(sf && sf.active && sf.kind === 'concept');
+        if (!conceptActive) {
+            host.hidden = true;
+            host.innerHTML = '';
+            return;
+        }
+
+        const label = sf.term || sf.uri || '';
+        host.hidden = false;
+        host.innerHTML = `<div class="described-by-chip" data-filter-kind="concept">
+            <span class="described-by-chip-label">Described by: ${escapeHtml(label)}</span>
+            <button type="button" class="described-by-chip-clear" data-clear-search-filter aria-label="Clear described-by filter" title="Clear described-by filter">✕</button>
+        </div>`;
+
+        const clearBtn = host.querySelector('[data-clear-search-filter]');
+        if (clearBtn) clearBtn.addEventListener('click', clearActiveSearchFilter);
+    }
+
+    function syncSearchPanelState() {
+        renderDescribedByChip();
+        const clusterEl = document.getElementById('clusterSection');
+        if (clusterEl) clusterEl.hidden = searchIsActive();
     }
 
     async function doSearch(scope) {
@@ -4579,11 +4739,13 @@ zoomWatcher = {
             // (issue #207 item 8). User clicks on a specific row to
             // establish a new selection.
             if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+                const cancelFinalFacetRefresh = refreshFacetCountsAfterSearchFlight(searchId);
                 viewer._globeState.selectedPid = null;
                 viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
-                    duration: 1.5
+                    duration: 1.5,
+                    cancel: cancelFinalFacetRefresh,
                 });
             }
 
