@@ -3644,8 +3644,32 @@ zoomWatcher = {
             syncFacetNote();
             writeQueryState();
             refreshHeatmap();
-            if (getMode() === 'point') {
-                await loadViewportSamples();
+            // #267: facet selection must visibly drive the MAP, not just the
+            // table/legend. Cluster dots come from pre-aggregated H3 summaries
+            // that carry only `dominant_source`, so they cannot honor a
+            // material/context/object_type facet. Mirror the committed-search
+            // path (applySearchFilterChange / C3): when any such facet is
+            // active, FORCE point mode so the map shows the actual filtered
+            // dots (which already apply facetFilterSQL()). When facets are
+            // cleared, revert to the altitude-appropriate mode — unless a text
+            // search is still latching point mode.
+            if (hasFacetFilters()) {
+                if (getMode() !== 'point') {
+                    await enterPointMode(false);   // forces point; awaits filtered viewport load
+                } else {
+                    await loadViewportSamples();
+                }
+            } else if (getMode() === 'point') {
+                const h = viewer.camera.positionCartographic.height;
+                if (!searchIsActive() && h >= EXIT_POINT_ALT) {
+                    exitPointMode(false);
+                    const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+                    if (target !== currentRes) {
+                        await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
+                    }
+                } else {
+                    await loadViewportSamples();
+                }
             }
             refreshFacetCounts();
             await new Promise(r => setTimeout(r, 300));
