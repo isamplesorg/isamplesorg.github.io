@@ -26,6 +26,15 @@ import duckdb
 
 FACET_DIMS = ["source", "material", "context", "object_type"]
 
+# #265: the broad SKOS root concept for material. Source arrays (esp. SESAR)
+# carry the full ancestry, and this root ("Material") can sit at ANY array
+# position — so the old p__has_material_category[1] often surfaced it as a
+# bogus facet value. We drop it during material selection. (context/object_type
+# have analogous roots — `anysampledfeature`, `materialsample` — but those are
+# meaningful "any/generic" values and far higher-volume, so we leave them on the
+# [1] selection pending confirmation; tracked as a #265 follow-up.)
+MATERIAL_ROOT = "https://w3id.org/isample/vocabulary/material/1.0/material"
+
 
 def log(msg, t0):
     print(f"[{time.time()-t0:.1f}s] {msg}", flush=True)
@@ -36,6 +45,10 @@ def base_samples_sql(wide: str) -> str:
     return f"""
     CREATE OR REPLACE TEMP TABLE ic AS
       SELECT row_id, pid AS uri FROM read_parquet('{wide}') WHERE otype='IdentifiedConcept';
+    -- row_id -> uri map, so we can resolve a whole concept array without a
+    -- per-element correlated subquery (needed for the #265 most-specific pick).
+    CREATE OR REPLACE TEMP TABLE icmap AS
+      SELECT MAP(list(row_id), list(uri)) AS m FROM ic;
     CREATE OR REPLACE TEMP TABLE samp AS
       SELECT
         s.pid,
@@ -46,10 +59,26 @@ def base_samples_sql(wide: str) -> str:
         s.result_time,
         ST_Y(ST_GeomFromWKB(s.geometry))               AS latitude,
         ST_X(ST_GeomFromWKB(s.geometry))               AS longitude,
-        (SELECT uri FROM ic WHERE ic.row_id = s.p__has_material_category[1])   AS material,
+        -- #265: drop the broad root concept, then keep the original [1] order.
+        -- The root ("Material") can sit at ANY array position; when it landed at
+        -- position 1 the old p__has_material_category[1] surfaced it as a bogus
+        -- facet value (346k samples). We resolve the whole array, filter out the
+        -- root, and take the FIRST remaining concept. This is deliberately
+        -- conservative: it changes ONLY samples whose [1] was the root (they now
+        -- get their first real concept, or NULL if root-only -> excluded from the
+        -- facet). Samples already labelled with a real concept are untouched —
+        -- e.g. the ceramic ark:/28722/k2p55x96j keeps anthropogenicmetal rather
+        -- than flipping to a deeper-but-wrong array entry. NOTE: this does not
+        -- pick the most-SPECIFIC concept (the arrays are not clean SKOS paths,
+        -- and some OC arrays end in an unrelated 'rock'); true leaf selection
+        -- needs the SKOS hierarchy and is tracked as a #265 follow-up.
+        (list_filter(
+          list_transform(s.p__has_material_category, rid -> icmap.m[rid]),
+          u -> u IS NOT NULL AND u <> '{MATERIAL_ROOT}'
+        ))[1]                                          AS material,
         (SELECT uri FROM ic WHERE ic.row_id = s.p__has_context_category[1])    AS context,
         (SELECT uri FROM ic WHERE ic.row_id = s.p__has_sample_object_type[1])  AS object_type
-      FROM read_parquet('{wide}') s
+      FROM read_parquet('{wide}') s, icmap
       WHERE s.otype='MaterialSampleRecord';
     -- coordinate-bearing subset + h3 cells (used by map_lite + h3 summaries)
     CREATE OR REPLACE TEMP TABLE samp_geo AS
