@@ -3699,14 +3699,21 @@ zoomWatcher = {
             syncSearchPanelState();
             syncFacetNote();
             refreshHeatmap();
-            if (searchIsActive()) {
+            // #267: point mode is latched by EITHER an active search OR an
+            // active facet — both filter the sample set and can't be shown as
+            // clusters. So clearing the search must NOT revert to clusters if a
+            // facet is still checked (and vice-versa, handled in
+            // handleFacetFilterChange). Use the same forced-point predicate as
+            // every other latch.
+            const forcePoint = searchIsActive() || hasFacetFilters();
+            if (forcePoint) {
                 if (getMode() !== 'point') {
                     await enterPointMode(false);   // forces point; awaits filtered viewport load
                 } else {
                     await loadViewportSamples();
                 }
             } else {
-                // Search cleared: revert to the altitude-appropriate mode.
+                // Neither search nor facet active: revert to altitude-appropriate mode.
                 const h = viewer.camera.positionCartographic.height;
                 if (getMode() === 'point' && h >= EXIT_POINT_ALT) {
                     exitPointMode(false);
