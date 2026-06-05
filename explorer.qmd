@@ -3751,16 +3751,17 @@ zoomWatcher = {
             // A1 (#234 Step 4) / C3: while a search is active, latch point
             // mode regardless of altitude — clusters can't be text-filtered,
             // so we keep showing the filtered sample dots even when zoomed out.
-            const targetMode = searchIsActive() ? 'point'
+            const targetMode = (searchIsActive() || hasFacetFilters()) ? 'point'
                              : h < ENTER_POINT_ALT ? 'point'
                              : h > EXIT_POINT_ALT ? 'cluster'
                              : getMode();
 
             if (targetMode === 'point' && getMode() !== 'point') {
-                if (searchIsActive()) {
-                    // Search forces point mode even above ENTER_POINT_ALT,
-                    // where tryEnterPointModeIfNeeded() would refuse; enter
-                    // directly so the filtered dots render at any zoom.
+                if (searchIsActive() || hasFacetFilters()) {
+                    // Search or an active facet (#267) forces point mode even
+                    // above ENTER_POINT_ALT, where tryEnterPointModeIfNeeded()
+                    // would refuse; enter directly so the filtered dots render
+                    // at any zoom.
                     await enterPointMode(false);
                 } else {
                     // Cold-cache deep-link: the res8 + samples_map_lite fetches
@@ -3901,7 +3902,7 @@ zoomWatcher = {
         // moveEnd must NOT exit to clusters — otherwise the post-search
         // flyTo (200 km, above EXIT_POINT_ALT) would immediately undo the
         // forced point mode and the globe would show unfiltered clusters.
-        if (h > EXIT_POINT_ALT && !searchIsActive()) {
+        if (h > EXIT_POINT_ALT && !searchIsActive() && !hasFacetFilters()) {
             // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't
             // fire `camera.changed`, so without driving the exit here we'd
             // be stuck in point mode above `EXIT_POINT_ALT` until a larger
@@ -4041,7 +4042,7 @@ zoomWatcher = {
             // A1 (#234 Step 4): an active search forces point mode regardless
             // of the restored altitude, so the back/forward globe state stays
             // coherent with the (still-filtered) table/legend.
-            const wantsPoint = searchIsActive() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            const wantsPoint = searchIsActive() || hasFacetFilters() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
             if (wantsPoint && getMode() !== 'point') await enterPointMode(false);
             else if (!wantsPoint && getMode() === 'point') exitPointMode(false);
         }, 2000);
@@ -5288,6 +5289,21 @@ zoomWatcher = {
         // pushHistory: false — boot should reconcile state without adding
         // a history entry (issue #207 item 3).
         await tryEnterPointModeIfNeeded({ pushHistory: false });
+    }
+
+    // #267: a shared `?material=`/`?context=`/`?object_type=` deep link must
+    // force point mode like `?search=` does — cluster H3 summaries can't honor
+    // those facets. The altitude-gated trigger above won't promote a high-alt
+    // facet deep link, so enter point mode directly. We read the URL params
+    // (not the hydrated checkboxes) so this is independent of facet-loader
+    // timing; the latch points (targetMode / moveEnd / wantsPoint) keep it
+    // pinned once the checkboxes hydrate.
+    const _urlHasFacets = ['material', 'context', 'object_type'].some(p => {
+        const v = new URLSearchParams(location.search).get(p);
+        return v != null && v.trim() !== '';
+    });
+    if (_urlHasFacets && getMode() !== 'point') {
+        await enterPointMode(false);
     }
 
     // #233 phase 1: hydrate heatmap overlay from `heatmap=1` URL param.
