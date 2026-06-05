@@ -216,17 +216,6 @@ format:
             padding: 4px 8px;
         }
     }
-    .sidebar-search { display: flex; flex-direction: column; gap: 4px; }
-    .sidebar-search input {
-        width: 100%;
-        padding: 7px 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 13px;
-        outline: none;
-    }
-    .sidebar-search input:focus { border-color: #1565c0; box-shadow: 0 0 0 2px rgba(21,101,192,0.15); }
-    .sidebar-search-hint { font-size: 11px; color: #888; }
     .side-panel {
         display: flex;
         flex-direction: column;
@@ -652,10 +641,6 @@ Circle size = log(sample count). Color = dominant data source.
 </div>
 <div class="side-panel">
 <div id="activeSearchChipHost" class="filter-chip-host" hidden></div>
-<div class="panel-section sidebar-search">
-<input type="text" id="sampleSearchSidebar" placeholder="Search samples (press Enter to search globally)" aria-label="Search samples globally" />
-<div class="sidebar-search-hint">Enter searches the entire world. Use the in-map controls for area-limited search.</div>
-</div>
 <div class="panel-section">
 <div class="filter-section stats-disclosure">
 <div class="filter-header" role="button" tabindex="0" aria-expanded="false" aria-controls="statsPanelBody" onclick="const body = this.nextElementSibling; const open = body.style.display === 'none'; body.style.display = open ? 'block' : 'none'; this.setAttribute('aria-expanded', open ? 'true' : 'false'); this.querySelector('span').textContent = open ? '▾' : '▸';" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">
@@ -865,13 +850,11 @@ function applyQueryToSourceFilter() {
 // See docs/site_libs/quarto-search/quarto-search.js.
 function applyQueryToSearch() {
     const input = document.getElementById('sampleSearch');
-    const sidebarInput = document.getElementById('sampleSearchSidebar');
-    if (!input && !sidebarInput) return;
+    if (!input) return;
     const params = new URLSearchParams(location.search);
     const q = params.get('search');
     if (q != null) {
-        if (input) input.value = q;
-        if (sidebarInput) sidebarInput.value = q;
+        input.value = q;
     }
 }
 
@@ -4356,8 +4339,6 @@ zoomWatcher = {
         // Same clear path as an empty search submit, without entering doSearch().
         _searchSeq++;
         if (searchInput) searchInput.value = '';
-        const sidebarInput = document.getElementById('sampleSearchSidebar');
-        if (sidebarInput) sidebarInput.value = '';
         if (searchResults) searchResults.textContent = '';
         await clearSearchFilter();
         await applySearchFilterChange();
@@ -4952,8 +4933,6 @@ zoomWatcher = {
         // Mutual exclusivity: a committed concept filter OWNS search_pids, so
         // clear the free-text box (and its sidebar mirror) before building.
         if (searchInput) searchInput.value = '';
-        const sidebarInput = document.getElementById('sampleSearchSidebar');
-        if (sidebarInput) sidebarInput.value = '';
 
         if (searchResults) searchResults.textContent = 'Filtering by concept…';
 
@@ -5145,29 +5124,8 @@ zoomWatcher = {
         }
     });
 
-    // Sidebar open-text search (M-1B). Mirrors #sampleSearch so there's one
-    // logical query term with two input chrome. Enter on sidebar always
-    // submits world scope — typed-text-from-sidebar implies "find anywhere".
-    // The mirror guards against feedback loops by comparing values before
-    // setting; setting .value does not fire 'input' so a simple guard suffices.
-    const searchInputSidebar = document.getElementById('sampleSearchSidebar');
-    if (searchInputSidebar && searchInput) {
-        searchInputSidebar.addEventListener('input', () => {
-            if (searchInput.value !== searchInputSidebar.value) {
-                searchInput.value = searchInputSidebar.value;
-            }
-        });
-        searchInput.addEventListener('input', () => {
-            if (searchInputSidebar.value !== searchInput.value) {
-                searchInputSidebar.value = searchInput.value;
-            }
-        });
-    }
-    if (searchInputSidebar) searchInputSidebar.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
-            doSearch('world');
-        }
-    });
+    // (#266) Sidebar search box removed — the in-map #sampleSearch overlay is
+    // the single canonical search input. The former sidebar mirror is gone.
 
     // #248 Flavor A boot: a `described-by=<concept-uri>` deep link commits the
     // concept filter. It WINS over `search=` if a hand-crafted URL carries both
