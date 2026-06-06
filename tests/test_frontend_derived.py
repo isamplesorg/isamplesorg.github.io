@@ -224,11 +224,44 @@ def test_manifest_emitted(tmp_path):
     assert all("sha256" in v and "rows" in v for v in m["outputs"].values())
 
 
-def test_wide_h3_builds_with_h3_columns(tmp_path):
+def test_wide_h3_cells_match_map_lite(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    assert _build(tmp_path, wide).returncode == 0  # builds map_lite (skips wide_h3)
     cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
            "--only", "wide_h3", "--no-manifest"]
     assert subprocess.run(cmd, capture_output=True, text=True).returncode == 0
     con = duckdb.connect()
-    cols = [r[0] for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{tmp_path / 't_wide_h3.parquet'}')").fetchall()]
+    wh3 = f"read_parquet('{tmp_path / 't_wide_h3.parquet'}')"
+    ml = f"read_parquet('{tmp_path / 't_samples_map_lite.parquet'}')"
+    cols = [r[0] for r in con.sql(f"DESCRIBE SELECT * FROM {wh3}").fetchall()]
     assert {"h3_res4", "h3_res6", "h3_res8"} <= set(cols)
+    # CORRECTNESS: wide_h3 cells must agree with map_lite's for the same located pids
+    bad = con.sql(f"SELECT COUNT(*) FROM {wh3} w JOIN {ml} m ON w.pid=m.pid "
+                  f"WHERE w.h3_res8 IS DISTINCT FROM m.h3_res8").fetchone()[0]
+    assert bad == 0, f"{bad} wide_h3 rows have h3_res8 disagreeing with map_lite"
+
+
+def test_semantic_gate_catches_h3_center_and_resolution_corruption(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    assert _build(tmp_path, wide).returncode == 0
+    h3f = str(tmp_path / "t_h3_summary_res4.parquet")
+    con = duckdb.connect()
+    tmp_h3 = h3f + ".tmp"
+    con.execute(f"""COPY (SELECT h3_cell, sample_count, 0.0::DOUBLE AS center_lat, center_lng,
+                   dominant_source, source_count, 999::INTEGER AS resolution FROM read_parquet('{h3f}'))
+                   TO '{tmp_h3}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_h3, h3f)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert v.returncode != 0 and "h3 res4" in v.stdout, f"gate missed h3 center/resolution corruption:\n{v.stdout}"
+
+
+def test_scheme_corruption_caught(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    assert _build(tmp_path, wide).returncode == 0
+    sf = str(tmp_path / "t_facet_summaries.parquet")
+    con = duckdb.connect(); tmp_s = sf + ".tmp"
+    con.execute(f"""COPY (SELECT facet_type, facet_value, 7::INTEGER AS scheme, count
+                   FROM read_parquet('{sf}')) TO '{tmp_s}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_s, sf)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "scheme" in v.stdout, f"gate missed scheme corruption:\n{v.stdout}"

@@ -103,6 +103,8 @@ def main():
         UNION ALL
         SELECT * FROM summ EXCEPT SELECT * FROM recomputed)""")
     check("facet_summaries == GROUP BY facets", mismatch == 0, f"{mismatch} (facet_type,value,count) rows disagree")
+    check("facet_summaries.scheme all NULL", scalar(f"SELECT COUNT(*) FROM {S} WHERE scheme IS NOT NULL") == 0,
+          "non-NULL scheme rows (contract: scheme is NULL)")
 
     # --- 6. ALGEBRA: facet_cross_filter single-dim rows == conditional GROUP BY facets ---
     dims = ("source", "material", "context", "object_type")
@@ -188,14 +190,22 @@ def main():
                 ref_h3 = (f"WITH sc AS (SELECT h3_res{res} AS cell, source, COUNT(*) c FROM samp_geo "
                           f"WHERE h3_res{res} IS NOT NULL GROUP BY h3_res{res}, source), "
                           f"dom AS (SELECT cell, source AS ds, ROW_NUMBER() OVER (PARTITION BY cell ORDER BY c DESC, source ASC) rn FROM sc), "
-                          f"agg AS (SELECT h3_res{res} AS cell, COUNT(*) sc2, COUNT(DISTINCT source) srcc FROM samp_geo "
+                          f"agg AS (SELECT h3_res{res} AS cell, COUNT(*) sc2, COUNT(DISTINCT source) srcc, "
+                          f"ROUND(AVG(latitude),6) clat, ROUND(AVG(longitude),6) clng FROM samp_geo "
                           f"WHERE h3_res{res} IS NOT NULL GROUP BY h3_res{res}) "
-                          f"SELECT agg.cell::UBIGINT h3_cell, agg.sc2::INTEGER sample_count, dom.ds AS dominant_source, "
-                          f"agg.srcc::INTEGER source_count FROM agg JOIN dom ON dom.cell=agg.cell AND dom.rn=1")
-                # discrete cols only (float centroids are display-only / thread-dependent)
-                file_h3 = f"SELECT h3_cell, sample_count, dominant_source, source_count FROM read_parquet('{hp}')"
-                check(f"h3 res{res} == fresh build from --wide", except_diff(ref_h3, file_h3) == 0,
-                      "h3 cells/counts/dominant_source differ from a re-derivation off the wide")
+                          f"SELECT agg.cell::UBIGINT h3_cell, agg.sc2::INTEGER sample_count, agg.clat center_lat, "
+                          f"agg.clng center_lng, dom.ds AS dominant_source, agg.srcc::INTEGER source_count, "
+                          f"{res}::INTEGER resolution FROM agg JOIN dom ON dom.cell=agg.cell AND dom.rn=1")
+                FH = f"read_parquet('{hp}')"
+                # discrete cols exact (now incl. resolution)
+                disc_ref = f"SELECT h3_cell, sample_count, dominant_source, source_count, resolution FROM ({ref_h3})"
+                disc_file = f"SELECT h3_cell, sample_count, dominant_source, source_count, resolution FROM {FH}"
+                check(f"h3 res{res} discrete == fresh build", except_diff(disc_ref, disc_file) == 0,
+                      "h3 cells/counts/dominant_source/resolution differ from re-derivation off the wide")
+                # centers: tolerant (float/thread last-ULP jitter ok; gross corruption like 0,0 caught)
+                cdiff = scalar(f"SELECT COALESCE(MAX(GREATEST(ABS(f.center_lat-r.center_lat), "
+                               f"ABS(f.center_lng-r.center_lng))), 0) FROM {FH} f JOIN ({ref_h3}) r ON f.h3_cell=r.h3_cell")
+                check(f"h3 res{res} centers within 1e-4", cdiff <= 1e-4, f"max center delta {cdiff}")
 
     # --- informational (not failing): context/object_type root presence ---
     for dim, root in [("context", "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"),
