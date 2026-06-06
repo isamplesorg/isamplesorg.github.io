@@ -1,0 +1,36 @@
+name: Derived-parquet pipeline tests
+
+# Fast, AI-free gate for the data pipeline. Runs the fixture-based unit tests
+# (no network for data, no large parquet) whenever the pipeline code changes.
+on:
+  pull_request:
+    paths:
+      - "scripts/build_frontend_derived.py"
+      - "scripts/validate_frontend_derived.py"
+      - "tests/test_frontend_derived.py"
+      - "scripts/requirements.txt"
+      - "Makefile"
+      - ".github/workflows/pipeline-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/build_frontend_derived.py"
+      - "scripts/validate_frontend_derived.py"
+      - "tests/test_frontend_derived.py"
+  workflow_dispatch:
+
+jobs:
+  fixture-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install -r scripts/requirements.txt
+      - name: Run pipeline fixture tests
+        # builds tiny synthetic wides (WKB BLOB + DuckDB GEOMETRY), runs the real
+        # builder + algebraic validator, asserts the contract. Exits non-zero on
+        # any failure -> PR is blocked.
+        run: python -m pytest tests/test_frontend_derived.py -q
