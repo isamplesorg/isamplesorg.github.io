@@ -14,8 +14,16 @@ Usage:
       --facets URL --map-lite URL --summaries URL --cross-filter URL \
       --h3 URL4 URL6 URL8
 """
-import argparse, os, sys
+import argparse, hashlib, json, os, sys
 import duckdb
+
+
+def sha256_file(path, _b=1 << 20):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(_b), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 MATERIAL_ROOT = "https://w3id.org/isample/vocabulary/material/1.0/material"
 PID_K = "ark:/28722/k2p55x96j"  # #260 sentinel: must not flip under #271 selection
@@ -205,7 +213,44 @@ def main():
                 # centers: tolerant (float/thread last-ULP jitter ok; gross corruption like 0,0 caught)
                 cdiff = scalar(f"SELECT COALESCE(MAX(GREATEST(ABS(f.center_lat-r.center_lat), "
                                f"ABS(f.center_lng-r.center_lng))), 0) FROM {FH} f JOIN ({ref_h3}) r ON f.h3_cell=r.h3_cell")
-                check(f"h3 res{res} centers within 1e-4", cdiff <= 1e-4, f"max center delta {cdiff}")
+                # tolerance 1e-5 (~1 m): absorbs the ~1e-6 round/thread jitter, catches
+                # any meaningful shift (an adversary's 8e-5/~9 m shift previously slipped
+                # through the old 1e-4). Residual undetected error is bounded at ~1 m on
+                # display-only cluster centroids.
+                check(f"h3 res{res} centers within 1e-5 (~1m)", cdiff <= 1e-5, f"max center delta {cdiff}")
+
+    # --- 12. manifest integrity (when a {tag}_manifest.json is present) ---
+    # The build emits a provenance manifest (per-output + input sha256). Verify the
+    # written files match it, so the manifest is a guarded attestation, not decoration.
+    # NOTE: the manifest is self-attesting (not signed) — this catches accidental
+    # corruption, stale files, and tampering that didn't also rewrite the manifest;
+    # it does NOT defend against an attacker who rewrites file+manifest consistently.
+    if a.dir and a.tag:
+        man_path = os.path.join(a.dir, f"{a.tag}_manifest.json")
+        if os.path.exists(man_path):
+            try:
+                man = json.load(open(man_path))
+            except Exception as e:
+                man = None
+                check("manifest parses", False, f"unreadable: {e}")
+            if man:
+                outs = man.get("outputs", {})
+                check("manifest has outputs", bool(outs), "empty manifest.outputs")
+                bad = []
+                for fname, m in outs.items():
+                    fp = os.path.join(a.dir, fname)
+                    if not os.path.exists(fp):
+                        bad.append(f"{fname}:missing")
+                    elif sha256_file(fp) != m.get("sha256"):
+                        bad.append(f"{fname}:sha256")
+                check("manifest sha256 matches output files", not bad, f"mismatches: {bad}")
+                if a.wide:
+                    msha = man.get("input", {}).get("sha256")
+                    if msha and msha != "remote/unhashed":
+                        check("manifest input sha256 matches --wide", sha256_file(a.wide) == msha,
+                              "wide sha256 != manifest.input.sha256")
+        else:
+            info.append(f"no {a.tag}_manifest.json (manifest verification skipped)")
 
     # --- informational (not failing): context/object_type root presence ---
     for dim, root in [("context", "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"),

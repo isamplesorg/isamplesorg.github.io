@@ -255,6 +255,38 @@ def test_semantic_gate_catches_h3_center_and_resolution_corruption(tmp_path):
     assert v.returncode != 0 and "h3 res4" in v.stdout, f"gate missed h3 center/resolution corruption:\n{v.stdout}"
 
 
+def test_h3_center_micro_shift_caught(tmp_path):
+    """Adversary shifted every H3 centroid ~9m (8e-5 deg) and passed the old 1e-4
+    tolerance. The tightened 1e-5 gate must now catch it."""
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    assert _build(tmp_path, wide).returncode == 0
+    h3f = str(tmp_path / "t_h3_summary_res4.parquet")
+    con = duckdb.connect(); tmp_h3 = h3f + ".tmp"
+    con.execute(f"""COPY (SELECT h3_cell, sample_count, ROUND(center_lat+8e-5,6) AS center_lat,
+                   ROUND(center_lng+8e-5,6) AS center_lng, dominant_source, source_count, resolution
+                   FROM read_parquet('{h3f}')) TO '{tmp_h3}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_h3, h3f)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert v.returncode != 0 and "centers within" in v.stdout, f"gate missed ~9m centroid shift:\n{v.stdout}"
+
+
+def test_manifest_tamper_caught(tmp_path):
+    """Adversary corrupted manifest.json sha256s and the validator ignored it.
+    Manifest integrity must now be a gated check."""
+    import json
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t", "--skip", "wide_h3"]
+    assert subprocess.run(cmd, capture_output=True, text=True).returncode == 0
+    man = tmp_path / "t_manifest.json"
+    m = json.loads(man.read_text())
+    for k in m["outputs"]:
+        m["outputs"][k]["sha256"] = "deadbeef" * 8
+    man.write_text(json.dumps(m))
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "manifest sha256" in v.stdout, f"gate missed manifest tamper:\n{v.stdout}"
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0
