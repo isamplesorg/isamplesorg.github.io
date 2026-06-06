@@ -155,7 +155,80 @@ def test_algebraic_validator_passes_on_fixture(tmp_path):
     cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
            "--skip", "wide_h3", "--no-manifest"]
     assert subprocess.run(cmd, capture_output=True, text=True).returncode == 0
-    # --min-rows 1 for the tiny fixture; sentinel auto-skips when its pid is absent.
-    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
-                       capture_output=True, text=True)
+    # --min-rows 1 for the tiny fixture; sentinel auto-skips when its pid is absent;
+    # --wide exercises the SEMANTIC gate (must still pass on a clean rebuild).
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
     assert v.returncode == 0, f"validator failed on fixture:\n{v.stdout}\n{v.stderr}"
+
+
+def _build(tmp_path, wide, tag="t", extra=None):
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", tag,
+           "--skip", "wide_h3", "--no-manifest"] + (extra or [])
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def test_semantic_gate_catches_corruption_that_internal_checks_miss(tmp_path):
+    """The whole point (Codex's attack): corrupt map_lite coords so internal
+    consistency still holds, but the --wide semantic gate must FAIL."""
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    assert _build(tmp_path, wide).returncode == 0
+    ml = str(tmp_path / "t_samples_map_lite.parquet")
+
+    # corrupt: zero out every latitude (passes pid-set/uniqueness/h3-sum checks)
+    con = duckdb.connect()
+    tmp_ml = ml + ".tmp"
+    con.execute(f"""COPY (SELECT pid, label, source, 0.0::DOUBLE AS latitude, longitude,
+                   place_name, result_time, h3_res8, h3_res8_hex FROM read_parquet('{ml}'))
+                   TO '{tmp_ml}' (FORMAT PARQUET)""")
+    con.close(); os.replace(tmp_ml, ml)
+
+    # internal-only validator: still PASSES (the hole Codex exploited)
+    internal = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                              capture_output=True, text=True)
+    assert internal.returncode == 0, "expected internal-only checks to miss coord corruption"
+
+    # semantic gate (--wide): must now FAIL
+    semantic = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                               "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert semantic.returncode != 0, f"semantic gate failed to catch coord corruption:\n{semantic.stdout}"
+    assert "map_lite == fresh build" in semantic.stdout
+
+
+def test_duplicate_pid_hard_fails(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    con = duckdb.connect(); con.execute("INSTALL spatial; LOAD spatial;")
+    # append a duplicate of an existing located pid
+    dup = str(tmp_path / "wide_dup.parquet")
+    con.execute(f"""COPY (
+        SELECT * FROM read_parquet('{wide}')
+        UNION ALL
+        SELECT * FROM read_parquet('{wide}') WHERE pid='m-real-first'
+    ) TO '{dup}' (FORMAT PARQUET)""")
+    con.close()
+    r = _build(tmp_path, dup)
+    assert r.returncode != 0 and "non-unique" in (r.stdout + r.stderr).lower(), \
+        f"builder should hard-fail on duplicate pids:\n{r.stdout}\n{r.stderr}"
+
+
+def test_manifest_emitted(tmp_path):
+    import json
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t", "--skip", "wide_h3"]
+    assert subprocess.run(cmd, capture_output=True, text=True).returncode == 0
+    man = tmp_path / "t_manifest.json"
+    assert man.exists()
+    m = json.loads(man.read_text())
+    assert m["input"]["sha256"] and m["duckdb_version"] and m["outputs"]
+    assert any("sample_facets_v2" in k for k in m["outputs"])
+    assert all("sha256" in v and "rows" in v for v in m["outputs"].values())
+
+
+def test_wide_h3_builds_with_h3_columns(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
+           "--only", "wide_h3", "--no-manifest"]
+    assert subprocess.run(cmd, capture_output=True, text=True).returncode == 0
+    con = duckdb.connect()
+    cols = [r[0] for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{tmp_path / 't_wide_h3.parquet'}')").fetchall()]
+    assert {"h3_res4", "h3_res6", "h3_res8"} <= set(cols)

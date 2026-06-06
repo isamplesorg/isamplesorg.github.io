@@ -77,9 +77,12 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
   └─► consumed by Search Explorer to render facet URIs as prefLabels
 ```
 
-Arrows indicate derivation, not containment. Every file in the left
-column can be rebuilt from its parent by a script in
-`isamples-python/` or `isamplesorg.github.io/scripts/`.
+Arrows indicate derivation, not containment. The Stage-4 frontend-derived
+files are rebuilt by `isamplesorg.github.io/scripts/build_frontend_derived.py`
+(+ `build_vocab_labels.py`); the Stage-2 narrow/wide files are rebuilt by
+`pqg/`. Note: the **currently deployed** `isamples_202601_*` files predate that
+builder — a fresh build is NOT bit-for-bit identical to them (see
+`DATA_PROVENANCE.md`, "deployed 202601 not reproducible").
 
 ## 3. Catalog
 
@@ -246,6 +249,8 @@ for the alias when you want "latest."
   ```
 
 ### 4.8 `isamples_202601_sample_facets_v2.parquet`
+
+> ⚠️ **Deployed-file caveat:** the live `isamples_202601_sample_facets_v2.parquet` still contains **346,768** bare-root "Material" rows — it predates the #271 selection rule below. The rule describes the **builder contract** for the next rebuild (verified to drop the root → 0), not the file currently served.
 
 - **Role**: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI.
 - **Headline schema** (8 cols, all VARCHAR): `pid, source, material, context, object_type, label, description, place_name`. `material`/`context`/`object_type` are scalar URI strings, NOT arrays — one row per sample, so a sample tagged with multiple URIs is represented by a single chosen URI. **Selection rule:** `material` = the **first NON-ROOT** concept in the array (the broad root `.../material/1.0/material` is dropped — #265/#271); root-only samples → NULL material. This is **NOT** necessarily the leaf/most-specific concept (the arrays are not clean SKOS paths). `context`/`object_type` = the first array element (`[1]`). `place_name` is a VARCHAR cast of the wide's `VARCHAR[]` (note: `samples_map_lite` keeps `place_name` as `VARCHAR[]`). For multi-value accuracy, JOIN back to `wide.p__has_*_category`.

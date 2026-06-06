@@ -34,6 +34,8 @@ def main():
     ap.add_argument("--facets"); ap.add_argument("--map-lite")
     ap.add_argument("--summaries"); ap.add_argument("--cross-filter")
     ap.add_argument("--h3", nargs=3, metavar=("R4", "R6", "R8"))
+    ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
+                    "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
                     help="floor for the non-empty sanity check (use 1 for fixtures)")
     a = ap.parse_args()
@@ -151,6 +153,49 @@ def main():
     # --- 10. sanity floor ---
     total, mat = con.sql(f"SELECT COUNT(*), COUNT(material) FROM {F}").fetchone()
     check("facets non-empty", total >= a.min_rows, f"{total:,} rows (min {a.min_rows:,})")
+
+    # --- 11. SEMANTIC gate vs the source wide (the REAL trust gate) ---
+    # Internal-consistency checks (1-10) pass even on a wrecked-but-self-consistent
+    # rebuild (proven). Re-derive from the wide with the SAME builder logic and
+    # assert the WRITTEN files match it. Catches corrupted material/coords/H3,
+    # stale files, and wrong-version artifacts.
+    if a.wide:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import build_frontend_derived as B
+        con.execute("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial;")
+        B.build_base_tables(con, a.wide, 0.0)  # builds samp_geo; hard-fails on dup keys
+
+        def except_diff(asql, bsql):
+            return scalar(f"SELECT (SELECT COUNT(*) FROM (({asql}) EXCEPT ({bsql}))) "
+                          f"+ (SELECT COUNT(*) FROM (({bsql}) EXCEPT ({asql})))")
+
+        ref_facets = ("SELECT pid, source, material, context, object_type, label, description, "
+                      "place_name::VARCHAR AS place_name FROM samp_geo")
+        file_facets = f"SELECT pid, source, material, context, object_type, label, description, place_name FROM {F}"
+        check("facets == fresh build from --wide", except_diff(ref_facets, file_facets) == 0,
+              "facets rows differ from a re-derivation off the wide (corruption/stale/wrong-version)")
+
+        ref_ml = ("SELECT pid, label, source, latitude, longitude, result_time, "
+                  "h3_res8::UBIGINT AS h3_res8, h3_h3_to_string(h3_res8) AS h3_res8_hex, "
+                  "place_name::VARCHAR AS pn FROM samp_geo")
+        file_ml = (f"SELECT pid, label, source, latitude, longitude, result_time, h3_res8, h3_res8_hex, "
+                   f"place_name::VARCHAR AS pn FROM {ML}")
+        check("map_lite == fresh build from --wide", except_diff(ref_ml, file_ml) == 0,
+              "map_lite coords/h3/place_name differ from a re-derivation off the wide")
+
+        if h3:
+            for res, hp in zip((4, 6, 8), h3):
+                ref_h3 = (f"WITH sc AS (SELECT h3_res{res} AS cell, source, COUNT(*) c FROM samp_geo "
+                          f"WHERE h3_res{res} IS NOT NULL GROUP BY h3_res{res}, source), "
+                          f"dom AS (SELECT cell, source AS ds, ROW_NUMBER() OVER (PARTITION BY cell ORDER BY c DESC, source ASC) rn FROM sc), "
+                          f"agg AS (SELECT h3_res{res} AS cell, COUNT(*) sc2, COUNT(DISTINCT source) srcc FROM samp_geo "
+                          f"WHERE h3_res{res} IS NOT NULL GROUP BY h3_res{res}) "
+                          f"SELECT agg.cell::UBIGINT h3_cell, agg.sc2::INTEGER sample_count, dom.ds AS dominant_source, "
+                          f"agg.srcc::INTEGER source_count FROM agg JOIN dom ON dom.cell=agg.cell AND dom.rn=1")
+                # discrete cols only (float centroids are display-only / thread-dependent)
+                file_h3 = f"SELECT h3_cell, sample_count, dominant_source, source_count FROM read_parquet('{hp}')"
+                check(f"h3 res{res} == fresh build from --wide", except_diff(ref_h3, file_h3) == 0,
+                      "h3 cells/counts/dominant_source differ from a re-derivation off the wide")
 
     # --- informational (not failing): context/object_type root presence ---
     for dim, root in [("context", "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature"),

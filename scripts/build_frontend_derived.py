@@ -29,8 +29,11 @@ get NULL material (excluded from the facet). This is NOT leaf/most-specific
 selection — see DATA_PROVENANCE.md. context/object_type use the first array
 element ([1]); their root-dropping is deferred (tracked in the pipeline epic).
 
-Determinism: every COPY has an ORDER BY; dominant_source ties break on source
-name (ASC); center lat/lng are rounded to 6 dp.
+Determinism: row order and all DISCRETE values are deterministic (ORDER BY on
+every COPY; dominant_source ties broken by source name ASC; non-unique keys are
+a hard error). Floating centroids (center_lat/lng) are rounded to 6 dp and are
+display-only — not part of the reproducibility guarantee; pass --threads 1 for
+bit-stable centroids across machines.
 
 Usage:
   python scripts/build_frontend_derived.py --wide WIDE.parquet --outdir OUT --tag isamples_202606
@@ -122,9 +125,14 @@ def build_base_tables(con, wide, t0):
     n_samp = con.sql("SELECT COUNT(*) FROM samp").fetchone()[0]
     n_geo = con.sql("SELECT COUNT(*) FROM samp_geo").fetchone()[0]
     n_dup = con.sql("SELECT COUNT(*) FROM (SELECT pid FROM samp_geo GROUP BY pid HAVING COUNT(*)>1)").fetchone()[0]
-    log(f"samp={n_samp:,}  samp_geo={n_geo:,}  duplicate_pids={n_dup:,}", t0)
-    if n_dup:
-        print(f"WARNING: {n_dup:,} duplicate pids in samp_geo — facet counts/joins may inflate", flush=True)
+    n_icdup = con.sql("SELECT COUNT(*) FROM (SELECT row_id FROM ic GROUP BY row_id HAVING COUNT(*)>1)").fetchone()[0]
+    log(f"samp={n_samp:,}  samp_geo={n_geo:,}  duplicate_pids={n_dup:,}  duplicate_concept_row_ids={n_icdup:,}", t0)
+    if n_dup or n_icdup:
+        # HARD fail (Codex): non-unique keys make the output grain wrong (inflated
+        # facet counts, ambiguous joins, non-total ORDER BY pid). Abort before writing.
+        raise SystemExit(
+            f"FATAL: non-unique keys — duplicate_pids={n_dup}, duplicate_concept_row_ids={n_icdup}. "
+            f"Output grain/joins would be wrong; refusing to write.")
 
 
 def build_sample_facets_v2(con, out):
@@ -249,6 +257,8 @@ def main():
     ap.add_argument("--only", default="", help=f"comma list of: {','.join(ARTIFACTS)}")
     ap.add_argument("--skip", default="", help="comma list of the same names to skip")
     ap.add_argument("--no-manifest", action="store_true", help="skip writing {tag}_manifest.json")
+    ap.add_argument("--threads", type=int, default=0,
+                    help="DuckDB thread count; set 1 for bit-stable floating centroids (slower)")
     args = ap.parse_args()
 
     only = set(filter(None, args.only.split(",")))
@@ -261,6 +271,8 @@ def main():
 
     t0 = time.time()
     con = duckdb.connect()
+    if args.threads:
+        con.execute(f"PRAGMA threads={args.threads}")
     con.execute("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial;")
     log("building base sample tables…", t0)
     build_base_tables(con, args.wide, t0)
