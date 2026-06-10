@@ -51,10 +51,12 @@ $(OC_WIDE):
 	curl -fSL -o $(OC_WIDE) "$(OC_WIDE_URL)"
 	@echo "sha256: $$(shasum -a 256 $(OC_WIDE) | cut -d' ' -f1)  $(OC_WIDE)"
 
-enrich: $(WIDE) $(OC_WIDE)
+# real file dependency so `make -j` orders enrich before validate-enrich
+enrich: $(ENRICHED)
+$(ENRICHED): $(WIDE) $(OC_WIDE)
 	$(PY) $(ENRICH) --src $(WIDE) --oc-wide $(OC_WIDE) --out $(ENRICHED)
 
-validate-enrich:
+validate-enrich: $(ENRICHED)
 	$(PY) $(VALIDATE_ENRICH) --src $(WIDE) --oc-wide $(OC_WIDE) --out $(ENRICHED)
 
 derived: $(WIDE)
@@ -69,11 +71,15 @@ SENTINEL_FLAG ?= --sentinel-material $(LEGACY_SENTINEL)
 validate:
 	$(PY) $(VALIDATE) --dir $(OUTDIR) --tag $(TAG) $(SENTINEL_FLAG)
 
-all: wide derived validate
+# ordered sub-makes: safe under `make -j` (derived must finish before validate)
+all: wide
+	$(MAKE) derived
+	$(MAKE) validate
 
 # Full #272 chain: enrich the wide with OC concepts, gate it, then build+gate derived.
-all-272: wide oc-wide enrich validate-enrich
-	$(MAKE) derived validate DERIVED_WIDE=$(ENRICHED) TAG=$(TAG) SENTINEL_FLAG=
+all-272: validate-enrich
+	$(MAKE) derived DERIVED_WIDE=$(ENRICHED) TAG=$(TAG)
+	$(MAKE) validate TAG=$(TAG) SENTINEL_FLAG=
 
 clean:
 	rm -rf $(OUTDIR)

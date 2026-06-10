@@ -359,6 +359,65 @@ def test_empty_oc_array_normalizes_to_null(pair, tmp_path):
     assert mats is None
 
 
+def test_validator_fails_on_shifted_minted_row_ids(pair, tmp_path):
+    """Codex round-2 MAJOR: move minted rows to arbitrary ids (107/108 ->
+    1007/1008), repoint overlay arrays at them — URI resolution still correct,
+    but the deterministic-id contract is broken. Must FAIL."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0
+    tampered = str(tmp_path / "shifted.parquet")
+    con = duckdb.connect()
+    con.execute(f"""
+        COPY (
+          SELECT o.* REPLACE (
+            (CASE WHEN o.row_id IN (107,108) THEN o.row_id + 900 ELSE o.row_id END) AS row_id,
+            list_transform(o.p__has_material_category,
+              x -> CASE WHEN x IN (107,108) THEN x + 900 ELSE x END) AS p__has_material_category,
+            list_transform(o.p__has_sample_object_type,
+              x -> CASE WHEN x IN (107,108) THEN x + 900 ELSE x END) AS p__has_sample_object_type)
+          FROM read_parquet('{out}') o ORDER BY row_id
+        ) TO '{tampered}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+    con.close()
+    r = run_validate(src, oc, tampered)
+    assert r.returncode != 0
+
+
+def test_validator_fails_on_smuggled_minted_columns(pair, tmp_path):
+    """Codex round-2 MAJOR: minted rows must be NULL outside
+    pid/otype/label/scheme — smuggled thumbnail_url must FAIL."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0
+    tampered = str(tmp_path / "smuggled.parquet")
+    con = duckdb.connect()
+    con.execute(f"""
+        COPY (
+          SELECT o.* REPLACE (
+            (CASE WHEN o.row_id > 106 THEN 'https://evil/x.jpg' ELSE o.thumbnail_url END) AS thumbnail_url)
+          FROM read_parquet('{out}') o ORDER BY row_id
+        ) TO '{tampered}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+    con.close()
+    r = run_validate(src, oc, tampered)
+    assert r.returncode != 0
+    assert "EXACTLY match" in r.stdout
+
+
+def test_hard_fail_on_duplicate_oc_concept_row_ids(pair):
+    """Codex round-2 MAJOR: a duplicated OC concept row_id fans one reference
+    into several URIs — both enricher and validator must reject the input."""
+    src, oc, out = pair
+    dup_oc = oc.replace("oc.parquet", "oc_dupconcept.parquet")
+    build_oc(dup_oc, concepts=OC_CONCEPTS + [
+        (9003, MAT + "soil", "Soil", None, None)])  # row_id 9003 duplicated, different URI
+    r = run_enrich(src, dup_oc, out)
+    assert r.returncode != 0
+    assert "concept row_ids" in (r.stderr + r.stdout)
+    assert not os.path.exists(out)
+    # validator must also reject it as an input, given any output
+    assert run_enrich(src, oc, out).returncode == 0
+    rv = run_validate(src, dup_oc, out)
+    assert rv.returncode != 0
+
+
 def test_refuses_to_overwrite_input(pair):
     src, oc, _ = pair
     r = run_enrich(src, oc, src)

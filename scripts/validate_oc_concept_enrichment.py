@@ -59,6 +59,15 @@ def main():
     def scalar(sql):
         return con.sql(sql).fetchone()[0]
 
+    # ---- input integrity: duplicate OC concept row_ids would fan one
+    # reference into several URIs through every resolve join below (Codex
+    # round-2) — reject the inputs before deriving expectations from them.
+    n_dup_oc_crid = scalar(
+        f"SELECT COUNT(*) FROM (SELECT row_id FROM {OC} WHERE otype='IdentifiedConcept' "
+        f"AND row_id IS NOT NULL GROUP BY row_id HAVING COUNT(*)>1)")
+    check("OC concept row_ids unique (input integrity)", n_dup_oc_crid == 0,
+          f"{n_dup_oc_crid} duplicated OC IdentifiedConcept row_ids")
+
     # ---- expected per-pid ORDERED URI lists from OC (independent derivation)
     con.execute(f"""
     CREATE TEMP TABLE exp_oc AS
@@ -138,9 +147,25 @@ def main():
     check("replaced arrays untouched outside the overlay", arr_diff == 0,
           f"{arr_diff} non-overlay rows had their concept arrays modified")
 
-    # --- 3. minted concepts: exactly the missing URIs, ids beyond src max ----
+    # --- 3. minted concepts: EXACT full-row expectation, re-derived ----------
+    # (Codex round-2 MAJOR: URI-set + metadata spot checks let shifted row_ids
+    # and smuggled column values pass. Re-derive the complete expected minted
+    # rows — deterministic ids max(src)+rank(uri), every other column NULL
+    # except pid/otype/label/scheme — and demand exact equality, all columns.)
     max_src = scalar(f"SELECT COALESCE(MAX(row_id),0) FROM {SRC}")
-    minted_diff = scalar(f"""
+    src_schema = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM {SRC}").fetchall()]
+    exp_minted_cols = ", ".join(
+        {
+            "row_id": f"({max_src} + ROW_NUMBER() OVER (ORDER BY uri))::{dict(src_schema)['row_id']} AS row_id",
+            "pid": "uri AS pid",
+            "otype": "'IdentifiedConcept' AS otype",
+            "label": "label",
+            "scheme_name": "scheme_name",
+            "scheme_uri": "scheme_uri",
+        }.get(c, f"NULL::{t} AS {c}")
+        for c, t in src_schema)
+    con.execute(f"""
+    CREATE TEMP TABLE expected_minted AS
       WITH oc_uris AS (
         SELECT DISTINCT unnest(mat_uris) AS uri FROM exp_oc
         UNION SELECT DISTINCT unnest(obj_uris) FROM exp_oc),
@@ -148,27 +173,24 @@ def main():
         SELECT uri FROM oc_uris
         WHERE uri NOT IN (SELECT pid FROM {SRC} WHERE otype='IdentifiedConcept')
           AND uri IS NOT NULL),
-      minted AS (SELECT pid AS uri FROM {OUT} WHERE row_id > {max_src})
-      SELECT
-        (SELECT COUNT(*) FROM (SELECT uri FROM missing EXCEPT SELECT uri FROM minted)) +
-        (SELECT COUNT(*) FROM (SELECT uri FROM minted EXCEPT SELECT uri FROM missing))""")
-    check("minted concepts == exactly the missing URIs", minted_diff == 0,
-          f"{minted_diff} URI mismatches between minted rows and missing set")
-    bad_minted_type = scalar(
-        f"SELECT COUNT(*) FROM {OUT} WHERE row_id > {max_src} AND otype <> 'IdentifiedConcept'")
-    check("minted rows are IdentifiedConcept", bad_minted_type == 0, f"{bad_minted_type} bad otype")
-    bad_minted_meta = scalar(f"""
-      WITH oc_meta AS (
+      meta AS (
         SELECT pid AS uri, MIN(label) AS label, MIN(scheme_name) AS scheme_name,
                MIN(scheme_uri) AS scheme_uri
         FROM {OC} WHERE otype='IdentifiedConcept' GROUP BY pid)
-      SELECT COUNT(*) FROM {OUT} o JOIN oc_meta m ON m.uri = o.pid
-      WHERE o.row_id > {max_src}
-        AND (o.label IS DISTINCT FROM m.label
-          OR o.scheme_name IS DISTINCT FROM m.scheme_name
-          OR o.scheme_uri IS DISTINCT FROM m.scheme_uri)""")
-    check("minted rows carry OC label/scheme metadata", bad_minted_meta == 0,
-          f"{bad_minted_meta} minted rows with wrong metadata")
+      SELECT {exp_minted_cols}
+      FROM (SELECT m.uri, t.label, t.scheme_name, t.scheme_uri
+            FROM missing m JOIN meta t ON t.uri = m.uri);
+    """)
+    all_cols = ", ".join(c for c, _ in src_schema)
+    minted_exact_diff = scalar(f"""
+      SELECT (SELECT COUNT(*) FROM (
+                (SELECT {all_cols} FROM expected_minted)
+                EXCEPT (SELECT {all_cols} FROM {OUT} WHERE row_id > {max_src})))
+           + (SELECT COUNT(*) FROM (
+                (SELECT {all_cols} FROM {OUT} WHERE row_id > {max_src})
+                EXCEPT (SELECT {all_cols} FROM expected_minted)))""")
+    check("minted rows EXACTLY match re-derived expectation (all columns)",
+          minted_exact_diff == 0, f"{minted_exact_diff} full-row mismatches among minted rows")
 
     # --- 4. grain + accounting ----------------------------------------------
     n_src, n_out = scalar(f"SELECT COUNT(*) FROM {SRC}"), scalar(f"SELECT COUNT(*) FROM {OUT}")

@@ -118,9 +118,15 @@ def main():
     n_dup_oc_pid = con.sql(
         f"SELECT COUNT(*) FROM (SELECT pid FROM {OC} WHERE otype='MaterialSampleRecord' "
         f"GROUP BY pid HAVING COUNT(*)>1)").fetchone()[0]
-    if n_dup_src_rowid or n_dup_oc_pid:
+    # duplicate OC concept row_ids would fan ONE reference out into SEVERAL
+    # URIs through the resolve join (Codex round-2) — input-integrity failure.
+    n_dup_oc_crid = con.sql(
+        f"SELECT COUNT(*) FROM (SELECT row_id FROM {OC} WHERE otype='IdentifiedConcept' "
+        f"AND row_id IS NOT NULL GROUP BY row_id HAVING COUNT(*)>1)").fetchone()[0]
+    if n_dup_src_rowid or n_dup_oc_pid or n_dup_oc_crid:
         sys.exit(f"FATAL: non-unique keys — src duplicate row_ids={n_dup_src_rowid}, "
-                 f"OC duplicate MSR pids={n_dup_oc_pid}. Refusing to write.")
+                 f"OC duplicate MSR pids={n_dup_oc_pid}, "
+                 f"OC duplicate concept row_ids={n_dup_oc_crid}. Refusing to write.")
 
     # ---- 1. OC per-pid ORDERED URI lists, both dims ------------------------
     # WITH ORDINALITY preserves OC's array order; every rid MUST resolve to an
