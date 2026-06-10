@@ -418,6 +418,49 @@ def test_hard_fail_on_duplicate_oc_concept_row_ids(pair):
     assert rv.returncode != 0
 
 
+def test_validator_rejects_unresolved_oc_refs_standalone(pair, tmp_path):
+    """Codex round-3 MAJOR: the validator's inner joins silently DROPPED
+    dangling OC refs from the expectation — an output omitting them passed.
+    The gate must reject such input even when run standalone."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0  # good output from good oc
+    bad_oc = str(tmp_path / "oc_dangling.parquet")
+    build_oc(bad_oc, samples=[("ark:/28722/k2p55x96j", [9001, 99999], [9004])])
+    r = run_validate(src, bad_oc, out)
+    assert r.returncode != 0
+    assert "concept refs resolve" in r.stdout
+
+
+def test_validator_rejects_duplicate_oc_msr_pids(pair, tmp_path):
+    """Codex round-3 MAJOR: validator must match the enricher's input grain."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0
+    dup_oc = str(tmp_path / "oc_duppid.parquet")
+    build_oc(dup_oc, samples=OC_SAMPLES + [("ark:/28722/k2p55x96j", [9001], [9004])])
+    r = run_validate(src, dup_oc, out)
+    assert r.returncode != 0
+    assert "MSR pids unique" in r.stdout
+
+
+def test_null_pid_src_concept_does_not_break_minted_expectation(pair, tmp_path):
+    """Codex round-3 MINOR: a NULL-pid IdentifiedConcept in src must not
+    empty the minted expectation (NOT IN NULL trap) — good output still passes."""
+    src, oc, out = pair
+    src2 = str(tmp_path / "src_nullpid.parquet")
+    con = duckdb.connect()
+    con.execute(f"""
+        COPY (
+          SELECT * FROM read_parquet('{src}')
+          UNION ALL
+          SELECT s.* REPLACE (999::BIGINT AS row_id, NULL::VARCHAR AS pid)
+          FROM read_parquet('{src}') s WHERE s.row_id = 101
+        ) TO '{src2}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+    con.close()
+    assert run_enrich(src2, oc, out).returncode == 0
+    r = run_validate(src2, oc, out)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
 def test_refuses_to_overwrite_input(pair):
     src, oc, _ = pair
     r = run_enrich(src, oc, src)

@@ -67,6 +67,26 @@ def main():
         f"AND row_id IS NOT NULL GROUP BY row_id HAVING COUNT(*)>1)")
     check("OC concept row_ids unique (input integrity)", n_dup_oc_crid == 0,
           f"{n_dup_oc_crid} duplicated OC IdentifiedConcept row_ids")
+    n_dup_oc_pid = scalar(
+        f"SELECT COUNT(*) FROM (SELECT pid FROM {OC} WHERE otype='MaterialSampleRecord' "
+        f"GROUP BY pid HAVING COUNT(*)>1)")
+    check("OC MSR pids unique (input integrity)", n_dup_oc_pid == 0,
+          f"{n_dup_oc_pid} duplicated OC MaterialSampleRecord pids")
+    # unresolved OC concept refs: the inner joins below would silently DROP
+    # them from the expectation (Codex round-3) — the gate must reject the
+    # input the same way the enricher does, since it may run standalone.
+    n_unresolved = scalar(f"""
+        SELECT COUNT(*) FROM (
+          SELECT u.rid FROM {OC} s, UNNEST(s.p__has_material_category) AS u(rid)
+          WHERE s.otype='MaterialSampleRecord'
+          UNION ALL
+          SELECT u.rid FROM {OC} s, UNNEST(s.p__has_sample_object_type) AS u(rid)
+          WHERE s.otype='MaterialSampleRecord') refs
+        LEFT JOIN (SELECT row_id FROM {OC} WHERE otype='IdentifiedConcept') c
+          ON c.row_id = refs.rid
+        WHERE c.row_id IS NULL""")
+    check("all OC concept refs resolve (input integrity)", n_unresolved == 0,
+          f"{n_unresolved} dangling OC concept references")
 
     # ---- expected per-pid ORDERED URI lists from OC (independent derivation)
     con.execute(f"""
@@ -170,9 +190,12 @@ def main():
         SELECT DISTINCT unnest(mat_uris) AS uri FROM exp_oc
         UNION SELECT DISTINCT unnest(obj_uris) FROM exp_oc),
       missing AS (
-        SELECT uri FROM oc_uris
-        WHERE uri NOT IN (SELECT pid FROM {SRC} WHERE otype='IdentifiedConcept')
-          AND uri IS NOT NULL),
+        -- NOT EXISTS, not NOT IN: a NULL-pid src concept would make NOT IN
+        -- evaluate UNKNOWN and silently empty this set (Codex round-3 MINOR)
+        SELECT uri FROM oc_uris u
+        WHERE u.uri IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM {SRC} s
+                          WHERE s.otype='IdentifiedConcept' AND s.pid = u.uri)),
       meta AS (
         SELECT pid AS uri, MIN(label) AS label, MIN(scheme_name) AS scheme_name,
                MIN(scheme_uri) AS scheme_uri
