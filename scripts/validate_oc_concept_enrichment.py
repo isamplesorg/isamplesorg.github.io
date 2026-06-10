@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Independent trust gate for the OC concept enrichment (#272).
+
+Validates an enriched wide AGAINST ITS INPUTS — it re-derives the expected
+result from (src, oc-wide) with its own SQL (deliberately NOT importing the
+enrichment script) and asserts the written output matches. Exits non-zero on
+any failure so it can gate a publish.
+
+What a wrong output looks like and which check catches it:
+  - an OC pid kept the frozen export's junk materials  -> overlay-applied
+  - URI list order scrambled (changes facet selection) -> overlay-applied (order-sensitive)
+  - a non-OC row was modified                          -> non-overlay untouched
+  - rows dropped/duplicated                            -> row accounting / grain
+  - minted concept missing, wrong id, or extra rows    -> minted concepts exact
+  - #260 ceramic still "anthropogenic metal"           -> sentinel
+
+Usage:
+  python scripts/validate_oc_concept_enrichment.py \
+      --src isamples_202604_wide.parquet \
+      --oc-wide oc_isamples_pqg_wide_2026-06-09.parquet \
+      --out isamples_202606_wide.parquet
+"""
+import argparse
+import hashlib
+import json
+import os
+import sys
+
+import duckdb
+
+SENTINEL_PID = "ark:/28722/k2p55x96j"  # #260: ceramic, must carry otheranthropogenicmaterial
+SENTINEL_MATERIAL = "https://w3id.org/isample/vocabulary/material/1.0/otheranthropogenicmaterial"
+DIMS = [("p__has_material_category", "mat"), ("p__has_sample_object_type", "obj")]
+
+
+def sha256_file(path, _b=1 << 20):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(_b), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--src", required=True)
+    ap.add_argument("--oc-wide", required=True)
+    ap.add_argument("--out", required=True)
+    a = ap.parse_args()
+
+    con = duckdb.connect()
+    SRC = f"read_parquet('{a.src}')"
+    OC = f"read_parquet('{a.oc_wide}')"
+    OUT = f"read_parquet('{a.out}')"
+
+    R, info = [], []
+    def check(name, passed, detail=""):
+        R.append((name, bool(passed), detail))
+    def scalar(sql):
+        return con.sql(sql).fetchone()[0]
+
+    # ---- expected per-pid ORDERED URI lists from OC (independent derivation)
+    con.execute(f"""
+    CREATE TEMP TABLE exp_oc AS
+      SELECT s.pid,
+        (SELECT list(c.pid ORDER BY u.ord, c.pid)
+           FROM UNNEST(s.p__has_material_category) WITH ORDINALITY AS u(rid, ord)
+           JOIN {OC} c ON c.row_id=u.rid AND c.otype='IdentifiedConcept') AS mat_uris,
+        (SELECT list(c.pid ORDER BY u.ord, c.pid)
+           FROM UNNEST(s.p__has_sample_object_type) WITH ORDINALITY AS u(rid, ord)
+           JOIN {OC} c ON c.row_id=u.rid AND c.otype='IdentifiedConcept') AS obj_uris
+      FROM {OC} s WHERE s.otype='MaterialSampleRecord';
+    """)
+
+    # ---- actual per-pid URI lists in OUT (resolve out's row_ids -> out's concepts)
+    con.execute(f"""
+    CREATE TEMP TABLE out_concepts AS
+      SELECT row_id, pid AS uri FROM {OUT} WHERE otype='IdentifiedConcept';
+    CREATE TEMP TABLE act_out AS
+      SELECT s.pid,
+        (SELECT list(c.uri ORDER BY u.ord, c.uri)
+           FROM UNNEST(s.p__has_material_category) WITH ORDINALITY AS u(rid, ord)
+           JOIN out_concepts c ON c.row_id=u.rid) AS mat_uris,
+        (SELECT list(c.uri ORDER BY u.ord, c.uri)
+           FROM UNNEST(s.p__has_sample_object_type) WITH ORDINALITY AS u(rid, ord)
+           JOIN out_concepts c ON c.row_id=u.rid) AS obj_uris
+      FROM {OUT} s
+      WHERE s.otype='MaterialSampleRecord' AND s.pid IN (SELECT pid FROM exp_oc);
+    """)
+
+    # --- 1. overlay applied, order-sensitive, both dims ---------------------
+    n_expected_in_src = scalar(f"""
+        SELECT COUNT(*) FROM exp_oc e
+        JOIN {SRC} s ON s.pid=e.pid AND s.otype='MaterialSampleRecord'""")
+    bad_overlay = scalar("""
+        SELECT COUNT(*) FROM exp_oc e JOIN act_out o ON o.pid=e.pid
+        WHERE e.mat_uris IS DISTINCT FROM o.mat_uris
+           OR e.obj_uris IS DISTINCT FROM o.obj_uris""")
+    n_act = scalar("SELECT COUNT(*) FROM act_out")
+    check("overlay applied (OC == OUT, ordered, both dims)", bad_overlay == 0,
+          f"{bad_overlay} overlay pids differ from OC expectation")
+    check("all matched OC pids present in OUT", n_act == n_expected_in_src,
+          f"act={n_act} expected={n_expected_in_src}")
+
+    # --- 2. non-overlay rows byte-identical ---------------------------------
+    cols = ", ".join(r[0] for r in con.sql(f"DESCRIBE SELECT * FROM {SRC}").fetchall())
+    untouched_src = (f"SELECT {cols} FROM {SRC} WHERE pid NOT IN (SELECT pid FROM exp_oc) "
+                     f"OR otype <> 'MaterialSampleRecord'")
+    untouched_out = (f"SELECT {cols} FROM {OUT} WHERE row_id <= (SELECT MAX(row_id) FROM {SRC}) "
+                     f"AND (pid NOT IN (SELECT pid FROM exp_oc) OR otype <> 'MaterialSampleRecord')")
+    diff = scalar(f"""SELECT
+        (SELECT COUNT(*) FROM (({untouched_src}) EXCEPT ALL ({untouched_out}))) +
+        (SELECT COUNT(*) FROM (({untouched_out}) EXCEPT ALL ({untouched_src})))""")
+    check("non-overlay rows untouched", diff == 0, f"{diff} row diffs outside the overlay")
+
+    # --- 3. minted concepts: exactly the missing URIs, ids beyond src max ----
+    max_src = scalar(f"SELECT COALESCE(MAX(row_id),0) FROM {SRC}")
+    minted_diff = scalar(f"""
+      WITH oc_uris AS (
+        SELECT DISTINCT unnest(mat_uris) AS uri FROM exp_oc
+        UNION SELECT DISTINCT unnest(obj_uris) FROM exp_oc),
+      missing AS (
+        SELECT uri FROM oc_uris
+        WHERE uri NOT IN (SELECT pid FROM {SRC} WHERE otype='IdentifiedConcept')
+          AND uri IS NOT NULL),
+      minted AS (SELECT pid AS uri FROM {OUT} WHERE row_id > {max_src})
+      SELECT
+        (SELECT COUNT(*) FROM (SELECT uri FROM missing EXCEPT SELECT uri FROM minted)) +
+        (SELECT COUNT(*) FROM (SELECT uri FROM minted EXCEPT SELECT uri FROM missing))""")
+    check("minted concepts == exactly the missing URIs", minted_diff == 0,
+          f"{minted_diff} URI mismatches between minted rows and missing set")
+    bad_minted_type = scalar(
+        f"SELECT COUNT(*) FROM {OUT} WHERE row_id > {max_src} AND otype <> 'IdentifiedConcept'")
+    check("minted rows are IdentifiedConcept", bad_minted_type == 0, f"{bad_minted_type} bad otype")
+
+    # --- 4. grain + accounting ----------------------------------------------
+    n_src, n_out = scalar(f"SELECT COUNT(*) FROM {SRC}"), scalar(f"SELECT COUNT(*) FROM {OUT}")
+    n_minted = scalar(f"SELECT COUNT(*) FROM {OUT} WHERE row_id > {max_src}")
+    check("row accounting (out == src + minted)", n_out == n_src + n_minted,
+          f"out={n_out:,} src={n_src:,} minted={n_minted}")
+    dup = scalar(f"SELECT COUNT(*) FROM (SELECT row_id FROM {OUT} GROUP BY row_id HAVING COUNT(*)>1)")
+    check("out row_id unique", dup == 0, f"{dup} duplicate row_ids")
+
+    # --- 5. every referenced concept resolves in OUT -------------------------
+    dangling = scalar(f"""
+      SELECT COUNT(*) FROM (
+        SELECT u.rid FROM {OUT} s, UNNEST(s.p__has_material_category) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord'
+        UNION ALL
+        SELECT u.rid FROM {OUT} s, UNNEST(s.p__has_sample_object_type) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord') refs
+      LEFT JOIN out_concepts c ON c.row_id = refs.rid
+      WHERE c.row_id IS NULL""")
+    check("no dangling concept references in OUT", dangling == 0, f"{dangling} dangling refs")
+
+    # --- 6. #260 sentinel ----------------------------------------------------
+    row = con.sql(f"SELECT mat_uris FROM act_out WHERE pid='{SENTINEL_PID}'").fetchone()
+    if row is None:
+        info.append(f"sentinel {SENTINEL_PID} not present (N/A for this dataset)")
+    else:
+        check(f"sentinel {SENTINEL_PID} == [{SENTINEL_MATERIAL.rsplit('/',1)[1]}]",
+              row[0] == [SENTINEL_MATERIAL], f"got {row[0]}")
+
+    # --- 7. manifest integrity (if present) ----------------------------------
+    mpath = a.out + ".manifest.json"
+    if os.path.exists(mpath):
+        try:
+            man = json.load(open(mpath))
+        except Exception as e:
+            man = None
+            check("manifest parses", False, f"unreadable: {e}")
+        if man:
+            check("manifest output sha256 matches file",
+                  man.get("output", {}).get("sha256") == sha256_file(a.out),
+                  "out file does not match its manifest")
+            for key, path in (("src", a.src), ("oc_wide", a.oc_wide)):
+                msha = man.get("inputs", {}).get(key, {}).get("sha256")
+                if msha:
+                    check(f"manifest input sha256 matches --{key.replace('_','-')}",
+                          msha == sha256_file(path), f"{key} sha mismatch")
+    else:
+        info.append("no .manifest.json next to --out (manifest verification skipped)")
+
+    print(f"\n{'CHECK':<52} {'RESULT':<6} DETAIL\n" + "-" * 100)
+    ok = True
+    for name, passed, detail in R:
+        ok = ok and passed
+        print(f"{name:<52} {'PASS' if passed else 'FAIL':<6} {detail}")
+    print("-" * 100)
+    for line in info:
+        print("  info:", line)
+    print("\n" + ("ALL CHECKS PASS" if ok else "FAILURES PRESENT"))
+    sys.exit(0 if ok else 1)
+
+
+if __name__ == "__main__":
+    main()

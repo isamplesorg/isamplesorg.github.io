@@ -7,7 +7,10 @@ on:
     paths:
       - "scripts/build_frontend_derived.py"
       - "scripts/validate_frontend_derived.py"
+      - "scripts/enrich_wide_with_oc_concepts.py"
+      - "scripts/validate_oc_concept_enrichment.py"
       - "tests/test_frontend_derived.py"
+      - "tests/test_oc_concept_enrichment.py"
       - "scripts/requirements.txt"
       - "Makefile"
       - ".github/workflows/pipeline-tests.yml"
@@ -16,7 +19,10 @@ on:
     paths:
       - "scripts/build_frontend_derived.py"
       - "scripts/validate_frontend_derived.py"
+      - "scripts/enrich_wide_with_oc_concepts.py"
+      - "scripts/validate_oc_concept_enrichment.py"
       - "tests/test_frontend_derived.py"
+      - "tests/test_oc_concept_enrichment.py"
   workflow_dispatch:
 
 jobs:
@@ -33,4 +39,4 @@ jobs:
         # builds tiny synthetic wides (WKB BLOB + DuckDB GEOMETRY), runs the real
         # builder + algebraic validator, asserts the contract. Exits non-zero on
         # any failure -> PR is blocked.
-        run: python -m pytest tests/test_frontend_derived.py -q
+        run: python -m pytest tests/test_frontend_derived.py tests/test_oc_concept_enrichment.py -q
