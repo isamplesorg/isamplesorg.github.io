@@ -12,8 +12,8 @@ format:
     include-in-header:
       text: |
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_h3_summary_res4.parquet">
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202601_facet_summaries.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202606_h3_summary_res4.parquet">
+        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202606_facet_summaries.parquet">
         <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels.parquet">
 ---
 
@@ -764,18 +764,20 @@ R2_BASE = (() => {
     // default and absolute overrides (http://localhost:8099/data) pass through.
     return raw.startsWith('/') ? new URL(raw, location.origin).href : raw;
 })()
-h3_res4_url = `${R2_BASE}/isamples_202601_h3_summary_res4.parquet`
-h3_res6_url = `${R2_BASE}/isamples_202601_h3_summary_res6.parquet`
-h3_res8_url = `${R2_BASE}/isamples_202601_h3_summary_res8.parquet`
-lite_url = `${R2_BASE}/isamples_202601_samples_map_lite.parquet`
-// Stable alias that 302-redirects to the current enriched wide parquet
-// (isamples_YYYYMM_wide.parquet). Gets OpenContext thumbnails populated.
-wide_url = `${R2_BASE}/current/wide.parquet`
+h3_res4_url = `${R2_BASE}/isamples_202606_h3_summary_res4.parquet`
+h3_res6_url = `${R2_BASE}/isamples_202606_h3_summary_res6.parquet`
+h3_res8_url = `${R2_BASE}/isamples_202606_h3_summary_res8.parquet`
+lite_url = `${R2_BASE}/isamples_202606_samples_map_lite.parquet`
+// Explicit versioned wide (#272: OC concept-enriched — popups read material/
+// object-type from this file). The stable alias `current/wide.parquet` still
+// points at the previous wide until the production cutover flips the manifest;
+// pinning the version here keeps staging and prod each self-consistent.
+wide_url = `${R2_BASE}/isamples_202606_wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
-facets_url = `${R2_BASE}/isamples_202601_sample_facets_v2.parquet`
-facet_summaries_url = `${R2_BASE}/isamples_202601_facet_summaries.parquet`
+facets_url = `${R2_BASE}/isamples_202606_sample_facets_v2.parquet`
+facet_summaries_url = `${R2_BASE}/isamples_202606_facet_summaries.parquet`
 // Pre-aggregated single-filter cache for fast cross-filtered facet counts.
-cross_filter_url = `${R2_BASE}/isamples_202601_facet_cross_filter.parquet`
+cross_filter_url = `${R2_BASE}/isamples_202606_facet_cross_filter.parquet`
 // SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels.parquet`
