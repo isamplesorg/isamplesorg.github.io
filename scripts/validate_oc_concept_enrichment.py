@@ -88,30 +88,55 @@ def main():
       WHERE s.otype='MaterialSampleRecord' AND s.pid IN (SELECT pid FROM exp_oc);
     """)
 
-    # --- 1. overlay applied, order-sensitive, both dims ---------------------
-    n_expected_in_src = scalar(f"""
-        SELECT COUNT(*) FROM exp_oc e
-        JOIN {SRC} s ON s.pid=e.pid AND s.otype='MaterialSampleRecord'""")
+    # --- 1. overlay applied, order-sensitive, both dims; pid SET equality ----
+    # (Codex round-1 BLOCKER: an inner join + count let a duplicated-pid /
+    # dropped-sentinel output pass. Use set EXCEPTs, not counts.)
     bad_overlay = scalar("""
         SELECT COUNT(*) FROM exp_oc e JOIN act_out o ON o.pid=e.pid
         WHERE e.mat_uris IS DISTINCT FROM o.mat_uris
            OR e.obj_uris IS DISTINCT FROM o.obj_uris""")
-    n_act = scalar("SELECT COUNT(*) FROM act_out")
     check("overlay applied (OC == OUT, ordered, both dims)", bad_overlay == 0,
           f"{bad_overlay} overlay pids differ from OC expectation")
-    check("all matched OC pids present in OUT", n_act == n_expected_in_src,
-          f"act={n_act} expected={n_expected_in_src}")
+    pid_set_diff = scalar(f"""
+      WITH expected AS (
+        SELECT e.pid FROM exp_oc e
+        JOIN {SRC} s ON s.pid=e.pid AND s.otype='MaterialSampleRecord')
+      SELECT (SELECT COUNT(*) FROM (SELECT pid FROM expected EXCEPT SELECT pid FROM act_out))
+           + (SELECT COUNT(*) FROM (SELECT pid FROM act_out EXCEPT SELECT pid FROM expected))""")
+    check("overlay pid SET == (OC ∩ src) pid SET", pid_set_diff == 0,
+          f"{pid_set_diff} pids differ between expected and actual overlay sets")
+    dup_overlay_pid = scalar(
+        "SELECT COUNT(*) FROM (SELECT pid FROM act_out GROUP BY pid HAVING COUNT(*)>1)")
+    check("overlay pids distinct in OUT", dup_overlay_pid == 0,
+          f"{dup_overlay_pid} duplicated overlay pids in OUT")
 
-    # --- 2. non-overlay rows byte-identical ---------------------------------
-    cols = ", ".join(r[0] for r in con.sql(f"DESCRIBE SELECT * FROM {SRC}").fetchall())
-    untouched_src = (f"SELECT {cols} FROM {SRC} WHERE pid NOT IN (SELECT pid FROM exp_oc) "
-                     f"OR otype <> 'MaterialSampleRecord'")
-    untouched_out = (f"SELECT {cols} FROM {OUT} WHERE row_id <= (SELECT MAX(row_id) FROM {SRC}) "
-                     f"AND (pid NOT IN (SELECT pid FROM exp_oc) OR otype <> 'MaterialSampleRecord')")
-    diff = scalar(f"""SELECT
-        (SELECT COUNT(*) FROM (({untouched_src}) EXCEPT ALL ({untouched_out}))) +
-        (SELECT COUNT(*) FROM (({untouched_out}) EXCEPT ALL ({untouched_src})))""")
-    check("non-overlay rows untouched", diff == 0, f"{diff} row diffs outside the overlay")
+    # --- 2. ALL src rows present + ALL non-replaced columns identical --------
+    # (Codex round-1 BLOCKER: comparing only non-overlay rows let an output
+    # null label/thumbnail/geometry on overlay rows and still pass. Compare
+    # EVERY src row on EVERY column except the two replaced arrays — keyed by
+    # row_id with row hashes, not full-table EXCEPT, so it scales to 20.7M.)
+    keep_cols = [r[0] for r in con.sql(f"DESCRIBE SELECT * FROM {SRC}").fetchall()
+                 if r[0] not in ("p__has_material_category", "p__has_sample_object_type")]
+    keep_expr = ", ".join(keep_cols)
+    missing_rows = scalar(f"""
+        SELECT COUNT(*) FROM {SRC} s LEFT JOIN {OUT} o ON o.row_id = s.row_id
+        WHERE o.row_id IS NULL""")
+    check("every src row_id present in OUT", missing_rows == 0, f"{missing_rows} src rows missing")
+    col_diff = scalar(f"""
+        WITH sh AS (SELECT row_id, hash(ROW({keep_expr})) AS h FROM {SRC}),
+             oh AS (SELECT row_id, hash(ROW({keep_expr})) AS h FROM {OUT})
+        SELECT COUNT(*) FROM sh JOIN oh ON oh.row_id = sh.row_id WHERE sh.h <> oh.h""")
+    check("all non-replaced columns identical (every src row)", col_diff == 0,
+          f"{col_diff} rows differ outside the two replaced arrays")
+    # the two replaced arrays: must equal src for everything that is NOT an
+    # overlay MaterialSampleRecord (overlay rows are covered by check 1).
+    arr_diff = scalar(f"""
+        SELECT COUNT(*) FROM {SRC} s JOIN {OUT} o ON o.row_id = s.row_id
+        WHERE NOT (s.otype='MaterialSampleRecord' AND s.pid IN (SELECT pid FROM exp_oc))
+          AND (s.p__has_material_category IS DISTINCT FROM o.p__has_material_category
+            OR s.p__has_sample_object_type IS DISTINCT FROM o.p__has_sample_object_type)""")
+    check("replaced arrays untouched outside the overlay", arr_diff == 0,
+          f"{arr_diff} non-overlay rows had their concept arrays modified")
 
     # --- 3. minted concepts: exactly the missing URIs, ids beyond src max ----
     max_src = scalar(f"SELECT COALESCE(MAX(row_id),0) FROM {SRC}")
@@ -132,6 +157,18 @@ def main():
     bad_minted_type = scalar(
         f"SELECT COUNT(*) FROM {OUT} WHERE row_id > {max_src} AND otype <> 'IdentifiedConcept'")
     check("minted rows are IdentifiedConcept", bad_minted_type == 0, f"{bad_minted_type} bad otype")
+    bad_minted_meta = scalar(f"""
+      WITH oc_meta AS (
+        SELECT pid AS uri, MIN(label) AS label, MIN(scheme_name) AS scheme_name,
+               MIN(scheme_uri) AS scheme_uri
+        FROM {OC} WHERE otype='IdentifiedConcept' GROUP BY pid)
+      SELECT COUNT(*) FROM {OUT} o JOIN oc_meta m ON m.uri = o.pid
+      WHERE o.row_id > {max_src}
+        AND (o.label IS DISTINCT FROM m.label
+          OR o.scheme_name IS DISTINCT FROM m.scheme_name
+          OR o.scheme_uri IS DISTINCT FROM m.scheme_uri)""")
+    check("minted rows carry OC label/scheme metadata", bad_minted_meta == 0,
+          f"{bad_minted_meta} minted rows with wrong metadata")
 
     # --- 4. grain + accounting ----------------------------------------------
     n_src, n_out = scalar(f"SELECT COUNT(*) FROM {SRC}"), scalar(f"SELECT COUNT(*) FROM {OUT}")
@@ -154,12 +191,20 @@ def main():
     check("no dangling concept references in OUT", dangling == 0, f"{dangling} dangling refs")
 
     # --- 6. #260 sentinel ----------------------------------------------------
+    # N/A ONLY if the pid is absent from the INPUTS (fixtures). If src+oc both
+    # carry it, its absence from the overlay output is a FAILURE, not a skip
+    # (Codex round-1: a dropped sentinel row was silently 'N/A').
+    in_inputs = scalar(f"""
+        SELECT COUNT(*) FROM {SRC} s
+        WHERE s.pid='{SENTINEL_PID}' AND s.otype='MaterialSampleRecord'
+          AND s.pid IN (SELECT pid FROM exp_oc)""")
     row = con.sql(f"SELECT mat_uris FROM act_out WHERE pid='{SENTINEL_PID}'").fetchone()
-    if row is None:
-        info.append(f"sentinel {SENTINEL_PID} not present (N/A for this dataset)")
+    if not in_inputs and row is None:
+        info.append(f"sentinel {SENTINEL_PID} not present in inputs (N/A for this dataset)")
     else:
         check(f"sentinel {SENTINEL_PID} == [{SENTINEL_MATERIAL.rsplit('/',1)[1]}]",
-              row[0] == [SENTINEL_MATERIAL], f"got {row[0]}")
+              row is not None and row[0] == [SENTINEL_MATERIAL],
+              f"got {row[0] if row else 'MISSING ROW'}")
 
     # --- 7. manifest integrity (if present) ----------------------------------
     mpath = a.out + ".manifest.json"

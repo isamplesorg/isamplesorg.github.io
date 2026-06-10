@@ -31,6 +31,11 @@ WHAT IT DOES *NOT* DO (scope, documented in #272):
     overlay only. New-record ingestion is a follow-up.
   - `p__has_context_category` is untouched (unverified against OC; follow-up).
 
+NORMALIZATION: an EMPTY OC array (`[]`) becomes NULL in the output — this is
+deliberate and matches the wide-format convention that p__* columns are NULL
+when no relationship exists (pqg issue #8). In practice all 1.11M OC
+MaterialSampleRecords carry non-empty arrays for both dims.
+
 HARD FAILURES (refuses to write):
   - duplicate pids among OC MaterialSampleRecords (overlay grain would be wrong)
   - any OC concept reference that does not resolve to an OC IdentifiedConcept row

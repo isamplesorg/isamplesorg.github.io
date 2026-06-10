@@ -300,6 +300,65 @@ def test_hard_fail_on_unresolved_oc_concept_ref(pair):
     assert not os.path.exists(out)
 
 
+def test_validator_fails_on_nulled_overlay_columns(pair, tmp_path):
+    """Codex round-1 BLOCKER: keep the OC URI lists but wreck a popup-facing
+    column (label) on overlay rows — must FAIL, not pass as 'overlay ok'."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0
+    tampered = str(tmp_path / "nulled.parquet")
+    con = duckdb.connect()
+    con.execute(f"""
+        COPY (
+          SELECT o.* REPLACE (
+            (CASE WHEN o.pid LIKE 'ark:/28722/%' AND o.otype='MaterialSampleRecord'
+             THEN NULL ELSE o.label END) AS label)
+          FROM read_parquet('{out}') o ORDER BY row_id
+        ) TO '{tampered}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+    con.close()
+    r = run_validate(src, oc, tampered)
+    assert r.returncode != 0
+    assert "non-replaced columns identical" in r.stdout
+
+
+def test_validator_fails_on_duplicated_pid_replacing_sentinel(pair, tmp_path):
+    """Codex round-1 BLOCKER: replace the sentinel row with a duplicate of
+    another overlay pid (unique row_id) — counts stay equal; sets must not."""
+    src, oc, out = pair
+    assert run_enrich(src, oc, out).returncode == 0
+    tampered = str(tmp_path / "dup_pid.parquet")
+    con = duckdb.connect()
+    # drop the sentinel row entirely; insert a full clone of another overlay
+    # row (correct arrays!) reusing the sentinel's row_id. Counts all balance;
+    # only SET checks notice.
+    con.execute(f"""
+        COPY (
+          SELECT * FROM read_parquet('{out}')
+          WHERE NOT (pid='ark:/28722/k2p55x96j' AND otype='MaterialSampleRecord')
+          UNION ALL
+          SELECT o.* REPLACE (1::BIGINT AS row_id)
+          FROM read_parquet('{out}') o
+          WHERE o.pid='ark:/28722/order' AND o.otype='MaterialSampleRecord'
+          ORDER BY row_id
+        ) TO '{tampered}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+    con.close()
+    r = run_validate(src, oc, tampered)
+    assert r.returncode != 0
+
+
+def test_empty_oc_array_normalizes_to_null(pair, tmp_path):
+    """Documented normalization: OC `[]` -> NULL in the output (pqg issue #8
+    convention). All real OC rows are non-empty; this pins the edge behavior."""
+    src, oc, out = pair
+    empty_oc = str(tmp_path / "oc_empty.parquet")
+    build_oc(empty_oc, samples=[("ark:/28722/k2p55x96j", [], [9004])])
+    assert run_enrich(src, empty_oc, out).returncode == 0
+    con = duckdb.connect()
+    mats = con.sql(f"""SELECT p__has_material_category FROM read_parquet('{out}')
+        WHERE pid='ark:/28722/k2p55x96j' AND otype='MaterialSampleRecord'""").fetchone()[0]
+    con.close()
+    assert mats is None
+
+
 def test_refuses_to_overwrite_input(pair):
     src, oc, _ = pair
     r = run_enrich(src, oc, src)

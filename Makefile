@@ -60,14 +60,20 @@ validate-enrich:
 derived: $(WIDE)
 	$(PY) $(BUILD) --wide $(DERIVED_WIDE) --outdir $(OUTDIR) --tag $(TAG) --skip wide_h3
 
+# Sentinel expectation tracks data vintage: the plain (non-enriched) chain
+# validates a frozen-export wide -> legacy value; the all-272 chain overrides
+# to the OC-corrected default baked into the validator.
+LEGACY_SENTINEL := https://w3id.org/isample/vocabulary/material/1.0/anthropogenicmetal
+SENTINEL_FLAG ?= --sentinel-material $(LEGACY_SENTINEL)
+
 validate:
-	$(PY) $(VALIDATE) --dir $(OUTDIR) --tag $(TAG)
+	$(PY) $(VALIDATE) --dir $(OUTDIR) --tag $(TAG) $(SENTINEL_FLAG)
 
 all: wide derived validate
 
 # Full #272 chain: enrich the wide with OC concepts, gate it, then build+gate derived.
 all-272: wide oc-wide enrich validate-enrich
-	$(MAKE) derived validate DERIVED_WIDE=$(ENRICHED) TAG=$(TAG)
+	$(MAKE) derived validate DERIVED_WIDE=$(ENRICHED) TAG=$(TAG) SENTINEL_FLAG=
 
 clean:
 	rm -rf $(OUTDIR)
