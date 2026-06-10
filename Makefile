@@ -59,7 +59,7 @@ $(ENRICHED): $(WIDE) $(OC_WIDE)
 validate-enrich: $(ENRICHED)
 	$(PY) $(VALIDATE_ENRICH) --src $(WIDE) --oc-wide $(OC_WIDE) --out $(ENRICHED)
 
-derived: $(WIDE)
+derived: $(DERIVED_WIDE)
 	$(PY) $(BUILD) --wide $(DERIVED_WIDE) --outdir $(OUTDIR) --tag $(TAG) --skip wide_h3
 
 # Sentinel expectation tracks data vintage: the plain (non-enriched) chain
