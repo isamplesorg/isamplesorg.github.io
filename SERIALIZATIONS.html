@@ -380,7 +380,7 @@ Vocabulary labels (parallel to the substrate, sourced from isamplesorg/vocabular
 
 vocab_labels.parquet           (58 KB, 537 SKOS concepts)
   └─► consumed by Search Explorer to render facet URIs as prefLabels</code></pre>
-<p>Arrows indicate derivation, not containment. Every file in the left column can be rebuilt from its parent by a script in <code>isamples-python/</code> or <code>isamplesorg.github.io/scripts/</code>.</p>
+<p>Arrows indicate derivation, not containment. The Stage-4 frontend-derived files are rebuilt by <code>isamplesorg.github.io/scripts/build_frontend_derived.py</code> (+ <code>build_vocab_labels.py</code>); the Stage-2 narrow/wide files are rebuilt by <code>pqg/</code>. Note: the <strong>currently deployed</strong> <code>isamples_202601_*</code> files predate that builder — a fresh build is NOT bit-for-bit identical to them (see <code>DATA_PROVENANCE.md</code>, “deployed 202601 not reproducible”).</p>
 </section>
 <section id="catalog" class="level2" data-number="3">
 <h2 data-number="3" data-anchor-id="catalog"><span class="header-section-number">3</span> 3. Catalog</h2>
@@ -854,7 +854,7 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 <h3 data-number="4.6" data-anchor-id="isamples_202601_h3_summary_res468.parquet"><span class="header-section-number">4.6</span> 4.6 <code>isamples_202601_h3_summary_res{4,6,8}.parquet</code></h3>
 <ul>
 <li><p><strong>Role</strong>: Zoom-adaptive aggregates that back the Cesium progressive globe and the Python Explorer’s “H3 tier” rendering mode.</p></li>
-<li><p><strong>Headline schema</strong> (7 cols, identical across resolutions): <code>h3_cell</code> (BIGINT), <code>sample_count</code> (INT), <code>center_lat</code>, <code>center_lng</code> (DOUBLE), <code>dominant_source</code> (VARCHAR), <code>source_count</code> (INT), <code>resolution</code> (INT).</p></li>
+<li><p><strong>Headline schema</strong> (7 cols, identical across resolutions): <code>h3_cell</code> (<strong>UBIGINT</strong> — H3 cells are unsigned 64-bit; a signed BIGINT would go negative for high-bit cells), <code>sample_count</code> (INT), <code>center_lat</code>, <code>center_lng</code> (DOUBLE, rounded 6 dp), <code>dominant_source</code> (VARCHAR; ties broken by source name ASC for determinism), <code>source_count</code> (INT), <code>resolution</code> (INT).</p></li>
 <li><p><strong>Query pattern</strong>: fetch the right resolution for the current zoom; no join needed.</p></li>
 <li><p><strong>DuckDB</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span> <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_h3_summary_res6.parquet'</span>)</span>
@@ -874,9 +874,12 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 </section>
 <section id="isamples_202601_sample_facets_v2.parquet" class="level3" data-number="4.8">
 <h3 data-number="4.8" data-anchor-id="isamples_202601_sample_facets_v2.parquet"><span class="header-section-number">4.8</span> 4.8 <code>isamples_202601_sample_facets_v2.parquet</code></h3>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Deployed-file caveat:</strong> the live <code>isamples_202601_sample_facets_v2.parquet</code> still contains <strong>346,768</strong> bare-root “Material” rows — it predates the #271 selection rule below. The rule describes the <strong>builder contract</strong> for the next rebuild (verified to drop the root → 0), not the file currently served.</p>
+</blockquote>
 <ul>
-<li><p><strong>Role</strong>: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI (the leaf concept the sample is tagged with at that dimension).</p></li>
-<li><p><strong>Headline schema</strong> (8 cols, all VARCHAR): <code>pid, source, material, context, object_type, label, description, place_name</code>. <code>material</code>/<code>context</code>/<code>object_type</code> are scalar URI strings, NOT arrays — the file’s grain is one row per sample, so a sample tagged with multiple material URIs is represented by a single chosen URI (currently the first/leaf). For multi-material accuracy, JOIN back to <code>wide.p__has_material_category</code>.</p></li>
+<li><p><strong>Role</strong>: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI.</p></li>
+<li><p><strong>Headline schema</strong> (8 cols, all VARCHAR): <code>pid, source, material, context, object_type, label, description, place_name</code>. <code>material</code>/<code>context</code>/<code>object_type</code> are scalar URI strings, NOT arrays — one row per sample, so a sample tagged with multiple URIs is represented by a single chosen URI. <strong>Selection rule:</strong> <code>material</code> = the <strong>first NON-ROOT</strong> concept in the array (the broad root <code>.../material/1.0/material</code> is dropped — #265/#271); root-only samples → NULL material. This is <strong>NOT</strong> necessarily the leaf/most-specific concept (the arrays are not clean SKOS paths). <code>context</code>/<code>object_type</code> = the first array element (<code>[1]</code>). <code>place_name</code> is a VARCHAR cast of the wide’s <code>VARCHAR[]</code> (note: <code>samples_map_lite</code> keeps <code>place_name</code> as <code>VARCHAR[]</code>). For multi-value accuracy, JOIN back to <code>wide.p__has_*_category</code>.</p></li>
 <li><p><strong>Query pattern</strong>: <code>WHERE material = '&lt;uri&gt;'</code> for exact match; <code>WHERE material ILIKE '%rock%'</code> to substring-match URI fragments.</p></li>
 <li><p><strong>DuckDB</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span></span>
@@ -900,7 +903,7 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 <h3 data-number="4.10" data-anchor-id="isamples_202601_facet_cross_filter.parquet"><span class="header-section-number">4.10</span> 4.10 <code>isamples_202601_facet_cross_filter.parquet</code></h3>
 <ul>
 <li><p><strong>Role</strong>: Cross-facet counts for the single-active-filter case (QUERY_SPEC §3.3 tier 2a). Avoids recomputing when one facet dimension is active.</p></li>
-<li><p><strong>Headline schema</strong> (7 cols, 526 rows): <code>filter_source, filter_material, filter_context, filter_object_type, facet_type, facet_value, count</code>. Exactly one <code>filter_*</code> column is non-NULL per row.</p></li>
+<li><p><strong>Headline schema</strong> (7 cols): <code>filter_source, filter_material, filter_context, filter_object_type, facet_type, facet_value, count</code>. Two row kinds: <strong>baseline</strong> rows have <strong>all</strong> <code>filter_*</code> NULL (these equal <code>facet_summaries</code>); <strong>single-dimension</strong> rows have <strong>exactly one</strong> <code>filter_*</code> non-NULL. Single-dimension rows include self-dimension counts (<code>facet_type == filter dim</code>), which the explorer ignores. (Both kinds are emitted by <code>build_frontend_derived.py</code> and asserted by <code>validate_frontend_derived.py</code>.)</p></li>
 <li><p><strong>Query pattern</strong>: lookup by the active filter to get counts for the remaining dimensions.</p></li>
 <li><p><strong>DuckDB</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> facet_type, facet_value, <span class="fu">count</span> <span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202601_facet_cross_filter.parquet'</span>)</span>
