@@ -42,7 +42,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-1ee02054668a0d42167d8c4e7240f8ef.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-46c1e64c2409ffa41d8278daa552b940.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -297,13 +297,13 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><code>search</code></td>
-<td>DOM <code>#sampleSearch</code> value (mirrored to <code>#sampleSearchSidebar</code>)</td>
+<td>DOM <code>#sampleSearch</code> value</td>
 <td>omitted</td>
 <td>raw string</td>
-<td><code>applyQueryToSearch()</code> at start of <code>phase1</code> (hydrates both inputs)</td>
+<td><code>applyQueryToSearch()</code> at start of <code>phase1</code></td>
 <td><code>writeQueryState()</code> called from <code>doSearch()</code></td>
 <td>trim only; min 2 chars enforced at search time, not in URL</td>
-<td>written even on no-result searches</td>
+<td>written even on no-result searches. The mirrored <code>#sampleSearchSidebar</code> input was removed in #266</td>
 </tr>
 <tr class="even">
 <td><code>sources</code></td>
@@ -363,7 +363,7 @@ ul.task-list li input[type="checkbox"] {
 <td><code>_searchScope</code> hydrated at top of <code>zoomWatcher</code> from <code>params.get('search_scope')</code></td>
 <td><code>persistSearchScope()</code> from <code>doSearch()</code> and button clicks</td>
 <td>exact match <code>'area'</code></td>
-<td>sidebar <code>#sampleSearchSidebar</code> Enter always submits <code>world</code>, never <code>area</code> — see §6 mockup-v1 addendum</td>
+<td>(the sidebar search input that always submitted <code>world</code> was removed in #266)</td>
 </tr>
 <tr class="even">
 <td><code>page</code></td>
@@ -608,7 +608,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code> + <code>#sampleSearchSidebar</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, and the search input. SQL builders read <code>#sampleSearch</code> directly each call. <code>#sampleSearchSidebar</code> is kept in lock-step with <code>#sampleSearch</code> via a two-way <code>input</code>-event mirror (see §6 mockup-v1 addendum). The <code>#maxSamples</code> input and the <code>getTableMaxSamples()</code> / <code>clampTableMaxSamples()</code> helpers were removed in the table v2 follow-up — the samples table now paginates server-side via DuckDB <code>LIMIT/OFFSET</code> instead of fetching up to 25K rows up-front.</p>
+<p>DOM input elements (the four facet checkbox bodies + <code>#sampleSearch</code>) are the <strong>source of truth</strong> for <code>getActiveSources()</code>, <code>getCheckedValues()</code>, and the search input. SQL builders read <code>#sampleSearch</code> directly each call. (The mirrored <code>#sampleSearchSidebar</code> input was removed in #266 — <code>#sampleSearch</code> is the only search box; the historical mirror design is in §6.) The <code>#maxSamples</code> input and the <code>getTableMaxSamples()</code> / <code>clampTableMaxSamples()</code> helpers were removed in the table v2 follow-up — the samples table now paginates server-side via DuckDB <code>LIMIT/OFFSET</code> instead of fetching up to 25K rows up-front.</p>
 <hr>
 </section>
 <section id="widget-internal-state-viewer.-window." class="level2" data-number="1.4">
@@ -1035,7 +1035,7 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <h3 data-number="1.6.8" data-anchor-id="mockup-v1-addendum-in-map-overlay-sidebar-mirror-permanent-table-200-2026-05"><span class="header-section-number">1.6.8</span> Mockup-v1 addendum: in-map overlay, sidebar mirror, permanent table (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/200">#200</a>, 2026-05)</h3>
 <p>A coordinated UI refactor aligning the explorer with Hana’s wireframe. Built as a single PR sequenced into independently revertable commits. All changes are UI-relocation / surface-additive; the data/query contract is unchanged from the (C) decision + #178 light path above.</p>
 <p><strong>M-1A — Search controls relocated into an in-map overlay.</strong> The search input, the two scope buttons (Search Selected Areas / Search Entire World), help text, and <code>#searchResults</code> count moved from a top-of-page <code>.explorer-controls</code> block into <code>.map-search-overlay</code>, absolutely positioned over <code>#cesiumContainer</code> inside a new <code>.map-wrap</code> wrapper. All element IDs preserved so existing handlers in <code>zoomWatcher</code> and the <code>writeQueryState()</code> contract bind unchanged. Overlay positioning clears the Cesium toolbar column (<code>left: 50px</code>) and the base-layer picker dropdown wins z-stack (<code>z-index: 1100</code> vs overlay’s <code>1000</code>).</p>
-<p><strong>M-1B — Sidebar open-text search input that mirrors the in-map one.</strong> A second input <code>#sampleSearchSidebar</code> lives at the top of <code>.side-panel</code>. Two-way <code>input</code>-event mirror keeps both inputs in lock-step as a single logical query term:</p>
+<p><strong>M-1B — Sidebar open-text search input that mirrors the in-map one.</strong> <em>(Removed in #266 — the duplicate sidebar box confused users; <code>#sampleSearch</code> is now the only search input. Kept for historical context:)</em> A second input <code>#sampleSearchSidebar</code> lived at the top of <code>.side-panel</code>. Two-way <code>input</code>-event mirror keeps both inputs in lock-step as a single logical query term:</p>
 <ul>
 <li>Typing in <code>#sampleSearchSidebar</code> propagates to <code>#sampleSearch</code>.</li>
 <li>Typing in <code>#sampleSearch</code> propagates to <code>#sampleSearchSidebar</code>.</li>
