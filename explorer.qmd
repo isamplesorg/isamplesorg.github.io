@@ -2726,14 +2726,25 @@ zoomWatcher = {
 
     // Single source of truth for marker-layer visibility (#233 phase 3).
     //
-    // Cluster dots (h3Points) and individual sample points (samplePoints)
-    // are mutually exclusive with the heatmap overlay. When the heatmap is
-    // on it IS the density view, so painting the cluster dots on top of it
-    // produces the dots-vs-hotspots disagreement RY flagged 2026-05-27 —
-    // two layers telling contradictory spatial stories at once. Rule:
-    //   heatmap on  ⇒ both marker collections hidden (heatmap stands alone)
-    //   heatmap off ⇒ show whichever collection the altitude-driven mode
-    //                 calls for (cluster→h3Points, point→samplePoints)
+    // The heatmap interacts differently with the two marker layers:
+    //
+    //   * Cluster dots (h3Points) DO contradict the heatmap. Both are
+    //     aggregate/density views, so painting cluster dots over the heatmap
+    //     produces the dots-vs-hotspots disagreement RY flagged 2026-05-27 —
+    //     two layers telling contradictory spatial stories at once. So cluster
+    //     dots stay hidden whenever the heatmap is on.
+    //
+    //   * Individual sample points (samplePoints) do NOT contradict it: they
+    //     are exact per-sample locations, which COMPLEMENT the density overlay
+    //     (heatmap = where it's dense, dots = the actual samples there). So at
+    //     sample resolution (point mode) we show the sample dots on top of the
+    //     heatmap rather than hiding them. (loadViewportSamples() already runs
+    //     under heatmap in point mode, so they stay loaded and pan-fresh — this
+    //     just unhides them.)
+    //
+    // Rule:
+    //   cluster mode → h3Points shown only when heatmap OFF
+    //   point mode   → samplePoints shown always (heatmap on or off)
     // Aside from the one-time initializer (samplePoints starts hidden at
     // creation), this is the ONLY place that writes `.show` on the two
     // collections. Call it from every site that flips the mode or the
@@ -2742,7 +2753,7 @@ zoomWatcher = {
         const heat = heatmapEnabled();
         const mode = getMode();
         viewer.h3Points.show = !heat && mode === 'cluster';
-        viewer.samplePoints.show = !heat && mode === 'point';
+        viewer.samplePoints.show = mode === 'point';
     }
 
     // --- Mode transitions ---
