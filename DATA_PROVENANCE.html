@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mapping Source Records – iSamples</title>
+<title>data_provenance – iSamples</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -23,26 +23,61 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<link href="../assets/isamplesfavicon.ico" rel="icon">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-1ee02054668a0d42167d8c4e7240f8ef.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-1ee02054668a0d42167d8c4e7240f8ef.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -72,7 +107,7 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
-<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -82,11 +117,11 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="../index.html" class="navbar-brand navbar-brand-logo">
-    <img src="../assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
-    <img src="../assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
     </a>
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="./index.html">
     <span class="navbar-title">iSamples</span>
     </a>
   </div>
@@ -97,11 +132,11 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../explorer.html"> 
+    <a class="nav-link" href="./explorer.html"> 
 <span class="menu-text">Interactive Explorer</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -110,11 +145,11 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
         <li>
-    <a class="dropdown-item" href="../how-to-use.html">
+    <a class="dropdown-item" href="./how-to-use.html">
  <span class="dropdown-text">Overview</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../tutorials/zenodo_isamples_analysis.html">
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
  <span class="dropdown-text">Deep-Dive Analysis</span></a>
   </li>  
     </ul>
@@ -125,19 +160,19 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
         <li>
-    <a class="dropdown-item" href="../about.html">
+    <a class="dropdown-item" href="./about.html">
  <span class="dropdown-text">Objectives</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../about.html#team">
+    <a class="dropdown-item" href="./about.html#team">
  <span class="dropdown-text">PIs and Contributors</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../about.html#photo-gallery">
+    <a class="dropdown-item" href="./about.html#photo-gallery">
  <span class="dropdown-text">Photo Gallery</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../about.html#background-history">
+    <a class="dropdown-item" href="./about.html#background-history">
  <span class="dropdown-text">Background &amp; History</span></a>
   </li>  
     </ul>
@@ -148,11 +183,11 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
         <li>
-    <a class="dropdown-item" href="../design/index.html">
+    <a class="dropdown-item" href="./design/index.html">
  <span class="dropdown-text">Overview</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../design/requirements.html">
+    <a class="dropdown-item" href="./design/requirements.html">
  <span class="dropdown-text">Requirements</span></a>
   </li>  
         <li>
@@ -160,15 +195,15 @@ ul.task-list li input[type="checkbox"] {
  <span class="dropdown-text">Metadata Model</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../models/index.html">
+    <a class="dropdown-item" href="./models/index.html">
  <span class="dropdown-text">Vocabularies</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../tutorials/narrow_vs_wide_performance.html">
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
  <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../tutorials/why_h3.html">
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
  <span class="dropdown-text">Technical: Why H3?</span></a>
   </li>  
     </ul>
@@ -179,15 +214,15 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
         <li>
-    <a class="dropdown-item" href="../pubs.html">
+    <a class="dropdown-item" href="./pubs.html">
  <span class="dropdown-text">Publications &amp; Conferences</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../pubs.html#zenodo-community">
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
  <span class="dropdown-text">Zenodo Community</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../pubs.html#github-repositories">
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
  <span class="dropdown-text">Github Repositories</span></a>
   </li>  
     </ul>
@@ -220,125 +255,139 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#mapping-from-sources-to-core" id="toc-mapping-from-sources-to-core" class="nav-link active" data-scroll-target="#mapping-from-sources-to-core"><span class="header-section-number">1</span> Mapping from sources to core</a></li>
-  <li><a href="#geome" id="toc-geome" class="nav-link" data-scroll-target="#geome"><span class="header-section-number">2</span> GEOME</a></li>
+  <li><a href="#isamples-explorer-data-provenance" id="toc-isamples-explorer-data-provenance" class="nav-link active" data-scroll-target="#isamples-explorer-data-provenance"><span class="header-section-number">1</span> iSamples Explorer — Data Provenance</a>
+  <ul>
+  <li><a href="#pipeline-dag" id="toc-pipeline-dag" class="nav-link" data-scroll-target="#pipeline-dag"><span class="header-section-number">1.1</span> Pipeline DAG</a></li>
+  <li><a href="#stages-script-command-per-step" id="toc-stages-script-command-per-step" class="nav-link" data-scroll-target="#stages-script-command-per-step"><span class="header-section-number">1.2</span> Stages (script / command per step)</a></li>
+  <li><a href="#the-sidecarenrichment-pattern-how-new-data-gets-in" id="toc-the-sidecarenrichment-pattern-how-new-data-gets-in" class="nav-link" data-scroll-target="#the-sidecarenrichment-pattern-how-new-data-gets-in"><span class="header-section-number">1.3</span> The sidecar/enrichment pattern (how new data gets in)</a></li>
+  <li><a href="#documentation-automation-gaps" id="toc-documentation-automation-gaps" class="nav-link" data-scroll-target="#documentation-automation-gaps"><span class="header-section-number">1.4</span> Documentation / automation gaps</a></li>
+  <li><a href="#key-files" id="toc-key-files" class="nav-link" data-scroll-target="#key-files"><span class="header-section-number">1.5</span> Key files</a></li>
+  </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/mapping_sources.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DATA_PROVENANCE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Mapping Source Records</h1>
-<p class="subtitle lead">Mapping source sample records to the iSamples core model</p>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<section id="mapping-from-sources-to-core" class="level2" data-number="1">
-<h2 data-number="1" data-anchor-id="mapping-from-sources-to-core"><span class="header-section-number">1</span> Mapping from sources to core</h2>
-<p>In general the process is :</p>
-<p>Remove plantuml diagram… [smr 2024-01-04]</p>
+<section id="isamples-explorer-data-provenance" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> iSamples Explorer — Data Provenance</h1>
+<p>How every parquet file the explorer uses is generated, from root to publish. <em>Reviewed 2026-06-02 (CC, via codebase audit). Complements <code>SERIALIZATIONS.md</code> (format/schema reference); this file is the end-to-end build chain + the automation gaps.</em></p>
+<blockquote class="blockquote">
+<p><strong>Load-bearing constraint:</strong> the <strong>root export cannot be regenerated.</strong> It was produced from the iSamples Central Solr API (<code>central.isample.xyz</code>), <strong>offline since Aug 2025</strong>. The Zenodo-archived export is a <strong>frozen root</strong>. Any <em>new</em> data (e.g.&nbsp;concept URIs, thumbnails) therefore must come from a <strong>per-source supplementary file merged into the base by <code>pid</code></strong> — the “sidecar” pattern (see Stage 3) — not from re-exporting.</p>
+</blockquote>
+<section id="pipeline-dag" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="pipeline-dag"><span class="header-section-number">1.1</span> Pipeline DAG</h2>
+<pre><code>Source collections (SESAR · OpenContext · GEOME · Smithsonian)
+   │  iSamples Central Solr API  ── OFFLINE since Aug 2025 (cannot re-run) ──┐
+   ▼                                                                         │
+STAGE 0/1  export_client → JSONL → GeoParquet                               │ frozen
+   → isamples_export_*_geo.parquet   (Export format; ~300MB, 6.7M; Zenodo doi:10.5281/zenodo.15278211)
+   ▼
+STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
+   →  narrow (…_narrow.parquet, ~844MB, 106M rows)   and   wide (…_wide.parquet, ~282MB, 20M rows)
+   ▼
+STAGE 3  sidecar/enrichment merge (LEFT JOIN by pid)        ← Eric's independently-maintained OC PQG (GCS)
+   scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
+   ▼
+STAGE 4  wide → frontend derived files  (mostly AD-HOC / not checked in — see gaps)
+   → wide_h3 · h3_summary_res4/6/8 · samples_map_lite · sample_facets_v2 · facet_summaries · facet_cross_filter
+   → vocab_labels  (scripts/build_vocab_labels.py — the one fully-scripted derived file; built from SKOS TTLs)
+   ▼
+STAGE 5  publish to R2 (bucket isamples-ry) + Cloudflare Worker (data.isamples.org, /current/ aliases)
+   ▼
+DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)</code></pre>
 </section>
-<section id="geome" class="level2" data-number="2">
-<h2 data-number="2" data-anchor-id="geome"><span class="header-section-number">2</span> GEOME</h2>
+<section id="stages-script-command-per-step" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="stages-script-command-per-step"><span class="header-section-number">1.2</span> Stages (script / command per step)</h2>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
 <thead>
 <tr class="header">
-<th>s</th>
-<th>p</th>
-<th>o</th>
-<th>Label</th>
-<th>Source</th>
+<th>Stage</th>
+<th>Input → Output</th>
+<th>How (file:line)</th>
+<th>Automated?</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>event</td>
-<td>GEOME</td>
+<td><strong>0/1 Export</strong></td>
+<td>Solr API → <code>isamples_export_*_geo.parquet</code></td>
+<td><code>export_client</code> <code>ExportClient.perform_full_download()</code> (<code>export_client.py:423-469</code>) → <code>write_geoparquet_from_json_lines()</code>; schema <code>SOURCE_COLUMNS</code> (<code>duckdb_utilities.py:9-42</code>, incl.&nbsp;<code>keywords: STRUCT(keyword VARCHAR)[]</code> — <strong>text only, no URI</strong>, L17)</td>
+<td>❌ API offline; <strong>frozen</strong></td>
 </tr>
 <tr class="even">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>sample</td>
-<td>GEOME</td>
+<td><strong>2 Base PQG</strong></td>
+<td>export → <code>*_narrow.parquet</code> / <code>*_wide.parquet</code></td>
+<td><code>pqg/pqg/sql_converter.py</code> <code>convert_isamples_sql(input, output, wide=…)</code> (CLI <code>python pqg/sql_converter.py in.parquet out.parquet [--wide]</code>); 7 stages, decomposes nested structs → nodes+edges; site dedupe by rounded lat/lon+label</td>
+<td>✅ scripted (exact prod invocation not recorded — gap)</td>
 </tr>
 <tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>tissue</td>
-<td>GEOME</td>
+<td><strong>3 Sidecar merge</strong></td>
+<td>base wide + Eric’s OC PQG → <code>isamples_202604_wide.parquet</code></td>
+<td><code>scripts/enrich_wide_with_oc_thumbnails.py</code> — <code>LEFT JOIN</code> OC <code>(pid, thumbnail_url)</code> into wide (<code>COALESCE</code>). <strong>This is the precedent for merging ANY per-source supplement (incl.&nbsp;concept URIs) by pid.</strong> Drift check: <code>scripts/check_oc_pqg_drift.py</code> (detects only; no mirror)</td>
+<td>⚠️ merge scripted; OC mirror + R2 upload manual</td>
 </tr>
 <tr class="even">
-<td>IGSN</td>
-<td>has_record</td>
-<td>_id</td>
-<td>sample</td>
-<td>SESAR</td>
+<td><strong>4 Frontend derived</strong></td>
+<td>wide → 7 explorer files</td>
+<td><code>vocab_labels.parquet</code> ← <code>scripts/build_vocab_labels.py</code> (SKOS TTLs via rdflib). <strong>The other 6</strong> (<code>wide_h3</code>, <code>h3_summary_res4/6/8</code>, <code>samples_map_lite</code>, <code>sample_facets_v2</code>, <code>facet_summaries</code>, <code>facet_cross_filter</code>) have <strong>no checked-in build script</strong> — query patterns live in notebooks / <code>SERIALIZATIONS.md</code> only</td>
+<td>❌ ad-hoc (1 of 7 scripted)</td>
 </tr>
 <tr class="odd">
-<td>ARK</td>
-<td>has_record</td>
-<td>_id</td>
-<td>SMITHSONIAN</td>
-<td></td>
+<td><strong>5 Publish</strong></td>
+<td>files → R2 + Worker</td>
+<td>Worker <code>workers/data-isamples-org/src/index.js</code> (<code>wrangler deploy</code>); immutable cache for <code>isamples_\d{6}_*.parquet</code>; <code>/current/&lt;flavor&gt;.parquet</code> → 302 via <code>current/manifest.json</code>. Bucket <code>isamples-ry</code></td>
+<td>⚠️ Worker scripted; <strong>file upload + manifest update are manual</strong></td>
 </tr>
 </tbody>
 </table>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>```saqjceba assets/geome_mapping.drawio.svg</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>align: left</td>
-</tr>
-</tbody>
-</table>
-<p>Source record representation.</p>
-<pre><code>
-```{figure} assets/geome_mapping_1.drawio.svg
----
-align: left
----
-Mapping to individual core records and relation records. </code></pre>
-<p>Relations between entities are modelled as triples with subject (s) indicating the source of the relation, the predicate (p) the type of relation, and object (o) identifying the target.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>```saqjceba assets/geome_mapping_2.drawio.svg</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>align: left</td>
-</tr>
-</tbody>
-</table>
-<p>Mapping to individual core records and including relations in the records. ```</p>
-<p>Relations between entities are modelled as key-value pairs within the record, with key being a field name, and value being a list of identifiers.</p>
+</section>
+<section id="the-sidecarenrichment-pattern-how-new-data-gets-in" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="the-sidecarenrichment-pattern-how-new-data-gets-in"><span class="header-section-number">1.3</span> The sidecar/enrichment pattern (how new data gets in)</h2>
+<p>Because the export is frozen, new per-source data is added by <strong>merging a supplementary parquet keyed by <code>pid</code> into the base wide</strong> — exactly what the thumbnail enrichment does:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- scripts/enrich_wide_with_oc_thumbnails.py (core)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> TEMP <span class="kw">TABLE</span> oc_thumbs <span class="kw">AS</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> <span class="kw">DISTINCT</span> pid, thumbnail_url <span class="kw">FROM</span> read_parquet(<span class="st">'&lt;eric_oc_pqg&gt;'</span>) <span class="kw">WHERE</span> thumbnail_url <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> (<span class="kw">SELECT</span> p.<span class="op">*</span> <span class="kw">REPLACE</span> (<span class="fu">COALESCE</span>(oc.thumbnail_url, p.thumbnail_url) <span class="kw">AS</span> thumbnail_url)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="kw">FROM</span> read_parquet(<span class="st">'&lt;base_wide&gt;'</span>) p <span class="kw">LEFT</span> <span class="kw">JOIN</span> oc_thumbs oc <span class="kw">ON</span> p.pid <span class="op">=</span> oc.pid)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">TO</span> <span class="st">'&lt;out&gt;'</span> (FORMAT PARQUET, COMPRESSION ZSTD);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Eric Kansa maintains OpenContext PQG <strong>independently</strong> on GCS (<code>storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet</code>), so it can carry data the frozen iSamples export lacks. This is the channel for <strong>#263</strong> (external concept URIs): Eric’s OC PQG carries them → merged into wide by pid → flows to the derived files. <em>(Sidecar design endorsed 2026-04-17; the spec <code>project_isamples_sidecar_pattern.md</code> lives in the Obsidian vault, not a repo — gap.)</em></p>
+</section>
+<section id="documentation-automation-gaps" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="documentation-automation-gaps"><span class="header-section-number">1.4</span> Documentation / automation gaps</h2>
+<ul>
+<li><strong>6 of 7 frontend derived files have no checked-in build script</strong> (<code>wide_h3</code>, the three <code>h3_summary_res*</code>, <code>samples_map_lite</code>, <code>sample_facets_v2</code>, <code>facet_summaries</code>, <code>facet_cross_filter</code>). Query patterns exist in notebooks + <code>SERIALIZATIONS.md §4</code> but not as runnable COPY-TO scripts. <code>pqg add-h3</code> / <code>pqg facet-summaries</code> are named in the dev journal (Mar 2026) but <strong>absent from <code>pqg/__main__.py</code></strong>.</li>
+<li><strong>No R2 upload automation</strong> — file upload to bucket <code>isamples-ry</code> + <code>current/manifest.json</code> update are manual <code>wrangler</code>/dashboard steps.</li>
+<li><strong>No OC mirror script</strong> — <code>check_oc_pqg_drift.py</code> detects GCS↔︎R2 drift but doesn’t perform the mirror.</li>
+<li><strong>Exact prod invocation</strong> that produced <code>zenodo_narrow_2025-12-12</code> / <code>zenodo_wide_2026-01-09</code> from the Zenodo export is not recorded (dedupe options unknown).</li>
+<li><strong>No Makefile / CI / post-render hook</strong> rebuilds derived files when wide changes — every post-Stage-2 step is manual.</li>
+<li><strong><code>SERIALIZATIONS.md:80</code></strong> claims every file “can be rebuilt by a script” — aspirational; true for ~4 of 10 files.</li>
+<li><strong>Sidecar spec</strong> is in Obsidian only, not version-controlled with the code.</li>
+</ul>
+</section>
+<section id="key-files" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="key-files"><span class="header-section-number">1.5</span> Key files</h2>
+<ul>
+<li><code>export_client/isamples_export_client/duckdb_utilities.py</code> — export schema (keywords narrowing @ L17)</li>
+<li><code>pqg/pqg/sql_converter.py</code> — export→PQG engine; <code>pqg/docs/PQG_SPECIFICATION.md</code> — format spec</li>
+<li><code>isamplesorg.github.io/scripts/enrich_wide_with_oc_thumbnails.py</code> — the sidecar-merge precedent</li>
+<li><code>isamplesorg.github.io/scripts/build_vocab_labels.py</code> — the one scripted derived file</li>
+<li><code>isamplesorg.github.io/scripts/check_oc_pqg_drift.py</code> — OC drift check</li>
+<li><code>isamplesorg.github.io/workers/data-isamples-org/{src/index.js,wrangler.toml}</code> — Worker + R2 config</li>
+<li><code>isamplesorg.github.io/SERIALIZATIONS.md</code> — format/schema reference (DAG companion to this file)</li>
+</ul>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -743,7 +792,7 @@ Mapping to individual core records and relation records. </code></pre>
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/models/mapping_sources.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DATA_PROVENANCE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
