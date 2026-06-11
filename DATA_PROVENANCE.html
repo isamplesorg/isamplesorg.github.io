@@ -290,8 +290,11 @@ STAGE 0/1  export_client → JSONL → GeoParquet                               
 STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
    →  narrow (…_narrow.parquet, ~844MB, 106M rows)   and   wide (…_wide.parquet, ~282MB, 20M rows)
    ▼
-STAGE 3  sidecar/enrichment merge (LEFT JOIN by pid)        ← Eric's independently-maintained OC PQG (GCS)
-   scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
+STAGE 3  sidecar/enrichment merges (LEFT JOIN by pid)       ← Eric's independently-maintained OC PQG (GCS)
+   3a scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
+   3b scripts/enrich_wide_with_oc_concepts.py    →  isamples_202606_wide.parquet (#272: OC material/
+      object-type concepts REPLACE the frozen export's for OC pids — OC wins unconditionally;
+      gate: scripts/validate_oc_concept_enrichment.py)
    ▼
 STAGE 4  wide → frontend derived files  (NOW SCRIPTED: scripts/build_frontend_derived.py)
    → wide_h3 · h3_summary_res4/6/8 · samples_map_lite · sample_facets_v2 · facet_summaries · facet_cross_filter
@@ -333,18 +336,24 @@ DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)</code></pre>
 <td>✅ scripted (exact prod invocation not recorded — gap)</td>
 </tr>
 <tr class="odd">
-<td><strong>3 Sidecar merge</strong></td>
+<td><strong>3a Sidecar: thumbnails</strong></td>
 <td>base wide + Eric’s OC PQG → <code>isamples_202604_wide.parquet</code></td>
-<td><code>scripts/enrich_wide_with_oc_thumbnails.py</code> — <code>LEFT JOIN</code> OC <code>(pid, thumbnail_url)</code> into wide (<code>COALESCE</code>). <strong>This is the precedent for merging ANY per-source supplement (incl.&nbsp;concept URIs) by pid.</strong> Drift check: <code>scripts/check_oc_pqg_drift.py</code> (detects only; no mirror)</td>
+<td><code>scripts/enrich_wide_with_oc_thumbnails.py</code> — <code>LEFT JOIN</code> OC <code>(pid, thumbnail_url)</code> into wide (<code>COALESCE</code>). Drift check: <code>scripts/check_oc_pqg_drift.py</code> (detects only; no mirror)</td>
 <td>⚠️ merge scripted; OC mirror + R2 upload manual</td>
 </tr>
 <tr class="even">
+<td><strong>3b Sidecar: OC concepts (#272)</strong></td>
+<td>3a wide + Eric’s OC <strong>wide</strong> → <code>isamples_202606_wide.parquet</code></td>
+<td><code>scripts/enrich_wide_with_oc_concepts.py</code> — REPLACES <code>p__has_material_category</code> / <code>p__has_sample_object_type</code> for OC pids with OC’s ordered concept lists (<strong>OC wins unconditionally</strong> — RY decision 2026-06-10, #272); mints <code>IdentifiedConcept</code> rows for URIs the frozen export never had (e.g.&nbsp;<code>otheranthropogenicmaterial</code>, the #260 fix); deterministic; emits <code>.manifest.json</code>. Independent gate: <code>scripts/validate_oc_concept_enrichment.py</code> (re-derives from inputs; non-overlay rows must be byte-identical). Scope: overlay only — ~75K OC records absent from the frozen export are NOT ingested (follow-up); <code>p__has_context_category</code> untouched (follow-up).</td>
+<td>✅ merge + gate scripted (<code>make all-272</code>); R2 upload manual</td>
+</tr>
+<tr class="odd">
 <td><strong>4 Frontend derived</strong></td>
 <td>wide → 7 explorer files</td>
 <td>The 6 map/facet files (<code>wide_h3</code>, <code>h3_summary_res4/6/8</code>, <code>samples_map_lite</code>, <code>sample_facets_v2</code>, <code>facet_summaries</code>, <code>facet_cross_filter</code>) ← <strong><code>scripts/build_frontend_derived.py</code></strong> (deterministic; geometry-agnostic; emits a manifest). <code>vocab_labels.parquet</code> ← <code>scripts/build_vocab_labels.py</code> (SKOS TTLs). Gated by <code>scripts/validate_frontend_derived.py</code> (algebraic + <code>--wide</code> semantic re-derivation) + <code>tests/test_frontend_derived.py</code> (fixtures, CI).</td>
 <td>✅ scripted; facet/map files semantic-tested; wide_h3 column-smoke-tested</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>5 Publish</strong></td>
 <td>files → R2 + Worker</td>
 <td>Worker <code>workers/data-isamples-org/src/index.js</code> (<code>wrangler deploy</code>); immutable cache for <code>isamples_\d{6}_*.parquet</code>; <code>/current/&lt;flavor&gt;.parquet</code> → 302 via <code>current/manifest.json</code>. Bucket <code>isamples-ry</code></td>
