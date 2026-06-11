@@ -29,13 +29,13 @@ citations.
 
 | field | owner | default | URL repr | hydration site | write-back trigger | validation | notes |
 |-------|-------|---------|----------|----------------|--------------------|------------|-------|
-| `search` | DOM `#sampleSearch` value (mirrored to `#sampleSearchSidebar`) | omitted | raw string | `applyQueryToSearch()` at start of `phase1` (hydrates both inputs) | `writeQueryState()` called from `doSearch()` | trim only; min 2 chars enforced at search time, not in URL | written even on no-result searches |
+| `search` | DOM `#sampleSearch` value | omitted | raw string | `applyQueryToSearch()` at start of `phase1` | `writeQueryState()` called from `doSearch()` | trim only; min 2 chars enforced at search time, not in URL | written even on no-result searches. The mirrored `#sampleSearchSidebar` input was removed in #266 |
 | `sources` | DOM `#sourceFilter` checkboxes | omitted (= all 4 checked) | CSV of `SOURCE_VALUES` ∩ user-checked | `applyQueryToSourceFilter()` at start of `phase1` (`:938`) | `writeQueryState()` from source filter `change` (`:1620`) | filtered by `SOURCE_VALUES` allowlist (`:407`); param removed when all 4 checked (`:449`) | empty (zero checked) renders as `&sources=` and yields `1=0` predicate (`:379`) |
 | `material` | DOM `#materialFilterBody` checkboxes | omitted (= no filter) | CSV of full URIs | `applyQueryToFacetFilters()` at end of `facetFilters` (`:1061`) | `writeQueryState()` from `handleFacetFilterChange` (`:1642`) | none — checkbox `value` already constrained by render | empty checked set ⇒ param removed (`:459`) |
 | `context` | DOM `#contextFilterBody` checkboxes | omitted | CSV of full URIs | same as `material` | same as `material` | none | same |
 | `object_type` | DOM `#objectTypeFilterBody` checkboxes | omitted | CSV of full URIs | same as `material` | same as `material` | none | same |
 | ~~`view`~~ | _removed in mockup-v1 (#200)_ | — | — | — | — | — | The Globe/Table toggle is gone — the samples table is now permanent below the globe. `writeQueryState()` does `params.delete('view')` to canonicalize legacy bookmarks. See §6 "Mockup-v1 addendum" |
-| `search_scope` | local closure `_searchScope` in `zoomWatcher` | omitted (= `world`) | `area` only; absent ⇒ world | `_searchScope` hydrated at top of `zoomWatcher` from `params.get('search_scope')` | `persistSearchScope()` from `doSearch()` and button clicks | exact match `'area'` | sidebar `#sampleSearchSidebar` Enter always submits `world`, never `area` — see §6 mockup-v1 addendum |
+| `search_scope` | local closure `_searchScope` in `zoomWatcher` | omitted (= `world`) | `area` only; absent ⇒ world | `_searchScope` hydrated at top of `zoomWatcher` from `params.get('search_scope')` | `persistSearchScope()` from `doSearch()` and button clicks | exact match `'area'` | (the sidebar search input that always submitted `world` was removed in #266) |
 | `page` | inner closure `let page = 0` in `tableView` | not in URL | — | — | resets to 0 on `refreshTable()`; ±1 on prev/next | clamped to `[0, totalPages-1]` | **#163 item 6** — table page is intentionally not URL state today; if/when added, must coexist with the cross-filter contract below |
 | `perf` | — (read-only feature flag) | omitted | `1` to enable | `perfPanel` cell reads (`:1921-1922`) | never written | `=== '1'` exact match | never round-tripped; safe to add other tail params |
 
@@ -99,12 +99,12 @@ predates the store-on-`viewer` pattern and isn't worth migrating.
 | `.zero` on `.facet-row` | "value has zero count under current filters" styling | `applyFacetCounts()` (`:565`) | CSS only | derived; do not read |
 | `.disabled` on `#sourceFilter .legend-item` | unchecked source visual | `updateSourceLegendState()` (`:395-400`) | CSS only | derived from checkbox `checked`; do not read |
 
-DOM input elements (the four facet checkbox bodies + `#sampleSearch` +
-`#sampleSearchSidebar`) are the **source of truth** for
-`getActiveSources()`, `getCheckedValues()`, and the search input. SQL
-builders read `#sampleSearch` directly each call. `#sampleSearchSidebar`
-is kept in lock-step with `#sampleSearch` via a two-way `input`-event
-mirror (see §6 mockup-v1 addendum). The `#maxSamples` input and the
+DOM input elements (the four facet checkbox bodies + `#sampleSearch`)
+are the **source of truth** for `getActiveSources()`,
+`getCheckedValues()`, and the search input. SQL builders read
+`#sampleSearch` directly each call. (The mirrored `#sampleSearchSidebar`
+input was removed in #266 — `#sampleSearch` is the only search box;
+the historical mirror design is in §6.) The `#maxSamples` input and the
 `getTableMaxSamples()` / `clampTableMaxSamples()` helpers were removed
 in the table v2 follow-up — the samples table now paginates server-side
 via DuckDB `LIMIT/OFFSET` instead of fetching up to 25K rows up-front.
@@ -375,7 +375,9 @@ base-layer picker dropdown wins z-stack (`z-index: 1100` vs overlay's
 `1000`).
 
 **M-1B — Sidebar open-text search input that mirrors the in-map one.**
-A second input `#sampleSearchSidebar` lives at the top of `.side-panel`.
+*(Removed in #266 — the duplicate sidebar box confused users; `#sampleSearch`
+is now the only search input. Kept for historical context:)*
+A second input `#sampleSearchSidebar` lived at the top of `.side-panel`.
 Two-way `input`-event mirror keeps both inputs in lock-step as a single
 logical query term:
 

@@ -291,21 +291,19 @@ test.describe('Map search overlay — Cesium toolbar coexistence (#200 / M-1A)',
     expect(hash).toContain(`pid=${encodeURIComponent(pid)}`);
   });
 
-  test('sidebar search input mirrors in-map search input', async ({ page }) => {
+  test('sidebar search input is gone; in-map search is the only search box (#266)', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(explorerUrl(), {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
     await page.waitForSelector('#sampleSearch', { timeout: 30000 });
-    await page.waitForSelector('#sampleSearchSidebar', { timeout: 10000 });
 
     await waitForBootReady(page);
 
-    await page.locator('#sampleSearchSidebar').fill('pottery');
-    await expect(page.locator('#sampleSearch')).toHaveValue('pottery');
-
-    await page.locator('#sampleSearch').fill('basalt');
-    await expect(page.locator('#sampleSearchSidebar')).toHaveValue('basalt');
+    // #266: the duplicate sidebar search box was removed — exactly one
+    // search input should exist, and it's the in-map one.
+    await expect(page.locator('#sampleSearchSidebar')).toHaveCount(0);
+    await expect(page.locator('#sampleSearch')).toHaveCount(1);
   });
 });
