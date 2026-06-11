@@ -26,8 +26,16 @@ def sha256_file(path, _b=1 << 20):
     return h.hexdigest()
 
 MATERIAL_ROOT = "https://w3id.org/isample/vocabulary/material/1.0/material"
-PID_K = "ark:/28722/k2p55x96j"  # #260 sentinel: must not flip under #271 selection
-PID_K_EXPECTED = "https://w3id.org/isample/vocabulary/material/1.0/anthropogenicmetal"
+PID_K = "ark:/28722/k2p55x96j"  # #260 sentinel (a ceramic)
+# Expected sentinel material BY DATA VINTAGE:
+#   pre-#272 wides (frozen-export lineage, e.g. 202601/202604): the export's
+#     (wrong) value — anthropogenicmetal — because #271 only fixed SELECTION,
+#     not the data. The check then asserts selection didn't regress.
+#   post-#272 wides (OC-concept-enriched, 202606+): the corrected value from
+#     Eric's OC PQG — otheranthropogenicmaterial (see #260/#272).
+# Default = the enriched expectation; validate a legacy build with
+#   --sentinel-material https://w3id.org/isample/vocabulary/material/1.0/anthropogenicmetal
+PID_K_EXPECTED = "https://w3id.org/isample/vocabulary/material/1.0/otheranthropogenicmaterial"
 
 EXPECTED_SCHEMA = {
     "facets": [("pid", "VARCHAR"), ("source", "VARCHAR"), ("material", "VARCHAR"),
@@ -46,6 +54,9 @@ def main():
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
                     help="floor for the non-empty sanity check (use 1 for fixtures)")
+    ap.add_argument("--sentinel-material", default=PID_K_EXPECTED,
+                    help="expected material URI for the #260 sentinel pid; default is the "
+                         "post-#272 (OC-enriched) value — override for pre-enrichment builds")
     a = ap.parse_args()
 
     def f(name, attr):
@@ -80,12 +91,13 @@ def main():
     check("material root absent", scalar(f"SELECT COUNT(*) FROM {F} WHERE material='{MATERIAL_ROOT}'") == 0,
           "facets rows with bare root material (want 0)")
 
-    # --- 2. #260 sentinel preserved (skip when the pid isn't in this dataset, e.g. fixtures) ---
+    # --- 2. #260 sentinel (skip when the pid isn't in this dataset, e.g. fixtures) ---
     row = con.sql(f"SELECT material FROM {F} WHERE pid='{PID_K}'").fetchone()
     if row is None:
         info.append(f"sentinel {PID_K} not present (N/A for this dataset)")
     else:
-        check(f"sentinel {PID_K} preserved", row[0] == PID_K_EXPECTED, f"got {row}")
+        check(f"sentinel {PID_K} == expected vintage value", row[0] == a.sentinel_material,
+              f"got {row}, expected {a.sentinel_material} (wrong --sentinel-material for this data vintage?)")
 
     # --- 3. PID uniqueness (browser relies on one row per pid) ---
     check("facets pid unique", scalar(f"SELECT COUNT(*) FROM (SELECT pid FROM {F} GROUP BY pid HAVING COUNT(*)>1)") == 0,
