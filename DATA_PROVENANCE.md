@@ -20,9 +20,10 @@ STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
 STAGE 3  sidecar/enrichment merge (LEFT JOIN by pid)        ← Eric's independently-maintained OC PQG (GCS)
    scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
    ▼
-STAGE 4  wide → frontend derived files  (mostly AD-HOC / not checked in — see gaps)
+STAGE 4  wide → frontend derived files  (NOW SCRIPTED: scripts/build_frontend_derived.py)
    → wide_h3 · h3_summary_res4/6/8 · samples_map_lite · sample_facets_v2 · facet_summaries · facet_cross_filter
-   → vocab_labels  (scripts/build_vocab_labels.py — the one fully-scripted derived file; built from SKOS TTLs)
+   → vocab_labels  (scripts/build_vocab_labels.py — built separately from SKOS TTLs)
+   → {tag}_manifest.json  (build identity: input+output sha256, argv, git SHA, DuckDB/extension versions)
    ▼
 STAGE 5  publish to R2 (bucket isamples-ry) + Cloudflare Worker (data.isamples.org, /current/ aliases)
    ▼
@@ -36,7 +37,7 @@ DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)
 | **0/1 Export** | Solr API → `isamples_export_*_geo.parquet` | `export_client` `ExportClient.perform_full_download()` (`export_client.py:423-469`) → `write_geoparquet_from_json_lines()`; schema `SOURCE_COLUMNS` (`duckdb_utilities.py:9-42`, incl. `keywords: STRUCT(keyword VARCHAR)[]` — **text only, no URI**, L17) | ❌ API offline; **frozen** |
 | **2 Base PQG** | export → `*_narrow.parquet` / `*_wide.parquet` | `pqg/pqg/sql_converter.py` `convert_isamples_sql(input, output, wide=…)` (CLI `python pqg/sql_converter.py in.parquet out.parquet [--wide]`); 7 stages, decomposes nested structs → nodes+edges; site dedupe by rounded lat/lon+label | ✅ scripted (exact prod invocation not recorded — gap) |
 | **3 Sidecar merge** | base wide + Eric's OC PQG → `isamples_202604_wide.parquet` | `scripts/enrich_wide_with_oc_thumbnails.py` — `LEFT JOIN` OC `(pid, thumbnail_url)` into wide (`COALESCE`). **This is the precedent for merging ANY per-source supplement (incl. concept URIs) by pid.** Drift check: `scripts/check_oc_pqg_drift.py` (detects only; no mirror) | ⚠️ merge scripted; OC mirror + R2 upload manual |
-| **4 Frontend derived** | wide → 7 explorer files | `vocab_labels.parquet` ← `scripts/build_vocab_labels.py` (SKOS TTLs via rdflib). **The other 6** (`wide_h3`, `h3_summary_res4/6/8`, `samples_map_lite`, `sample_facets_v2`, `facet_summaries`, `facet_cross_filter`) have **no checked-in build script** — query patterns live in notebooks / `SERIALIZATIONS.md` only | ❌ ad-hoc (1 of 7 scripted) |
+| **4 Frontend derived** | wide → 7 explorer files | The 6 map/facet files (`wide_h3`, `h3_summary_res4/6/8`, `samples_map_lite`, `sample_facets_v2`, `facet_summaries`, `facet_cross_filter`) ← **`scripts/build_frontend_derived.py`** (deterministic; geometry-agnostic; emits a manifest). `vocab_labels.parquet` ← `scripts/build_vocab_labels.py` (SKOS TTLs). Gated by `scripts/validate_frontend_derived.py` (algebraic + `--wide` semantic re-derivation) + `tests/test_frontend_derived.py` (fixtures, CI). | ✅ scripted; facet/map files semantic-tested; wide_h3 column-smoke-tested |
 | **5 Publish** | files → R2 + Worker | Worker `workers/data-isamples-org/src/index.js` (`wrangler deploy`); immutable cache for `isamples_\d{6}_*.parquet`; `/current/<flavor>.parquet` → 302 via `current/manifest.json`. Bucket `isamples-ry` | ⚠️ Worker scripted; **file upload + manifest update are manual** |
 
 ## The sidecar/enrichment pattern (how new data gets in)
@@ -54,14 +55,22 @@ COPY (SELECT p.* REPLACE (COALESCE(oc.thumbnail_url, p.thumbnail_url) AS thumbna
 
 Eric Kansa maintains OpenContext PQG **independently** on GCS (`storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet`), so it can carry data the frozen iSamples export lacks. This is the channel for **#263** (external concept URIs): Eric's OC PQG carries them → merged into wide by pid → flows to the derived files. *(Sidecar design endorsed 2026-04-17; the spec `project_isamples_sidecar_pattern.md` lives in the Obsidian vault, not a repo — gap.)*
 
-## Documentation / automation gaps
+## Stage 4 builder contract (`scripts/build_frontend_derived.py`)
 
-- **6 of 7 frontend derived files have no checked-in build script** (`wide_h3`, the three `h3_summary_res*`, `samples_map_lite`, `sample_facets_v2`, `facet_summaries`, `facet_cross_filter`). Query patterns exist in notebooks + `SERIALIZATIONS.md §4` but not as runnable COPY-TO scripts. `pqg add-h3` / `pqg facet-summaries` are named in the dev journal (Mar 2026) but **absent from `pqg/__main__.py`**.
+- **Geometry-agnostic input.** The `geometry` column may be **WKB BLOB** (e.g. `isamples_202604_wide`) or DuckDB **GEOMETRY** (e.g. `isamples_202601_wide`, the Zenodo wide). The builder detects the type at runtime — earlier ad-hoc SQL assumed BLOB and threw `BinderException` on GEOMETRY wides.
+- **Material selection (#265/#271).** `material` = the **first NON-ROOT** concept in `p__has_material_category` (the root `.../material/1.0/material` "Material" can sit at any array position). Samples tagged only at the root get `NULL` material (excluded from the facet). This is **NOT leaf/most-specific** selection — the arrays are not clean SKOS paths. `context`/`object_type` use `[1]`; their root-dropping is deferred.
+- **Determinism.** Every COPY has `ORDER BY`; `dominant_source` ties break on source name (ASC); center lat/lng rounded to 6 dp.
+- **Reproducibility & build identity.** Each run writes `{tag}_manifest.json` (input + per-output sha256, argv, git SHA, DuckDB + extension versions). DuckDB pinned in `scripts/requirements.txt`.
+- **Tested.** `tests/test_frontend_derived.py` (fixtures, CI via `.github/workflows/pipeline-tests.yml`) + `scripts/validate_frontend_derived.py` (algebraic: `facet_summaries == GROUP BY sample_facets_v2`, `facet_cross_filter == conditional GROUP BY`, `facets.pid == map_lite.pid`, pid uniqueness, H3 sums). `make test` / `make all`.
+
+## Documentation / automation gaps (remaining)
+
+- ⚠️ **The deployed `202601` derived files are NOT reproducible** from any available wide. A rebuild yields **528,983** root-material rows (pre-#271); the deployed `sample_facets_v2` has **346,768** — so the live files came from a different/unrecorded Stage-4 process, *and* the data has since rolled (wide is now `202604`). Treat a fresh `build_frontend_derived.py` run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.
+- **Version skew:** the deployed derived files are `202601` while the wide they should derive from is `202604` (the popup reads `202604`). Rebuilding from `202604` resolves it (tracked in the pipeline epic).
 - **No R2 upload automation** — file upload to bucket `isamples-ry` + `current/manifest.json` update are manual `wrangler`/dashboard steps.
 - **No OC mirror script** — `check_oc_pqg_drift.py` detects GCS↔R2 drift but doesn't perform the mirror.
-- **Exact prod invocation** that produced `zenodo_narrow_2025-12-12` / `zenodo_wide_2026-01-09` from the Zenodo export is not recorded (dedupe options unknown).
-- **No Makefile / CI / post-render hook** rebuilds derived files when wide changes — every post-Stage-2 step is manual.
-- **`SERIALIZATIONS.md:80`** claims every file "can be rebuilt by a script" — aspirational; true for ~4 of 10 files.
+- **Stage-2 prod invocation** that produced `zenodo_narrow_2025-12-12` / `zenodo_wide_2026-01-09` from the Zenodo export is still unrecorded (dedupe options unknown).
+- **`SERIALIZATIONS.md:80`** claims every file "can be rebuilt by a script" — now true for the Stage-4 files; still aspirational for Stage-2.
 - **Sidecar spec** is in Obsidian only, not version-controlled with the code.
 
 ## Key files

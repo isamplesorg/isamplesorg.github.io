@@ -77,9 +77,12 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
   └─► consumed by Search Explorer to render facet URIs as prefLabels
 ```
 
-Arrows indicate derivation, not containment. Every file in the left
-column can be rebuilt from its parent by a script in
-`isamples-python/` or `isamplesorg.github.io/scripts/`.
+Arrows indicate derivation, not containment. The Stage-4 frontend-derived
+files are rebuilt by `isamplesorg.github.io/scripts/build_frontend_derived.py`
+(+ `build_vocab_labels.py`); the Stage-2 narrow/wide files are rebuilt by
+`pqg/`. Note: the **currently deployed** `isamples_202601_*` files predate that
+builder — a fresh build is NOT bit-for-bit identical to them (see
+`DATA_PROVENANCE.md`, "deployed 202601 not reproducible").
 
 ## 3. Catalog
 
@@ -226,7 +229,7 @@ for the alias when you want "latest."
 ### 4.6 `isamples_202601_h3_summary_res{4,6,8}.parquet`
 
 - **Role**: Zoom-adaptive aggregates that back the Cesium progressive globe and the Python Explorer's "H3 tier" rendering mode.
-- **Headline schema** (7 cols, identical across resolutions): `h3_cell` (BIGINT), `sample_count` (INT), `center_lat`, `center_lng` (DOUBLE), `dominant_source` (VARCHAR), `source_count` (INT), `resolution` (INT).
+- **Headline schema** (7 cols, identical across resolutions): `h3_cell` (**UBIGINT** — H3 cells are unsigned 64-bit; a signed BIGINT would go negative for high-bit cells), `sample_count` (INT), `center_lat`, `center_lng` (DOUBLE, rounded 6 dp), `dominant_source` (VARCHAR; ties broken by source name ASC for determinism), `source_count` (INT), `resolution` (INT).
 - **Query pattern**: fetch the right resolution for the current zoom; no join needed.
 - **DuckDB**:
   ```sql
@@ -247,8 +250,10 @@ for the alias when you want "latest."
 
 ### 4.8 `isamples_202601_sample_facets_v2.parquet`
 
-- **Role**: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI (the leaf concept the sample is tagged with at that dimension).
-- **Headline schema** (8 cols, all VARCHAR): `pid, source, material, context, object_type, label, description, place_name`. `material`/`context`/`object_type` are scalar URI strings, NOT arrays — the file's grain is one row per sample, so a sample tagged with multiple material URIs is represented by a single chosen URI (currently the first/leaf). For multi-material accuracy, JOIN back to `wide.p__has_material_category`.
+> ⚠️ **Deployed-file caveat:** the live `isamples_202601_sample_facets_v2.parquet` still contains **346,768** bare-root "Material" rows — it predates the #271 selection rule below. The rule describes the **builder contract** for the next rebuild (verified to drop the root → 0), not the file currently served.
+
+- **Role**: Cross-dimension facet filtering — one row per sample, each facet column holds a single controlled-vocabulary URI.
+- **Headline schema** (8 cols, all VARCHAR): `pid, source, material, context, object_type, label, description, place_name`. `material`/`context`/`object_type` are scalar URI strings, NOT arrays — one row per sample, so a sample tagged with multiple URIs is represented by a single chosen URI. **Selection rule:** `material` = the **first NON-ROOT** concept in the array (the broad root `.../material/1.0/material` is dropped — #265/#271); root-only samples → NULL material. This is **NOT** necessarily the leaf/most-specific concept (the arrays are not clean SKOS paths). `context`/`object_type` = the first array element (`[1]`). `place_name` is a VARCHAR cast of the wide's `VARCHAR[]` (note: `samples_map_lite` keeps `place_name` as `VARCHAR[]`). For multi-value accuracy, JOIN back to `wide.p__has_*_category`.
 - **Query pattern**: `WHERE material = '<uri>'` for exact match; `WHERE material ILIKE '%rock%'` to substring-match URI fragments.
 - **DuckDB**:
   ```sql
@@ -272,7 +277,7 @@ for the alias when you want "latest."
 ### 4.10 `isamples_202601_facet_cross_filter.parquet`
 
 - **Role**: Cross-facet counts for the single-active-filter case (QUERY_SPEC §3.3 tier 2a). Avoids recomputing when one facet dimension is active.
-- **Headline schema** (7 cols, 526 rows): `filter_source, filter_material, filter_context, filter_object_type, facet_type, facet_value, count`. Exactly one `filter_*` column is non-NULL per row.
+- **Headline schema** (7 cols): `filter_source, filter_material, filter_context, filter_object_type, facet_type, facet_value, count`. Two row kinds: **baseline** rows have **all** `filter_*` NULL (these equal `facet_summaries`); **single-dimension** rows have **exactly one** `filter_*` non-NULL. Single-dimension rows include self-dimension counts (`facet_type == filter dim`), which the explorer ignores. (Both kinds are emitted by `build_frontend_derived.py` and asserted by `validate_frontend_derived.py`.)
 - **Query pattern**: lookup by the active filter to get counts for the remaining dimensions.
 - **DuckDB**:
   ```sql
