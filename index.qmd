@@ -70,6 +70,8 @@ All analysis happens in your browser. Only the data you need is downloaded — t
 
 <br/>
 
+# iSamples in Action {.unnumbered}
+
 ::: {.column-page style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%;"}
 
 <video autoplay muted playsinline controls style="max-width: 100%; display: block;" aria-label="iSamples data visualization from Moorea">
