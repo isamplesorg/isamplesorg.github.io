@@ -39,6 +39,30 @@ To test against a deployed site instead of a local render:
 TEST_URL=https://rdhyee.github.io/isamplesorg.github.io npx playwright test explorer-smoke
 ```
 
+## Running characterization & deeper specs via workflow_dispatch
+
+The characterization and deeper specs depend on live remote parquet loads and are **not**
+in the CI smoke gate.  They can be triggered via the GitHub Actions
+*Run workflow* button on the `explorer-e2e` workflow.  Set `spec_filter`
+to one of the values below; empty = all specs.
+
+| spec_filter value | What runs |
+|---|---|
+| `explorer-characterization` | PR2 characterization suite (7 [data] tests) |
+| `facet-viewport` | B1 viewport-aware facet counts (#234 step 3) |
+| `heatmap-overlay` | Heatmap mutual-exclusion and round-trip (#233) |
+| `search-real-count` | Search cap-hit real-count display (#232) |
+| `url-roundtrip` | URL state round-trip regressions (#209) |
+| `explorer-map-overlay` | Map overlay / table pagination (#200) |
+| *(empty)* | All Playwright specs (explorer + tutorial) |
+
+Run any of these locally with `npx playwright test <spec_filter>`, e.g.:
+
+    npx playwright test explorer-characterization
+
+Allow up to 3 minutes per test for remote parquet loads.
+
+
 ## Setup
 
 ### Install Dependencies
