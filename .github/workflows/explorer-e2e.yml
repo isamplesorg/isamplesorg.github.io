@@ -1,0 +1,163 @@
+name: Explorer e2e smoke gate
+
+# Browser-level regression gate for explorer.html (#249 PR 1 — the safety
+# net that must exist BEFORE any refactor of explorer.qmd lands).
+#
+# What it does: renders explorer.qmd with Quarto, serves the rendered
+# docs/ with the repo's range-capable static server, and runs the
+# Playwright smoke set (tests/playwright/explorer-smoke.spec.js) against
+# it in headless Chromium.
+#
+# What it does NOT do: assert on data correctness. The explorer streams
+# large parquet files from data.isamples.org; the smoke set only asserts
+# structural liveness (page boots, Cesium canvas, facet sidebar, search
+# box) so a slow or flaky data load cannot fail the gate. The deeper
+# data-dependent specs in tests/playwright/ can be run manually via
+# workflow_dispatch with a spec filter.
+
+on:
+  pull_request:
+    paths:
+      - "explorer.qmd"
+      - "_quarto.yml"
+      - "styles.css"
+      - "assets/**"
+      - "workers/**"
+      - "tests/playwright/**"
+      - "playwright.config.js"
+      - "package.json"
+      - "dev_server.py"
+      - ".github/workflows/explorer-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "explorer.qmd"
+      - "_quarto.yml"
+      - "styles.css"
+      - "assets/**"
+      - "workers/**"
+      - "tests/playwright/**"
+      - "playwright.config.js"
+      - "package.json"
+      - "dev_server.py"
+      - ".github/workflows/explorer-e2e.yml"
+  workflow_dispatch:
+    inputs:
+      spec_filter:
+        description: >-
+          Playwright test file filter. Default runs only the smoke set;
+          pass e.g. "explorer-map-overlay" or "" (empty for all specs)
+          to run the data-dependent suite manually.
+        required: false
+        default: "explorer-smoke"
+
+concurrency:
+  group: explorer-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Pinned: the version this gate was developed and verified against.
+  # The deploy workflow installs latest; pinning here keeps the gate's
+  # failures attributable to the PR, not a Quarto release.
+  QUARTO_VERSION: "1.6.42"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Quarto installer
+        uses: actions/cache@v4
+        with:
+          path: ~/quarto.deb
+          key: quarto-deb-${{ env.QUARTO_VERSION }}
+
+      - name: Install Quarto
+        run: |
+          if [ ! -f ~/quarto.deb ]; then
+            curl -sSL -o ~/quarto.deb \
+              "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.deb"
+          fi
+          sudo dpkg -i ~/quarto.deb
+          quarto --version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # package-lock.json is gitignored in this repo, so `npm ci` and
+      # setup-node's built-in npm cache are unavailable; cache ~/.npm
+      # keyed on package.json instead.
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+
+      - name: Install node deps
+        run: npm install
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -e 'console.log(require("@playwright/test/package.json").version)')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Single-page render: explorer.qmd is OJS/HTML only, so this needs
+      # neither the Python deps nor generate_vocab_docs.sh that the full
+      # site render (quarto-pages.yml) requires. ~10s, produces
+      # docs/explorer.html + site_libs + assets.
+      - name: Render explorer page
+        run: quarto render explorer.qmd
+
+      # dev_server.py is the repo's range-capable (206) static server —
+      # same serving semantics the explorer verify loop uses locally.
+      - name: Serve rendered site
+        run: |
+          python3 dev_server.py --dir docs --port 5860 > devserver.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:5860/explorer.html > /dev/null && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://localhost:5860/explorer.html
+
+      # PR/push runs are pinned to the smoke set. Only workflow_dispatch
+      # honors spec_filter, and it is passed as ONE quoted argument so the
+      # input can never smuggle extra Playwright flags (e.g.
+      # --pass-with-no-tests, which would green-light a zero-test run).
+      # Empty spec_filter on dispatch = run ALL specs.
+      - name: Run Playwright specs
+        env:
+          SPEC_FILTER: ${{ github.event.inputs.spec_filter }}
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            npx playwright test explorer-smoke --reporter=list
+          elif [ -n "$SPEC_FILTER" ]; then
+            npx playwright test "$SPEC_FILTER" --reporter=list
+          else
+            npx playwright test --reporter=list
+          fi
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            tests/playwright-report/
+            test-results/
+            devserver.log
+          retention-days: 7
+          if-no-files-found: ignore

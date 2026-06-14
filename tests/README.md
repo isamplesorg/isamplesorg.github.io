@@ -1,6 +1,43 @@
 # iSamples Testing Infrastructure
 
-Automated tests for the iSamples Cesium tutorial UI using Playwright.
+Automated tests for the iSamples website: Playwright specs for the
+Interactive Explorer and Cesium tutorial UI (`tests/playwright/`), plus
+pytest suites for rendered-site checks (`tests/test_*.py`).
+
+## Explorer e2e suite & CI smoke gate (#249)
+
+`tests/playwright/explorer-smoke.spec.js` is the minimal "is the explorer
+alive?" set — page boots without uncaught/OJS errors, Cesium canvas draws,
+facet sidebar renders, search box present. It deliberately does **not**
+wait on parquet data loads, so it stays green even when
+data.isamples.org is slow. CI runs it on every PR that touches the
+explorer via `.github/workflows/explorer-e2e.yml`.
+
+Run it locally against a fresh render:
+
+```bash
+npm install
+npx playwright install --with-deps chromium
+quarto render explorer.qmd                      # ~10s, single page
+python3 dev_server.py --dir docs --port 5860 &  # range-capable server
+npx playwright test explorer-smoke
+```
+
+The other `tests/playwright/*.spec.js` files are deeper, data-dependent
+explorer specs (facets, URL round-trip, heatmap, search counts, …) plus
+the Cesium tutorial specs (`cesium-queries.spec.js`). Run a specific
+file the same way (`npx playwright test facet-viewport`); dropping the
+filter entirely runs **all** Playwright specs, explorer and tutorial
+alike. Expect the deeper specs to exercise remote parquet loads from
+data.isamples.org (slower, network-sensitive). In CI they can be run
+manually via the `explorer-e2e` workflow's *Run workflow* button with a
+different spec filter (empty filter = all specs).
+
+To test against a deployed site instead of a local render:
+
+```bash
+TEST_URL=https://rdhyee.github.io/isamplesorg.github.io npx playwright test explorer-smoke
+```
 
 ## Setup
 
