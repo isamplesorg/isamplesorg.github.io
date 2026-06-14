@@ -66,6 +66,27 @@ VOCAB_TTLS: list[str] = [
 
 PREFERRED_LANG = "en"
 
+# Deprecated / legacy concept URIs that are absent from the live SKOS TTLs but
+# still appear in older source data (e.g. SESAR records using the specimentype/1.0
+# namespace, superseded by materialsampleobjecttype/1.0). These rows are injected
+# directly so the Explorer can display human-readable labels instead of raw URI
+# path tails. Each entry: (uri, pref_label, lang, scheme).
+# Issue #283b: 169 SESAR records carry these deprecated URIs.
+MANUAL_LABEL_OVERRIDES: list[tuple[str, str, str, str | None]] = [
+    (
+        "https://w3id.org/isample/vocabulary/specimentype/1.0/othersolidobject",
+        "Other solid object",
+        "en",
+        "https://w3id.org/isample/vocabulary/specimentype/1.0/",
+    ),
+    (
+        "https://w3id.org/isample/vocabulary/specimentype/1.0/physicalspecimen",
+        "Material sample",
+        "en",
+        "https://w3id.org/isample/vocabulary/specimentype/1.0/",
+    ),
+]
+
 # When a concept URI is declared in more than one TTL, prefer the row whose
 # source TTL's URL contains one of these path fragments. The fragments are
 # matched against the concept URI: a URI containing "vocabulary/material/"
@@ -285,6 +306,23 @@ def main(argv: list[str] | None = None) -> int:
     if not all_rows:
         print("ERROR: no rows extracted; aborting.", file=sys.stderr)
         return 2
+
+    # Inject manual overrides for deprecated URIs not present in any live TTL.
+    # These are appended before dedupe so _dedupe can merge them if they ever
+    # appear in a future TTL revision, and so _emit_data_form_aliases does NOT
+    # re-emit them (they already carry the /1.0/ version segment).
+    for uri, label, lang, scheme in MANUAL_LABEL_OVERRIDES:
+        all_rows.append({
+            "uri": uri,
+            "uri_form": "data_v1",   # already in the /1.0/ data form
+            "pref_label": label,
+            "lang": lang,
+            "scheme": scheme,
+            "definition": None,
+            "alt_labels": [],
+            "source_ttl": "manual_override",
+        })
+    print(f"  {len(MANUAL_LABEL_OVERRIDES):>4} rows  (manual overrides for deprecated URIs)")
 
     raw_count = len(all_rows)
     all_rows = _dedupe(all_rows)

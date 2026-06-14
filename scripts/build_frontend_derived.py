@@ -13,7 +13,7 @@ INPUT CONTRACT (enforced/handled):
   live in `p__has_{material,context,sample_object}_category` row-id arrays.
 
 OUTPUTS (into --outdir, prefixed --tag):
-  - {tag}_sample_facets_v2.parquet   pid, source, material, context, object_type, label, description, place_name(VARCHAR)
+  - {tag}_sample_facets_v2.parquet   pid, source, material, context, object_type, label, description (search-only; includes appended concept labels), place_name(VARCHAR)
   - {tag}_samples_map_lite.parquet   pid, label, source, latitude, longitude, place_name(VARCHAR[]), result_time, h3_res8(UBIGINT), h3_res8_hex
   - {tag}_h3_summary_res{4,6,8}.parquet  h3_cell(UBIGINT), sample_count(INT), center_lat, center_lng, dominant_source, source_count(INT), resolution(INT)
   - {tag}_facet_summaries.parquet    facet_type, facet_value, scheme, count
@@ -48,6 +48,21 @@ FACET_DIMS = ["source", "material", "context", "object_type"]
 ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
              "facet_summaries", "facet_cross_filter", "wide_h3"]
 
+# Shared SQL expression for sample_facets_v2.description (#277 part 2).
+# Appends space-joined concept labels (IC labels across all 4 concept dims)
+# to the raw description so full-text search matches concept terms even when
+# they don't appear in label/description/place_name.  description is
+# SEARCH-ONLY in facets_v2 — display reads from the wide parquet.
+# Used by build_sample_facets_v2 AND the validator's --wide semantic gate so
+# they can never drift from each other.
+FACETS_DESCRIPTION_EXPR = (
+    "CASE"
+    "  WHEN concept_labels IS NOT NULL AND TRIM(concept_labels) != ''"
+    "  THEN COALESCE(description, '') || ' ' || concept_labels"
+    "  ELSE description"
+    " END"
+)
+
 
 def log(msg, t0):
     print(f"[{time.time()-t0:6.1f}s] {msg}", flush=True)
@@ -77,8 +92,12 @@ def geometry_expr(con, wide):
 def build_base_tables(con, wide, t0):
     geom = geometry_expr(con, wide)
     con.execute(f"""
+    -- ic: concept lookup for facet resolution and label aggregation.
+    -- label is included so concept_labels can aggregate human-readable text
+    -- directly from the wide without a second scan.
     CREATE OR REPLACE TEMP TABLE ic AS
-      SELECT row_id, pid AS uri FROM read_parquet('{wide}') WHERE otype='IdentifiedConcept';
+      SELECT row_id, pid AS uri, label
+      FROM read_parquet('{wide}') WHERE otype='IdentifiedConcept';
 
     -- material: FIRST NON-ROOT concept per sample. Decorrelated (unnest+join+
     -- arg_min by array ordinality) — NOT a correlated subquery and NOT a MAP
@@ -95,6 +114,39 @@ def build_base_tables(con, wide, t0):
       WHERE ic.uri <> '{MATERIAL_ROOT}'
       GROUP BY ex.pid;
 
+    -- concept_labels: one row per MSR pid; concept_labels is a space-joined
+    -- string of all DISTINCT non-null IC labels referenced across
+    -- p__has_material_category, p__has_sample_object_type,
+    -- p__has_context_category, and p__keywords.  Appended (search-only) into
+    -- sample_facets_v2.description so full-text searches like "pottery cyprus"
+    -- match samples tagged with a pottery concept even if the word doesn't
+    -- appear in their label/description/place_name.  facets_v2.description is
+    -- SEARCH-ONLY; display always reads description from the wide parquet.
+    CREATE OR REPLACE TEMP TABLE concept_labels AS
+      WITH all_refs AS (
+        SELECT s.pid, u.rid
+        FROM read_parquet('{wide}') s, UNNEST(s.p__has_material_category) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord'
+        UNION ALL
+        SELECT s.pid, u.rid
+        FROM read_parquet('{wide}') s, UNNEST(s.p__has_sample_object_type) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord'
+        UNION ALL
+        SELECT s.pid, u.rid
+        FROM read_parquet('{wide}') s, UNNEST(s.p__has_context_category) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord'
+        UNION ALL
+        SELECT s.pid, u.rid
+        FROM read_parquet('{wide}') s, UNNEST(s.p__keywords) AS u(rid)
+        WHERE s.otype='MaterialSampleRecord'
+      )
+      SELECT r.pid,
+             string_agg(DISTINCT ic.label, ' ' ORDER BY ic.label) AS concept_labels
+      FROM all_refs r
+      JOIN ic ON ic.row_id = r.rid
+      WHERE ic.label IS NOT NULL AND TRIM(ic.label) != ''
+      GROUP BY r.pid;
+
     -- one row per MaterialSampleRecord; all concept resolution via JOINs (decorrelated).
     CREATE OR REPLACE TEMP TABLE samp AS
       SELECT
@@ -108,11 +160,13 @@ def build_base_tables(con, wide, t0):
         ROUND(ST_X({geom}), 6)           AS longitude,
         mat.material                     AS material,
         ctx.uri                          AS context,
-        obj.uri                          AS object_type
+        obj.uri                          AS object_type,
+        cl.concept_labels                AS concept_labels
       FROM read_parquet('{wide}') s
       LEFT JOIN mat ON mat.pid = s.pid
       LEFT JOIN ic AS ctx ON ctx.row_id = s.p__has_context_category[1]
       LEFT JOIN ic AS obj ON obj.row_id = s.p__has_sample_object_type[1]
+      LEFT JOIN concept_labels cl ON cl.pid = s.pid
       WHERE s.otype='MaterialSampleRecord';
 
     CREATE OR REPLACE TEMP TABLE samp_geo AS
@@ -136,8 +190,19 @@ def build_base_tables(con, wide, t0):
 
 
 def build_sample_facets_v2(con, out):
+    # description is SEARCH-ONLY in sample_facets_v2: the explorer reads
+    # description for display from the wide parquet (self-join on pid), never
+    # from facets_v2.  We append the space-joined concept labels of every
+    # IdentifiedConcept referenced by this sample (p__has_material_category,
+    # p__has_sample_object_type, p__has_context_category, p__keywords) so that
+    # full-text searches like "pottery cyprus" match samples tagged with a pottery
+    # concept even when the word doesn't appear in label/description/place_name.
+    # The wide's IdentifiedConcept.label is used directly (covers minted keyword
+    # concepts such as British Museum thesaurus terms that are absent from
+    # vocab_labels.parquet). See issue #277 part 2.
     con.execute(f"""COPY (
-        SELECT pid, source, material, context, object_type, label, description,
+        SELECT pid, source, material, context, object_type, label,
+               {FACETS_DESCRIPTION_EXPR} AS description,
                place_name::VARCHAR AS place_name
         FROM samp_geo ORDER BY pid
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
@@ -185,7 +250,7 @@ def build_h3_summary(con, out, res):
 
 def build_facet_summaries(con, out):
     union = " UNION ALL ".join(
-        f"SELECT '{d}' AS facet_type, {d} AS facet_value FROM samp_geo WHERE {d} IS NOT NULL"
+        f"SELECT '{d}' AS facet_type, {d} AS facet_value FROM samp_geo WHERE NULLIF(TRIM({d}), '') IS NOT NULL"
         for d in FACET_DIMS)
     con.execute(f"""COPY (
         SELECT facet_type, facet_value, NULL::INTEGER AS scheme, COUNT(*) AS count
@@ -206,7 +271,7 @@ def build_facet_cross_filter(con, out):
             f"SELECT NULL::VARCHAR AS filter_source, NULL::VARCHAR AS filter_material, "
             f"NULL::VARCHAR AS filter_context, NULL::VARCHAR AS filter_object_type, "
             f"'{fd}' AS facet_type, {fd} AS facet_value, COUNT(*) AS count "
-            f"FROM samp_geo WHERE {fd} IS NOT NULL GROUP BY {fd}")
+            f"FROM samp_geo WHERE NULLIF(TRIM({fd}), '') IS NOT NULL GROUP BY {fd}")
     for filt in FACET_DIMS:
         for fd in FACET_DIMS:
             cols = ", ".join(
@@ -214,7 +279,7 @@ def build_facet_cross_filter(con, out):
                 for c in FACET_DIMS)
             selects.append(
                 f"SELECT {cols}, '{fd}' AS facet_type, {fd} AS facet_value, COUNT(*) AS count "
-                f"FROM samp_geo WHERE {filt} IS NOT NULL AND {fd} IS NOT NULL GROUP BY {filt}, {fd}")
+                f"FROM samp_geo WHERE NULLIF(TRIM({filt}), '') IS NOT NULL AND NULLIF(TRIM({fd}), '') IS NOT NULL GROUP BY {filt}, {fd}")
     con.execute(f"""COPY (
         SELECT filter_source, filter_material, filter_context, filter_object_type,
                facet_type, facet_value, count

@@ -112,8 +112,9 @@ def main():
     check("facets.pid == map_lite.pid", diff == 0, f"{diff} pids differ between facets and map_lite")
 
     # --- 5. ALGEBRA: facet_summaries == GROUP BY facets (per dim) ---
+    # NOTE: build_frontend_derived.py filters both NULL and empty-string values (#283a fix).
     recompute = " UNION ALL ".join(
-        f"SELECT '{d}' AS facet_type, {d} AS facet_value, COUNT(*) AS c FROM {F} WHERE {d} IS NOT NULL GROUP BY {d}"
+        f"SELECT '{d}' AS facet_type, {d} AS facet_value, COUNT(*) AS c FROM {F} WHERE {d} IS NOT NULL AND {d} <> '' GROUP BY {d}"
         for d in ("source", "material", "context", "object_type"))
     mismatch = scalar(f"""
       WITH recomputed AS ({recompute}),
@@ -125,15 +126,19 @@ def main():
     check("facet_summaries == GROUP BY facets", mismatch == 0, f"{mismatch} (facet_type,value,count) rows disagree")
     check("facet_summaries.scheme all NULL", scalar(f"SELECT COUNT(*) FROM {S} WHERE scheme IS NOT NULL") == 0,
           "non-NULL scheme rows (contract: scheme is NULL)")
+    # --- 5b. blank facet values absent (#283a) — also catches whitespace-only values ---
+    check("facet_summaries no blank values (#283a)", scalar(f"SELECT COUNT(*) FROM {S} WHERE TRIM(facet_value) = ''") == 0,
+          "blank/whitespace-only facet_value rows (want 0; caused by GEOME empty-string concept URI)")
 
     # --- 6. ALGEBRA: facet_cross_filter single-dim rows == conditional GROUP BY facets ---
+    # NOTE: build_frontend_derived.py filters both NULL and empty-string values (#283a fix).
     dims = ("source", "material", "context", "object_type")
     parts = []
     for filt in dims:
         for fd in dims:
             parts.append(
                 f"SELECT '{filt}' AS fcol, {filt} AS fval, '{fd}' AS facet_type, {fd} AS facet_value, COUNT(*) AS c "
-                f"FROM {F} WHERE {filt} IS NOT NULL AND {fd} IS NOT NULL GROUP BY {filt}, {fd}")
+                f"FROM {F} WHERE {filt} IS NOT NULL AND {filt} <> '' AND {fd} IS NOT NULL AND {fd} <> '' GROUP BY {filt}, {fd}")
     recompute_cf = " UNION ALL ".join(parts)
     # normalize cross_filter single-dim rows into (fcol, fval, facet_type, facet_value, count)
     cf_single = f"""
@@ -191,8 +196,13 @@ def main():
             return scalar(f"SELECT (SELECT COUNT(*) FROM (({asql}) EXCEPT ({bsql}))) "
                           f"+ (SELECT COUNT(*) FROM (({bsql}) EXCEPT ({asql})))")
 
-        ref_facets = ("SELECT pid, source, material, context, object_type, label, description, "
-                      "place_name::VARCHAR AS place_name FROM samp_geo")
+        # description in facets_v2 is SEARCH-ONLY: concept labels are appended by
+        # the builder (#277 part 2). We import the SAME expression from the builder
+        # so the validator and builder can never drift from each other.
+        from build_frontend_derived import FACETS_DESCRIPTION_EXPR
+        ref_facets = (f"SELECT pid, source, material, context, object_type, label, "
+                      f"{FACETS_DESCRIPTION_EXPR} AS description, "
+                      f"place_name::VARCHAR AS place_name FROM samp_geo")
         file_facets = f"SELECT pid, source, material, context, object_type, label, description, place_name FROM {F}"
         check("facets == fresh build from --wide", except_diff(ref_facets, file_facets) == 0,
               "facets rows differ from a re-derivation off the wide (corruption/stale/wrong-version)")

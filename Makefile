@@ -31,7 +31,7 @@ VALIDATE := scripts/validate_frontend_derived.py
 ENRICH  := scripts/enrich_wide_with_oc_concepts.py
 VALIDATE_ENRICH := scripts/validate_oc_concept_enrichment.py
 
-.PHONY: help test wide oc-wide enrich validate-enrich derived validate all all-272 clean
+.PHONY: help test wide oc-wide enrich validate-enrich derived validate all all-272 ingest-272 all-202608 clean
 help:
 	@grep -E '^#   make' Makefile | sed 's/^#   /  /'
 
@@ -80,6 +80,31 @@ all: wide
 all-272: validate-enrich
 	$(MAKE) derived DERIVED_WIDE=$(ENRICHED) TAG=$(TAG)
 	$(MAKE) validate TAG=$(TAG) SENTINEL_FLAG=
+
+# TRUE SYNC ingestion: add 67,187 new OC pids + remove 21,227 stale OC pids (#272 Phase 2, D3).
+# Requires the 202606 wide (--src) and Eric's OC wide (--oc-wide).
+# Outputs a 202608-tagged wide parquet + derived files in $(OUTDIR).
+#
+#   make ingest-272 \
+#     SRC_202606=~/Data/iSample/pqg_refining/isamples_202606_wide.parquet \
+#     OC_WIDE_2026=~/Data/iSample/pqg_refining/oc_isamples_pqg_wide_2026-06-09.parquet
+#
+INGEST_TAG ?= isamples_202608
+SRC_202606 ?= $(OUTDIR)/isamples_202606_wide.parquet
+OC_WIDE_2026 ?= $(OUTDIR)/oc_isamples_pqg_wide_2026-06-09.parquet
+INGEST_OUT ?= $(OUTDIR)/$(INGEST_TAG)_wide.parquet
+INGEST := scripts/ingest_oc_records.py
+
+$(INGEST_OUT): $(SRC_202606) $(OC_WIDE_2026)
+	@mkdir -p $(OUTDIR)
+	$(PY) $(INGEST) --src $(SRC_202606) --oc-wide $(OC_WIDE_2026) --out $(INGEST_OUT)
+
+ingest-272: $(INGEST_OUT)
+
+# Full 202608 pipeline: ingest -> derived -> validate
+all-202608: ingest-272
+	$(MAKE) derived DERIVED_WIDE=$(INGEST_OUT) TAG=$(INGEST_TAG)
+	$(MAKE) validate TAG=$(INGEST_TAG) SENTINEL_FLAG=
 
 clean:
 	rm -rf $(OUTDIR)

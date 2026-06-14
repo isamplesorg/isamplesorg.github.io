@@ -68,7 +68,7 @@ def build_fixture_wide(path, geom_mode):
         f"NULL::VARCHAR AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, "
         f"NULL::TIMESTAMP AS result_time, NULL AS geometry, "
         f"NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
-        f"NULL::BIGINT[] AS p__has_sample_object_type"
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
         for rid, uri in CONCEPTS)
 
     msr = []
@@ -79,13 +79,13 @@ def build_fixture_wide(path, geom_mode):
             f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}','x''q']::VARCHAR[] AS place_name, "
             f"NULL::TIMESTAMP AS result_time, {geom(lng, lat)} AS geometry, "
             f"{_arr(marr)} AS p__has_material_category, [10]::BIGINT[] AS p__has_context_category, "
-            f"[20]::BIGINT[] AS p__has_sample_object_type")
+            f"[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
     # one NULL-geometry sample -> must be EXCLUDED from located outputs
     msr.append(
         "SELECT 'MaterialSampleRecord' AS otype, 'm-nogeo' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
         "'l' AS label, 'd' AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
         "NULL AS geometry, [4]::BIGINT[] AS p__has_material_category, [10]::BIGINT[] AS p__has_context_category, "
-        "[20]::BIGINT[] AS p__has_sample_object_type")
+        "[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
 
     con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) "
                 f"TO '{path}' (FORMAT PARQUET)")
