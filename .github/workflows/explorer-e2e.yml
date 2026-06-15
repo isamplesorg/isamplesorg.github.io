@@ -102,6 +102,13 @@ jobs:
       - name: Install node deps
         run: npm install
 
+      # Fast pure-logic gate (#249 PR3): unit-tests the ES modules extracted
+      # from explorer.qmd (assets/js/sql-builders.js + explorer-utils.js).
+      # Node built-ins only, sub-second — runs before the slow Quarto/
+      # Playwright steps so a module regression fails fast.
+      - name: Unit tests (extracted modules)
+        run: node --test tests/unit/*.test.mjs
+
       - name: Resolve Playwright version
         id: pw
         run: echo "version=$(node -e 'console.log(require("@playwright/test/package.json").version)')" >> "$GITHUB_OUTPUT"
