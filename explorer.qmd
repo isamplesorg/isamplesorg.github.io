@@ -774,14 +774,25 @@ _palette = await import(new URL('assets/js/source-palette.js', document.baseURI)
 SOURCE_COLORS = _palette.SOURCE_COLORS
 SOURCE_NAMES = _palette.SOURCE_NAMES
 
-// === Source URL: resolve pid to original repository ===
-function sourceUrl(pid) {
-    if (!pid) return null;
-    // All sources resolve via n2t.net:
-    // ARK pids (OpenContext, GEOME, Smithsonian) → n2t.net/ark:/...
-    // IGSN pids (SESAR) → n2t.net/IGSN:...
-    return `https://n2t.net/${pid}`;
-}
+// === Pure logic extracted to ES modules (issue #249, PR3) ===
+// Same path-relative dynamic-import pattern as the palette above, so these
+// resolve under both the custom domain (isamples.org) and fork project-pages
+// previews. The functions are closure-free (no viewer/db/DOM) and unit-tested
+// under Node (tests/unit/). Each `name = _module.fn` line is a single OJS cell
+// that REPLACES the former inline `function name(){...}` cell.
+_sqlBuilders = await import(new URL('assets/js/sql-builders.js', document.baseURI).href)
+escSql = _sqlBuilders.escSql
+escapeIlikePattern = _sqlBuilders.escapeIlikePattern
+textSearchWhere = _sqlBuilders.textSearchWhere
+textSearchScore = _sqlBuilders.textSearchScore
+
+_explorerUtils = await import(new URL('assets/js/explorer-utils.js', document.baseURI).href)
+escapeHtml = _explorerUtils.escapeHtml
+searchTerms = _explorerUtils.searchTerms
+parseNum = _explorerUtils.parseNum
+csvParamValues = _explorerUtils.csvParamValues
+sourceUrl = _explorerUtils.sourceUrl
+readHash = _explorerUtils.readHash
 
 // === Source Filter: get active sources and build SQL clause ===
 function getActiveSources() {
@@ -820,13 +831,6 @@ DEFAULT_POINT_BUDGET = 5000
 // the Earth). A 2,000 km bound preserves globe-ellipsoid occlusion at
 // long range while bypassing terrain occlusion at every interactive zoom.
 POINT_DEPTH_TEST_DISTANCE = 2.0e6
-
-function csvParamValues(params, key) {
-    if (!params.has(key)) return null;
-    const raw = params.get(key) || '';
-    if (raw.trim() === '') return [];
-    return raw.split(',').map(s => s.trim()).filter(Boolean);
-}
 
 function updateSourceLegendState() {
     document.querySelectorAll('#sourceFilter .legend-item').forEach(li => {
@@ -940,32 +944,6 @@ function writeQueryState(opts = {}) {
     }
 }
 
-function searchTerms(value) {
-    return String(value || '').trim().split(/\s+/).filter(Boolean);
-}
-
-function escapeIlikePattern(value) {
-    return escSql(value).replace(/[\\%_]/g, "\\$&");
-}
-
-function textSearchWhere(terms, columns) {
-    return terms.map(raw => {
-        const term = escapeIlikePattern(raw);
-        const checks = columns.map(col => `${col} ILIKE '%${term}%' ESCAPE '\\'`);
-        return `(${checks.join(' OR ')})`;
-    }).join(' AND ');
-}
-
-function textSearchScore(terms, weightedColumns) {
-    if (!terms.length) return '0';
-    return terms.map(raw => {
-        const term = escapeIlikePattern(raw);
-        return weightedColumns.map(({ col, weight }) =>
-            `CASE WHEN ${col} ILIKE '%${term}%' ESCAPE '\\' THEN ${weight} ELSE 0 END`
-        ).join(' + ');
-    }).map(score => `(${score})`).join(' + ');
-}
-
 // === Material / Sampled Feature / Specimen Type Filters ===
 // Checkbox semantics: start UNCHECKED (no filter; show everything). User
 // checks items to *include only those*. Empty = no filter. Matches the
@@ -1007,10 +985,6 @@ function syncFacetNote() {
     const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
     const heatOn = document.getElementById('heatmapToggle')?.checked === true;
     el.style.display = (active && inCluster && !heatOn) ? 'block' : 'none';
-}
-
-function escSql(value) {
-    return String(value).replace(/'/g, "''");
 }
 
 // Returns a portable predicate fragment (no outer-table alias dependency)
@@ -1186,31 +1160,7 @@ function markFacetCountsRecomputing() {
 }
 
 // === URL State: encode/decode globe state in hash fragment ===
-function parseNum(val, def, min, max) {
-    if (val == null) return def;
-    const n = parseFloat(val);
-    if (!Number.isFinite(n)) return def;
-    if (min != null && n < min) return min;
-    if (max != null && n > max) return max;
-    return n;
-}
-
-function readHash() {
-    const params = new URLSearchParams(location.hash.slice(1));
-    return {
-        v: parseInt(params.get('v')) || 0,
-        lat: parseNum(params.get('lat'), null, -90, 90),
-        lng: parseNum(params.get('lng'), null, -180, 180),
-        alt: parseNum(params.get('alt'), null, 100, 40000000),
-        heading: parseNum(params.get('heading'), 0, 0, 360),
-        pitch: parseNum(params.get('pitch'), -90, -90, 0),
-        mode: params.get('mode') || null,
-        pid: params.get('pid') || null,
-        h3: params.get('h3') || null,
-        heatmap: params.get('heatmap') === '1',
-    };
-}
-
+// (decode side — parseNum + readHash — extracted to assets/js/explorer-utils.js, PR3)
 function buildHash(v) {
     const cam = v.camera;
     const carto = cam.positionCartographic;
@@ -1517,15 +1467,6 @@ function updateSamples(samples) {
 // issued on filter change so the pager knows the total. The deterministic
 // ORDER BY pid makes "Page N is the same N rows" actually true.
 TABLE_PAGE_SIZE = 100
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
 
 ```
 

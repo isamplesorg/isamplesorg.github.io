@@ -3,6 +3,8 @@ project:
   output-dir: docs
   resources:
     - assets/js/source-palette.js
+    - assets/js/sql-builders.js
+    - assets/js/explorer-utils.js
 
 website:
   title: "iSamples"

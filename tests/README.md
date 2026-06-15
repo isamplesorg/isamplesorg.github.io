@@ -1,6 +1,67 @@
 # iSamples Testing Infrastructure
 
-Automated tests for the iSamples Cesium tutorial UI using Playwright.
+Automated tests for the iSamples website: Playwright specs for the
+Interactive Explorer and Cesium tutorial UI (`tests/playwright/`), plus
+pytest suites for rendered-site checks (`tests/test_*.py`).
+
+## Explorer e2e suite & CI smoke gate (#249)
+
+`tests/playwright/explorer-smoke.spec.js` is the minimal "is the explorer
+alive?" set — page boots without uncaught/OJS errors, Cesium canvas draws,
+facet sidebar renders, search box present. It deliberately does **not**
+wait on parquet data loads, so it stays green even when
+data.isamples.org is slow. CI runs it on every PR that touches the
+explorer via `.github/workflows/explorer-e2e.yml`.
+
+Run it locally against a fresh render:
+
+```bash
+npm install
+npx playwright install --with-deps chromium
+quarto render explorer.qmd                      # ~10s, single page
+python3 dev_server.py --dir docs --port 5860 &  # range-capable server
+npx playwright test explorer-smoke
+```
+
+The other `tests/playwright/*.spec.js` files are deeper, data-dependent
+explorer specs (facets, URL round-trip, heatmap, search counts, …) plus
+the Cesium tutorial specs (`cesium-queries.spec.js`). Run a specific
+file the same way (`npx playwright test facet-viewport`); dropping the
+filter entirely runs **all** Playwright specs, explorer and tutorial
+alike. Expect the deeper specs to exercise remote parquet loads from
+data.isamples.org (slower, network-sensitive). In CI they can be run
+manually via the `explorer-e2e` workflow's *Run workflow* button with a
+different spec filter (empty filter = all specs).
+
+To test against a deployed site instead of a local render:
+
+```bash
+TEST_URL=https://rdhyee.github.io/isamplesorg.github.io npx playwright test explorer-smoke
+```
+
+## Running characterization & deeper specs via workflow_dispatch
+
+The characterization and deeper specs depend on live remote parquet loads and are **not**
+in the CI smoke gate.  They can be triggered via the GitHub Actions
+*Run workflow* button on the `explorer-e2e` workflow.  Set `spec_filter`
+to one of the values below; empty = all specs.
+
+| spec_filter value | What runs |
+|---|---|
+| `explorer-characterization` | PR2 characterization suite (7 [data] tests) |
+| `facet-viewport` | B1 viewport-aware facet counts (#234 step 3) |
+| `heatmap-overlay` | Heatmap mutual-exclusion and round-trip (#233) |
+| `search-real-count` | Search cap-hit real-count display (#232) |
+| `url-roundtrip` | URL state round-trip regressions (#209) |
+| `explorer-map-overlay` | Map overlay / table pagination (#200) |
+| *(empty)* | All Playwright specs (explorer + tutorial) |
+
+Run any of these locally with `npx playwright test <spec_filter>`, e.g.:
+
+    npx playwright test explorer-characterization
+
+Allow up to 3 minutes per test for remote parquet loads.
+
 
 ## Setup
 
