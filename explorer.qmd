@@ -1187,6 +1187,24 @@ function buildHash(v) {
     return '#' + params.toString();
 }
 
+// === Single URL-hash writer (#208 smell 1a) ===
+// The ONLY place that writes the globe hash. Centralizes the
+// `_suppressHashWrite` gate that was previously repeated at the camera/
+// moveEnd writers and silently omitted at the selection/share writers.
+//   replace: true (default) → history.replaceState; false → pushState.
+//   force:   true → write even when _suppressHashWrite is set. Used by the
+//            explicit user-action writers (map/row selection, enter/exit
+//            point mode, source-filter selection-invalidation, Share button)
+//            that must always reflect the action; only the camera.changed /
+//            moveEnd settled-camera writers honor the suppress gate (force
+//            omitted). See REFACTOR_PR4_PLAN.md §1 for the per-site matrix.
+function writeGlobeHash(v, { replace = true, force = false } = {}) {
+    if (v._suppressHashWrite && !force) return;
+    const hash = buildHash(v);
+    if (replace) history.replaceState(null, '', hash);
+    else history.pushState(null, '', hash);
+}
+
 // === Selection freshness primitive ===
 //
 // Async work that updates `viewer._globeState`, the URL hash, or the side
@@ -1591,7 +1609,7 @@ viewer = {
             showInMapCard(meta, { x: e.position.x, y: e.position.y });
             v._globeState.selectedPid = meta.pid;
             v._globeState.selectedH3 = null;
-            history.pushState(null, '', buildHash(v));
+            writeGlobeHash(v, { replace: false, force: true });
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
@@ -1651,7 +1669,7 @@ viewer = {
             hideInMapCard();
             v._globeState.selectedPid = null;
             v._globeState.selectedH3 = meta.h3_cell || null;
-            history.pushState(null, '', buildHash(v));
+            writeGlobeHash(v, { replace: false, force: true });
 
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
@@ -2056,7 +2074,7 @@ tableView = {
                     // zoomWatcher's listener. zoomWatcher may not be wired yet
                     // at very-early-boot click time, and even when it is, the
                     // _suppressHashWrite gate could swallow the write.
-                    history.replaceState(null, '', buildHash(viewer));
+                    writeGlobeHash(viewer, { force: true });
                     // Repaint to apply .selected class without a full refresh.
                     tableEl.querySelectorAll('tbody tr.selected').forEach(el => el.classList.remove('selected'));
                     tr.classList.add('selected');
@@ -2695,7 +2713,7 @@ zoomWatcher = {
     async function enterPointMode(pushHistory) {
         setExplorerMode('point');
         applyLayerVisibility();
-        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        if (pushHistory !== false) writeGlobeHash(viewer, { replace: false, force: true });
         // #facetNote is only meaningful in cluster mode (#234 step 1).
         syncFacetNote();
         console.log('Entered point mode');
@@ -2707,7 +2725,7 @@ zoomWatcher = {
         setExplorerMode('cluster');
         viewer.samplePoints.removeAll();
         applyLayerVisibility();
-        if (pushHistory !== false) history.pushState(null, '', buildHash(viewer));
+        if (pushHistory !== false) writeGlobeHash(viewer, { replace: false, force: true });
         // Returning to cluster mode: surface the honesty note if any
         // facet filter is active (#234 step 1).
         syncFacetNote();
@@ -3522,7 +3540,7 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
-                        history.replaceState(null, '', buildHash(viewer));
+                        writeGlobeHash(viewer, { force: true });
                     } else {
                         // Cluster's dominant_source still checked, but the
                         // nearby-samples list inside hydrateClusterUI is
@@ -3545,7 +3563,7 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
-                        history.replaceState(null, '', buildHash(viewer));
+                        writeGlobeHash(viewer, { force: true });
                     }
                 }
             }
@@ -3676,9 +3694,7 @@ zoomWatcher = {
             // below settles — and a URL copy in the meantime captures the
             // PREVIOUS state. We still write again at the end of the
             // handler to capture any mode change that the awaits produced.
-            if (!viewer._suppressHashWrite) {
-                history.replaceState(null, '', buildHash(viewer));
-            }
+            writeGlobeHash(viewer);
 
             // Determine target mode with hysteresis.
             // A1 (#234 Step 4) / C3: while a search is active, latch point
@@ -3753,9 +3769,7 @@ zoomWatcher = {
             }
 
             // Update URL hash (replaceState for continuous movement)
-            if (!viewer._suppressHashWrite) {
-                history.replaceState(null, '', buildHash(viewer));
-            }
+            writeGlobeHash(viewer);
         }, 600);
     });
     viewer.camera.percentageChanged = 0.1;
@@ -3819,9 +3833,7 @@ zoomWatcher = {
     });
 
     viewer.camera.moveEnd.addEventListener(() => {
-        if (!viewer._suppressHashWrite) {
-            history.replaceState(null, '', buildHash(viewer));
-        }
+        writeGlobeHash(viewer);
         // B1: viewport-aware facet counts. Bouncing through refreshFacetCounts
         // reuses the existing 250ms debounce + facetCountsReqId stale-guard,
         // so bursts of moveEnd (drag-pan, wheel-zoom) coalesce into one query
@@ -4041,7 +4053,7 @@ zoomWatcher = {
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
         shareBtn.addEventListener('click', async () => {
-            history.replaceState(null, '', buildHash(viewer));
+            writeGlobeHash(viewer, { force: true });
             try {
                 await navigator.clipboard.writeText(location.href);
                 const toast = document.getElementById('shareToast');
