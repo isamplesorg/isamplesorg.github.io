@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>facet_hierarchy_plan – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-46c1e64c2409ffa41d8278daa552b940.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#facet-hierarchy-plan-tree-display-of-facet-values-281-282" id="toc-facet-hierarchy-plan-tree-display-of-facet-values-281-282" class="nav-link active" data-scroll-target="#facet-hierarchy-plan-tree-display-of-facet-values-281-282"><span class="header-section-number">1</span> Facet hierarchy plan — tree display of facet values (#281 + #282)</a>
+  <ul>
+  <li><a href="#what-i-verified-first-grounding-dont-trust-the-folklore" id="toc-what-i-verified-first-grounding-dont-trust-the-folklore" class="nav-link" data-scroll-target="#what-i-verified-first-grounding-dont-trust-the-folklore"><span class="header-section-number">1.1</span> 0. What I verified first (grounding — don’t trust the folklore)</a></li>
+  <li><a href="#two-halves-two-dependency-profiles" id="toc-two-halves-two-dependency-profiles" class="nav-link" data-scroll-target="#two-halves-two-dependency-profiles"><span class="header-section-number">1.2</span> 1. Two halves, two dependency profiles</a></li>
+  <li><a href="#half-a-datapipeline-start-now" id="toc-half-a-datapipeline-start-now" class="nav-link" data-scroll-target="#half-a-datapipeline-start-now"><span class="header-section-number">1.3</span> 2. Half (a) — data/pipeline (start now)</a>
+  <ul class="collapse">
+  <li><a href="#emit-the-tree-build_vocab_labels.py" id="toc-emit-the-tree-build_vocab_labels.py" class="nav-link" data-scroll-target="#emit-the-tree-build_vocab_labels.py"><span class="header-section-number">1.3.1</span> 2.1 Emit the tree (<code>build_vocab_labels.py</code>)</a></li>
+  <li><a href="#compute-membership-build_frontend_derived.py" id="toc-compute-membership-build_frontend_derived.py" class="nav-link" data-scroll-target="#compute-membership-build_frontend_derived.py"><span class="header-section-number">1.3.2</span> 2.2 Compute membership (<code>build_frontend_derived.py</code>)</a></li>
+  <li><a href="#sizing-perf" id="toc-sizing-perf" class="nav-link" data-scroll-target="#sizing-perf"><span class="header-section-number">1.3.3</span> 2.3 Sizing / perf</a></li>
+  <li><a href="#outputs-validator-publish" id="toc-outputs-validator-publish" class="nav-link" data-scroll-target="#outputs-validator-publish"><span class="header-section-number">1.3.4</span> 2.4 Outputs, validator, publish</a></li>
+  </ul></li>
+  <li><a href="#half-b-tree-ui-after-249-prs-merge" id="toc-half-b-tree-ui-after-249-prs-merge" class="nav-link" data-scroll-target="#half-b-tree-ui-after-249-prs-merge"><span class="header-section-number">1.4</span> 3. Half (b) — tree UI (after #249 PRs merge)</a>
+  <ul class="collapse">
+  <li><a href="#rendering" id="toc-rendering" class="nav-link" data-scroll-target="#rendering"><span class="header-section-number">1.4.1</span> 3.1 Rendering</a></li>
+  <li><a href="#counts" id="toc-counts" class="nav-link" data-scroll-target="#counts"><span class="header-section-number">1.4.2</span> 3.2 Counts</a></li>
+  <li><a href="#filtering-semantics-the-coherence-contract" id="toc-filtering-semantics-the-coherence-contract" class="nav-link" data-scroll-target="#filtering-semantics-the-coherence-contract"><span class="header-section-number">1.4.3</span> 3.3 Filtering semantics (the coherence contract)</a></li>
+  <li><a href="#interactions-to-respect" id="toc-interactions-to-respect" class="nav-link" data-scroll-target="#interactions-to-respect"><span class="header-section-number">1.4.4</span> 3.4 Interactions to respect</a></li>
+  </ul></li>
+  <li><a href="#sequencing-gate" id="toc-sequencing-gate" class="nav-link" data-scroll-target="#sequencing-gate"><span class="header-section-number">1.5</span> 4. Sequencing &amp; gate</a></li>
+  <li><a href="#open-questions-for-codex-ry" id="toc-open-questions-for-codex-ry" class="nav-link" data-scroll-target="#open-questions-for-codex-ry"><span class="header-section-number">1.6</span> 5. Open questions (for Codex + RY)</a></li>
+  <li><a href="#first-concrete-step-done-proof-of-concept" id="toc-first-concrete-step-done-proof-of-concept" class="nav-link" data-scroll-target="#first-concrete-step-done-proof-of-concept"><span class="header-section-number">1.7</span> 6. First concrete step — DONE (proof-of-concept)</a></li>
+  <li><a href="#poc-results-proven-material-dimension-202608" id="toc-poc-results-proven-material-dimension-202608" class="nav-link" data-scroll-target="#poc-results-proven-material-dimension-202608"><span class="header-section-number">1.8</span> 7. PoC results (proven, material dimension, 202608)</a></li>
+  <li><a href="#codex-review-accepted-corrections-2026-06-17-gpt-5.5" id="toc-codex-review-accepted-corrections-2026-06-17-gpt-5.5" class="nav-link" data-scroll-target="#codex-review-accepted-corrections-2026-06-17-gpt-5.5"><span class="header-section-number">1.9</span> 8. Codex review — accepted corrections (2026-06-17, gpt-5.5)</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/FACET_HIERARCHY_PLAN.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="facet-hierarchy-plan-tree-display-of-facet-values-281-282" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Facet hierarchy plan — tree display of facet values (#281 + #282)</h1>
+<p>Draft for Codex + RY review (2026-06-17). Issues: - <strong>#281</strong> (ekansa): show facet hierarchy in a tree, first two levels unfolded, click to open deeper. - <strong>#282</strong> (akthom): nested + alphabetical across all three concept vocabularies. - <strong>#276</strong>: the counting-semantics fork this forces — single “first non-root” value vs <strong>membership</strong> (“anywhere in the path”).</p>
+<p>Treated as <strong>one design</strong>. This is the biggest explorer UI change since launch; it rides on the #249 test net (PR1/PR2 merged; PR3 deployed; PR4a/PR4b/#285 in flight).</p>
+<hr>
+<section id="what-i-verified-first-grounding-dont-trust-the-folklore" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="what-i-verified-first-grounding-dont-trust-the-folklore"><span class="header-section-number">1.1</span> 0. What I verified first (grounding — don’t trust the folklore)</h2>
+<p>The Slack/issue framing was “the data already carries each sample’s full vocab ancestry, so the tree is in hand.” <strong>That is only half true</strong> — verified against code + the live 202608 data, not assumed:</p>
+<ol type="1">
+<li><p><strong>The facet UI is entirely flat today.</strong> <code>explorer.qmd</code> <code>facetFilters</code> cell (L1783–1873) renders material/context/object_type as a flat checkbox list via <code>renderFilter()</code> (L1843), sorted by <code>count DESC</code> from <code>facet_summaries</code>. Source is hard-coded flat HTML (L659–690). No parent/child/tree/indent anywhere. <code>vocab_labels</code> is loaded only as <code>uri → pref_label</code> (no <code>broader</code>).</p></li>
+<li><p><strong><code>sample_facets_v3</code> is one row per <code>pid</code> with a SINGLE already-flattened URI per dimension.</strong> <code>build_frontend_derived.py</code> picks the <strong>first non-root</strong> material concept per sample (<code>arg_min(ic.uri, ord)</code> over the wide array, excluding <code>MATERIAL_ROOT</code>, L86–96); context/object_type take array element <code>[1]</code> and their root-dropping is still deferred (L29–30, L114–115).</p></li>
+<li><p><strong>The wide arrays are a SET of asserted concepts, NOT a clean ancestry path.</strong> Real 202608 data — one sample’s <code>p__has_material_category</code> resolves (in array order) to: <code>mineral</code>, <code>material</code> (root), <code>rock</code>. The canonical SKOS tree is <code>mineral → earthmaterial → material</code> and <code>rock → rockorsediment → earthmaterial → material</code>. So the array <code>{mineral, material, rock}</code> is <strong>neither</strong> a path <strong>nor</strong> a transitive closure (it’s missing <code>earthmaterial</code> and <code>rockorsediment</code>, and spans two branches). Array-length distribution: len 1 = 6,233,867 samples, len 2 = 1,601, len 3 = 491,424.</p>
+<p><strong>Consequence:</strong> full transitive ancestry must be <strong>computed at build time</strong> by walking <code>skos:broader</code> from each asserted concept to the root. We cannot read it straight off the array.</p></li>
+<li><p><strong>The canonical tree IS available</strong> — <code>build_vocab_labels.py</code> already fetches ~12 SKOS TTLs (core material/sampledfeature/objecttype + OpenContext, earthenv, biology extensions) but <strong>drops</strong> <code>skos:broader</code> from its output. The three core vocabularies are small and shallow:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>vocab</th>
+<th>concepts (core)</th>
+<th>root</th>
+<th>max depth</th>
+<th>level-1 children</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>material</td>
+<td>21</td>
+<td><code>material</code></td>
+<td>3</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>sampledfeature</td>
+<td>20</td>
+<td><code>anysampledfeature</code></td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>objecttype</td>
+<td>20</td>
+<td><code>materialsample</code></td>
+<td>3</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p>Extension TTLs add more nodes under these roots, but the structure stays shallow. “First two levels unfolded” reveals most of each tree.</p></li>
+</ol>
+<p><strong>Net:</strong> the tree is <em>derivable</em> but not free. Two build-time additions are needed — (a) emit the <code>broader</code> edges, (b) compute per-sample membership over the ancestry. The UI then renders the tree and counts/filters via membership.</p>
+<hr>
+</section>
+<section id="two-halves-two-dependency-profiles" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="two-halves-two-dependency-profiles"><span class="header-section-number">1.2</span> 1. Two halves, two dependency profiles</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Half</th>
+<th>What</th>
+<th>Depends on #249 refactor?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>(a) Data/pipeline</strong></td>
+<td>tree edges + membership-count derived files</td>
+<td><strong>No</strong> — pure backend; can start now</td>
+</tr>
+<tr class="even">
+<td><strong>(b) Tree UI</strong></td>
+<td>tree rendering + membership filtering in <code>explorer.qmd</code></td>
+<td><strong>Yes</strong> — touches the facet cells PR4b/#285 also touch</td>
+</tr>
+</tbody>
+</table>
+<p>So we break ground on <strong>(a) immediately</strong>; <strong>(b)</strong> lands after PR4a/PR4b/#285 merge.</p>
+<hr>
+</section>
+<section id="half-a-datapipeline-start-now" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="half-a-datapipeline-start-now"><span class="header-section-number">1.3</span> 2. Half (a) — data/pipeline (start now)</h2>
+<section id="emit-the-tree-build_vocab_labels.py" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="emit-the-tree-build_vocab_labels.py"><span class="header-section-number">1.3.1</span> 2.1 Emit the tree (<code>build_vocab_labels.py</code>)</h3>
+<p>Add a <code>broader</code> column (parent URI, nullable for roots) to <code>vocab_labels.parquet</code>, read from <code>skos:broader</code> across <strong>all</strong> the TTLs already parsed. Optionally also a <code>depth</code> (int, root = 0) and <code>scheme</code> (already present). Validation: every non-root concept resolves to a root via <code>broader</code>; no cycles; every <code>facet_value</code> that appears in the data has a tree node (flag orphans — these are the #161/#148-style label-gap cousins).</p>
+</section>
+<section id="compute-membership-build_frontend_derived.py" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="compute-membership-build_frontend_derived.py"><span class="header-section-number">1.3.2</span> 2.2 Compute membership (<code>build_frontend_derived.py</code>)</h3>
+<p>New derived table, one row per (sample, concept-in-its-ancestry):</p>
+<pre><code>sample_facet_membership(pid, facet_type, concept_uri, depth)</code></pre>
+<p>For each sample and each dimension: take the asserted concept(s) from the wide array, drop the bare root, and for each, walk <code>broader</code> to the root emitting a row per ancestor (dedup per pid×concept). A sample tagged <code>{mineral, rock}</code> → membership <code>{mineral, earthmaterial, rockorsediment, rock, material?}</code> (root-inclusion = open question Q2). This is <strong>membership semantics</strong> (#276 “anywhere in the path”).</p>
+<p>Then hierarchical counts come from a GROUP BY on the membership table:</p>
+<pre><code>facet_tree_summaries(facet_type, concept_uri, parent_uri, depth, label, count)
+  where count = COUNT(DISTINCT pid) with that concept in its membership set</code></pre>
+<p><strong>Counting invariant (Codex-corrected):</strong> counts are a <strong>distinct-pid UNION</strong>, NOT additive. <code>parent_count = COUNT(DISTINCT pid)</code> over (direct ∪ all descendants); the only guaranteed relation is <code>parent_count &gt;= every child_count</code>. Do <strong>not</strong> assert <code>parent = direct + Σ children</code> — a <code>{mineral, rock}</code> sample lands under multiple sibling branches, so children overlap. (Verified both directions on real data — see §7.)</p>
+<p><strong>Universe must match the explorer (Codex):</strong> build membership from the <strong>located</strong> sample set (<code>samp_geo</code> — <code>MaterialSampleRecord</code> with geometry), the same universe the map/table/existing facet_summaries use, or hierarchy counts will drift from every other surface.</p>
+<p><strong>URI form is first-class (Codex):</strong> the SKOS TTLs use <em>un-versioned</em> URIs (<code>.../material/anthropogenicmetal</code>) while the data uses <em>versioned</em> ones (<code>.../material/1.0/rock</code>). <code>broader</code> edges MUST be emitted in the <strong>data form</strong> — reuse the alias/version normalization <code>build_vocab_labels.py</code> already applies (its data-form aliases exist for exactly this reason). Verified: a naive join is 0% match; with version-segment normalization it’s correct (§7).</p>
+<p><strong>SKOS is a DAG, not a tree (Codex):</strong> 29 concepts across the loaded vocabularies have multiple <code>skos:broader</code> parents. The validator must either pick a canonical parent deterministically or define multi-parent rendering before UI work; don’t silently assume a single-parent tree.</p>
+</section>
+<section id="sizing-perf" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="sizing-perf"><span class="header-section-number">1.3.3</span> 2.3 Sizing / perf</h3>
+<p>Membership ≈ samples × avg ancestry depth. With depth ≤ 3–4 and most samples at len 1, expect ~15–25M rows over 6.7M samples (vs <code>facets_v3</code> 6.7M rows). Store sorted by <code>(facet_type, pid)</code> for the bbox-JOIN path; ZSTD. <strong>Validate query latency</strong> (the explorer reads these over HTTP range requests) before committing to the shape — mirror <code>profile_queries.py</code>. If the per-pid membership table is too heavy for the viewport-scoped count JOIN, fall back to a precomputed <code>facet_tree_cross_filter</code> cube (like today’s <code>facet_cross_filter</code>).</p>
+</section>
+<section id="outputs-validator-publish" class="level3" data-number="1.3.4">
+<h3 data-number="1.3.4" data-anchor-id="outputs-validator-publish"><span class="header-section-number">1.3.4</span> 2.4 Outputs, validator, publish</h3>
+<ul>
+<li>New/changed files (versioned, <strong>non-cutover</strong> — publish alongside, don’t overwrite prod): <code>…_facet_tree_summaries.parquet</code>, <code>…_sample_facet_membership.parquet</code>, <code>vocab_labels_*.parquet</code> (+<code>broader</code>).</li>
+<li>Extend <code>validate_frontend_derived.py</code>: tree integrity (single root per scheme, no cycles, parent counts ≥ child counts and = direct+Σchildren), membership grain (no dup pid×concept), label coverage.</li>
+<li>Ship as a <strong>data-pipeline-only PR</strong> (no <code>explorer.qmd</code>). Prove counts in a notebook / query log committed under the existing <code>*_SUMMARY</code> convention.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="half-b-tree-ui-after-249-prs-merge" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="half-b-tree-ui-after-249-prs-merge"><span class="header-section-number">1.4</span> 3. Half (b) — tree UI (after #249 PRs merge)</h2>
+<section id="rendering" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="rendering"><span class="header-section-number">1.4.1</span> 3.1 Rendering</h3>
+<p>Replace flat <code>renderFilter()</code> for material/context/object_type with a tree builder fed by <code>facet_tree_summaries</code> (parent_uri + depth + label + count). Source stays flat (no vocab tree). Behavior per #281/#282: - Render the tree <strong>nested + alphabetical</strong> within each level (#282). - <strong>First two levels unfolded</strong> (root’s children + grandchildren); deeper nodes collapsed behind a disclosure control; click to expand (#281). - Each node: checkbox + label + <code>(membership count)</code> in the existing <code>.facet-count[data-facet][data-value]</code> span shape so the count-update plumbing (<code>applyFacetCounts</code>, <code>.recomputing</code>) is reused unchanged.</p>
+</section>
+<section id="counts" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" data-anchor-id="counts"><span class="header-section-number">1.4.2</span> 3.2 Counts</h3>
+<p><code>updateCrossFilteredCounts</code> reads membership counts instead of single-value counts. Node count = its membership count under the current viewport + cross-filter + search. Parent = direct + Σ descendants falls out of the membership GROUP BY.</p>
+</section>
+<section id="filtering-semantics-the-coherence-contract" class="level3" data-number="1.4.3">
+<h3 data-number="1.4.3" data-anchor-id="filtering-semantics-the-coherence-contract"><span class="header-section-number">1.4.3</span> 3.3 Filtering semantics (the coherence contract)</h3>
+<p>Selecting a node filters to its <strong>entire subtree</strong> (membership): <code>facetFilterSQL</code> changes from <code>material IN (…)</code> on <code>facets_v3</code> to <code>pid IN (SELECT pid FROM membership WHERE concept_uri IN (selected nodes + their descendants))</code>. <strong>Counts and the table filter must share one expression</strong> (the <code>FACETS_DESCRIPTION_EXPR</code> discipline from the 202608 work / the #245 “facet == table” invariant), or legend and table drift. - Parent/child checkbox interaction: selecting a parent selects its subtree (tri-state indeterminate for partial — <strong>Q3</strong>).</p>
+</section>
+<section id="interactions-to-respect" class="level3" data-number="1.4.4">
+<h3 data-number="1.4.4" data-anchor-id="interactions-to-respect"><span class="header-section-number">1.4.4</span> 3.4 Interactions to respect</h3>
+<ul>
+<li><code>?material=</code> URL param (and friends) must accept tree nodes and round-trip (cf.&nbsp;facet-viewport <code>coherence</code> test).</li>
+<li>The #267 “active facet forces point mode” rule and the B1 viewport-scoped count path (moveStart <code>.recomputing</code> → moveEnd <code>refreshFacetCounts</code>) stay intact.</li>
+<li>Rides on the refactored facet code from #249 PR3 (<code>sql-builders.js</code>) — extend there, with <code>node --test</code> units for the new tree/membership SQL builders.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="sequencing-gate" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="sequencing-gate"><span class="header-section-number">1.5</span> 4. Sequencing &amp; gate</h2>
+<ol type="1">
+<li><strong>Now:</strong> Half (a) — tree edges + membership + <code>facet_tree_summaries</code>, validator, latency probe, notebook proof. Data-pipeline PR; publish versioned files.</li>
+<li><strong>After PR4a/PR4b/#285 merge:</strong> Half (b) — tree UI + membership filtering, behind the smoke + characterization + new tree-specific Playwright specs (assert parent count = direct+Σchildren; selecting a parent filters the subtree; 2-levels unfolded; legend == table under a subtree selection). Codex per step.</li>
+<li>Keep single-value <code>facets_v3</code> until (b) ships, then decide deprecate vs keep (Q1).</li>
+</ol>
+<hr>
+</section>
+<section id="open-questions-for-codex-ry" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="open-questions-for-codex-ry"><span class="header-section-number">1.6</span> 5. Open questions (for Codex + RY)</h2>
+<ul>
+<li><strong>Q1 — migrate or coexist?</strong> Does hierarchy fully replace the single-value <code>facets_v3</code> columns (filtering + counts move to membership), or do both ship? (Hierarchy needs membership for both; single-value can’t express subtree filter.)</li>
+<li><strong>Q2 — root inclusion.</strong> Does membership include the bare root (<code>material</code>, <code>anysampledfeature</code>, <code>materialsample</code>)? It’s the “All” node; probably render it as the tree root label, not a selectable facet — confirm.</li>
+<li><strong>Q3 — parent selection UX.</strong> Selecting a parent = select whole subtree, with a tri-state indeterminate when only some children are checked? Or parent is a pure filter (subtree) with no child checkboxes shown until expanded?</li>
+<li><strong>Q4 — multi-asserted leaves.</strong> A sample tagged <code>{mineral, rock}</code> contributes to both branches’ ancestries (union). Confirm that’s the intended “membership” reading (vs picking one). #276 leans union.</li>
+<li><strong>Q5 — which dims first.</strong> material is the #282 priority; sampledfeature + objecttype follow the same machinery; source never gets a tree. Ship all three trees at once or material-first?</li>
+<li><strong>Q6 — count perf.</strong> Is the per-pid membership JOIN viable for viewport-scoped counts, or do we precompute a <code>facet_tree_cross_filter</code> cube? Decide from the 2.3 latency probe.</li>
+</ul>
+<hr>
+</section>
+<section id="first-concrete-step-done-proof-of-concept" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="first-concrete-step-done-proof-of-concept"><span class="header-section-number">1.7</span> 6. First concrete step — DONE (proof-of-concept)</h2>
+<p><code>scripts/poc_facet_hierarchy.py</code> builds the proof against the local 202608 wide + the SKOS TTLs: merges <code>broader</code> edges (per-file parse — a combined-graph parse silently drops material’s edges), normalizes URIs to data form, computes the ancestor closure + membership, and checks the invariants. Run: <code>python scripts/poc_facet_hierarchy.py --wide &lt;202608_wide.parquet&gt; --ttls &lt;dir&gt;</code>.</p>
+</section>
+<section id="poc-results-proven-material-dimension-202608" class="level2" data-number="1.8">
+<h2 data-number="1.8" data-anchor-id="poc-results-proven-material-dimension-202608"><span class="header-section-number">1.8</span> 7. PoC results (proven, material dimension, 202608)</h2>
+<ul>
+<li>located samples = <strong>6,026,242</strong>; located-with-material = <strong>5,829,436</strong>; membership = <strong>15,076,893</strong> rows.</li>
+<li><strong>INVARIANT A — parent ≥ child: PASS</strong> (counts monotonic down the tree).</li>
+<li><strong>INVARIANT B — root == located-with-material: PASS</strong> (5,829,436 = 5,829,436; every located sample with a material concept reaches the root).</li>
+<li><strong>INVARIANT C — non-additive: confirmed</strong> (earthmaterial distinct = 4,091,133 ≠ Σ children = 2,028,538). Additive summing is wrong in both directions.</li>
+<li>Sane tree: material 5.83M → earthmaterial 4.09M → rockorsediment 852K → rock 794K; mineral 303K; organicmaterial 1.02M.</li>
+<li><strong>Gotchas surfaced &amp; fixed:</strong> (1) URI version-form mismatch (0% join → fixed by normalization); (2) rdflib drops material edges when many TTLs share one graph (parse per-file, merge dicts); (3) 29 multi-parent (DAG) concepts exist.</li>
+</ul>
+<p><strong>Next:</strong> wire this into <code>build_vocab_labels.py</code> (emit <code>broader</code>, data-form) + <code>build_frontend_derived.py</code> (closure + membership + <code>facet_tree_summaries</code>, built from <code>samp_geo</code>) + <code>validate_frontend_derived.py</code> (tree integrity, parent≥child, DAG policy), behind a latency probe. Ship as the data-only PR (Half a). Then Half b.</p>
+</section>
+<section id="codex-review-accepted-corrections-2026-06-17-gpt-5.5" class="level2" data-number="1.9">
+<h2 data-number="1.9" data-anchor-id="codex-review-accepted-corrections-2026-06-17-gpt-5.5"><span class="header-section-number">1.9</span> 8. Codex review — accepted corrections (2026-06-17, gpt-5.5)</h2>
+<p>Verdict: “directionally sound.” Accepted: (1) distinct-pid-union invariant, not additive [§2.2]; (2) build membership from the located universe [§2.2]; (3) URI-form normalization is first-class [§2.2]; (4) DAG/multi-parent handling [§2.2]; (5) extract a selected-facet <strong>state model</strong> (URL/checkbox/filter-SQL/cross-filter currently all read the DOM directly) rather than just nested HTML [§3]; (6) put membership SQL in <code>assets/js/sql-builders.js</code> with <code>node --test</code> units [§3]; (7) consider a <strong>closure table</strong> (<code>concept_closure(ancestor, descendant, distance)</code> + asserted projection) over a materialized membership file — benchmark both; (8) <strong>ship material-first</strong> behind shared machinery [§5 Q5]; (9) parent UX = store the parent URI + derive descendants, don’t explode into the URL, tri-state indeterminate [§5 Q3].</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/FACET_HIERARCHY_PLAN.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
