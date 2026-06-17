@@ -44,9 +44,26 @@ import duckdb
 
 MATERIAL_ROOT = "https://w3id.org/isample/vocabulary/material/1.0/material"
 FACET_DIMS = ["source", "material", "context", "object_type"]
+# Hierarchical dims (#281/#282): wide array column + the dim's canonical SKOS
+# root. The array carries each sample's SET of asserted IdentifiedConcept
+# row_ids (general↔specific, no guaranteed order — FACET_HIERARCHY_PLAN.md §0).
+# The root is dropped from "asserted" (re-added via closure) and is the single
+# tree root per dim. source has no vocab tree. (Codex: drop ONLY these explicit
+# roots, not every parentless concept — deprecated/parentless concepts must stay.)
+DIM_ARRAY_COL = {
+    "material": "p__has_material_category",
+    "context": "p__has_context_category",
+    "object_type": "p__has_sample_object_type",
+}
+DIM_ROOT = {
+    "material": MATERIAL_ROOT,
+    "context": "https://w3id.org/isample/vocabulary/sampledfeature/1.0/anysampledfeature",
+    "object_type": "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample",
+}
 # the artifacts this script knows how to build (for --only/--skip validation)
 ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
-             "facet_summaries", "facet_cross_filter", "wide_h3"]
+             "facet_summaries", "facet_cross_filter", "wide_h3",
+             "sample_facet_membership", "facet_tree_summaries"]
 
 # Shared SQL expression for sample_facets_v2.description (#277 part 2).
 # Appends space-joined concept labels (IC labels across all 4 concept dims)
@@ -299,6 +316,117 @@ def build_wide_h3(con, wide, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
+def build_concept_membership(con, wide, vocab_labels, t0):
+    """Build the hierarchy temp tables (#281/#282/#276) from vocab_labels' data-form
+    `broader` edges + the wide concept arrays, over the LOCATED universe (samp_geo)
+    so counts match the map/table. Creates: concept_tree, concept_closure, roots,
+    asserted, membership. See FACET_HIERARCHY_PLAN.md §2."""
+    # concept_tree: data-form (uri, canonical primary parent, depth-from-root).
+    # vocab_labels already aliases broader into data form, so this joins to the
+    # data-form concept URIs the wide arrays resolve to.
+    con.execute(f"""
+    CREATE OR REPLACE TEMP TABLE vl_edges AS
+      SELECT DISTINCT uri, broader AS parent_uri
+      FROM read_parquet('{vocab_labels}') WHERE uri_form='data_v1';
+    CREATE OR REPLACE TEMP TABLE concept_tree AS
+      WITH RECURSIVE depths AS (
+        SELECT uri, parent_uri, 0 AS depth FROM vl_edges WHERE parent_uri IS NULL
+        UNION ALL
+        SELECT e.uri, e.parent_uri, d.depth + 1
+        FROM vl_edges e JOIN depths d ON e.parent_uri = d.uri
+      )
+      SELECT uri, ANY_VALUE(parent_uri) AS parent_uri, MIN(depth) AS depth
+      FROM depths GROUP BY uri;
+    -- transitive ancestor closure (self at distance 0)
+    CREATE OR REPLACE TEMP TABLE concept_closure AS
+      WITH RECURSIVE clo AS (
+        SELECT uri AS descendant, uri AS ancestor, 0 AS distance FROM concept_tree
+        UNION ALL
+        SELECT c.descendant, t.parent_uri AS ancestor, c.distance + 1
+        FROM clo c JOIN concept_tree t ON t.uri = c.ancestor
+        -- Cycle guard (Codex r2): the SKOS projection is acyclic today, but cap
+        -- depth so a future bad vocab (a broader cycle) can't recurse forever.
+        -- 64 >> any real concept depth (live max is 3).
+        WHERE t.parent_uri IS NOT NULL AND c.distance < 64
+      )
+      SELECT DISTINCT descendant, ancestor, distance FROM clo;
+    """)
+    # node_dim: assign each tree concept to the dim whose canonical root it reaches
+    # via the closure. This both (a) restricts the hierarchy to each dim's real
+    # tree and (b) keeps exactly one root per dim — deprecated/parentless concepts
+    # that don't reach a dim root are NOT treated as roots (Codex HIGH-1).
+    dim_root_vals = ", ".join(f"('{dim}', '{root}')" for dim, root in DIM_ROOT.items())
+    con.execute(f"""
+    CREATE OR REPLACE TEMP TABLE dim_root(facet_type VARCHAR, root_uri VARCHAR);
+    INSERT INTO dim_root VALUES {dim_root_vals};
+    CREATE OR REPLACE TEMP TABLE node_dim AS
+      SELECT DISTINCT c.descendant AS uri, r.facet_type
+      FROM concept_closure c JOIN dim_root r ON r.root_uri = c.ancestor;
+    """)
+    # asserted: every located sample's concept(s) per hierarchical dim, from the
+    # FULL wide array (not the flattened first-non-root value), dropping ONLY that
+    # dim's explicit root.
+    union = " UNION ALL ".join(
+        f"""SELECT DISTINCT sg.pid, '{dim}' AS facet_type, ic.uri AS concept
+            FROM samp_geo sg
+            JOIN read_parquet('{wide}') s ON s.pid = sg.pid,
+                 UNNEST(s.{col}) AS u(rid)
+            JOIN ic ON ic.row_id = u.rid
+            WHERE ic.uri <> '{DIM_ROOT[dim]}'"""
+        for dim, col in DIM_ARRAY_COL.items())
+    con.execute(f"CREATE OR REPLACE TEMP TABLE asserted AS {union};")
+    # membership: each asserted concept expanded to its ancestor closure, RESTRICTED
+    # to ancestors in the SAME dim's canonical tree. Membership semantics (#276): a
+    # sample counts under every node on the path(s) of every concept it asserts.
+    # Asserted concepts that don't reach their dim root (label gaps #148/#161, or
+    # the un-linked specimentype scheme) produce no rows → EXCLUDED from the
+    # hierarchy (flat facet_summaries still counts them) and reported below.
+    con.execute("""
+    CREATE OR REPLACE TEMP TABLE membership AS
+      SELECT DISTINCT a.pid, a.facet_type, c.ancestor AS concept_uri
+      FROM asserted a
+      JOIN concept_closure c ON c.descendant = a.concept
+      JOIN node_dim nd ON nd.uri = c.ancestor AND nd.facet_type = a.facet_type;
+    """)
+    n_tree = con.sql("SELECT COUNT(*) FROM concept_tree").fetchone()[0]
+    n_mem = con.sql("SELECT COUNT(*) FROM membership").fetchone()[0]
+    # Excluded = distinct (dim, concept) asserted that never reach the dim root.
+    excl = con.sql("""
+        SELECT a.facet_type, COUNT(DISTINCT a.concept) AS n
+        FROM asserted a
+        WHERE NOT EXISTS (
+          SELECT 1 FROM concept_closure c JOIN node_dim nd
+            ON nd.uri = c.ancestor AND nd.facet_type = a.facet_type
+          WHERE c.descendant = a.concept)
+        GROUP BY a.facet_type ORDER BY a.facet_type""").fetchall()
+    log(f"concept_tree={n_tree:,}  membership={n_mem:,}", t0)
+    if excl:
+        detail = ", ".join(f"{ft}={n}" for ft, n in excl)
+        log(f"NOTE: concepts EXCLUDED from hierarchy (no path to dim root; label "
+            f"gaps #148/#161 / un-linked schemes — flat facet_summaries still counts them): {detail}", t0)
+
+
+def build_sample_facet_membership(con, out):
+    con.execute(f"""COPY (
+        SELECT m.pid, m.facet_type, m.concept_uri, t.depth
+        FROM membership m JOIN concept_tree t ON t.uri = m.concept_uri
+        ORDER BY m.facet_type, m.pid, m.concept_uri
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
+def build_facet_tree_summaries(con, out):
+    # Hierarchical counts: COUNT(DISTINCT pid) per node (membership = direct ∪
+    # descendants). NOT additive — a sample under two sibling branches counts
+    # once at each and once at their shared ancestor (FACET_HIERARCHY_PLAN.md §2.2).
+    con.execute(f"""COPY (
+        SELECT m.facet_type, m.concept_uri, t.parent_uri, t.depth,
+               COUNT(DISTINCT m.pid) AS count
+        FROM membership m JOIN concept_tree t ON t.uri = m.concept_uri
+        GROUP BY m.facet_type, m.concept_uri, t.parent_uri, t.depth
+        ORDER BY m.facet_type, count DESC, m.concept_uri
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
 def file_meta(con, path):
     n = con.sql(f"SELECT COUNT(*) FROM read_parquet('{path}')").fetchone()[0]
     schema = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{path}')").fetchall()]
@@ -321,6 +449,9 @@ def main():
     ap.add_argument("--tag", required=True, help="output prefix, e.g. isamples_202606 (no stale default)")
     ap.add_argument("--only", default="", help=f"comma list of: {','.join(ARTIFACTS)}")
     ap.add_argument("--skip", default="", help="comma list of the same names to skip")
+    ap.add_argument("--vocab-labels", default="",
+                    help="vocab_labels parquet (with `broader`, data_v1 rows) — "
+                         "required for sample_facet_membership / facet_tree_summaries (#281/#282)")
     ap.add_argument("--no-manifest", action="store_true", help="skip writing {tag}_manifest.json")
     ap.add_argument("--threads", type=int, default=0,
                     help="DuckDB thread count; set 1 for bit-stable floating centroids (slower)")
@@ -357,6 +488,20 @@ def main():
             build_h3_summary(con, p(f"h3_summary_res{res}"), res); produced.append(p(f"h3_summary_res{res}"))
         log("h3_summary_res{4,6,8} ✓", t0)
     emit("wide_h3", lambda o: build_wide_h3(con, args.wide, o))
+
+    # Hierarchy artifacts (#281/#282) — need vocab_labels for the SKOS tree.
+    if want("sample_facet_membership") or want("facet_tree_summaries"):
+        if not args.vocab_labels:
+            # Fail loud if the user EXPLICITLY asked for a hierarchy artifact
+            # (Codex) — silently skipping an explicit --only target is wrong.
+            explicit = only & {"sample_facet_membership", "facet_tree_summaries"}
+            if explicit:
+                sys.exit(f"FATAL: --only {sorted(explicit)} requires --vocab-labels <vocab_labels.parquet>")
+            log("SKIP hierarchy artifacts: pass --vocab-labels <vocab_labels.parquet>", t0)
+        else:
+            build_concept_membership(con, args.wide, args.vocab_labels, t0)
+            emit("sample_facet_membership", lambda o: build_sample_facet_membership(con, o))
+            emit("facet_tree_summaries", lambda o: build_facet_tree_summaries(con, o))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)

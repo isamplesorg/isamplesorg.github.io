@@ -179,6 +179,14 @@ def extract_rows(ttl_url: str) -> list[dict]:
         scheme = _pick_scheme(g, c)
         definition = _pick_definition(g, c)
         alt_labels = sorted({str(a) for a in g.objects(c, SKOS.altLabel)})
+        # skos:broader parent (#281/#282 tree). SKOS permits multiple parents
+        # (a DAG); pick the lexicographically-first as the canonical primary so
+        # the column is deterministic, and stash the full set for the validator
+        # to flag multi-parent concepts. Vocab-form here; aliased to data-form
+        # in _emit_data_form_aliases so uri↔broader join within each uri_form.
+        broaders = sorted(str(b) for b in g.objects(c, SKOS.broader))
+        broader_vocab = broaders[0] if broaders else None
+        broader_count = len(broaders)
 
         # One row per language of skos:prefLabel; fall back to rdfs:label.
         pref_labels = list(g.objects(c, SKOS.prefLabel))
@@ -190,11 +198,14 @@ def extract_rows(ttl_url: str) -> list[dict]:
             # downstream JOINs at least know the URI exists.
             rows.append({
                 "uri": uri,
+                "uri_form": "vocab",
                 "pref_label": None,
                 "lang": None,
                 "scheme": scheme,
                 "definition": definition,
                 "alt_labels": alt_labels,
+                "broader": broader_vocab,
+                "broader_count": broader_count,
                 "source_ttl": ttl_url,
             })
             continue
@@ -208,6 +219,8 @@ def extract_rows(ttl_url: str) -> list[dict]:
                 "scheme": scheme,
                 "definition": definition,
                 "alt_labels": alt_labels,
+                "broader": broader_vocab,
+                "broader_count": broader_count,
                 "source_ttl": ttl_url,
             })
     return rows
@@ -254,6 +267,15 @@ def _emit_data_form_aliases(rows: list[dict]) -> list[dict]:
             clone = dict(r)
             clone["uri"] = data_uri
             clone["uri_form"] = "data_v1"
+            # Map the parent to its data form too, so a data_v1 row's `broader`
+            # joins to another data_v1 row's `uri` (same alias space). If the
+            # parent has no known data-form alias, leave the vocab-form parent
+            # (the validator flags any broader that resolves to no node).
+            parent = r.get("broader")
+            if parent:
+                parent_data = _data_form_uris(parent)
+                if parent_data:
+                    clone["broader"] = parent_data[0]
             aliases.append(clone)
     return aliases
 
@@ -320,6 +342,8 @@ def main(argv: list[str] | None = None) -> int:
             "scheme": scheme,
             "definition": None,
             "alt_labels": [],
+            "broader": None,          # deprecated leaf concepts; no tree parent
+            "broader_count": 0,
             "source_ttl": "manual_override",
         })
     print(f"  {len(MANUAL_LABEL_OVERRIDES):>4} rows  (manual overrides for deprecated URIs)")
@@ -343,6 +367,12 @@ def main(argv: list[str] | None = None) -> int:
     df.to_parquet(args.output, index=False)
     print(f"\nWrote {len(df):,} rows → {args.output}")
     print(f"  by uri_form: {df['uri_form'].value_counts().to_dict()}")
+    # Surface the SKOS DAG (#281/#282): concepts with >1 skos:broader parent.
+    # We keep the lexicographically-first as the canonical `broader` (a lossy
+    # tree projection); flag the count so the hierarchy build/UI can account for it.
+    if "broader_count" in df.columns:
+        multi = df[(df["uri_form"] == "vocab") & (df["broader_count"].fillna(0) > 1)]["uri"].nunique()
+        print(f"  multi-parent (DAG) concepts: {multi} (canonical primary parent kept; lossy projection)")
     print(f"  unique URIs: {df['uri'].nunique():,}")
     print(f"  languages:   {sorted(df['lang'].dropna().unique().tolist())}")
     print(f"  schemes:     {df['scheme'].nunique()} distinct skos:inScheme values")

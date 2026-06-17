@@ -298,4 +298,19 @@ test.describe('Explorer URL state round-trip (issue #209)', () => {
     const s = await snapshot(page);
     expect(s.selectedH3).toBeNull();
   });
+
+  // NOTE (PR4b, #208 smell 1b): a dedicated headless regression for the new
+  // `moveEnd` cluster "Samples in View" refresh was attempted but proved
+  // unreliable. The explorer OJS cell re-evaluates repeatedly during headless
+  // boot, so `_ojs...value('viewer')` returns different `viewer` instances
+  // across calls — the one reachable at interaction time frequently has zero
+  // camera listeners attached, so a forced `moveEnd.raiseEvent()` (or `flyTo`)
+  // never reaches reconcileSettledCamera. A flaky test being worse than none,
+  // PR4b instead rests on: (1) the existing url-roundtrip + characterization
+  // suite proving behavior-neutrality of the shared URL write from BOTH the
+  // camera.changed and moveEnd handlers; (2) the change being mechanically
+  // trivial — `moveEnd` now invokes the IDENTICAL cluster-stat block that
+  // `camera.changed` already ran (covered by cluster-mode boot in the
+  // characterization specs); (3) a manual probe confirming a settled cluster
+  // camera writes "<count> | Samples in View" via the shared tail.
 });

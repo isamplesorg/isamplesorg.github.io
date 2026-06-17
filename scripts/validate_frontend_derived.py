@@ -50,6 +50,8 @@ def main():
     ap.add_argument("--facets"); ap.add_argument("--map-lite")
     ap.add_argument("--summaries"); ap.add_argument("--cross-filter")
     ap.add_argument("--h3", nargs=3, metavar=("R4", "R6", "R8"))
+    ap.add_argument("--tree-summaries", help="facet_tree_summaries parquet (#281/#282); optional")
+    ap.add_argument("--membership", help="sample_facet_membership parquet (#281/#282); optional")
     ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
@@ -279,6 +281,63 @@ def main():
                       ("object_type", "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/materialsample")]:
         n = scalar(f"SELECT COUNT(*) FROM {F} WHERE {dim}='{root}'")
         info.append(f"{dim} root-concept rows: {n:,} (informational; root-dropping deferred)")
+
+    # --- hierarchy artifacts (#281/#282) — checked only when present ---
+    def _opt(name, attr):
+        v = getattr(a, attr)
+        if v:
+            return v
+        if a.dir and a.tag:
+            p = os.path.join(a.dir, f"{a.tag}_{name}.parquet")
+            return p if os.path.exists(p) else None
+        return None
+    tree = _opt("facet_tree_summaries", "tree_summaries")
+    mem = _opt("sample_facet_membership", "membership")
+    if tree:
+        T = f"read_parquet('{tree}')"
+        # parent ≥ child for every edge, every dim (distinct-pid UNION semantics —
+        # NOT additive; see FACET_HIERARCHY_PLAN.md §2.2).
+        viol = scalar(f"""SELECT COUNT(*) FROM {T} c JOIN {T} p
+            ON p.concept_uri=c.parent_uri AND p.facet_type=c.facet_type
+            WHERE c.count > p.count""")
+        check("tree: parent count >= every child count", viol == 0, f"{viol} edges violate")
+        # every non-null parent_uri resolves to a node (no dangling edges)
+        orph = scalar(f"""SELECT COUNT(*) FROM {T} c WHERE c.parent_uri IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM {T} p WHERE p.concept_uri=c.parent_uri AND p.facet_type=c.facet_type)""")
+        check("tree: every parent_uri resolves to a node", orph == 0, f"{orph} dangling parents")
+        # exactly one root per hierarchical dim
+        badroots = scalar(f"""SELECT COUNT(*) FROM (
+            SELECT facet_type, COUNT(*) n FROM {T} WHERE parent_uri IS NULL GROUP BY facet_type HAVING n<>1)""")
+        check("tree: exactly one root per dim", badroots == 0, f"{badroots} dims with !=1 root")
+        # all three hierarchical dims present (catches a silently-missing dim)
+        dims_present = scalar(f"SELECT COUNT(DISTINCT facet_type) FROM {T}")
+        check("tree: all 3 hierarchical dims present", dims_present == 3,
+              f"{dims_present} dims present (want material/context/object_type)")
+        # CROSS-FILE ALGEBRA: material root membership == facets_v2 non-root material
+        # (both = located samples carrying ≥1 non-root material concept).
+        # NOTE (Codex r2): this equality holds under the current-data invariant
+        # "0 material concepts excluded from the hierarchy" (every located
+        # material concept resolves to the material tree). If a future vintage
+        # introduces a material concept absent from the SKOS tree, facets_v2 would
+        # still count it flat while the hierarchy excludes it, and this check would
+        # (correctly) fail — revisit the equality then.
+        mat_root = scalar(f"SELECT count FROM {T} WHERE facet_type='material' AND parent_uri IS NULL")
+        fv2_mat = scalar(f"SELECT COUNT(*) FROM {F} WHERE material IS NOT NULL")
+        check("tree: material root == facets_v2 non-root material count",
+              mat_root == fv2_mat, f"tree={mat_root:,} vs facets_v2={fv2_mat:,}")
+    if mem:
+        M = f"read_parquet('{mem}')"
+        dup = scalar(f"SELECT COUNT(*) FROM (SELECT pid,facet_type,concept_uri FROM {M} GROUP BY 1,2,3 HAVING COUNT(*)>1)")
+        check("membership: (pid,facet_type,concept_uri) unique", dup == 0, f"{dup} dup grain rows")
+        if tree:  # tree_summaries must EXACTLY equal a fresh GROUP BY of membership
+            T2 = f"read_parquet('{tree}')"
+            # symmetric: neither side has a (facet_type,concept,count) the other lacks
+            mm = scalar(f"""
+                WITH g AS (SELECT facet_type, concept_uri, COUNT(DISTINCT pid) AS count FROM {M} GROUP BY 1,2),
+                     t AS (SELECT facet_type, concept_uri, count FROM {T2})
+                SELECT (SELECT COUNT(*) FROM (SELECT * FROM g EXCEPT SELECT * FROM t))
+                     + (SELECT COUNT(*) FROM (SELECT * FROM t EXCEPT SELECT * FROM g))""")
+            check("tree counts == GROUP BY membership (symmetric)", mm == 0, f"{mm} rows disagree")
 
     print(f"\n{'CHECK':<44} {'RESULT':<6} DETAIL\n" + "-" * 90)
     ok = True
