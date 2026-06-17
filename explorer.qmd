@@ -778,16 +778,20 @@ cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels_202608.parquet`
 
-// #281/#282 facet hierarchy PREVIEW (default OFF — the flat Material list is
-// unchanged for everyone). Opt in with ?facets=tree (force off with ?facets=flat),
-// or stickily via localStorage ISAMPLES_FACET_TREE=1. When on, the Material facet
-// renders as an expandable tree backed by the hierarchy artifacts below; context /
-// object_type / source stay flat. Reversible = a single switch.
+// #281/#282 facet hierarchy — SHIPPED, default ON. The Material facet renders as an
+// expandable tree backed by the hierarchy artifacts below; context / object_type /
+// source stay flat. `?facets=flat` is the kill-switch (also localStorage
+// ISAMPLES_FACET_TREE=0); `?facets=tree` / `=1` force on. The escape hatch lets us
+// revert PER USER with no redeploy if the tree misbehaves; flipping the default back
+// globally is a one-line change + redeploy.
 FACET_TREE = (() => {
     const q = new URLSearchParams(location.search).get('facets');
     if (q === 'tree') return true;
-    if (q === 'flat') return false;
-    return (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_FACET_TREE') === '1');
+    if (q === 'flat') return false;           // kill-switch
+    const ls = (typeof localStorage !== 'undefined') ? localStorage.getItem('ISAMPLES_FACET_TREE') : null;
+    if (ls === '0') return false;
+    if (ls === '1') return true;
+    return true;                              // DEFAULT ON
 })()
 // Hierarchical counts (one row per concept node: facet_type, concept_uri,
 // parent_uri, depth, count) and per-sample membership (pid ↔ every ancestor).
