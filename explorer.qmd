@@ -578,6 +578,17 @@ format:
     .facet-row.zero { opacity: 0.4; }
     .facet-row.zero:hover { opacity: 0.65; }
     .facet-count.recomputing { opacity: 0.55; font-style: italic; }
+    /* #281/#282 Material tree (preview) — compact rows */
+    .filter-body .facet-treeroot { font-weight: 600; font-size: 12px; line-height: 1.5; padding: 0 0 2px; color: #444; }
+    .filter-body .facet-treenode { font-size: 12px; line-height: 1.5; }
+    /* override .filter-body label{display:block;padding:2px 0} so caret+label+count
+       sit on one tight line with no extra per-row padding */
+    .filter-body .facet-treenode .facet-treelabel { display: inline; padding: 0; cursor: pointer; }
+    .facet-children { margin-left: 13px; }
+    .facet-children.collapsed { display: none; }
+    .facet-caret { cursor: pointer; display: inline-block; width: 12px; color: #888; user-select: none; font-size: 10px; }
+    .facet-caret:hover { color: #1565c0; }
+    .facet-caret-spacer { display: inline-block; width: 12px; }
 </style>
 ```
 
@@ -767,6 +778,22 @@ cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels_202608.parquet`
 
+// #281/#282 facet hierarchy PREVIEW (default OFF — the flat Material list is
+// unchanged for everyone). Opt in with ?facets=tree (force off with ?facets=flat),
+// or stickily via localStorage ISAMPLES_FACET_TREE=1. When on, the Material facet
+// renders as an expandable tree backed by the hierarchy artifacts below; context /
+// object_type / source stay flat. Reversible = a single switch.
+FACET_TREE = (() => {
+    const q = new URLSearchParams(location.search).get('facets');
+    if (q === 'tree') return true;
+    if (q === 'flat') return false;
+    return (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_FACET_TREE') === '1');
+})()
+// Hierarchical counts (one row per concept node: facet_type, concept_uri,
+// parent_uri, depth, count) and per-sample membership (pid ↔ every ancestor).
+facet_tree_url = `${R2_BASE}/isamples_202608_facet_tree_summaries.parquet`
+membership_url = `${R2_BASE}/isamples_202608_sample_facet_membership.parquet`
+
 // Canonical palette — see issue #113. Path-relative so this works under
 // both isamples.org (custom domain at root) and project-pages fork
 // previews (rdhyee.github.io/isamplesorg.github.io/...).
@@ -877,6 +904,9 @@ function applyQueryToFacetFilters() {
     setCheckedValues('materialFilterBody', csvParamValues(params, 'material'));
     setCheckedValues('contextFilterBody', csvParamValues(params, 'context'));
     setCheckedValues('objectTypeFilterBody', csvParamValues(params, 'object_type'));
+    // #281/#282: restored ?material= URIs are the minimal nodes — fill in their
+    // inherited descendants + indeterminate ancestors so the tree looks right.
+    syncMaterialTreeVisual();
 }
 
 
@@ -927,7 +957,9 @@ function writeQueryState(opts = {}) {
         ['context', 'contextFilterBody'],
         ['object_type', 'objectTypeFilterBody'],
     ].forEach(([key, containerId]) => {
-        const values = getCheckedValues(containerId);
+        // #281/#282: serialize the MINIMAL Material selection in tree mode (parent
+        // URIs, not expanded descendants) so shared links stay compact + stable.
+        const values = (key === 'material') ? materialSelection() : getCheckedValues(containerId);
         if (values.length > 0) params.set(key, values.join(','));
         else params.delete(key);
     });
@@ -959,6 +991,73 @@ function hasFacetFilters() {
     return getCheckedValues('materialFilterBody').length > 0
         || getCheckedValues('contextFilterBody').length > 0
         || getCheckedValues('objectTypeFilterBody').length > 0;
+}
+
+// #281/#282: the MINIMAL Material selection — the top-most checked tree nodes
+// (a checked node whose ancestor is also checked is redundant, since the parent's
+// subtree already covers it). This is the canonical selection used for filtering
+// and URL serialization in tree mode; flat mode falls back to all checked values.
+// #281/#282: the SINGLE source of truth for "Material is actually in tree mode" —
+// the flag is on AND the tree rendered (renderMaterialTreeFacet falls back to the
+// flat list if the hierarchy files fail to load). Every material code path keys off
+// this, so a degraded flat fallback behaves fully flat — selection, filtering, AND
+// cross-filter counts (Codex r2). Without it, filtering would query the missing
+// membership file and counts would wrongly exclude material.
+function materialTreeActive() {
+    return FACET_TREE && !!document.querySelector('#materialFilterBody .facet-treenode');
+}
+
+function materialSelection() {
+    if (!materialTreeActive()) return getCheckedValues('materialFilterBody');
+    const body = document.getElementById('materialFilterBody');
+    const out = [];
+    body.querySelectorAll('.facet-treenode > .facet-treelabel input[type="checkbox"]:checked').forEach(cb => {
+        const node = cb.closest('.facet-treenode');
+        let anc = node && node.parentElement ? node.parentElement.closest('.facet-treenode') : null;
+        let covered = false;
+        while (anc) {
+            const a = anc.querySelector(':scope > .facet-treelabel input[type="checkbox"]');
+            if (a && a.checked && !a.disabled) { covered = true; break; }  // explicit ancestor covers it
+            anc = anc.parentElement ? anc.parentElement.closest('.facet-treenode') : null;
+        }
+        if (!covered) out.push(cb.value);
+    });
+    return out;
+}
+
+// #281/#282: keep the tree's visual state coherent after any change or URL restore:
+//  - a checked parent visually fills in its descendants (checked + disabled =
+//    "included because the parent is"), so the redundancy is obvious;
+//  - unchecking a parent reverts those inherited descendants;
+//  - a parent with some (but not all-via-itself) descendants selected shows the
+//    indeterminate "–" state. Filtering reads materialSelection() (top-most), so
+//    the inherited descendant checks never double-count.
+function syncMaterialTreeVisual() {
+    if (!materialTreeActive()) return;
+    const body = document.getElementById('materialFilterBody');
+    if (!body) return;
+    const cbOf = (node) => node.querySelector(':scope > .facet-treelabel input[type="checkbox"]');
+    const nodes = [...body.querySelectorAll('.facet-treenode')];  // DOM order = parents before children
+    // Pass 1 (top-down): inherit checked state from an explicitly-checked ancestor.
+    for (const node of nodes) {
+        const cb = cbOf(node);
+        if (!cb) continue;
+        let anc = node.parentElement ? node.parentElement.closest('.facet-treenode') : null;
+        let coveredByAnc = false;
+        while (anc) {
+            const a = cbOf(anc);
+            if (a && a.checked && !a.disabled) { coveredByAnc = true; break; }
+            anc = anc.parentElement ? anc.parentElement.closest('.facet-treenode') : null;
+        }
+        if (coveredByAnc) { cb.checked = true; cb.disabled = true; cb.indeterminate = false; }
+        else if (cb.disabled) { cb.disabled = false; cb.checked = false; }  // was inherited, parent now off → revert
+    }
+    // Pass 2: indeterminate when not selected itself but a descendant is checked.
+    for (const node of nodes) {
+        const cb = cbOf(node);
+        if (!cb) continue;
+        cb.indeterminate = (!cb.checked) && !!node.querySelector(':scope > .facet-children input[type="checkbox"]:checked');
+    }
 }
 
 // Single source of truth for #facetNote visibility. The note ("filter
@@ -994,25 +1093,38 @@ function syncFacetNote() {
 // (a sample with two materials would appear twice via JOIN). Required
 // for Phase 4's table mode and any non-JOIN caller. See issue #156.
 function facetFilterSQL() {
-    const mat = getCheckedValues('materialFilterBody');
+    const mat = materialSelection();   // minimal (top-most) nodes in tree mode
     const ctx = getCheckedValues('contextFilterBody');
     const ot  = getCheckedValues('objectTypeFilterBody');
 
-    const conds = [];
+    // Each entry is a standalone `pid IN (...)` predicate; multiple are AND-ed.
+    const parts = [];
+    // #281/#282: in tree mode the Material selection is a set of concept nodes;
+    // filter via the membership table (which encodes each sample under every
+    // ancestor), so selecting a parent node matches its whole subtree — no
+    // client-side descendant expansion. context/object_type stay flat on facets.
+    const facetsConds = [];
     if (mat.length > 0) {
         const list = mat.map(s => `'${escSql(s)}'`).join(',');
-        conds.push(`material IN (${list})`);
+        if (materialTreeActive()) {
+            parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${membership_url}') WHERE facet_type='material' AND concept_uri IN (${list}))`);
+        } else {
+            facetsConds.push(`material IN (${list})`);
+        }
     }
     if (ctx.length > 0) {
         const list = ctx.map(s => `'${escSql(s)}'`).join(',');
-        conds.push(`context IN (${list})`);
+        facetsConds.push(`context IN (${list})`);
     }
     if (ot.length > 0) {
         const list = ot.map(s => `'${escSql(s)}'`).join(',');
-        conds.push(`object_type IN (${list})`);
+        facetsConds.push(`object_type IN (${list})`);
     }
-    if (conds.length === 0) return '';
-    return ` AND pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${conds.join(' AND ')})`;
+    if (facetsConds.length > 0) {
+        parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${facetsConds.join(' AND ')})`);
+    }
+    if (parts.length === 0) return '';
+    return ' AND ' + parts.map(p => `(${p})`).join(' AND ');
 }
 
 // Shared viewport-padding factor. The samples table (PR #219), the
@@ -1852,7 +1964,62 @@ facetFilters = {
             ).join('');
         };
 
-        renderFilter('materialFilterBody', 'material', grouped.material);
+        // #281/#282: render Material as an expandable tree when the preview flag
+        // is on; flat list otherwise. context/object_type/source stay flat.
+        // Defined inline so it closes over prettyLabel / escapers / grouped / db.
+        async function renderMaterialTreeFacet() {
+            const body = document.getElementById('materialFilterBody');
+            if (!body) return;
+            let rows;
+            try {
+                rows = await db.query(`SELECT concept_uri, parent_uri, depth, count FROM read_parquet('${facet_tree_url}') WHERE facet_type='material'`);
+            } catch (err) {
+                console.warn('facet_tree load failed; flat material fallback:', err);
+                renderFilter('materialFilterBody', 'material', grouped.material);
+                return;
+            }
+            const nodes = new Map();
+            for (const r of rows) nodes.set(r.concept_uri, { uri: r.concept_uri, parent: r.parent_uri, depth: Number(r.depth), count: Number(r.count), label: prettyLabel(r.concept_uri), kids: [] });
+            let root = null;
+            for (const n of nodes.values()) { if (n.parent == null) root = n; else if (nodes.has(n.parent)) nodes.get(n.parent).kids.push(n); }
+            for (const n of nodes.values()) n.kids.sort((a, b) => a.label.localeCompare(b.label));  // #282 alphabetical within level
+            // Material baseline counts must come from the tree (Codex), not the flat summaries.
+            viewer._baselineCounts.material = new Map([...nodes.values()].map(n => [n.uri, n.count]));
+            // First two levels unfolded (#281): depth 1 + 2 visible; depth ≥3 collapsed.
+            const nodeHtml = (n) => {
+                const hasKids = n.kids.length > 0;
+                const open = hasKids && n.depth < 2;
+                const caret = hasKids
+                    ? `<span class="facet-caret" role="button" aria-label="expand or collapse">${open ? '▾' : '▸'}</span>`
+                    : `<span class="facet-caret-spacer"></span>`;
+                return `<div class="facet-treenode" data-depth="${n.depth}">`
+                    + caret
+                    + `<label class="facet-row facet-treelabel" data-facet="material" data-value="${escAttr(n.uri)}" title="${escAttr(n.uri)}">`
+                    + `<input type="checkbox" value="${escAttr(n.uri)}"> ${escText(n.label)} `
+                    + `<span class="facet-count" data-facet="material" data-value="${escAttr(n.uri)}" style="color:#999">(${n.count.toLocaleString()})</span>`
+                    + `</label>`
+                    + (hasKids ? `<div class="facet-children${open ? '' : ' collapsed'}">` + n.kids.map(nodeHtml).join('') + `</div>` : '')
+                    + `</div>`;
+            };
+            // Root renders as a non-selectable "All …" grouping label (selecting it = no filter).
+            body.innerHTML =
+                `<div class="facet-treeroot">${escText(root ? root.label : 'All materials')}`
+                + (root ? ` <span class="facet-count" data-facet="material" data-value="${escAttr(root.uri)}" style="color:#999">(${root.count.toLocaleString()})</span>` : '')
+                + `</div>`
+                + (root ? root.kids.map(nodeHtml).join('') : '');
+            body.querySelectorAll('.facet-caret').forEach(c => c.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                const node = c.closest('.facet-treenode');
+                const kids = node && node.querySelector(':scope > .facet-children');
+                if (kids) { const collapsed = kids.classList.toggle('collapsed'); c.textContent = collapsed ? '▸' : '▾'; }
+            }));
+            // Tri-state + inherited-check visual sync on any checkbox toggle. Filtering
+            // reads materialSelection() (top-most) so inherited checks don't double-count.
+            body.addEventListener('change', () => syncMaterialTreeVisual());
+            syncMaterialTreeVisual();  // initial (in case ?material= pre-checked nodes)
+        }
+        if (FACET_TREE) { await renderMaterialTreeFacet(); }
+        else { renderFilter('materialFilterBody', 'material', grouped.material); }
         renderFilter('contextFilterBody', 'context', grouped.context);
         renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
         applyFacetCounts('source', null);
@@ -2841,7 +3008,13 @@ zoomWatcher = {
         const sourceChecks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
         const sourceTotal = sourceChecks.length;
         const sources = getActiveSources();
-        const mat = getCheckedValues('materialFilterBody');
+        // #281/#282 increment 1: in tree mode the Material facet keeps its
+        // STATIC tree baseline counts and is excluded from the live cross-filter
+        // count engine (its counts come from facet_tree_summaries, not facets_v3,
+        // and a selected parent node wouldn't match facets_v3's flat values). The
+        // table/map still filter correctly via facetFilterSQL's membership path.
+        // Viewport/cross-filtered material tree counts are the next increment.
+        const mat = materialTreeActive() ? [] : getCheckedValues('materialFilterBody');
         const ctx = getCheckedValues('contextFilterBody');
         const ot = getCheckedValues('objectTypeFilterBody');
         const dims = [
