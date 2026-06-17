@@ -3679,6 +3679,37 @@ zoomWatcher = {
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
 
+    // --- Shared settled-camera tail (#208 smell 1b) ---
+    // The single reconciliation entry point both settled-camera listeners run
+    // once the camera has come to rest: refresh the cluster-mode "Samples in
+    // View" stat for the current viewport, then write the URL hash. Extracted
+    // so `moveEnd` runs the SAME cluster-stat refresh that `camera.changed`
+    // does — closing the sub-10%-pan gap where a small drag in cluster mode
+    // updated the URL (moveEnd fires) but left the "Samples in View" count
+    // stale (camera.changed's `percentageChanged=0.1` debounce didn't fire).
+    //
+    // Scope is deliberately minimal (Codex Q3, REFACTOR_PR4_PLAN.md §3): this
+    // touches NEITHER the mode-transition / resolution-reload logic (which
+    // stays camera.changed-only) NOR the facet/heatmap/point-exit logic (which
+    // stays moveEnd-only). The cluster-stat read is synchronous and cheap
+    // (counts already-loaded `_clusterData` against the padded viewport) and
+    // no-ops unless we're in cluster mode with data loaded.
+    function reconcileSettledCamera(v) {
+        // Cluster-mode viewport count only — point mode shows its own count via
+        // loadViewportSamples(). Padded bbox so the cluster "Samples in View"
+        // stat matches the samples table row total (issue #221 round 2).
+        if (getMode() === 'cluster' && v._clusterData) {
+            const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
+            const total = v._clusterTotal;
+            if (total) {
+                updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
+            }
+        }
+        // _suppressHashWrite-gated default — the hashchange-flight path stays
+        // unaffected (same gate the two raw writers honored before).
+        writeGlobeHash(v);
+    }
+
     // --- Camera change handler ---
     let timer = null;
     viewer.camera.changed.addEventListener(() => {
@@ -3756,20 +3787,11 @@ zoomWatcher = {
                 }
             }
 
-            // Update viewport cluster count (cluster mode only; point mode
-            // already shows viewport count). Padded bbox so the cluster
-            // "Samples in View" stat matches the samples table row total
-            // (issue #221 round 2).
-            if (getMode() === 'cluster' && viewer._clusterData) {
-                const inView = countInViewport(paddedViewportBounds(VIEWPORT_PAD_FACTOR));
-                const total = viewer._clusterTotal;
-                if (total) {
-                    updateStats(`H3 Res${currentRes}`, `${inView.clusters.toLocaleString()} / ${total.clusters.toLocaleString()}`, inView.samples.toLocaleString(), null, 'Clusters in View / Loaded', 'Samples in View');
-                }
-            }
-
-            // Update URL hash (replaceState for continuous movement)
-            writeGlobeHash(viewer);
+            // Settled-camera tail: cluster "Samples in View" stat (cluster
+            // mode only; point mode already shows viewport count) + URL-hash
+            // replaceState for continuous movement. Shared with `moveEnd` via
+            // reconcileSettledCamera() (#208 smell 1b).
+            reconcileSettledCamera(viewer);
         }, 600);
     });
     viewer.camera.percentageChanged = 0.1;
@@ -3833,7 +3855,12 @@ zoomWatcher = {
     });
 
     viewer.camera.moveEnd.addEventListener(() => {
-        writeGlobeHash(viewer);
+        // Settled-camera tail shared with `camera.changed` (#208 smell 1b):
+        // URL-hash write + cluster "Samples in View" refresh. moveEnd fires on
+        // every discrete settle including sub-10% pans that `camera.changed`
+        // debounces away, so routing through here keeps the cluster stat in
+        // lockstep with the URL (which moveEnd already kept fresh via #204).
+        reconcileSettledCamera(viewer);
         // B1: viewport-aware facet counts. Bouncing through refreshFacetCounts
         // reuses the existing 250ms debounce + facetCountsReqId stale-guard,
         // so bursts of moveEnd (drag-pan, wheel-zoom) coalesce into one query
