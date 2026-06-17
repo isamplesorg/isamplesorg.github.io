@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>refactor_pr4_plan – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-46c1e64c2409ffa41d8278daa552b940.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#pr4-plan-urlstate-single-writer-boundary-208" id="toc-pr4-plan-urlstate-single-writer-boundary-208" class="nav-link active" data-scroll-target="#pr4-plan-urlstate-single-writer-boundary-208"><span class="header-section-number">1</span> PR4 plan — URL/state single-writer boundary (#208)</a>
+  <ul>
+  <li><a href="#current-state-verified-against-explorer.qmd-be79a82" id="toc-current-state-verified-against-explorer.qmd-be79a82" class="nav-link" data-scroll-target="#current-state-verified-against-explorer.qmd-be79a82"><span class="header-section-number">1.1</span> 1. Current state (verified against <code>explorer.qmd</code> @ be79a82)</a>
+  <ul class="collapse">
+  <li><a href="#the-11-hash-write-sites-smell-1a-migration-surface-codex-corrected-2026-06-15" id="toc-the-11-hash-write-sites-smell-1a-migration-surface-codex-corrected-2026-06-15" class="nav-link" data-scroll-target="#the-11-hash-write-sites-smell-1a-migration-surface-codex-corrected-2026-06-15"><span class="header-section-number">1.1.1</span> The 11 hash-write sites (Smell 1a migration surface) — Codex-corrected 2026-06-15</a></li>
+  <li><a href="#the-one-judgment-call-26982710-during-boot-q2" id="toc-the-one-judgment-call-26982710-during-boot-q2" class="nav-link" data-scroll-target="#the-one-judgment-call-26982710-during-boot-q2"><span class="header-section-number">1.1.2</span> ⚠️ The one judgment call: 2698/2710 during boot (Q2)</a></li>
+  </ul></li>
+  <li><a href="#pr4a-writeglobehash-boundary-low-risk-high-clarity" id="toc-pr4a-writeglobehash-boundary-low-risk-high-clarity" class="nav-link" data-scroll-target="#pr4a-writeglobehash-boundary-low-risk-high-clarity"><span class="header-section-number">1.2</span> 2. PR4a — <code>writeGlobeHash()</code> boundary (LOW risk, high clarity)</a>
+  <ul class="collapse">
+  <li><a href="#design" id="toc-design" class="nav-link" data-scroll-target="#design"><span class="header-section-number">1.2.1</span> Design</a></li>
+  <li><a href="#migration" id="toc-migration" class="nav-link" data-scroll-target="#migration"><span class="header-section-number">1.2.2</span> Migration</a></li>
+  <li><a href="#behavior-neutrality-argument" id="toc-behavior-neutrality-argument" class="nav-link" data-scroll-target="#behavior-neutrality-argument"><span class="header-section-number">1.2.3</span> Behavior-neutrality argument</a></li>
+  <li><a href="#verification" id="toc-verification" class="nav-link" data-scroll-target="#verification"><span class="header-section-number">1.2.4</span> Verification</a></li>
+  </ul></li>
+  <li><a href="#pr4b-reconcilecamerastatereason-high-risk-recommend-caution" id="toc-pr4b-reconcilecamerastatereason-high-risk-recommend-caution" class="nav-link" data-scroll-target="#pr4b-reconcilecamerastatereason-high-risk-recommend-caution"><span class="header-section-number">1.3</span> 3. PR4b — <code>reconcileCameraState(reason)</code> (HIGH risk — recommend caution)</a>
+  <ul class="collapse">
+  <li><a href="#why-its-risky" id="toc-why-its-risky" class="nav-link" data-scroll-target="#why-its-risky"><span class="header-section-number">1.3.1</span> Why it’s risky</a></li>
+  <li><a href="#recommended-shape-if-we-proceed" id="toc-recommended-shape-if-we-proceed" class="nav-link" data-scroll-target="#recommended-shape-if-we-proceed"><span class="header-section-number">1.3.2</span> Recommended shape (if we proceed)</a></li>
+  <li><a href="#open-recommendation" id="toc-open-recommendation" class="nav-link" data-scroll-target="#open-recommendation"><span class="header-section-number">1.3.3</span> Open recommendation</a></li>
+  </ul></li>
+  <li><a href="#codec-extraction-question-q4" id="toc-codec-extraction-question-q4" class="nav-link" data-scroll-target="#codec-extraction-question-q4"><span class="header-section-number">1.4</span> 4. Codec extraction question (Q4)</a></li>
+  <li><a href="#sequencing-gate" id="toc-sequencing-gate" class="nav-link" data-scroll-target="#sequencing-gate"><span class="header-section-number">1.5</span> 5. Sequencing &amp; gate</a></li>
+  <li><a href="#questions-for-codex-answered-codex-gpt-5.5-2026-06-15" id="toc-questions-for-codex-answered-codex-gpt-5.5-2026-06-15" class="nav-link" data-scroll-target="#questions-for-codex-answered-codex-gpt-5.5-2026-06-15"><span class="header-section-number">1.6</span> 6. Questions for Codex — ANSWERED (Codex gpt-5.5, 2026-06-15)</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/REFACTOR_PR4_PLAN.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="pr4-plan-urlstate-single-writer-boundary-208" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> PR4 plan — URL/state single-writer boundary (#208)</h1>
+<p>Draft for Codex review (2026-06-15). Continues the #249 strangler refactor. PR1–PR3 (smoke gate, characterization tests, pure-module extraction) are merged to upstream and live on isamples.org. This plan covers the next documented stage: #208 “centralize URL writers, collapse dual mode.”</p>
+<p>Method unchanged: extract along seams, behind the green smoke + characterization gate, Codex review per step, behavior-neutral.</p>
+<hr>
+<section id="current-state-verified-against-explorer.qmd-be79a82" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="current-state-verified-against-explorer.qmd-be79a82"><span class="header-section-number">1.1</span> 1. Current state (verified against <code>explorer.qmd</code> @ be79a82)</h2>
+<p>#208 has three sub-smells. <strong>Smell 2 is already resolved</strong> — do not redo it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>#208 sub-step</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Smell 2 — collapse dual <code>mode</code></td>
+<td>✅ DONE</td>
+<td><code>viewer._globeState.mode</code> is the sole store; <code>getMode()</code>/<code>setExplorerMode()</code> exist at L2368-2369; the only other <code>mode</code> token is a local <code>const mode = getMode()</code> (L2684). No closure-private <code>mode</code> variable remains.</td>
+</tr>
+<tr class="even">
+<td>Smell 1a — single URL-write boundary</td>
+<td>❌ TODO</td>
+<td><strong>13</strong> <code>history.{replace,push}State</code> sites; <strong>11</strong> write <code>buildHash(viewer)</code> (hash), 2 write <code>url</code> (query string, owned by <code>writeQueryState</code>).</td>
+</tr>
+<tr class="odd">
+<td>Smell 1b — unify <code>camera.changed</code> + <code>moveEnd</code> via <code>reconcileCameraState</code></td>
+<td>❌ TODO</td>
+<td>Two listeners with overlapping duties + the sub-<code>percentageChanged</code> “URL updates but stats don’t” gap; also the #262 heatmap→zoom-out cluster-restore bug.</td>
+</tr>
+</tbody>
+</table>
+<section id="the-11-hash-write-sites-smell-1a-migration-surface-codex-corrected-2026-06-15" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="the-11-hash-write-sites-smell-1a-migration-surface-codex-corrected-2026-06-15"><span class="header-section-number">1.1.1</span> The 11 hash-write sites (Smell 1a migration surface) — Codex-corrected 2026-06-15</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Line</th>
+<th>Verb</th>
+<th>Gate today</th>
+<th>Caller / intent</th>
+<th>writeGlobeHash call</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1594</td>
+<td>push</td>
+<td><strong>none</strong></td>
+<td>map <strong>sample-click</strong> selection</td>
+<td><code>{replace:false, force:true}</code></td>
+</tr>
+<tr class="even">
+<td>1654</td>
+<td>push</td>
+<td><strong>none</strong></td>
+<td>map <strong>cluster-click</strong> selection</td>
+<td><code>{replace:false, force:true}</code></td>
+</tr>
+<tr class="odd">
+<td>2059</td>
+<td>replace</td>
+<td><strong>none</strong> (bypasses suppress by design, L2055)</td>
+<td>table row-click selection</td>
+<td><code>{force:true}</code></td>
+</tr>
+<tr class="even">
+<td>2698</td>
+<td>push</td>
+<td><code>pushHistory!==false</code> only (NOT suppress-gated)</td>
+<td><code>enterPointMode</code></td>
+<td>keep caller guard; <code>{replace:false, force:true}</code></td>
+</tr>
+<tr class="odd">
+<td>2710</td>
+<td>push</td>
+<td><code>pushHistory!==false</code> only (NOT suppress-gated)</td>
+<td><code>exitPointMode</code></td>
+<td>keep caller guard; <code>{replace:false, force:true}</code></td>
+</tr>
+<tr class="even">
+<td>3525</td>
+<td>replace</td>
+<td><strong>none</strong></td>
+<td>source-filter invalidates selected H3</td>
+<td><code>{force:true}</code></td>
+</tr>
+<tr class="odd">
+<td>3548</td>
+<td>replace</td>
+<td><strong>none</strong></td>
+<td>source-filter invalidates selected pid</td>
+<td><code>{force:true}</code></td>
+</tr>
+<tr class="even">
+<td>3680</td>
+<td>replace</td>
+<td><code>if (!_suppressHashWrite)</code></td>
+<td>camera.changed EARLY write (#201 Bug A)</td>
+<td><code>{}</code> (gated default)</td>
+</tr>
+<tr class="odd">
+<td>3757</td>
+<td>replace</td>
+<td><code>if (!_suppressHashWrite)</code></td>
+<td>camera.changed LATE write</td>
+<td><code>{}</code> (gated default)</td>
+</tr>
+<tr class="even">
+<td>3823</td>
+<td>replace</td>
+<td><code>if (!_suppressHashWrite)</code></td>
+<td>moveEnd backstop write (#204)</td>
+<td><code>{}</code> (gated default)</td>
+</tr>
+<tr class="odd">
+<td>4044</td>
+<td>replace</td>
+<td><strong>none</strong></td>
+<td><strong>Share button</strong> pre-copy hash refresh</td>
+<td><code>{force:true}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Only 3 sites (3680/3757/3823) are actually <code>_suppressHashWrite</code>-gated.</strong> The other 8 are ungated today and MUST migrate with <code>force:true</code> to stay behavior-neutral — default-gating them (my original error) would change behavior.</p>
+<p>Two non-hash writes stay out of scope (query string): <code>writeQueryState()</code> body (L940-943) and <code>persistSearchScope()</code> (L4105-4111, preserves the existing hash). <strong>Correction:</strong> L4044 is the Share button (a hash write, in scope); L4111 is <code>persistSearchScope</code> (query string, out of scope) — the reverse of the original draft.</p>
+<p><code>_suppressHashWrite</code> lifecycle: set true at boot (L1506), cleared at L5176; toggled around the hashchange deep-link apply (L3955/3973). Read by exactly 3 hash writers (3679/3756/3822).</p>
+</section>
+<section id="the-one-judgment-call-26982710-during-boot-q2" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="the-one-judgment-call-26982710-during-boot-q2"><span class="header-section-number">1.1.2</span> ⚠️ The one judgment call: 2698/2710 during boot (Q2)</h3>
+<p><code>enterPointMode</code> CAN fire in the suppressed boot window (camera.changed → <code>tryEnterPointModeIfNeeded()</code> at L3705 → <code>enterPointMode(undefined)</code> → pushes at L2698), even though boot reconciliation “should not add history” (L5197). <strong>PR4a decision: preserve current behavior exactly</strong> (<code>force:true</code> when <code>pushHistory!==false</code>) — keep the refactor pure. Whether boot should suppress those pushes is a <em>separate, tested bugfix</em>, filed as follow-up, NOT folded into PR4a (per “preserve working code patterns”).</p>
+<hr>
+</section>
+</section>
+<section id="pr4a-writeglobehash-boundary-low-risk-high-clarity" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="pr4a-writeglobehash-boundary-low-risk-high-clarity"><span class="header-section-number">1.2</span> 2. PR4a — <code>writeGlobeHash()</code> boundary (LOW risk, high clarity)</h2>
+<section id="design" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" data-anchor-id="design"><span class="header-section-number">1.2.1</span> Design</h3>
+<p>A single top-level function (sibling to <code>buildHash</code>), the only place that writes the hash:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// replace: true (default) → history.replaceState; false → pushState</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">// force:   true → write even when _suppressHashWrite is set (selection path)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">writeGlobeHash</span>(viewer<span class="op">,</span> { replace <span class="op">=</span> <span class="kw">true</span><span class="op">,</span> force <span class="op">=</span> <span class="kw">false</span> } <span class="op">=</span> {}) {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (viewer<span class="op">.</span><span class="at">_suppressHashWrite</span> <span class="op">&amp;&amp;</span> <span class="op">!</span>force) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> hash <span class="op">=</span> <span class="fu">buildHash</span>(viewer)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (replace) history<span class="op">.</span><span class="fu">replaceState</span>(<span class="kw">null</span><span class="op">,</span> <span class="st">''</span><span class="op">,</span> hash)<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>         history<span class="op">.</span><span class="fu">pushState</span>(<span class="kw">null</span><span class="op">,</span> <span class="st">''</span><span class="op">,</span> hash)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This bakes the <code>_suppressHashWrite</code> gate into ONE place instead of repeating <code>if (!viewer._suppressHashWrite)</code> at 4 sites and silently omitting it at 5.</p>
+</section>
+<section id="migration" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" data-anchor-id="migration"><span class="header-section-number">1.2.2</span> Migration</h3>
+<p>Drive entirely off the <strong>Codex-corrected table in §1</strong> (the <code>writeGlobeHash call</code> column is the per-site spec). Summary: 3 gated-default sites (3680/3757/3823), 8 <code>force:true</code> sites (everything else), <code>replace:false</code> for the 4 push sites (1594/1654/2698/2710), <code>replace</code> for the rest. enter/exitPointMode keep their <code>pushHistory!==false</code> caller guard.</p>
+</section>
+<section id="behavior-neutrality-argument" class="level3" data-number="1.2.3">
+<h3 data-number="1.2.3" data-anchor-id="behavior-neutrality-argument"><span class="header-section-number">1.2.3</span> Behavior-neutrality argument</h3>
+<p>Each migrated site produces the identical <code>history</code> call for identical state, because the per-site <code>force</code>/<code>replace</code> flags reproduce today’s exact gate (now verified line-by-line by Codex). The only sites reading <code>_suppressHashWrite</code> today are 3680/3757/3823 → they alone use the gated default; all others were already ungated and use <code>force:true</code>.</p>
+</section>
+<section id="verification" class="level3" data-number="1.2.4">
+<h3 data-number="1.2.4" data-anchor-id="verification"><span class="header-section-number">1.2.4</span> Verification</h3>
+<ul>
+<li><code>git diff</code> shows only call-site swaps + one new function; <code>buildHash</code> unchanged.</li>
+<li>Characterization (d1 <code>?search=</code>, d2 <code>&amp;pid=</code>) + <code>url-roundtrip.spec.js</code> (the existing deep deep-link spec) exercise push vs replace and the suppress gate. Run both manually (live parquet) + smoke on the PR.</li>
+<li>Add a focused Playwright assertion: after a row-click, <code>history.length</code> increases (push) and <code>#pid=</code> is in the URL; after a small pan, the URL updates without a new history entry (replace). (Optional — the existing url-roundtrip spec may already cover the round-trip.)</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="pr4b-reconcilecamerastatereason-high-risk-recommend-caution" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="pr4b-reconcilecamerastatereason-high-risk-recommend-caution"><span class="header-section-number">1.3</span> 3. PR4b — <code>reconcileCameraState(reason)</code> (HIGH risk — recommend caution)</h2>
+<section id="why-its-risky" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="why-its-risky"><span class="header-section-number">1.3.1</span> Why it’s risky</h3>
+<p><code>camera.changed</code> (L3666, debounced 600ms + <code>percentageChanged=0.1</code>) and <code>moveEnd</code> (L3821, every settled move) overlap but are NOT redundant. Between them they encode hard-won fixes for <strong>#190, #193, #201, #204, #221, #234 (A1/B1/C3), #237, #240, #262</strong>. Specifically they differ in:</p>
+<ul>
+<li><strong>URL write timing</strong>: camera.changed writes EARLY (before awaits, #201 Bug A) AND late; moveEnd writes once. A naive merge could drop the early write.</li>
+<li><strong>Mode transitions + resolution reload</strong> live only in camera.changed (with the #193 “chase” gates on <code>applied</code>).</li>
+<li><strong>Facet counts / heatmap</strong> (#237/#240 stale-guards) live only in moveEnd.</li>
+<li><strong>Point-mode exit backstop</strong> (#221 round 2) lives only in moveEnd.</li>
+<li><strong>Debounce</strong>: camera.changed coalesces 600ms; moveEnd is immediate.</li>
+</ul>
+<p><code>reason</code>-tagged unification (<code>'changed' | 'moveEnd'</code>) is feasible but every branch above must be preserved exactly. This is the opposite of PR3’s mechanical safety.</p>
+</section>
+<section id="recommended-shape-if-we-proceed" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="recommended-shape-if-we-proceed"><span class="header-section-number">1.3.2</span> Recommended shape (if we proceed)</h3>
+<p>Do NOT merge the two handlers wholesale. Instead: 1. Extract the <strong>shared settled-camera tail</strong> both already run — the URL write (now <code>writeGlobeHash</code>) + the cluster “Samples in View” stat update — into a small <code>reconcileSettledCamera(viewer)</code> and call it from both. This closes the #204 sub-threshold-URL gap minimally without touching mode/resolution logic. 2. Leave mode-transition + resolution-reload in camera.changed and facet/heatmap/point-exit in moveEnd as-is. 3. Treat #262 (heatmap→zoom-out cluster restore) as a SEPARATE targeted fix with its own characterization test, NOT folded into a big merge.</p>
+</section>
+<section id="open-recommendation" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="open-recommendation"><span class="header-section-number">1.3.3</span> Open recommendation</h3>
+<p><strong>Split confirmed: PR4a and PR4b are separate PRs.</strong> PR4a is a clean win and should land first and alone. PR4b’s value (#208 smell 1b + #262) is real but its risk profile argues for the minimal <code>reconcileSettledCamera</code> tail above rather than the full handler merge Codex originally sketched. Flag for Codex: is the minimal-tail extraction enough to claim #208 smell 1b, or does the acceptance criterion (“shared settled-camera reconciliation entry point”) require the full merge? (Q3)</p>
+<hr>
+</section>
+</section>
+<section id="codec-extraction-question-q4" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="codec-extraction-question-q4"><span class="header-section-number">1.4</span> 4. Codec extraction question (Q4)</h2>
+<p>The roadmap’s PR4 title is “URL/state <strong>codecs</strong> + boundary.” <code>readHash</code> is already a module (PR3). <code>buildHash</code> is nearly pure — it reads <code>viewer.camera</code>, <code>viewer._globeState</code>, and the <code>#heatmapToggle</code> DOM checkbox. Options: - (a) Leave <code>buildHash</code> in the qmd (it’s the encode half; the DOM read makes it not cleanly pure). Ship only <code>writeGlobeHash</code> this PR. - (b) Extract <code>buildHash(viewer, { heatmapOn })</code> to <code>explorer-utils.js</code> with the DOM read hoisted to the caller, unit-test the encode. More surface, more value for #164’s state-contract-in-code goal.</p>
+<p>Lean (a) for PR4a to keep it tiny; revisit (b) only if Codex thinks the codec pairing (readHash already extracted) is worth completing now.</p>
+<hr>
+</section>
+<section id="sequencing-gate" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="sequencing-gate"><span class="header-section-number">1.5</span> 5. Sequencing &amp; gate</h2>
+<ol type="1">
+<li><strong>PR4a</strong> — <code>writeGlobeHash</code> + migrate 11 sites. Behavior-neutral. Gate: smoke + characterization (d1/d2) + url-roundtrip, Codex review.</li>
+<li><strong>PR4b</strong> — <code>reconcileSettledCamera</code> minimal tail (+ optional #262 fix as a tracked sibling). Separate PR, separate Codex review, extra deep specs.</li>
+<li>Defer the full camera-handler merge and the Vite/TS question (post-PR5, per #249).</li>
+</ol>
+<p>Per-seam freeze only (not page-wide): while PR4a is open, avoid other edits to the 11 listed write sites.</p>
+<hr>
+</section>
+<section id="questions-for-codex-answered-codex-gpt-5.5-2026-06-15" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="questions-for-codex-answered-codex-gpt-5.5-2026-06-15"><span class="header-section-number">1.6</span> 6. Questions for Codex — ANSWERED (Codex gpt-5.5, 2026-06-15)</h2>
+<ul>
+<li><strong>Q1</strong>: 1594/1654 are map-click selections (not boot); they ignore suppress today → preserve via <code>force:true</code>. ✅</li>
+<li><strong>Q2</strong>: Yes — enter/exitPointMode CAN fire during the suppressed boot window (L3705→L2809→L2698). So preserve current behavior with <code>force:true</code>-when- <code>pushHistory!==false</code>; treat boot-push suppression as a separate tested bugfix, not part of PR4a. ✅ (see §1 judgment-call box)</li>
+<li><strong>Q3</strong>: Full handler merge NOT required. Minimal shared-tail extraction (hash write + cluster “Samples in View” stat) satisfies #208 smell 1b. ✅</li>
+<li><strong>Q4</strong>: Defer <code>buildHash</code> extraction (it reads <code>#heatmapToggle</code> DOM at L1186; needs a signature change + encoder tests). ✅</li>
+<li><strong>Q5</strong>: Yes — corrected: 3525/3548 ungated (not gated); 4044 = Share button (in scope); 4111 = persistSearchScope (query string, out of scope); no hashchange-internal buildHash write exists; row-click = replace, map = push. All folded into the §1 table. ✅</li>
+</ul>
+<p><strong>Codex verdict:</strong> agrees with the 2-PR split and with avoiding the full camera merge; required §1 to be corrected before PR4a (done above). Plan is now implementation-ready for PR4a.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/REFACTOR_PR4_PLAN.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
