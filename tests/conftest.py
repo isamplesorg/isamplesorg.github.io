@@ -13,7 +13,15 @@ Usage:
 """
 import os
 import pytest
-from playwright.sync_api import sync_playwright
+
+# Optional: only the browser-based site tests need playwright. The data-
+# pipeline fixture tests (tests/test_frontend_derived.py,
+# tests/test_oc_concept_enrichment.py) run in CI without it — a hard import
+# here would crash collection for the whole tests/ directory.
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:  # pragma: no cover
+    sync_playwright = None
 
 
 SITE_URL = os.environ.get("ISAMPLES_BASE_URL", "https://isamples.org")
@@ -21,6 +29,8 @@ SITE_URL = os.environ.get("ISAMPLES_BASE_URL", "https://isamples.org")
 
 @pytest.fixture(scope="session")
 def browser():
+    if sync_playwright is None:
+        pytest.skip("playwright not installed (pipeline-only environment)")
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless="--headed" not in " ".join(os.sys.argv),
