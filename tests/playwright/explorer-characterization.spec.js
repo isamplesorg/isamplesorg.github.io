@@ -22,9 +22,10 @@
  *   (c)  heatmap          -> see heatmap-overlay.spec.js (comment only, no test)
  *   (d1) ?search= URL     -> __searchFilter restored AND #tableMeta shows the match summary
  *   (d2) &pid= URL        -> selectedPid restored AND #clusterSection shows the sample card
- *                            (NB: deep-link does NOT open #inMapCard — row-click-only; gap filed)
+ *   (d3) &pid= URL        -> ALSO opens #inMapCard with exact material (#285 fix), and a
+ *                            hashchange away from the pid hides the floating card again
  *   (e)  facet hydration  -> >=3 source counts, material URIs, no stuck .recomputing
- *   (f)  detail card      -> known sample -> #inMapCard visible AND exact material value
+ *   (f)  detail card      -> known sample row-click -> #inMapCard visible AND exact material value
  */
 const { test, expect } = require('@playwright/test');
 const { explorerUrl } = require('./helpers/url');
@@ -179,10 +180,8 @@ test.describe('Explorer characterization tests [data]', () => {
 
   // =========================================================================
   // (d2) deep-link &pid= -> restores selectedPid AND renders the sample card
-  //      into #clusterSection (what the boot/hashchange pid path actually does:
-  //      updateSampleCard, NOT showInMapCard). The fact that a pid deep-link
-  //      does NOT open #inMapCard (whereas a row-click does) is a real UX
-  //      inconsistency tracked as a follow-up (#239-family), NOT asserted here.
+  //      into #clusterSection (the sidebar half of the pid path). The in-map
+  //      card (#inMapCard) half is asserted separately by (d3) below (#285).
   // =========================================================================
   test('(d2) [data] &pid= deep-link restores selectedPid and renders #clusterSection card', async ({ browser }) => {
     // Phase 1: click a row, capture pid + label + the resulting pid URL.
@@ -274,5 +273,59 @@ test.describe('Explorer characterization tests [data]', () => {
       async () => (await page.locator('#imcMaterial').textContent() || '').trim(),
       { timeout: 90000, intervals: [500, 1000, 2000] }
     ).toBe('Other anthropogenic material');
+  });
+
+  // =========================================================================
+  // (d3) #285: a pid deep-link must open the #inMapCard too, not only the
+  //      sidebar #clusterSection -- same end state as a row-click (f). Phase 1
+  //      row-clicks a KNOWN sample to capture a real pid URL; phase 2 loads it
+  //      fresh and asserts the boot pid path opens the in-map card with the
+  //      same exact material (f) pins for the row-click path. Fails on the
+  //      pre-#285 code, where the deep-link populated only the sidebar.
+  // =========================================================================
+  test('(d3) [data] &pid= deep-link opens #inMapCard with exact material (#285)', async ({ browser }) => {
+    const KNOWN_PID = 'ark:/28722/k2p55x96j';
+    const ctx1 = await browser.newContext();
+    let capturedUrl = null;
+    try {
+      const page1 = await ctx1.newPage();
+      await page1.goto(explorerUrl('?search=Object+5404-8' + WORLD), { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page1.waitForSelector('#cesiumContainer', { timeout: 30000 });
+      await waitForSearchReady(page1, 90000);
+      const row = page1.locator(`.samples-table tbody tr[data-pid="${KNOWN_PID}"]`);
+      await expect(row).toBeVisible({ timeout: 120000 });
+      await row.locator('td').first().click();
+      await expect.poll(async () => await page1.evaluate(() => location.href), { timeout: 30000, intervals: [250, 500, 1000] }).toContain('pid=');
+      capturedUrl = await page1.evaluate(() => location.href);
+    } finally { await ctx1.close(); }
+
+    const ctx2 = await browser.newContext();
+    try {
+      const page2 = await ctx2.newPage();
+      await page2.goto(capturedUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page2.waitForSelector('#cesiumContainer', { timeout: 30000 });
+      await waitForBootReady(page2);
+      // Boot pid path restored the selection...
+      await expect.poll(async () => await getSelectedPid(page2), { timeout: 90000, intervals: [500, 1000, 2000] }).toBe(KNOWN_PID);
+      // ...and (the #285 fix) opened the floating in-map card, not just the sidebar.
+      await expect.poll(
+        async () => await page2.locator('#inMapCard').getAttribute('hidden'),
+        { timeout: 120000, intervals: [500, 1000, 2000] }
+      ).toBeNull();
+      // The shared detail query populated the known material (parity with (f)).
+      await expect.poll(
+        async () => (await page2.locator('#imcMaterial').textContent() || '').trim(),
+        { timeout: 90000, intervals: [500, 1000, 2000] }
+      ).toBe('Other anthropogenic material');
+
+      // #285 finding 3: a hashchange away from the pid (to a bare view with no
+      // pid/h3) must HIDE the floating card again — otherwise it strands over
+      // the map. Drive a same-document hashchange and assert it re-hides.
+      await page2.evaluate(() => { location.hash = '#v=1&lat=20&lng=0&alt=10000000'; });
+      await expect.poll(
+        async () => await page2.locator('#inMapCard').getAttribute('hidden'),
+        { timeout: 30000, intervals: [250, 500, 1000] }
+      ).not.toBeNull();
+    } finally { await ctx2.close(); }
   });
 });
