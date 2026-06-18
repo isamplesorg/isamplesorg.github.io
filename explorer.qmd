@@ -3012,13 +3012,16 @@ zoomWatcher = {
         const sourceChecks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
         const sourceTotal = sourceChecks.length;
         const sources = getActiveSources();
-        // #281/#282 increment 1: in tree mode the Material facet keeps its
-        // STATIC tree baseline counts and is excluded from the live cross-filter
-        // count engine (its counts come from facet_tree_summaries, not facets_v3,
-        // and a selected parent node wouldn't match facets_v3's flat values). The
-        // table/map still filter correctly via facetFilterSQL's membership path.
-        // Viewport/cross-filtered material tree counts are the next increment.
-        const mat = materialTreeActive() ? [] : getCheckedValues('materialFilterBody');
+        // #290: in tree mode Material participates in the live count engine via
+        // its MINIMAL node selection (materialSelection) — but ONLY when zoomed in
+        // (!isGlobalView). The membership COUNT(DISTINCT pid) query is a near-full
+        // scan at global/near-global views and would starve the single DuckDB-WASM
+        // connection (incl. the samples-table query); at global the static tree
+        // baseline IS the correct global count, so we use it (instant). Its own
+        // per-node counts + cross-filter contribution use the membership table (NOT
+        // facets_v3's flat value) — see buildCrossFilterWhere + updateCrossFilteredCounts.
+        const mat = (materialTreeActive() && !isGlobalView()) ? materialSelection()
+                  : (materialTreeActive() ? [] : getCheckedValues('materialFilterBody'));
         const ctx = getCheckedValues('contextFilterBody');
         const ot = getCheckedValues('objectTypeFilterBody');
         const dims = [
@@ -3048,6 +3051,13 @@ zoomWatcher = {
             .filter(d => d.key !== excludeFacet)
             .map(d => {
                 const list = d.values.map(v => `'${escSql(v)}'`).join(',');
+                // #290: in tree mode the Material selection is a set of concept
+                // NODES — constrain via the membership table (which encodes every
+                // ancestor) so a selected parent matches its whole subtree, rather
+                // than facets_v3's single flat `material` value.
+                if (d.key === 'material' && materialTreeActive()) {
+                    return `${colPrefix}pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE facet_type='material' AND concept_uri IN (${list}))`;
+                }
                 return `${colPrefix}${d.col} IN (${list})`;
             });
 
@@ -3112,7 +3122,12 @@ zoomWatcher = {
         const singleActiveDim = !sourceImpossible
             && activeDims.length === 1 && activeDims[0].values.length === 1
             ? activeDims[0] : null;
-        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive()) {
+        // #290: the cube (facet_cross_filter) is pre-aggregated over flat facet
+        // values and has no tree nodes, so it can't answer Material tree counts
+        // (nor a Material-node cross-filter). In tree mode, always take the slow
+        // path; the common global-no-filter case is still fast via the baseline
+        // early-return above (material baseline = the global tree counts).
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive() && !materialTreeActive()) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -3150,7 +3165,44 @@ zoomWatcher = {
         await Promise.all(dims.map(async (d) => {
             try {
                 let rows;
-                if (bboxSQL) {
+                if (d.key === 'material' && materialTreeActive() && !bboxSQL) {
+                    // #290: global / near-global view → the static tree baseline IS
+                    // the correct global count (instant). Avoids a near-full-scan
+                    // membership query that would starve the WASM connection.
+                    applyFacetCounts('material', null);
+                    return;
+                }
+                if (d.key === 'material' && materialTreeActive()) {
+                    // #290: live Material tree counts from membership — COUNT(DISTINCT
+                    // pid) per concept node, scoped to viewport (bbox via lite JOIN) +
+                    // the OTHER active dims (a facets_v3 pid-subquery) + search. NOT
+                    // filtered by Material's own selection (show all nodes' counts), and
+                    // distinct-pid so ancestor rows don't inflate. Parent ≥ child holds.
+                    const others = activeDims.filter(x => x.key !== 'material');
+                    let otherCond = '';
+                    if (sourceImpossible) {
+                        otherCond = ' AND 1=0';
+                    } else if (others.length) {
+                        const oc = others.map(x => `${x.col} IN (${x.values.map(v => `'${escSql(v)}'`).join(',')})`).join(' AND ');
+                        otherCond = ` AND m.pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${oc})`;
+                    }
+                    if (bboxSQL) {
+                        rows = await db.query(`
+                            SELECT m.concept_uri AS value, COUNT(DISTINCT m.pid) AS count
+                            FROM read_parquet('${membership_url}') m
+                            JOIN read_parquet('${lite_url}') l ON l.pid = m.pid
+                            WHERE m.facet_type='material'${otherCond}${bboxSQL}${searchFilterSQL('m.pid')}
+                            GROUP BY m.concept_uri
+                        `);
+                    } else {
+                        rows = await db.query(`
+                            SELECT m.concept_uri AS value, COUNT(DISTINCT m.pid) AS count
+                            FROM read_parquet('${membership_url}') m
+                            WHERE m.facet_type='material'${otherCond}${searchFilterSQL('m.pid')}
+                            GROUP BY m.concept_uri
+                        `);
+                    }
+                } else if (bboxSQL) {
                     // B1 bbox-scoped slow path: JOIN facets_url to lite_url
                     // on pid so we can filter by lite.latitude / lite.longitude.
                     // facets_url has no coordinates of its own. Per-PR follow-up:
