@@ -1695,13 +1695,16 @@ nodeBitsReady = {
         const rows = await db.query(
             `SELECT facet_type, concept_uri, bit_index, build_id FROM read_parquet('${node_bits_url}')`);
         const map = { material: new Map(), context: new Map(), object_type: new Map() };
-        let nbBuild = null;
+        const nbBuilds = new Set();
         for (const r of rows) {
             if (map[r.facet_type]) map[r.facet_type].set(r.concept_uri, Number(r.bit_index));
-            nbBuild = r.build_id;
+            nbBuilds.add(r.build_id);
         }
         const haveBits = ['material', 'context', 'object_type'].every(k => map[k].size > 0);
-        if (!haveBits) return false;
+        // node_bits must carry exactly ONE build_id (a mixed file is corrupt; don't
+        // let a last-row-wins value coincidentally match masks — Codex r2).
+        if (!haveBits || nbBuilds.size !== 1) return false;
+        const nbBuild = [...nbBuilds][0];
         // Codex P1.1 + P1.2: PREFLIGHT the masks file AND require its build_id to
         // match node_bits. This proves masks is present/readable (else the mask
         // query path would fail with no retry) and that both artifacts are from the

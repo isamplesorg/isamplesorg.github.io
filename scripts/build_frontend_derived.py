@@ -485,16 +485,19 @@ def build_facet_tree_cross_filter(con, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
-def node_set_build_id(con):
-    # #293 (Codex P1): a stable fingerprint of the tree node SET. Bit assignment is
-    # positional (ROW_NUMBER over sorted concept_uri), so it shifts if the node set
-    # changes between builds. Embedding this id in BOTH node_bits and masks lets the
-    # explorer refuse the mask path unless the two artifacts are from the SAME
-    # generation (guards against a stale-cached masks file paired with fresh bits).
+def membership_build_id(con):
+    # #293 (Codex P1, r2): a fingerprint of the FULL membership generation — not
+    # just the node set. Both node_bits (positional bit assignment) and masks are
+    # pure functions of `membership`, so hashing membership content captures every
+    # change that would alter either artifact (new/dropped pids, re-mapped concepts,
+    # AND node-set changes). Embedding this id in both lets the explorer refuse the
+    # mask path unless the two are from the SAME generation (guards a stale-cached
+    # masks file). Order-independent XOR of per-row hashes (membership grain is
+    # unique per (pid,facet_type,concept_uri) — validated — so no XOR cancellation).
     return con.sql("""
-        SELECT md5(COALESCE(string_agg(facet_type || ':' || concept_uri, '|'
-                            ORDER BY facet_type, concept_uri), ''))
-        FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)""").fetchone()[0]
+        SELECT CAST(COALESCE(bit_xor(hash(pid || chr(31) || facet_type || chr(31) || concept_uri)), 0)
+                    AS VARCHAR)
+        FROM membership""").fetchone()[0]
 
 
 def build_facet_node_bits(con, out, build_id):
@@ -631,7 +634,7 @@ def main():
             # and masks share a node-set build_id so the explorer only uses the mask
             # path when the two are from the same generation (Codex P1).
             if want("facet_node_bits") or want("sample_facet_masks"):
-                _bid = node_set_build_id(con)
+                _bid = membership_build_id(con)
                 emit("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
                 emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o, _bid))
 

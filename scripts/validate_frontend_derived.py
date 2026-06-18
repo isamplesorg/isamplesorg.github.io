@@ -435,10 +435,17 @@ def main():
         if nodebits:
             nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}')")
             check("node_bits: single build_id", nb_bid == 1, f"{nb_bid} distinct build_ids in node_bits")
-            same = scalar(f"SELECT (SELECT DISTINCT build_id FROM read_parquet('{nodebits}')) "
-                          f"= (SELECT DISTINCT build_id FROM {X})")
-            check("node_bits/masks build_id match", bool(same),
-                  "build_id differs between node_bits and masks (mixed generations)")
+            # Only compare when both are single-valued, else the scalar subqueries
+            # below return multiple rows and throw (Codex r2). Use MIN/MAX agg so a
+            # multi-valued file degrades to a clean FAIL, not an exception.
+            if nb_bid == 1 and mbids == 1:
+                same = scalar(f"SELECT (SELECT MIN(build_id) FROM read_parquet('{nodebits}')) "
+                              f"= (SELECT MIN(build_id) FROM {X})")
+                check("node_bits/masks build_id match", bool(same),
+                      "build_id differs between node_bits and masks (mixed generations)")
+            else:
+                check("node_bits/masks build_id match", False,
+                      "cannot compare — an artifact has multiple build_ids")
         if mem and nodebits:
             M = f"read_parquet('{mem}')"
             NB = f"read_parquet('{nodebits}')"
