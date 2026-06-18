@@ -16,7 +16,9 @@ const { test, expect } = require('@playwright/test');
 
 const LOCAL = !!process.env.FACET_TREE_LOCAL;
 const DATA = LOCAL ? '&data_base=/data' : '';
-const WORLD = '#v=1&lat=20&lng=0&alt=10000000';
+// Clearly-global altitude (> isGlobalView's 1e7 threshold) so Material counts take
+// the fast baseline path (live membership counts are reserved for zoomed views).
+const WORLD = '#v=1&lat=20&lng=0&alt=15000000';
 
 test.describe('Material facet tree (#281/#282 preview)', () => {
   test.skip(!LOCAL, 'needs hierarchy data — run with FACET_TREE_LOCAL=1 against the docs/data mirror until R2 publish');
@@ -139,6 +141,97 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
       return { parentChecked: par.checked, kidChecked: kid.checked, kidDisabled: kid.disabled };
     });
     expect(restored).toEqual({ parentChecked: true, kidChecked: true, kidDisabled: true });
+  });
+
+  // #290: live viewport / cross-filtered Material tree counts (from membership).
+  const legendCount = (page, sub) => page.evaluate((s) => {
+    const sp = document.querySelector(`#materialFilterBody .facet-count[data-value*="${s}"]`);
+    const m = (sp?.textContent || '').match(/([\d,]+)/);
+    return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+  }, sub);
+  const tableTotal = (page) => page.evaluate(() => {
+    const m = (document.getElementById('tablePageInfo')?.textContent || '').match(/of ([\d,]+)\)/);
+    return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+  });
+
+  test('live counts: tree node counts shrink to the viewport (not static baseline)', async ({ page }) => {
+    test.setTimeout(180000);
+    // Global view → baseline (global tree counts).
+    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=0&lng=0&alt=15000000`);
+    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForTimeout(2500);
+    const globalEarth = await legendCount(page, '/earthmaterial');
+    expect(globalEarth).toBeGreaterThan(1000000);
+    // Zoom to a small region → the same node's count must drop (viewport-scoped).
+    await page.evaluate(async () => {
+      const v = await window._ojs.ojsConnector.mainModule.value('viewer');
+      v.scene.requestRenderMode = false;
+      v.camera.flyTo({ destination: window.Cesium.Cartesian3.fromDegrees(33, 35, 400000), duration: 0 });
+    });
+    await page.waitForTimeout(4000);
+    const zoomedEarth = await legendCount(page, '/earthmaterial');
+    expect(zoomedEarth).toBeLessThan(globalEarth);
+    expect(zoomedEarth).toBeGreaterThanOrEqual(0);
+  });
+
+  test('live counts coherence: legend(node) == table when that node is the filter (#245), parent >= child', async ({ page }) => {
+    test.setTimeout(180000);
+    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
+    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForTimeout(3500);
+    const legEarth = await legendCount(page, '/earthmaterial');
+    const legRock = await legendCount(page, '/rock');
+    expect(legEarth).toBeGreaterThanOrEqual(legRock);  // parent >= child, in-viewport
+    expect(legEarth).toBeGreaterThan(0);
+    // Selecting earthmaterial filters the table to exactly its viewport legend count.
+    await page.evaluate(() => {
+      const cb = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
+      cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect.poll(() => tableTotal(page), { timeout: 60000, intervals: [500, 1000, 2000] }).toBe(legEarth);
+  });
+
+  test('live counts cross-filter both ways (zoomed): a source narrows Material; Material narrows sources', async ({ page }) => {
+    test.setTimeout(180000);
+    const sumCounts = (page, container) => page.evaluate((c) => {
+      let s = 0;
+      document.querySelectorAll(`#${c} .facet-count`).forEach(el => {
+        const m = (el.textContent || '').match(/([\d,]+)/);
+        if (m) s += parseInt(m[1].replace(/,/g, ''), 10);
+      });
+      return s;
+    }, container);
+    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
+    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForTimeout(3500);
+    const matEarth0 = await legendCount(page, '/earthmaterial');
+    expect(matEarth0).toBeGreaterThan(0);
+
+    // (a) source → material: unchecking a source must not INCREASE a material count.
+    await page.evaluate(() => {
+      const cb = document.querySelector('#sourceFilter input[type="checkbox"]:checked');
+      if (cb) { cb.checked = false; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+    await page.waitForTimeout(3000);
+    const matEarth1 = await legendCount(page, '/earthmaterial');
+    expect(matEarth1).toBeLessThanOrEqual(matEarth0);
+
+    // restore source, then (b) material → source: selecting a Material node must not
+    // INCREASE the source-count total (it scopes sources to that subtree).
+    await page.evaluate(() => {
+      const cb = document.querySelector('#sourceFilter input[type="checkbox"]:not(:checked)');
+      if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+    await page.waitForTimeout(3000);
+    const srcSum0 = await sumCounts(page, 'sourceFilter');
+    await page.evaluate(() => {
+      const cb = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
+      cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForTimeout(3000);
+    const srcSum1 = await sumCounts(page, 'sourceFilter');
+    expect(srcSum1).toBeLessThanOrEqual(srcSum0);
+    expect(srcSum1).toBeGreaterThan(0);
   });
 
   test('graceful fallback: if the tree data 404s, Material renders flat and still filters', async ({ page }) => {
