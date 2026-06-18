@@ -778,9 +778,9 @@ cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
 vocab_labels_url = `${R2_BASE}/vocab_labels_202608.parquet`
 
-// #281/#282 facet hierarchy — SHIPPED, default ON. The Material facet renders as an
-// expandable tree backed by the hierarchy artifacts below; context / object_type /
-// source stay flat. `?facets=flat` is the kill-switch (also localStorage
+// #281/#282/#291 facet hierarchy — SHIPPED, default ON. Material, Sampled Feature
+// (context) and Specimen Type (object_type) render as expandable trees backed by the
+// hierarchy artifacts below; source stays flat. `?facets=flat` is the kill-switch (also localStorage
 // ISAMPLES_FACET_TREE=0); `?facets=tree` / `=1` force on. The escape hatch lets us
 // revert PER USER with no redeploy if the tree misbehaves; flipping the default back
 // globally is a one-line change + redeploy.
@@ -908,9 +908,9 @@ function applyQueryToFacetFilters() {
     setCheckedValues('materialFilterBody', csvParamValues(params, 'material'));
     setCheckedValues('contextFilterBody', csvParamValues(params, 'context'));
     setCheckedValues('objectTypeFilterBody', csvParamValues(params, 'object_type'));
-    // #281/#282: restored ?material= URIs are the minimal nodes — fill in their
-    // inherited descendants + indeterminate ancestors so the tree looks right.
-    syncMaterialTreeVisual();
+    // #291: restored ?material=/?context=/?object_type= URIs are minimal nodes —
+    // fill in each tree's inherited descendants + indeterminate ancestors.
+    for (const key of TREE_DIM_KEYS) syncTreeVisual(TREE_DIM_BODY[key]);
 }
 
 
@@ -961,9 +961,10 @@ function writeQueryState(opts = {}) {
         ['context', 'contextFilterBody'],
         ['object_type', 'objectTypeFilterBody'],
     ].forEach(([key, containerId]) => {
-        // #281/#282: serialize the MINIMAL Material selection in tree mode (parent
-        // URIs, not expanded descendants) so shared links stay compact + stable.
-        const values = (key === 'material') ? materialSelection() : getCheckedValues(containerId);
+        // #291: serialize the MINIMAL tree selection (parent URIs, not expanded
+        // descendants) for any tree dim; treeSelection falls back to all checked
+        // values when the dim is flat. Keeps shared links compact + stable.
+        const values = treeSelection(key);
         if (values.length > 0) params.set(key, values.join(','));
         else params.delete(key);
     });
@@ -997,9 +998,9 @@ function hasFacetFilters() {
         || getCheckedValues('objectTypeFilterBody').length > 0;
 }
 
-// #281/#282: the MINIMAL Material selection — the top-most checked tree nodes
-// (a checked node whose ancestor is also checked is redundant, since the parent's
-// subtree already covers it). This is the canonical selection used for filtering
+// #281/#282/#291: the MINIMAL selection for tree dim `key` — the top-most checked
+// tree nodes (a checked node whose ancestor is also checked is redundant, since the
+// parent's subtree already covers it). This is the canonical selection used for filtering
 // and URL serialization in tree mode; flat mode falls back to all checked values.
 // #281/#282: the SINGLE source of truth for "Material is actually in tree mode" —
 // the flag is on AND the tree rendered (renderMaterialTreeFacet falls back to the
@@ -1007,13 +1008,28 @@ function hasFacetFilters() {
 // this, so a degraded flat fallback behaves fully flat — selection, filtering, AND
 // cross-filter counts (Codex r2). Without it, filtering would query the missing
 // membership file and counts would wrongly exclude material.
-function materialTreeActive() {
-    return FACET_TREE && !!document.querySelector('#materialFilterBody .facet-treenode');
+// #281/#282/#291: the hierarchical facet dims and their sidebar containers.
+// facet_tree_summaries.facet_type / membership.facet_type use these same keys.
+// `source` has no vocab tree → not here (stays a flat list).
+TREE_DIM_BODY = ({ material: 'materialFilterBody', context: 'contextFilterBody', object_type: 'objectTypeFilterBody' })
+TREE_DIM_KEYS = Object.keys(TREE_DIM_BODY)
+
+// SINGLE source of truth for "dim `key` is actually in tree mode": the flag is on
+// AND a tree rendered (renderTreeFacet falls back to the flat list if the hierarchy
+// data fails to load). Every per-dim code path keys off this, so a degraded flat
+// fallback behaves fully flat — selection, filtering, AND cross-filter counts.
+function treeActive(key) {
+    const body = TREE_DIM_BODY[key];
+    return FACET_TREE && !!body && !!document.querySelector(`#${body} .facet-treenode`);
 }
 
-function materialSelection() {
-    if (!materialTreeActive()) return getCheckedValues('materialFilterBody');
-    const body = document.getElementById('materialFilterBody');
+// Minimal (top-most checked) tree-node selection for dim `key` — a checked node
+// whose ancestor is also checked is redundant (the parent's subtree covers it).
+// Flat fallback to all checked values when the dim isn't in tree mode.
+function treeSelection(key) {
+    const bodyId = TREE_DIM_BODY[key];
+    const body = bodyId ? document.getElementById(bodyId) : null;
+    if (!treeActive(key) || !body) return getCheckedValues(bodyId);
     const out = [];
     body.querySelectorAll('.facet-treenode > .facet-treelabel input[type="checkbox"]:checked').forEach(cb => {
         const node = cb.closest('.facet-treenode');
@@ -1029,17 +1045,14 @@ function materialSelection() {
     return out;
 }
 
-// #281/#282: keep the tree's visual state coherent after any change or URL restore:
-//  - a checked parent visually fills in its descendants (checked + disabled =
-//    "included because the parent is"), so the redundancy is obvious;
-//  - unchecking a parent reverts those inherited descendants;
-//  - a parent with some (but not all-via-itself) descendants selected shows the
-//    indeterminate "–" state. Filtering reads materialSelection() (top-most), so
-//    the inherited descendant checks never double-count.
-function syncMaterialTreeVisual() {
-    if (!materialTreeActive()) return;
-    const body = document.getElementById('materialFilterBody');
-    if (!body) return;
+// #281/#282: keep a tree body's visual state coherent after any change or URL
+// restore: a checked parent fills in its descendants (checked+disabled = "included
+// because the parent is"); unchecking a parent reverts them; a node with checked
+// descendants but unchecked itself shows the indeterminate "–". Filtering reads
+// treeSelection() (top-most) so inherited descendant checks never double-count.
+function syncTreeVisual(bodyId) {
+    const body = document.getElementById(bodyId);
+    if (!FACET_TREE || !body || !body.querySelector('.facet-treenode')) return;
     const cbOf = (node) => node.querySelector(':scope > .facet-treelabel input[type="checkbox"]');
     const nodes = [...body.querySelectorAll('.facet-treenode')];  // DOM order = parents before children
     // Pass 1 (top-down): inherit checked state from an explicitly-checked ancestor.
@@ -1097,32 +1110,22 @@ function syncFacetNote() {
 // (a sample with two materials would appear twice via JOIN). Required
 // for Phase 4's table mode and any non-JOIN caller. See issue #156.
 function facetFilterSQL() {
-    const mat = materialSelection();   // minimal (top-most) nodes in tree mode
-    const ctx = getCheckedValues('contextFilterBody');
-    const ot  = getCheckedValues('objectTypeFilterBody');
-
     // Each entry is a standalone `pid IN (...)` predicate; multiple are AND-ed.
     const parts = [];
-    // #281/#282: in tree mode the Material selection is a set of concept nodes;
-    // filter via the membership table (which encodes each sample under every
-    // ancestor), so selecting a parent node matches its whole subtree — no
-    // client-side descendant expansion. context/object_type stay flat on facets.
     const facetsConds = [];
-    if (mat.length > 0) {
-        const list = mat.map(s => `'${escSql(s)}'`).join(',');
-        if (materialTreeActive()) {
-            parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${membership_url}') WHERE facet_type='material' AND concept_uri IN (${list}))`);
+    // #281/#282/#291: for each hierarchical dim, a tree selection is a set of
+    // concept NODES → filter via the membership table (which encodes each sample
+    // under every ancestor), so a selected parent matches its whole subtree (no
+    // client-side descendant expansion). A flat (non-tree) dim filters on facets_v3.
+    for (const key of TREE_DIM_KEYS) {
+        const sel = treeSelection(key);
+        if (sel.length === 0) continue;
+        const list = sel.map(s => `'${escSql(s)}'`).join(',');
+        if (treeActive(key)) {
+            parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${membership_url}') WHERE facet_type='${key}' AND concept_uri IN (${list}))`);
         } else {
-            facetsConds.push(`material IN (${list})`);
+            facetsConds.push(`${key} IN (${list})`);
         }
-    }
-    if (ctx.length > 0) {
-        const list = ctx.map(s => `'${escSql(s)}'`).join(',');
-        facetsConds.push(`context IN (${list})`);
-    }
-    if (ot.length > 0) {
-        const list = ot.map(s => `'${escSql(s)}'`).join(',');
-        facetsConds.push(`object_type IN (${list})`);
     }
     if (facetsConds.length > 0) {
         parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${facetsConds.join(' AND ')})`);
@@ -1971,24 +1974,27 @@ facetFilters = {
         // #281/#282: render Material as an expandable tree when the preview flag
         // is on; flat list otherwise. context/object_type/source stay flat.
         // Defined inline so it closes over prettyLabel / escapers / grouped / db.
-        async function renderMaterialTreeFacet() {
-            const body = document.getElementById('materialFilterBody');
+        // #291: render any hierarchical dim (material/context/object_type) as a tree
+        // from facet_tree_summaries; fall back to the flat list on load failure.
+        async function renderTreeFacet(facetType, bodyId, flatItems, allLabel) {
+            const body = document.getElementById(bodyId);
             if (!body) return;
             let rows;
             try {
-                rows = await db.query(`SELECT concept_uri, parent_uri, depth, count FROM read_parquet('${facet_tree_url}') WHERE facet_type='material'`);
+                rows = await db.query(`SELECT concept_uri, parent_uri, depth, count FROM read_parquet('${facet_tree_url}') WHERE facet_type='${facetType}'`);
             } catch (err) {
-                console.warn('facet_tree load failed; flat material fallback:', err);
-                renderFilter('materialFilterBody', 'material', grouped.material);
+                console.warn(`facet_tree load failed for ${facetType}; flat fallback:`, err);
+                renderFilter(bodyId, facetType, flatItems);
                 return;
             }
+            if (!rows || rows.length === 0) { renderFilter(bodyId, facetType, flatItems); return; }
             const nodes = new Map();
             for (const r of rows) nodes.set(r.concept_uri, { uri: r.concept_uri, parent: r.parent_uri, depth: Number(r.depth), count: Number(r.count), label: prettyLabel(r.concept_uri), kids: [] });
             let root = null;
             for (const n of nodes.values()) { if (n.parent == null) root = n; else if (nodes.has(n.parent)) nodes.get(n.parent).kids.push(n); }
             for (const n of nodes.values()) n.kids.sort((a, b) => a.label.localeCompare(b.label));  // #282 alphabetical within level
-            // Material baseline counts must come from the tree (Codex), not the flat summaries.
-            viewer._baselineCounts.material = new Map([...nodes.values()].map(n => [n.uri, n.count]));
+            // Baseline counts come from the tree (Codex), not the flat summaries.
+            viewer._baselineCounts[facetType] = new Map([...nodes.values()].map(n => [n.uri, n.count]));
             // First two levels unfolded (#281): depth 1 + 2 visible; depth ≥3 collapsed.
             const nodeHtml = (n) => {
                 const hasKids = n.kids.length > 0;
@@ -1998,17 +2004,17 @@ facetFilters = {
                     : `<span class="facet-caret-spacer"></span>`;
                 return `<div class="facet-treenode" data-depth="${n.depth}">`
                     + caret
-                    + `<label class="facet-row facet-treelabel" data-facet="material" data-value="${escAttr(n.uri)}" title="${escAttr(n.uri)}">`
+                    + `<label class="facet-row facet-treelabel" data-facet="${facetType}" data-value="${escAttr(n.uri)}" title="${escAttr(n.uri)}">`
                     + `<input type="checkbox" value="${escAttr(n.uri)}"> ${escText(n.label)} `
-                    + `<span class="facet-count" data-facet="material" data-value="${escAttr(n.uri)}" style="color:#999">(${n.count.toLocaleString()})</span>`
+                    + `<span class="facet-count" data-facet="${facetType}" data-value="${escAttr(n.uri)}" style="color:#999">(${n.count.toLocaleString()})</span>`
                     + `</label>`
                     + (hasKids ? `<div class="facet-children${open ? '' : ' collapsed'}">` + n.kids.map(nodeHtml).join('') + `</div>` : '')
                     + `</div>`;
             };
             // Root renders as a non-selectable "All …" grouping label (selecting it = no filter).
             body.innerHTML =
-                `<div class="facet-treeroot">${escText(root ? root.label : 'All materials')}`
-                + (root ? ` <span class="facet-count" data-facet="material" data-value="${escAttr(root.uri)}" style="color:#999">(${root.count.toLocaleString()})</span>` : '')
+                `<div class="facet-treeroot">${escText(root ? root.label : allLabel)}`
+                + (root ? ` <span class="facet-count" data-facet="${facetType}" data-value="${escAttr(root.uri)}" style="color:#999">(${root.count.toLocaleString()})</span>` : '')
                 + `</div>`
                 + (root ? root.kids.map(nodeHtml).join('') : '');
             body.querySelectorAll('.facet-caret').forEach(c => c.addEventListener('click', (e) => {
@@ -2018,14 +2024,15 @@ facetFilters = {
                 if (kids) { const collapsed = kids.classList.toggle('collapsed'); c.textContent = collapsed ? '▸' : '▾'; }
             }));
             // Tri-state + inherited-check visual sync on any checkbox toggle. Filtering
-            // reads materialSelection() (top-most) so inherited checks don't double-count.
-            body.addEventListener('change', () => syncMaterialTreeVisual());
-            syncMaterialTreeVisual();  // initial (in case ?material= pre-checked nodes)
+            // reads treeSelection() (top-most) so inherited checks don't double-count.
+            body.addEventListener('change', () => syncTreeVisual(bodyId));
+            syncTreeVisual(bodyId);  // initial (in case ?<dim>= pre-checked nodes)
         }
-        if (FACET_TREE) { await renderMaterialTreeFacet(); }
-        else { renderFilter('materialFilterBody', 'material', grouped.material); }
-        renderFilter('contextFilterBody', 'context', grouped.context);
-        renderFilter('objectTypeFilterBody', 'object_type', grouped.object_type);
+        const TREE_ALL_LABEL = { material: 'All materials', context: 'All sampled features', object_type: 'All specimen types' };
+        for (const [key, bodyId] of [['material', 'materialFilterBody'], ['context', 'contextFilterBody'], ['object_type', 'objectTypeFilterBody']]) {
+            if (FACET_TREE) await renderTreeFacet(key, bodyId, grouped[key], TREE_ALL_LABEL[key]);
+            else renderFilter(bodyId, key, grouped[key]);
+        }
         applyFacetCounts('source', null);
         applyQueryToFacetFilters();
 
@@ -3012,23 +3019,22 @@ zoomWatcher = {
         const sourceChecks = document.querySelectorAll('#sourceFilter input[type="checkbox"]');
         const sourceTotal = sourceChecks.length;
         const sources = getActiveSources();
-        // #290: in tree mode Material participates in the live count engine via
-        // its MINIMAL node selection (materialSelection) — but ONLY when zoomed in
+        // #290/#291: in tree mode each dim participates in the live count engine via
+        // its MINIMAL node selection (treeSelection) — but ONLY when zoomed in
         // (!isGlobalView). The membership COUNT(DISTINCT pid) query is a near-full
         // scan at global/near-global views and would starve the single DuckDB-WASM
         // connection (incl. the samples-table query); at global the static tree
         // baseline IS the correct global count, so we use it (instant). Its own
         // per-node counts + cross-filter contribution use the membership table (NOT
         // facets_v3's flat value) — see buildCrossFilterWhere + updateCrossFilteredCounts.
-        const mat = (materialTreeActive() && !isGlobalView()) ? materialSelection()
-                  : (materialTreeActive() ? [] : getCheckedValues('materialFilterBody'));
-        const ctx = getCheckedValues('contextFilterBody');
-        const ot = getCheckedValues('objectTypeFilterBody');
+        const dimValues = (key) =>
+            (treeActive(key) && !isGlobalView()) ? treeSelection(key)
+          : (treeActive(key) ? [] : getCheckedValues(TREE_DIM_BODY[key]));
         const dims = [
             { key: 'source', col: 'source', values: sources.length < sourceTotal ? sources : [] },
-            { key: 'material', col: 'material', values: mat },
-            { key: 'context', col: 'context', values: ctx },
-            { key: 'object_type', col: 'object_type', values: ot },
+            { key: 'material', col: 'material', values: dimValues('material') },
+            { key: 'context', col: 'context', values: dimValues('context') },
+            { key: 'object_type', col: 'object_type', values: dimValues('object_type') },
         ];
         const activeDims = dims.filter(d => d.values.length > 0);
         const totalActiveValues = activeDims.reduce((n, d) => n + d.values.length, 0);
@@ -3051,12 +3057,12 @@ zoomWatcher = {
             .filter(d => d.key !== excludeFacet)
             .map(d => {
                 const list = d.values.map(v => `'${escSql(v)}'`).join(',');
-                // #290: in tree mode the Material selection is a set of concept
-                // NODES — constrain via the membership table (which encodes every
-                // ancestor) so a selected parent matches its whole subtree, rather
-                // than facets_v3's single flat `material` value.
-                if (d.key === 'material' && materialTreeActive()) {
-                    return `${colPrefix}pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE facet_type='material' AND concept_uri IN (${list}))`;
+                // #290/#291: a tree dim's selection is a set of concept NODES —
+                // constrain via the membership table (which encodes every ancestor)
+                // so a selected parent matches its whole subtree, rather than
+                // facets_v3's single flat value.
+                if (treeActive(d.key)) {
+                    return `${colPrefix}pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE facet_type='${d.key}' AND concept_uri IN (${list}))`;
                 }
                 return `${colPrefix}${d.col} IN (${list})`;
             });
@@ -3127,7 +3133,7 @@ zoomWatcher = {
         // (nor a Material-node cross-filter). In tree mode, always take the slow
         // path; the common global-no-filter case is still fast via the baseline
         // early-return above (material baseline = the global tree counts).
-        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive() && !materialTreeActive()) {
+        if (singleActiveDim && totalActiveValues === 1 && bboxSQL === null && !searchIsActive() && !TREE_DIM_KEYS.some(treeActive)) {
             try {
                 const filterCols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
                 const filterColForKey = {
@@ -3165,40 +3171,45 @@ zoomWatcher = {
         await Promise.all(dims.map(async (d) => {
             try {
                 let rows;
-                if (d.key === 'material' && materialTreeActive() && !bboxSQL) {
-                    // #290: global / near-global view → the static tree baseline IS
-                    // the correct global count (instant). Avoids a near-full-scan
+                if (treeActive(d.key) && !bboxSQL) {
+                    // #290/#291: global / near-global view → the static tree baseline
+                    // IS the correct global count (instant). Avoids a near-full-scan
                     // membership query that would starve the WASM connection.
-                    applyFacetCounts('material', null);
+                    applyFacetCounts(d.key, null);
                     return;
                 }
-                if (d.key === 'material' && materialTreeActive()) {
-                    // #290: live Material tree counts from membership — COUNT(DISTINCT
-                    // pid) per concept node, scoped to viewport (bbox via lite JOIN) +
-                    // the OTHER active dims (a facets_v3 pid-subquery) + search. NOT
-                    // filtered by Material's own selection (show all nodes' counts), and
-                    // distinct-pid so ancestor rows don't inflate. Parent ≥ child holds.
-                    const others = activeDims.filter(x => x.key !== 'material');
+                if (treeActive(d.key)) {
+                    // #290/#291: live tree counts from membership — COUNT(DISTINCT pid)
+                    // per concept node for this dim, scoped to viewport (bbox via lite
+                    // JOIN) + the OTHER active dims + search. NOT filtered by this dim's
+                    // own selection (show all nodes' counts); distinct-pid so ancestor
+                    // rows don't inflate. Parent ≥ child holds. Each OTHER active dim is
+                    // a pid-subquery (tree dim → membership; flat dim → facets_v3).
+                    const others = activeDims.filter(x => x.key !== d.key);
                     let otherCond = '';
                     if (sourceImpossible) {
                         otherCond = ' AND 1=0';
                     } else if (others.length) {
-                        const oc = others.map(x => `${x.col} IN (${x.values.map(v => `'${escSql(v)}'`).join(',')})`).join(' AND ');
-                        otherCond = ` AND m.pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${oc})`;
+                        otherCond = ' AND ' + others.map(x => {
+                            const list = x.values.map(v => `'${escSql(v)}'`).join(',');
+                            return treeActive(x.key)
+                                ? `m.pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE facet_type='${x.key}' AND concept_uri IN (${list}))`
+                                : `m.pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${x.col} IN (${list}))`;
+                        }).join(' AND ');
                     }
                     if (bboxSQL) {
                         rows = await db.query(`
                             SELECT m.concept_uri AS value, COUNT(DISTINCT m.pid) AS count
                             FROM read_parquet('${membership_url}') m
                             JOIN read_parquet('${lite_url}') l ON l.pid = m.pid
-                            WHERE m.facet_type='material'${otherCond}${bboxSQL}${searchFilterSQL('m.pid')}
+                            WHERE m.facet_type='${d.key}'${otherCond}${bboxSQL}${searchFilterSQL('m.pid')}
                             GROUP BY m.concept_uri
                         `);
                     } else {
                         rows = await db.query(`
                             SELECT m.concept_uri AS value, COUNT(DISTINCT m.pid) AS count
                             FROM read_parquet('${membership_url}') m
-                            WHERE m.facet_type='material'${otherCond}${searchFilterSQL('m.pid')}
+                            WHERE m.facet_type='${d.key}'${otherCond}${searchFilterSQL('m.pid')}
                             GROUP BY m.concept_uri
                         `);
                     }
