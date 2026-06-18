@@ -52,6 +52,7 @@ def main():
     ap.add_argument("--h3", nargs=3, metavar=("R4", "R6", "R8"))
     ap.add_argument("--tree-summaries", help="facet_tree_summaries parquet (#281/#282); optional")
     ap.add_argument("--membership", help="sample_facet_membership parquet (#281/#282); optional")
+    ap.add_argument("--tree-cross-filter", help="facet_tree_cross_filter parquet (#290/#293); optional")
     ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
@@ -293,6 +294,7 @@ def main():
         return None
     tree = _opt("facet_tree_summaries", "tree_summaries")
     mem = _opt("sample_facet_membership", "membership")
+    treexf = _opt("facet_tree_cross_filter", "tree_cross_filter")
     if tree:
         T = f"read_parquet('{tree}')"
         # parent ≥ child for every edge, every dim (distinct-pid UNION semantics —
@@ -338,6 +340,61 @@ def main():
                 SELECT (SELECT COUNT(*) FROM (SELECT * FROM g EXCEPT SELECT * FROM t))
                      + (SELECT COUNT(*) FROM (SELECT * FROM t EXCEPT SELECT * FROM g))""")
             check("tree counts == GROUP BY membership (symmetric)", mm == 0, f"{mm} rows disagree")
+
+    # --- facet_tree_cross_filter cube (#290/#293) — checked only when present ---
+    # CROSS-FILE ALGEBRA: the cube must EXACTLY equal a fresh re-derivation of the
+    # single-active-filter cross-filter self-join over the WRITTEN membership (tree
+    # dims, subtree semantics) ∪ source (from facets_v2), plus the baseline. This is
+    # the same algebra the builder runs, recomputed independently here from the
+    # written sibling files — a drifted/stale/corrupt cube FAILS. AI-free.
+    if treexf:
+        if not mem:
+            check("tree_cross_filter present but membership missing", False,
+                  "need --membership (or {tag}_sample_facet_membership.parquet) to validate the cube")
+        else:
+            X = f"read_parquet('{treexf}')"
+            M = f"read_parquet('{mem}')"
+            # re-derive xf = tree membership ∪ flat source (from facets_v2 = located universe)
+            xf = (f"SELECT pid, facet_type AS dim, concept_uri AS value FROM {M} "
+                  f"UNION ALL SELECT pid, 'source' AS dim, source AS value FROM {F} "
+                  f"WHERE NULLIF(TRIM(source), '') IS NOT NULL")
+            ref = (f"WITH xf AS ({xf}), "
+                   f"single AS (SELECT f.dim fdim, f.value fval, t.dim facet_type, t.value facet_value, "
+                   f"COUNT(DISTINCT t.pid) count FROM xf f JOIN xf t ON t.pid=f.pid AND t.dim<>f.dim GROUP BY 1,2,3,4), "
+                   f"base AS (SELECT NULL::VARCHAR fdim, NULL::VARCHAR fval, dim facet_type, value facet_value, "
+                   f"COUNT(DISTINCT pid) count FROM xf GROUP BY dim, value) "
+                   f"SELECT CASE WHEN fdim='source' THEN fval END filter_source, "
+                   f"CASE WHEN fdim='material' THEN fval END filter_material, "
+                   f"CASE WHEN fdim='context' THEN fval END filter_context, "
+                   f"CASE WHEN fdim='object_type' THEN fval END filter_object_type, "
+                   f"facet_type, facet_value, count FROM (SELECT * FROM single UNION ALL SELECT * FROM base)")
+            filecube = (f"SELECT filter_source, filter_material, filter_context, filter_object_type, "
+                        f"facet_type, facet_value, count FROM {X}")
+            # GRAIN first: EXCEPT below is SET semantics, so a duplicated cube would
+            # pass the symmetric diff. One row per (all filter cols, facet_type,
+            # facet_value) is the contract the explorer relies on. (Codex P3.)
+            xdup = scalar(f"""SELECT COUNT(*) FROM (
+                SELECT filter_source, filter_material, filter_context, filter_object_type,
+                       facet_type, facet_value
+                FROM {X} GROUP BY 1,2,3,4,5,6 HAVING COUNT(*) > 1)""")
+            check("tree_cross_filter grain unique", xdup == 0, f"{xdup} duplicated cube keys")
+            mm = scalar(f"SELECT (SELECT COUNT(*) FROM (({ref}) EXCEPT ({filecube}))) "
+                        f"+ (SELECT COUNT(*) FROM (({filecube}) EXCEPT ({ref})))")
+            check("tree_cross_filter == re-derived self-join (symmetric)", mm == 0,
+                  f"{mm} rows disagree (drifted/stale/corrupt cube)")
+            # baseline (all filter_* NULL) tree rows == facet_tree_summaries counts
+            if tree:
+                T3 = f"read_parquet('{tree}')"
+                bmm = scalar(f"""
+                  WITH cb AS (SELECT facet_type, facet_value, count FROM {X}
+                              WHERE filter_source IS NULL AND filter_material IS NULL
+                                AND filter_context IS NULL AND filter_object_type IS NULL
+                                AND facet_type <> 'source'),
+                       ts AS (SELECT facet_type, concept_uri AS facet_value, count FROM {T3})
+                  SELECT (SELECT COUNT(*) FROM (SELECT * FROM cb EXCEPT SELECT * FROM ts))
+                       + (SELECT COUNT(*) FROM (SELECT * FROM ts EXCEPT SELECT * FROM cb))""")
+                check("tree_cross_filter baseline == tree_summaries", bmm == 0,
+                      f"{bmm} baseline tree rows disagree with facet_tree_summaries")
 
     print(f"\n{'CHECK':<44} {'RESULT':<6} DETAIL\n" + "-" * 90)
     ok = True
