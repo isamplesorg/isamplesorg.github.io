@@ -287,6 +287,129 @@ def test_manifest_tamper_caught(tmp_path):
     assert v.returncode != 0 and "manifest sha256" in v.stdout, f"gate missed manifest tamper:\n{v.stdout}"
 
 
+# ---------------------------------------------------------------------------
+# facet_tree_cross_filter cube (#290/#293)
+# A self-contained tree fixture: a tiny SKOS vocab (broader edges) + located
+# samples whose concept arrays resolve into those trees, so the REAL builder
+# produces membership + tree_summaries + the cross-filter cube. We assert
+# EXPLICIT known counts (catches builder-logic bugs a re-derivation can't),
+# then confirm the validator's cube gate fires on corruption.
+# ---------------------------------------------------------------------------
+SF = "https://w3id.org/isample/vocabulary/sampledfeature/1.0/"          # context tree
+OT = "https://w3id.org/isample/vocabulary/materialsampleobjecttype/1.0/"  # object_type tree
+
+# row_id -> uri, for the tree fixture (roots match DIM_ROOT in the builder)
+TREE_CONCEPTS = [
+    (1, ROOT), (2, MAT + "mineral"), (3, MAT + "rock"),
+    (10, SF + "anysampledfeature"), (11, SF + "earthinterior"),
+    (20, OT + "materialsample"), (21, OT + "othersolidobject"),
+]
+# broader edges (data_v1 form): (uri, parent_uri-or-None)
+TREE_EDGES = [
+    (ROOT, None), (MAT + "mineral", ROOT), (MAT + "rock", ROOT),
+    (SF + "anysampledfeature", None), (SF + "earthinterior", SF + "anysampledfeature"),
+    (OT + "materialsample", None), (OT + "othersolidobject", OT + "materialsample"),
+]
+# (pid, source, material_rids, context_rids, object_rids)
+TREE_SAMPLES = [
+    ("s1", "A", [2], [11], [21]),   # mineral, earthinterior, othersolidobject
+    ("s2", "A", [3], [11], [21]),   # rock,    earthinterior, othersolidobject
+    ("s3", "B", [2], [11], [21]),   # mineral, earthinterior, othersolidobject
+]
+
+
+def build_tree_fixture(wide, vocab):
+    con = duckdb.connect(); con.execute("INSTALL spatial; LOAD spatial;")
+    ic_rows = " UNION ALL ".join(
+        f"SELECT 'IdentifiedConcept' AS otype, '{uri}' AS pid, {rid}::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        f"'lbl' AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
+        f"NULL AS geometry, NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
+        for rid, uri in TREE_CONCEPTS)
+    msr = []
+    for i, (pid, src, m, c, o) in enumerate(TREE_SAMPLES):
+        msr.append(
+            f"SELECT 'MaterialSampleRecord' AS otype, '{pid}' AS pid, NULL::BIGINT AS row_id, '{src}' AS n, "
+            f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}']::VARCHAR[] AS place_name, "
+            f"NULL::TIMESTAMP AS result_time, ST_AsWKB(ST_Point({10.0+i},{40.0+i})) AS geometry, "
+            f"{_arr(m)} AS p__has_material_category, {_arr(c)} AS p__has_context_category, "
+            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+    con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) TO '{wide}' (FORMAT PARQUET)")
+    edges = " UNION ALL ".join(
+        f"SELECT '{u}' uri, {('NULL' if p is None else repr(p))}::VARCHAR broader, 'data_v1' uri_form"
+        for u, p in TREE_EDGES)
+    con.execute(f"COPY ({edges}) TO '{vocab}' (FORMAT PARQUET)")
+    con.close()
+
+
+def _build_tree(tmp_path, wide, vocab, tag="t"):
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", tag,
+           "--skip", "wide_h3", "--no-manifest", "--vocab-labels", vocab]
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def test_tree_cross_filter_explicit_counts(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    r = _build_tree(tmp_path, wide, vocab)
+    assert r.returncode == 0, f"tree build failed:\n{r.stdout}\n{r.stderr}"
+    cube = f"read_parquet('{tmp_path / 't_facet_tree_cross_filter.parquet'}')"
+    con = duckdb.connect()
+
+    def cnt(fcol, fval, ftype, fvalue):
+        nulls = " AND ".join(f"{c} IS NULL" for c in
+                             ["filter_source", "filter_material", "filter_context", "filter_object_type"]
+                             if c != fcol)
+        where = (f"{fcol}='{fval}' AND " if fcol else "") + (nulls if fcol else
+                 "filter_source IS NULL AND filter_material IS NULL AND filter_context IS NULL AND filter_object_type IS NULL")
+        row = con.sql(f"SELECT count FROM {cube} WHERE {where} AND facet_type='{ftype}' AND facet_value='{fvalue}'").fetchone()
+        return row[0] if row else 0
+
+    # filter material=mineral (subtree pids: s1,s3) -> context earthinterior = 2
+    assert cnt("filter_material", MAT + "mineral", "context", SF + "earthinterior") == 2
+    # ...and its ancestor anysampledfeature also = 2 (subtree semantics)
+    assert cnt("filter_material", MAT + "mineral", "context", SF + "anysampledfeature") == 2
+    # filter material=mineral -> source A = 1 (s1), source B = 1 (s3)
+    assert cnt("filter_material", MAT + "mineral", "source", "A") == 1
+    assert cnt("filter_material", MAT + "mineral", "source", "B") == 1
+    # filter source=A (s1,s2) -> material mineral = 1 (s1), rock = 1 (s2), root = 2
+    assert cnt("filter_source", "A", "material", MAT + "mineral") == 1
+    assert cnt("filter_source", "A", "material", MAT + "rock") == 1
+    assert cnt("filter_source", "A", "material", ROOT) == 2
+    # baseline (no filter): material root = 3, context anysampledfeature = 3, source A = 2
+    assert cnt(None, None, "material", ROOT) == 3
+    assert cnt(None, None, "context", SF + "anysampledfeature") == 3
+    assert cnt(None, None, "source", "A") == 2
+    # no same-dim rows (a dim never cross-filters itself)
+    same = con.sql(f"""SELECT COUNT(*) FROM {cube} WHERE
+        (filter_material IS NOT NULL AND facet_type='material') OR
+        (filter_context  IS NOT NULL AND facet_type='context')  OR
+        (filter_object_type IS NOT NULL AND facet_type='object_type') OR
+        (filter_source IS NOT NULL AND facet_type='source')""").fetchone()[0]
+    assert same == 0, f"{same} forbidden same-dim cross-filter rows"
+
+
+def test_tree_cross_filter_validator_passes_and_gate_bites(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    # clean: validator (incl. the new cube gate + all tree gates) must PASS
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert v.returncode == 0, f"validator failed on clean tree fixture:\n{v.stdout}\n{v.stderr}"
+    assert "tree_cross_filter == re-derived self-join" in v.stdout
+    # corrupt: bump every cube count by 1 -> the cube gate must FAIL
+    cube = str(tmp_path / "t_facet_tree_cross_filter.parquet")
+    con = duckdb.connect(); tmp_c = cube + ".tmp"
+    con.execute(f"""COPY (SELECT filter_source, filter_material, filter_context, filter_object_type,
+                   facet_type, facet_value, count+1 AS count FROM read_parquet('{cube}'))
+                   TO '{tmp_c}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_c, cube)
+    v2 = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                        capture_output=True, text=True)
+    assert v2.returncode != 0 and "tree_cross_filter" in v2.stdout, \
+        f"cube gate failed to catch corruption:\n{v2.stdout}"
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0

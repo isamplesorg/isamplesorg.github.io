@@ -797,6 +797,11 @@ FACET_TREE = (() => {
 // parent_uri, depth, count) and per-sample membership (pid ↔ every ancestor).
 facet_tree_url = `${R2_BASE}/isamples_202608_facet_tree_summaries.parquet`
 membership_url = `${R2_BASE}/isamples_202608_sample_facet_membership.parquet`
+// #290/#293 single-active-filter cross-filter cube over the trees + source.
+// Precomputed COUNT(DISTINCT pid) for each target node given ONE active filter,
+// so global-view cross-filtered tree counts are instant instead of a live
+// membership near-full-scan. ~1k rows; same schema as facet_cross_filter.
+tree_cross_filter_url = `${R2_BASE}/isamples_202608_facet_tree_cross_filter.parquet`
 
 // Canonical palette — see issue #113. Path-relative so this works under
 // both isamples.org (custom domain at root) and project-pages fork
@@ -3078,6 +3083,64 @@ zoomWatcher = {
         return conds.length > 0 ? conds.join(' AND ') : '1=1';
     }
 
+    // #290/#293: the single active filter (one node/value in exactly ONE dim),
+    // read DIRECTLY from the controls so it sees tree-node selections even at
+    // global view (describeCrossFilters zeroes those). Returns {key, value} for a
+    // source value or a single tree NODE; null otherwise (no filter, multi-value,
+    // multi-dim, or a flat-mode dim — those keep their existing paths). The cube
+    // is keyed by concept_uri for tree dims, so flat-mode dim selections are
+    // deliberately excluded here (they'd miss the cube and fall through anyway).
+    function effectiveSingleFilter() {
+        const sel = [];
+        const sourceTotal = document.querySelectorAll('#sourceFilter input[type="checkbox"]').length;
+        const sources = getActiveSources();
+        if (sources.length > 0 && sources.length < sourceTotal) sel.push({ key: 'source', values: sources });
+        for (const key of TREE_DIM_KEYS) {
+            if (!treeActive(key)) continue;           // flat-mode dim → not in this cube
+            const vals = treeSelection(key);
+            if (vals && vals.length > 0) sel.push({ key, values: vals });
+        }
+        if (sel.length === 1 && sel[0].values.length === 1) {
+            return { key: sel[0].key, value: sel[0].values[0] };
+        }
+        return null;
+    }
+
+    // Apply cross-filtered counts for a single active filter from the precomputed
+    // facet_tree_cross_filter cube. Returns true if counts were applied (or the
+    // request was superseded mid-flight), false on a miss/error so the caller can
+    // fall through to the existing paths. The cube's schema mirrors
+    // facet_cross_filter: filter_<dim> columns + facet_type/facet_value/count.
+    async function applyTreeCubeCounts(eff, dims, myReq) {
+        const filterColForKey = {
+            source: 'filter_source', material: 'filter_material',
+            context: 'filter_context', object_type: 'filter_object_type',
+        };
+        const cols = ['filter_source', 'filter_material', 'filter_context', 'filter_object_type'];
+        const targetCol = filterColForKey[eff.key];
+        const value = escSql(eff.value);
+        const where = cols.map(c => c === targetCol ? `${c} = '${value}'` : `${c} IS NULL`).join(' AND ');
+        try {
+            const rows = await db.query(`
+                SELECT facet_type, facet_value, count
+                FROM read_parquet('${tree_cross_filter_url}')
+                WHERE ${where}
+            `);
+            if (myReq !== facetCountsReqId) return true;   // superseded — stop, don't fall through
+            if (!rows || rows.length === 0) return false;  // miss — fall through
+            const grouped = { source: new Map(), material: new Map(), context: new Map(), object_type: new Map() };
+            for (const r of rows) {
+                if (grouped[r.facet_type]) grouped[r.facet_type].set(r.facet_value, Number(r.count));
+            }
+            // The active dim shows ALL its own nodes (null = no cross-filter on self).
+            for (const d of dims) applyFacetCounts(d.key, d.key === eff.key ? null : grouped[d.key]);
+            return true;
+        } catch (err) {
+            console.warn('Tree cross-filter cube lookup failed; falling back to on-the-fly:', err);
+            return false;
+        }
+    }
+
     async function updateCrossFilteredCounts(myReq) {
         if (myReq !== facetCountsReqId) return;
         const { dims, activeDims, totalActiveValues, sourceImpossible } = describeCrossFilters();
@@ -3114,6 +3177,25 @@ zoomWatcher = {
         // again) is tracked on #234.
         const isGlobal = isGlobalView();
         const bboxSQL = isGlobal ? null : viewerBboxSQL('l.latitude', 'l.longitude', VIEWPORT_PAD_FACTOR);
+
+        // #290/#293 TREE cross-filter cube fast-path. At (near-)global view, a
+        // SINGLE active filter — one node in any one dim — is answered instantly
+        // by the precomputed facet_tree_cross_filter cube, replacing the live
+        // membership COUNT(DISTINCT pid) self-scan that hits the DuckDB-WASM
+        // data-scale wall. CRITICAL: describeCrossFilters() intentionally ZEROES
+        // tree-dim selections at global view (so activeDims excludes them), which
+        // is exactly why a selected tree node otherwise fails to cross-filter the
+        // other dims at global view (#290). We therefore read the effective single
+        // filter (incl. tree nodes) DIRECTLY here, ahead of the baseline early-
+        // return. Gated to global view (bboxSQL===null; viewport needs live
+        // counts) and no active search (the cube is global, can't be pid-scoped).
+        // Any miss/error (incl. cube not yet published) returns false → falls
+        // through to the existing baseline / flat-cube / slow paths unchanged.
+        if (bboxSQL === null && !searchIsActive() && !sourceImpossible) {
+            const eff = effectiveSingleFilter();
+            if (eff && await applyTreeCubeCounts(eff, dims, myReq)) return;
+            if (myReq !== facetCountsReqId) return;
+        }
 
         // Baseline early-return only applies when there is no filter AND no
         // spatial constraint. In a non-global view with no facet filter, B1

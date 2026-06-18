@@ -63,7 +63,8 @@ DIM_ROOT = {
 # the artifacts this script knows how to build (for --only/--skip validation)
 ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
              "facet_summaries", "facet_cross_filter", "wide_h3",
-             "sample_facet_membership", "facet_tree_summaries"]
+             "sample_facet_membership", "facet_tree_summaries",
+             "facet_tree_cross_filter"]
 
 # Shared SQL expression for sample_facets_v2.description (#277 part 2).
 # Appends space-joined concept labels (IC labels across all 4 concept dims)
@@ -427,6 +428,59 @@ def build_facet_tree_summaries(con, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
+def build_facet_tree_cross_filter(con, out):
+    # #290/#293: single-active-filter cross-filter COUNT cube spanning the 3 SKOS
+    # trees (material/context/object_type — keyed by concept_uri, subtree semantics
+    # via `membership`) AND the flat `source` dim. For every single active filter
+    # (one node/value in ONE dim) it precomputes COUNT(DISTINCT pid) for every
+    # OTHER dim's node/value, plus a baseline (no filter). This is the precomputed
+    # answer to the live tree-count membership self-scan that hits the DuckDB-WASM
+    # data-scale wall at global view (38.9M-row membership). Tiny output (~1k rows).
+    #
+    # Schema MIRRORS facet_cross_filter so the explorer reads it identically:
+    #   filter_source/material/context/object_type, facet_type, facet_value, count
+    # The filter dim is encoded in its filter_<dim> column (concept_uri for trees,
+    # source string for source); the target dim in facet_type/facet_value. A row is
+    # the cross-filtered count of target value GIVEN the single filter. Counts are
+    # GLOBAL (no viewport) — the explorer uses this only at/near global view, exactly
+    # like the flat cube. Determinism via COUNT(DISTINCT) + full-key ORDER BY.
+    #
+    # NOTE: this DELIBERATELY excludes same-dim pairs (t.dim <> f.dim) — the explorer
+    # never cross-filters a dim by its own selection (it shows all of a dim's nodes).
+    # It also excludes flat→flat pairs the existing facet_cross_filter already covers;
+    # here every row has a tree dim on at least one side (source has only one flat dim).
+    con.execute(f"""COPY (
+      WITH xf AS (
+        SELECT pid, facet_type AS dim, concept_uri AS value FROM membership
+        UNION ALL
+        SELECT pid, 'source' AS dim, source AS value
+        FROM samp_geo WHERE NULLIF(TRIM(source), '') IS NOT NULL
+      ),
+      single AS (
+        SELECT f.dim AS fdim, f.value AS fval,
+               t.dim AS facet_type, t.value AS facet_value,
+               COUNT(DISTINCT t.pid) AS count
+        FROM xf f JOIN xf t ON t.pid = f.pid AND t.dim <> f.dim
+        GROUP BY 1, 2, 3, 4
+      ),
+      base AS (
+        SELECT NULL::VARCHAR AS fdim, NULL::VARCHAR AS fval,
+               dim AS facet_type, value AS facet_value, COUNT(DISTINCT pid) AS count
+        FROM xf GROUP BY dim, value
+      ),
+      allrows AS (SELECT * FROM single UNION ALL SELECT * FROM base)
+      SELECT
+        CASE WHEN fdim = 'source'      THEN fval END AS filter_source,
+        CASE WHEN fdim = 'material'    THEN fval END AS filter_material,
+        CASE WHEN fdim = 'context'     THEN fval END AS filter_context,
+        CASE WHEN fdim = 'object_type' THEN fval END AS filter_object_type,
+        facet_type, facet_value, count
+      FROM allrows
+      ORDER BY filter_source, filter_material, filter_context, filter_object_type,
+               facet_type, facet_value
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
 def file_meta(con, path):
     n = con.sql(f"SELECT COUNT(*) FROM read_parquet('{path}')").fetchone()[0]
     schema = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{path}')").fetchall()]
@@ -502,6 +556,8 @@ def main():
             build_concept_membership(con, args.wide, args.vocab_labels, t0)
             emit("sample_facet_membership", lambda o: build_sample_facet_membership(con, o))
             emit("facet_tree_summaries", lambda o: build_facet_tree_summaries(con, o))
+            # #290/#293 cross-filter cube — needs membership (above) + samp_geo (source).
+            emit("facet_tree_cross_filter", lambda o: build_facet_tree_cross_filter(con, o))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)
