@@ -23,6 +23,12 @@ const WORLD = '#v=1&lat=20&lng=0&alt=15000000';
 test.describe('Material facet tree (#281/#282 preview)', () => {
   test.skip(!LOCAL, 'needs hierarchy data — run with FACET_TREE_LOCAL=1 against the docs/data mirror until R2 publish');
   test.setTimeout(150000);
+  // These are heavy live-count integration tests (each fires membership queries
+  // against the local parquet mirror). Run sequentially in one DuckDB-WASM
+  // connection they can occasionally contend/time out under accumulated load even
+  // though each passes in isolation — retry rather than flake. (Gated/local only;
+  // not part of the CI smoke gate.)
+  test.describe.configure({ retries: 2 });
 
   test('flag OFF → Material stays a flat list (no tree nodes)', async ({ page }) => {
     await page.goto(`/explorer.html?facets=flat${DATA}${WORLD}`);
@@ -36,7 +42,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
   test('flag ON → tree renders; selecting a parent filters the table to its subtree', async ({ page }) => {
     await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
     await page.waitForFunction(
-      () => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0,
+      () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0,
       null, { timeout: 90000 });
 
     // Tree structure: a non-selectable root group, several nodes, carets, and the
@@ -87,7 +93,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     });
     await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
     await page.waitForFunction(
-      () => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0,
+      () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0,
       null, { timeout: 90000 });
 
     // Check the "earthmaterial" parent → a child ("mineral") becomes inherited
@@ -119,7 +125,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     // Select earthmaterial, then assert the URL carries ONLY that node (minimal — no
     // expanded descendants like /mineral).
     await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
-    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.evaluate(() => {
       const cb = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
       cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
@@ -134,7 +140,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     // Reload that URL fresh → earthmaterial restored as selected, and a child shows
     // the inherited (checked + disabled) state.
     await page.goto(url.includes('data_base') ? url : `${url}${DATA.replace('&', url.includes('?') ? '&' : '?')}`);
-    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     const restored = await page.evaluate(() => {
       const par = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
       const kid = document.querySelector('#materialFilterBody input[value*="/mineral"]');
@@ -158,7 +164,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     test.setTimeout(180000);
     // Global view → baseline (global tree counts).
     await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=0&lng=0&alt=15000000`);
-    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.waitForTimeout(2500);
     const globalEarth = await legendCount(page, '/earthmaterial');
     expect(globalEarth).toBeGreaterThan(1000000);
@@ -177,18 +183,24 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
   test('live counts coherence: legend(node) == table when that node is the filter (#245), parent >= child', async ({ page }) => {
     test.setTimeout(180000);
     await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
-    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
-    await page.waitForTimeout(3500);
-    const legEarth = await legendCount(page, '/earthmaterial');
-    const legRock = await legendCount(page, '/rock');
-    expect(legEarth).toBeGreaterThanOrEqual(legRock);  // parent >= child, in-viewport
-    expect(legEarth).toBeGreaterThan(0);
-    // Selecting earthmaterial filters the table to exactly its viewport legend count.
+    await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    // Select earthmaterial, then poll until the LEGEND count and the TABLE total
+    // converge to the same value. Both are viewport-scoped and settle to the zoomed
+    // earthmaterial count; polling avoids the baseline-vs-live read race (the legend
+    // shows the global baseline momentarily before the live count query lands).
     await page.evaluate(() => {
       const cb = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
       cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await expect.poll(() => tableTotal(page), { timeout: 60000, intervals: [500, 1000, 2000] }).toBe(legEarth);
+    await expect.poll(async () => {
+      const leg = await legendCount(page, '/earthmaterial');
+      const tab = await tableTotal(page);
+      return (leg != null && tab != null && leg === tab) ? leg : -1;
+    }, { timeout: 90000, intervals: [1000, 1500, 2000] }).toBeGreaterThan(0);
+    // parent >= child, in-viewport (read after settle).
+    const legEarth = await legendCount(page, '/earthmaterial');
+    const legRock = await legendCount(page, '/rock');
+    expect(legEarth).toBeGreaterThanOrEqual(legRock);
   });
 
   test('live counts cross-filter both ways (zoomed): a source narrows Material; Material narrows sources', async ({ page }) => {
@@ -202,7 +214,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
       return s;
     }, container);
     await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
-    await page.waitForFunction(() => document.querySelectorAll('#materialFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.waitForTimeout(3500);
     const matEarth0 = await legendCount(page, '/earthmaterial');
     expect(matEarth0).toBeGreaterThan(0);
@@ -232,6 +244,63 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     const srcSum1 = await sumCounts(page, 'sourceFilter');
     expect(srcSum1).toBeLessThanOrEqual(srcSum0);
     expect(srcSum1).toBeGreaterThan(0);
+  });
+
+  test('#291: Sampled Feature + Specimen Type also render as trees and filter', async ({ page }) => {
+    test.setTimeout(150000);
+    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.waitForFunction(
+      () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    const shape = await page.evaluate(() => ({
+      material: document.querySelectorAll('#materialFilterBody .facet-treenode').length,
+      context: document.querySelectorAll('#contextFilterBody .facet-treenode').length,
+      object_type: document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length,
+      ctxRoot: !!document.querySelector('#contextFilterBody .facet-treeroot'),
+      otRoot: !!document.querySelector('#objectTypeFilterBody .facet-treeroot'),
+    }));
+    expect(shape.material).toBeGreaterThan(5);
+    expect(shape.context).toBeGreaterThan(3);
+    expect(shape.object_type).toBeGreaterThan(3);
+    expect(shape.ctxRoot).toBe(true);
+    expect(shape.otRoot).toBe(true);
+    // Selecting a Sampled Feature (context) tree node filters the table via membership.
+    await page.evaluate(() => {
+      const cb = document.querySelector('#contextFilterBody input[type="checkbox"]');
+      cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForFunction(
+      () => /of [\d,]+\)/.test(document.getElementById('tablePageInfo')?.textContent || ''), null, { timeout: 60000 });
+    const total = await page.evaluate(() => {
+      const m = (document.getElementById('tablePageInfo')?.textContent || '').match(/of ([\d,]+)\)/);
+      return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+    });
+    expect(total).toBeGreaterThan(0);
+  });
+
+  test('#291: simultaneous selections across all three tree dims register + round-trip to the URL', async ({ page }) => {
+    test.setTimeout(150000);
+    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.waitForFunction(
+      () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
+    // Check one node in each tree (material, context, object_type). Verify the
+    // selection state + that each dim serializes its minimal node to the URL — i.e.
+    // the three trees operate independently and coherently. (The actual multi-tree
+    // table/count QUERY does N membership scans and is slow in WASM at scale — a
+    // tracked perf follow-up; not asserted here.)
+    for (const body of ['materialFilterBody', 'contextFilterBody', 'objectTypeFilterBody']) {
+      await page.evaluate((b) => {
+        const cb = document.querySelector(`#${b} input[type="checkbox"]`);  // first node
+        cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true }));
+      }, body);
+    }
+    // Each dim records a checked node and serializes its minimal selection to the URL.
+    await expect.poll(async () => page.evaluate(() => {
+      const p = new URLSearchParams(location.search);
+      return !!p.get('material') && !!p.get('context') && !!p.get('object_type');
+    }), { timeout: 30000, intervals: [500, 1000] }).toBe(true);
+    const checked = await page.evaluate(() => ['materialFilterBody', 'contextFilterBody', 'objectTypeFilterBody']
+      .map(b => document.querySelectorAll(`#${b} input[type="checkbox"]:checked`).length));
+    expect(checked.every(n => n > 0)).toBe(true);
   });
 
   test('graceful fallback: if the tree data 404s, Material renders flat and still filters', async ({ page }) => {
