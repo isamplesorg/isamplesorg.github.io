@@ -802,6 +802,14 @@ membership_url = `${R2_BASE}/isamples_202608_sample_facet_membership.parquet`
 // so global-view cross-filtered tree counts are instant instead of a live
 // membership near-full-scan. ~1k rows; same schema as facet_cross_filter.
 tree_cross_filter_url = `${R2_BASE}/isamples_202608_facet_tree_cross_filter.parquet`
+// #293 bitmask filter: per-pid tree-membership masks + the concept_uri→bit map.
+// facetFilterSQL filters broad multi-tree selections with a columnar bitwise
+// predicate over sample_facet_masks (~10 MB, one row/pid) instead of the
+// 39M-row membership GROUP BY that stalls DuckDB-WASM. node_bits (~56 rows)
+// maps each selected node to its bit. Best-effort: if either fails to load,
+// facetFilterSQL falls back to the membership scan (no regression).
+masks_url = `${R2_BASE}/isamples_202608_sample_facet_masks.parquet`
+node_bits_url = `${R2_BASE}/isamples_202608_facet_node_bits.parquet`
 
 // Canonical palette — see issue #113. Path-relative so this works under
 // both isamples.org (custom domain at root) and project-pages fork
@@ -1114,6 +1122,31 @@ function syncFacetNote() {
 // without a JOIN and avoids duplicate rows from multi-valued facets
 // (a sample with two materials would appear twice via JOIN). Required
 // for Phase 4's table mode and any non-JOIN caller. See issue #156.
+// #293: build one "(<dim>_mask & <selected>) <> 0" predicate per active tree dim
+// from the concept_uri→bit map (window.__nodeBits). The mask is a BigInt OR of the
+// selected nodes' bits; sample_facet_masks already encodes the ancestor closure, so
+// selecting a parent matches its whole subtree. Returns [] (→ caller uses the
+// membership fallback) if the bit map isn't loaded, a selected node has no known
+// bit, or a dim's mask is empty — never silently under-filter.
+function treeMaskClauses(activeTree) {
+    const bits = (typeof window !== 'undefined') ? window.__nodeBits : null;
+    if (!bits) return [];
+    const out = [];
+    for (const { key, sel } of activeTree) {
+        const dimBits = bits[key];
+        if (!dimBits) return [];
+        let mask = 0n;
+        for (const uri of sel) {
+            const idx = dimBits.get(uri);
+            if (idx === undefined) return [];          // unknown node → fall back
+            mask |= (1n << BigInt(idx));
+        }
+        if (mask === 0n) return [];                    // empty → avoid matching nothing
+        out.push(`(${key}_mask & ${mask}) <> 0`);      // BigInt → decimal BIGINT literal
+    }
+    return out;
+}
+
 function facetFilterSQL() {
     // Each entry is a standalone `pid IN (...)` predicate; multiple are AND-ed.
     const parts = [];
@@ -1123,22 +1156,33 @@ function facetFilterSQL() {
     // under every ancestor), so a selected parent matches its whole subtree (no
     // client-side descendant expansion). A flat (non-tree) dim filters on facets_v3.
     const treeClauses = [];   // one "(facet_type='X' AND concept_uri IN(...))" per tree dim
+    const activeTree = [];    // [{key, sel}] for tree-active dims (for the bitmask path)
     for (const key of TREE_DIM_KEYS) {
         const sel = treeSelection(key);
         if (sel.length === 0) continue;
         const list = sel.map(s => `'${escSql(s)}'`).join(',');
         if (treeActive(key)) {
             treeClauses.push(`(facet_type='${key}' AND concept_uri IN (${list}))`);
+            activeTree.push({ key, sel });
         } else {
             facetsConds.push(`${key} IN (${list})`);
         }
     }
-    // #293: collapse the tree-dim selections into ONE membership scan rather than
-    // one AND-ed subquery per dim (N full scans → 1 in DuckDB-WASM). AND across dims
-    // is `HAVING COUNT(DISTINCT facet_type) = <#dims>`; OR within a dim is the
-    // `concept_uri IN (...)`. Single-dim collapses to the same one scan as before.
-    if (treeClauses.length > 0) {
-        parts.push(`pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE ${treeClauses.join(' OR ')} GROUP BY pid HAVING COUNT(DISTINCT facet_type) = ${treeClauses.length})`);
+    // #293: prefer the bitmask predicate over sample_facet_masks — a single
+    // columnar scan with no GROUP BY — which is set-identical to the membership
+    // form but avoids the 39M-row scan that stalls DuckDB-WASM on broad multi-tree
+    // selections. Fall back to the collapsed membership scan when the bit map
+    // isn't available or a selected node has no bit (treeMaskClauses → []), so
+    // results are always correct even before the mask artifacts are published.
+    if (activeTree.length > 0) {
+        const maskClauses = treeMaskClauses(activeTree);
+        if (maskClauses.length === activeTree.length) {
+            parts.push(`pid IN (SELECT pid FROM read_parquet('${masks_url}') WHERE ${maskClauses.join(' AND ')})`);
+        } else {
+            // Fallback: collapse the tree-dim selections into ONE membership scan
+            // (OR within, HAVING COUNT(DISTINCT facet_type)=N across).
+            parts.push(`pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE ${treeClauses.join(' OR ')} GROUP BY pid HAVING COUNT(DISTINCT facet_type) = ${treeClauses.length})`);
+        }
     }
     if (facetsConds.length > 0) {
         parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${facetsConds.join(' AND ')})`);
@@ -1631,6 +1675,37 @@ db = {
     performance.mark('duckdb-init-end');
     performance.measure('duckdb_init', 'duckdb-init-start', 'duckdb-init-end');
     return instance;
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+
+// #293: load the concept_uri→bit map once at startup so facetFilterSQL can turn
+// a tree-node selection into a bitmask and filter sample_facet_masks with a cheap
+// columnar predicate (instead of the 39M-row membership GROUP BY). Stashed on
+// window for synchronous access from facetFilterSQL (same pattern as
+// window.conceptLabelForUri). Best-effort: on ANY failure window.__nodeBits stays
+// null and facetFilterSQL falls back to the membership scan — so this is safe to
+// ship before sample_facet_masks / facet_node_bits are published.
+nodeBitsReady = {
+    try {
+        const rows = await db.query(
+            `SELECT facet_type, concept_uri, bit_index FROM read_parquet('${node_bits_url}')`);
+        const map = { material: new Map(), context: new Map(), object_type: new Map() };
+        for (const r of rows) {
+            if (map[r.facet_type]) map[r.facet_type].set(r.concept_uri, Number(r.bit_index));
+        }
+        // Only advertise readiness if every tree dim actually got bits.
+        const ok = ['material', 'context', 'object_type'].every(k => map[k].size > 0);
+        window.__nodeBits = ok ? map : null;
+        return ok;
+    } catch (err) {
+        console.warn('node_bits load failed; facetFilterSQL will use the membership fallback:', err);
+        window.__nodeBits = null;
+        return false;
+    }
 }
 ```
 

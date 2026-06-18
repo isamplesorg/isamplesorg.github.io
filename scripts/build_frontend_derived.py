@@ -64,7 +64,11 @@ DIM_ROOT = {
 ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
              "facet_summaries", "facet_cross_filter", "wide_h3",
              "sample_facet_membership", "facet_tree_summaries",
-             "facet_tree_cross_filter"]
+             "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks"]
+# #293: max tree nodes per dim that fit in a signed BIGINT mask (bits 0..62).
+# Live max is 22 (context); guard so a future vocab explosion fails loudly
+# instead of silently overflowing a mask bit.
+MASK_MAX_BITS = 63
 
 # Shared SQL expression for sample_facets_v2.description (#277 part 2).
 # Appends space-joined concept labels (IC labels across all 4 concept dims)
@@ -481,6 +485,55 @@ def build_facet_tree_cross_filter(con, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
+def build_facet_node_bits(con, out):
+    # #293: authoritative concept_uri -> bit_index assignment per tree dim. The
+    # explorer loads this to turn a node selection into a bitmask and filter
+    # sample_facet_masks with a cheap columnar bitwise predicate (replacing the
+    # 39M-row membership GROUP BY that hits the DuckDB-WASM data-scale wall on
+    # broad multi-tree selections). bit_index is 0-based, DETERMINISTIC (dense
+    # rank over distinct concept_uri per facet_type, ordered by URI). The mask
+    # builder below uses the SAME assignment so they can never drift. We HARD-fail
+    # if any dim exceeds MASK_MAX_BITS (a signed-BIGINT mask can't hold it).
+    over = con.sql("""
+        SELECT facet_type, MAX(bit_index)+1 AS n FROM (
+          SELECT facet_type, concept_uri,
+                 (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1) AS bit_index
+          FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)
+        ) GROUP BY facet_type HAVING MAX(bit_index)+1 > ?""", params=[MASK_MAX_BITS]).fetchall()
+    if over:
+        raise SystemExit(f"FATAL: tree dim(s) exceed {MASK_MAX_BITS} nodes — bitmask overflow: {over}")
+    con.execute(f"""COPY (
+        SELECT facet_type, concept_uri,
+               (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1)::INTEGER AS bit_index
+        FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)
+        ORDER BY facet_type, concept_uri
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
+def build_sample_facet_masks(con, out):
+    # #293: one row per located pid that has ANY tree membership; a BIGINT mask
+    # per tree dim where bit (1<<bit_index) is set iff the pid is a member of that
+    # node (membership already encodes the ancestor closure, so a parent node's
+    # bit is set for the whole subtree). The explorer filters with
+    #   (material_mask & <selected>) <> 0 AND (context_mask & <selected>) <> 0 ...
+    # which is set-identical to the membership pid-subquery but a single columnar
+    # scan (no 39M-row scan, no GROUP BY pid). bit assignment == build_facet_node_bits.
+    con.execute(f"""COPY (
+        WITH nb AS (
+          SELECT facet_type, concept_uri,
+                 (1::BIGINT << (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1)) AS bitval
+          FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)
+        )
+        SELECT m.pid,
+          COALESCE(bit_or(CASE WHEN m.facet_type='material'    THEN nb.bitval END), 0)::BIGINT AS material_mask,
+          COALESCE(bit_or(CASE WHEN m.facet_type='context'     THEN nb.bitval END), 0)::BIGINT AS context_mask,
+          COALESCE(bit_or(CASE WHEN m.facet_type='object_type' THEN nb.bitval END), 0)::BIGINT AS object_type_mask
+        FROM membership m JOIN nb ON nb.facet_type=m.facet_type AND nb.concept_uri=m.concept_uri
+        GROUP BY m.pid
+        ORDER BY m.pid
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
 def file_meta(con, path):
     n = con.sql(f"SELECT COUNT(*) FROM read_parquet('{path}')").fetchone()[0]
     schema = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{path}')").fetchall()]
@@ -544,11 +597,13 @@ def main():
     emit("wide_h3", lambda o: build_wide_h3(con, args.wide, o))
 
     # Hierarchy artifacts (#281/#282) — need vocab_labels for the SKOS tree.
-    if want("sample_facet_membership") or want("facet_tree_summaries") or want("facet_tree_cross_filter"):
+    HIER_ARTIFACTS = {"sample_facet_membership", "facet_tree_summaries",
+                      "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks"}
+    if any(want(a) for a in HIER_ARTIFACTS):
         if not args.vocab_labels:
             # Fail loud if the user EXPLICITLY asked for a hierarchy artifact
             # (Codex) — silently skipping an explicit --only target is wrong.
-            explicit = only & {"sample_facet_membership", "facet_tree_summaries", "facet_tree_cross_filter"}
+            explicit = only & HIER_ARTIFACTS
             if explicit:
                 sys.exit(f"FATAL: --only {sorted(explicit)} requires --vocab-labels <vocab_labels.parquet>")
             log("SKIP hierarchy artifacts: pass --vocab-labels <vocab_labels.parquet>", t0)
@@ -558,6 +613,9 @@ def main():
             emit("facet_tree_summaries", lambda o: build_facet_tree_summaries(con, o))
             # #290/#293 cross-filter cube — needs membership (above) + samp_geo (source).
             emit("facet_tree_cross_filter", lambda o: build_facet_tree_cross_filter(con, o))
+            # #293 bitmask filter artifacts — needs membership (above).
+            emit("facet_node_bits", lambda o: build_facet_node_bits(con, o))
+            emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)
