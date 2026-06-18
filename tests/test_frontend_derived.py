@@ -410,6 +410,46 @@ def test_tree_cross_filter_validator_passes_and_gate_bites(tmp_path):
         f"cube gate failed to catch corruption:\n{v2.stdout}"
 
 
+def test_tree_cross_filter_only_builds(tmp_path):
+    """`--only facet_tree_cross_filter` must actually produce the file (Codex P2:
+    the hierarchy guard previously omitted it -> rc=0 but no output)."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path),
+                        "--tag", "t", "--no-manifest", "--vocab-labels", vocab,
+                        "--only", "facet_tree_cross_filter"], capture_output=True, text=True)
+    assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
+    assert (tmp_path / "t_facet_tree_cross_filter.parquet").exists(), \
+        f"--only facet_tree_cross_filter produced no file:\n{r.stdout}\n{r.stderr}"
+
+
+def test_tree_cross_filter_only_requires_vocab(tmp_path):
+    """Explicit --only facet_tree_cross_filter without --vocab-labels must fail loud."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path),
+                        "--tag", "t", "--no-manifest", "--only", "facet_tree_cross_filter"],
+                       capture_output=True, text=True)
+    assert r.returncode != 0 and "vocab-labels" in (r.stdout + r.stderr).lower()
+
+
+def test_tree_cross_filter_grain_gate_bites(tmp_path):
+    """Doubling every cube row keeps counts 'correct' under EXCEPT set-semantics;
+    the grain/uniqueness check must catch it (Codex P3)."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    cube = str(tmp_path / "t_facet_tree_cross_filter.parquet")
+    con = duckdb.connect(); tmp_c = cube + ".tmp"
+    con.execute(f"""COPY (SELECT * FROM read_parquet('{cube}')
+                   UNION ALL SELECT * FROM read_parquet('{cube}'))
+                   TO '{tmp_c}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_c, cube)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "grain unique" in v.stdout, \
+        f"grain gate failed to catch a doubled cube:\n{v.stdout}"
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0

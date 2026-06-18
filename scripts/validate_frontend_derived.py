@@ -370,6 +370,14 @@ def main():
                    f"facet_type, facet_value, count FROM (SELECT * FROM single UNION ALL SELECT * FROM base)")
             filecube = (f"SELECT filter_source, filter_material, filter_context, filter_object_type, "
                         f"facet_type, facet_value, count FROM {X}")
+            # GRAIN first: EXCEPT below is SET semantics, so a duplicated cube would
+            # pass the symmetric diff. One row per (all filter cols, facet_type,
+            # facet_value) is the contract the explorer relies on. (Codex P3.)
+            xdup = scalar(f"""SELECT COUNT(*) FROM (
+                SELECT filter_source, filter_material, filter_context, filter_object_type,
+                       facet_type, facet_value
+                FROM {X} GROUP BY 1,2,3,4,5,6 HAVING COUNT(*) > 1)""")
+            check("tree_cross_filter grain unique", xdup == 0, f"{xdup} duplicated cube keys")
             mm = scalar(f"SELECT (SELECT COUNT(*) FROM (({ref}) EXCEPT ({filecube}))) "
                         f"+ (SELECT COUNT(*) FROM (({filecube}) EXCEPT ({ref})))")
             check("tree_cross_filter == re-derived self-join (symmetric)", mm == 0,

@@ -3191,7 +3191,19 @@ zoomWatcher = {
         // counts) and no active search (the cube is global, can't be pid-scoped).
         // Any miss/error (incl. cube not yet published) returns false → falls
         // through to the existing baseline / flat-cube / slow paths unchanged.
-        if (bboxSQL === null && !searchIsActive() && !sourceImpossible) {
+        // GATE: only when ALL tree dims are rendered as trees (full tree mode —
+        // the deployed default). In flat mode (?facets=flat) the cube's subtree-
+        // membership semantics would be WRONG for a flat dim (it counts a sample
+        // under ancestor nodes it never directly asserts), and a flat-mode
+        // selection isn't representable in the cube — so we defer entirely to the
+        // flat-cube/slow paths (no flat-count regression). (Codex P1.)
+        // SCOPE NOTE (Codex r2): the degenerate "mixed" state (FACET_TREE on but
+        // one tree failed to render) also fails this gate and falls through to the
+        // pre-cube baseline path — i.e. the SAME behavior as before this cube
+        // existed (no regression). Cross-filtering that transient state is out of
+        // scope; the cube's contract is full-tree-mode + global view + one filter.
+        if (bboxSQL === null && !searchIsActive() && !sourceImpossible
+            && TREE_DIM_KEYS.every(treeActive)) {
             const eff = effectiveSingleFilter();
             if (eff && await applyTreeCubeCounts(eff, dims, myReq)) return;
             if (myReq !== facetCountsReqId) return;

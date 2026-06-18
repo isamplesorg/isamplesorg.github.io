@@ -544,11 +544,11 @@ def main():
     emit("wide_h3", lambda o: build_wide_h3(con, args.wide, o))
 
     # Hierarchy artifacts (#281/#282) — need vocab_labels for the SKOS tree.
-    if want("sample_facet_membership") or want("facet_tree_summaries"):
+    if want("sample_facet_membership") or want("facet_tree_summaries") or want("facet_tree_cross_filter"):
         if not args.vocab_labels:
             # Fail loud if the user EXPLICITLY asked for a hierarchy artifact
             # (Codex) — silently skipping an explicit --only target is wrong.
-            explicit = only & {"sample_facet_membership", "facet_tree_summaries"}
+            explicit = only & {"sample_facet_membership", "facet_tree_summaries", "facet_tree_cross_filter"}
             if explicit:
                 sys.exit(f"FATAL: --only {sorted(explicit)} requires --vocab-labels <vocab_labels.parquet>")
             log("SKIP hierarchy artifacts: pass --vocab-labels <vocab_labels.parquet>", t0)
