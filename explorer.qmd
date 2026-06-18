@@ -1117,15 +1117,23 @@ function facetFilterSQL() {
     // concept NODES → filter via the membership table (which encodes each sample
     // under every ancestor), so a selected parent matches its whole subtree (no
     // client-side descendant expansion). A flat (non-tree) dim filters on facets_v3.
+    const treeClauses = [];   // one "(facet_type='X' AND concept_uri IN(...))" per tree dim
     for (const key of TREE_DIM_KEYS) {
         const sel = treeSelection(key);
         if (sel.length === 0) continue;
         const list = sel.map(s => `'${escSql(s)}'`).join(',');
         if (treeActive(key)) {
-            parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${membership_url}') WHERE facet_type='${key}' AND concept_uri IN (${list}))`);
+            treeClauses.push(`(facet_type='${key}' AND concept_uri IN (${list}))`);
         } else {
             facetsConds.push(`${key} IN (${list})`);
         }
+    }
+    // #293: collapse the tree-dim selections into ONE membership scan rather than
+    // one AND-ed subquery per dim (N full scans → 1 in DuckDB-WASM). AND across dims
+    // is `HAVING COUNT(DISTINCT facet_type) = <#dims>`; OR within a dim is the
+    // `concept_uri IN (...)`. Single-dim collapses to the same one scan as before.
+    if (treeClauses.length > 0) {
+        parts.push(`pid IN (SELECT pid FROM read_parquet('${membership_url}') WHERE ${treeClauses.join(' OR ')} GROUP BY pid HAVING COUNT(DISTINCT facet_type) = ${treeClauses.length})`);
     }
     if (facetsConds.length > 0) {
         parts.push(`pid IN (SELECT DISTINCT pid FROM read_parquet('${facets_url}') WHERE ${facetsConds.join(' AND ')})`);
