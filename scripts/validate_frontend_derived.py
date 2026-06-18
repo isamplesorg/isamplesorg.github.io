@@ -53,6 +53,8 @@ def main():
     ap.add_argument("--tree-summaries", help="facet_tree_summaries parquet (#281/#282); optional")
     ap.add_argument("--membership", help="sample_facet_membership parquet (#281/#282); optional")
     ap.add_argument("--tree-cross-filter", help="facet_tree_cross_filter parquet (#290/#293); optional")
+    ap.add_argument("--node-bits", help="facet_node_bits parquet (#293); optional")
+    ap.add_argument("--masks", help="sample_facet_masks parquet (#293); optional")
     ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
@@ -295,6 +297,8 @@ def main():
     tree = _opt("facet_tree_summaries", "tree_summaries")
     mem = _opt("sample_facet_membership", "membership")
     treexf = _opt("facet_tree_cross_filter", "tree_cross_filter")
+    nodebits = _opt("facet_node_bits", "node_bits")
+    masks = _opt("sample_facet_masks", "masks")
     if tree:
         T = f"read_parquet('{tree}')"
         # parent ≥ child for every edge, every dim (distinct-pid UNION semantics —
@@ -395,6 +399,82 @@ def main():
                        + (SELECT COUNT(*) FROM (SELECT * FROM ts EXCEPT SELECT * FROM cb))""")
                 check("tree_cross_filter baseline == tree_summaries", bmm == 0,
                       f"{bmm} baseline tree rows disagree with facet_tree_summaries")
+
+    # --- #293 bitmask filter artifacts (facet_node_bits + sample_facet_masks) ---
+    # The explorer filters broad multi-tree selections with a columnar bitwise
+    # predicate over sample_facet_masks instead of a 39M-row membership GROUP BY.
+    # These checks prove the masks are SET-IDENTICAL to membership (so the filter
+    # results can't differ from the old path) and node_bits is a clean assignment.
+    if nodebits:
+        NB = f"read_parquet('{nodebits}')"
+        if mem:
+            M = f"read_parquet('{mem}')"
+            # node_bits covers EXACTLY the distinct (facet_type, concept_uri) in membership
+            cov = scalar(f"""SELECT
+                (SELECT COUNT(*) FROM (SELECT DISTINCT facet_type, concept_uri FROM {M}
+                                       EXCEPT SELECT facet_type, concept_uri FROM {NB}))
+              + (SELECT COUNT(*) FROM (SELECT facet_type, concept_uri FROM {NB}
+                                       EXCEPT SELECT DISTINCT facet_type, concept_uri FROM {M}))""")
+            check("node_bits covers exactly membership nodes", cov == 0, f"{cov} node(s) differ from membership")
+        # bit_index dense 0..N-1, unique, and within signed-BIGINT range per dim
+        bad = scalar(f"""SELECT COUNT(*) FROM (
+            SELECT facet_type, COUNT(*) AS n, MIN(bit_index) AS lo, MAX(bit_index) AS hi,
+                   COUNT(DISTINCT bit_index) AS d
+            FROM {NB} GROUP BY facet_type
+            HAVING lo<>0 OR hi<>n-1 OR d<>n OR hi>62)""")
+        check("node_bits: dense unique 0..N-1 per dim (<=62)", bad == 0, f"{bad} dim(s) with a bad bit range")
+    if masks:
+        X = f"read_parquet('{masks}')"
+        mdup = scalar(f"SELECT COUNT(*) FROM (SELECT pid FROM {X} GROUP BY pid HAVING COUNT(*)>1)")
+        check("masks: one row per pid", mdup == 0, f"{mdup} duplicate pids in masks")
+        # build_id must be a single value AND match node_bits (Codex P1): the
+        # explorer enables the mask path only when these agree, so a mismatch here
+        # is a build error that would silently disable the fast path in prod.
+        mbids = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {X}")
+        check("masks: single build_id", mbids == 1, f"{mbids} distinct build_ids in masks (want 1)")
+        if nodebits:
+            nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}')")
+            check("node_bits: single build_id", nb_bid == 1, f"{nb_bid} distinct build_ids in node_bits")
+            # Only compare when both are single-valued, else the scalar subqueries
+            # below return multiple rows and throw (Codex r2). Use MIN/MAX agg so a
+            # multi-valued file degrades to a clean FAIL, not an exception.
+            if nb_bid == 1 and mbids == 1:
+                same = scalar(f"SELECT (SELECT MIN(build_id) FROM read_parquet('{nodebits}')) "
+                              f"= (SELECT MIN(build_id) FROM {X})")
+                check("node_bits/masks build_id match", bool(same),
+                      "build_id differs between node_bits and masks (mixed generations)")
+            else:
+                check("node_bits/masks build_id match", False,
+                      "cannot compare — an artifact has multiple build_ids")
+        if mem and nodebits:
+            M = f"read_parquet('{mem}')"
+            NB = f"read_parquet('{nodebits}')"
+            # SEMANTIC gate: re-derive masks from the WRITTEN membership + node_bits
+            # (independent of the builder's internal ROW_NUMBER) and diff symmetric.
+            ref = (f"WITH nb AS (SELECT facet_type, concept_uri, (1::BIGINT << bit_index) AS bitval FROM {NB}) "
+                   f"SELECT m.pid, "
+                   f"COALESCE(bit_or(CASE WHEN m.facet_type='material' THEN nb.bitval END),0)::BIGINT material_mask, "
+                   f"COALESCE(bit_or(CASE WHEN m.facet_type='context' THEN nb.bitval END),0)::BIGINT context_mask, "
+                   f"COALESCE(bit_or(CASE WHEN m.facet_type='object_type' THEN nb.bitval END),0)::BIGINT object_type_mask "
+                   f"FROM {M} m JOIN nb ON nb.facet_type=m.facet_type AND nb.concept_uri=m.concept_uri GROUP BY m.pid")
+            fil = f"SELECT pid, material_mask, context_mask, object_type_mask FROM {X}"
+            mm = scalar(f"SELECT (SELECT COUNT(*) FROM (({ref}) EXCEPT ({fil}))) + (SELECT COUNT(*) FROM (({fil}) EXCEPT ({ref})))")
+            check("masks == re-derived from membership+node_bits", mm == 0, f"{mm} mask rows disagree")
+            # CROSS-CHECK the actual filter semantics on a real node per dim: the
+            # bitwise predicate must return the SAME pid set as the membership
+            # subquery. Proves the masks are usable as a drop-in, not just equal blobs.
+            for dim in ("material", "context", "object_type"):
+                node = scalar(f"SELECT concept_uri FROM {M} WHERE facet_type='{dim}' "
+                              f"GROUP BY 1 ORDER BY COUNT(*) DESC, 1 LIMIT 1")
+                if node is None:
+                    continue
+                bitval = scalar(f"SELECT (1::BIGINT << bit_index) FROM {NB} WHERE facet_type='{dim}' AND concept_uri='{node}'")
+                col = f"{dim}_mask"
+                d = scalar(f"""WITH a AS (SELECT pid FROM {M} WHERE facet_type='{dim}' AND concept_uri='{node}'),
+                                    b AS (SELECT pid FROM {X} WHERE ({col} & {bitval})<>0)
+                    SELECT (SELECT COUNT(*) FROM (SELECT * FROM a EXCEPT SELECT * FROM b))
+                         + (SELECT COUNT(*) FROM (SELECT * FROM b EXCEPT SELECT * FROM a))""")
+                check(f"masks filter == membership ({dim})", d == 0, f"{d} pids differ for a real {dim} node")
 
     print(f"\n{'CHECK':<44} {'RESULT':<6} DETAIL\n" + "-" * 90)
     ok = True

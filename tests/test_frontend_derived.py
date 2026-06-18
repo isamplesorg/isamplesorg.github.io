@@ -450,6 +450,75 @@ def test_tree_cross_filter_grain_gate_bites(tmp_path):
         f"grain gate failed to catch a doubled cube:\n{v.stdout}"
 
 
+def test_facet_masks_filter_equals_membership(tmp_path):
+    """#293: the bitmask filter must be SET-IDENTICAL to the membership subquery
+    for every tree node, and node_bits must be a dense unique assignment."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    con = duckdb.connect()
+    mem = f"read_parquet('{tmp_path / 't_sample_facet_membership.parquet'}')"
+    nb = f"read_parquet('{tmp_path / 't_facet_node_bits.parquet'}')"
+    masks = f"read_parquet('{tmp_path / 't_sample_facet_masks.parquet'}')"
+    # node_bits dense 0..N-1 per dim, unique
+    bad = con.sql(f"""SELECT COUNT(*) FROM (
+        SELECT facet_type, COUNT(*) n, MIN(bit_index) lo, MAX(bit_index) hi, COUNT(DISTINCT bit_index) d
+        FROM {nb} GROUP BY facet_type HAVING lo<>0 OR hi<>n-1 OR d<>n)""").fetchone()[0]
+    assert bad == 0
+    # for every tree node, bitmask predicate == membership pid set
+    for dim, node in con.sql(f"SELECT DISTINCT facet_type, concept_uri FROM {mem}").fetchall():
+        bitval = con.sql(f"SELECT (1::BIGINT << bit_index) FROM {nb} WHERE facet_type='{dim}' AND concept_uri='{node}'").fetchone()[0]
+        col = f"{dim}_mask"
+        d = con.sql(f"""WITH a AS (SELECT pid FROM {mem} WHERE facet_type='{dim}' AND concept_uri='{node}'),
+                             b AS (SELECT pid FROM {masks} WHERE ({col} & {bitval})<>0)
+            SELECT (SELECT COUNT(*) FROM (SELECT * FROM a EXCEPT SELECT * FROM b))
+                 + (SELECT COUNT(*) FROM (SELECT * FROM b EXCEPT SELECT * FROM a))""").fetchone()[0]
+        assert d == 0, f"{dim} node {node}: bitmask filter != membership ({d} pids differ)"
+
+
+def test_facet_masks_validator_gate_bites(tmp_path):
+    """Corrupting a mask must fail the validator's re-derivation gate."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    masks = str(tmp_path / "t_sample_facet_masks.parquet")
+    con = duckdb.connect(); tmp_m = masks + ".tmp"
+    con.execute(f"""COPY (SELECT pid, material_mask + 1 AS material_mask, context_mask, object_type_mask, build_id
+                   FROM read_parquet('{masks}')) TO '{tmp_m}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_m, masks)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "masks ==" in v.stdout, f"masks gate failed to catch corruption:\n{v.stdout}"
+
+
+def test_facet_masks_build_id_mismatch_caught(tmp_path):
+    """Codex P1.1: a masks file from a different generation than node_bits (different
+    build_id) must fail validation — that mismatch silently disables the fast path."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    masks = str(tmp_path / "t_sample_facet_masks.parquet")
+    con = duckdb.connect(); tmp_m = masks + ".tmp"
+    con.execute(f"""COPY (SELECT pid, material_mask, context_mask, object_type_mask,
+                   'STALE_GENERATION' AS build_id FROM read_parquet('{masks}'))
+                   TO '{tmp_m}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_m, masks)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "build_id match" in v.stdout, \
+        f"build_id mismatch gate failed to catch a stale-generation masks file:\n{v.stdout}"
+
+
+def test_facet_masks_only_builds(tmp_path):
+    """--only sample_facet_masks (and facet_node_bits) must produce the files."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
+                        "--no-manifest", "--vocab-labels", vocab,
+                        "--only", "facet_node_bits,sample_facet_masks"], capture_output=True, text=True)
+    assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
+    assert (tmp_path / "t_facet_node_bits.parquet").exists()
+    assert (tmp_path / "t_sample_facet_masks.parquet").exists()
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0
