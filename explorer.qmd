@@ -1690,19 +1690,35 @@ db = {
 // null and facetFilterSQL falls back to the membership scan — so this is safe to
 // ship before sample_facet_masks / facet_node_bits are published.
 nodeBitsReady = {
+    window.__nodeBits = null;
     try {
         const rows = await db.query(
-            `SELECT facet_type, concept_uri, bit_index FROM read_parquet('${node_bits_url}')`);
+            `SELECT facet_type, concept_uri, bit_index, build_id FROM read_parquet('${node_bits_url}')`);
         const map = { material: new Map(), context: new Map(), object_type: new Map() };
+        let nbBuild = null;
         for (const r of rows) {
             if (map[r.facet_type]) map[r.facet_type].set(r.concept_uri, Number(r.bit_index));
+            nbBuild = r.build_id;
         }
-        // Only advertise readiness if every tree dim actually got bits.
-        const ok = ['material', 'context', 'object_type'].every(k => map[k].size > 0);
-        window.__nodeBits = ok ? map : null;
-        return ok;
+        const haveBits = ['material', 'context', 'object_type'].every(k => map[k].size > 0);
+        if (!haveBits) return false;
+        // Codex P1.1 + P1.2: PREFLIGHT the masks file AND require its build_id to
+        // match node_bits. This proves masks is present/readable (else the mask
+        // query path would fail with no retry) and that both artifacts are from the
+        // SAME generation (else a stale-cached masks file would map bits wrong).
+        // Only then advertise readiness; otherwise facetFilterSQL uses membership.
+        const mrows = await db.query(
+            `SELECT DISTINCT build_id FROM read_parquet('${masks_url}')`);
+        const maskBuilds = mrows.map(r => r.build_id);
+        if (maskBuilds.length !== 1 || maskBuilds[0] !== nbBuild) {
+            console.warn('masks/node_bits build_id mismatch or missing; using membership fallback',
+                         { nbBuild, maskBuilds });
+            return false;
+        }
+        window.__nodeBits = map;
+        return true;
     } catch (err) {
-        console.warn('node_bits load failed; facetFilterSQL will use the membership fallback:', err);
+        console.warn('node_bits/masks preflight failed; facetFilterSQL will use the membership fallback:', err);
         window.__nodeBits = null;
         return false;
     }

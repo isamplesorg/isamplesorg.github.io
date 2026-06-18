@@ -485,7 +485,19 @@ def build_facet_tree_cross_filter(con, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
-def build_facet_node_bits(con, out):
+def node_set_build_id(con):
+    # #293 (Codex P1): a stable fingerprint of the tree node SET. Bit assignment is
+    # positional (ROW_NUMBER over sorted concept_uri), so it shifts if the node set
+    # changes between builds. Embedding this id in BOTH node_bits and masks lets the
+    # explorer refuse the mask path unless the two artifacts are from the SAME
+    # generation (guards against a stale-cached masks file paired with fresh bits).
+    return con.sql("""
+        SELECT md5(COALESCE(string_agg(facet_type || ':' || concept_uri, '|'
+                            ORDER BY facet_type, concept_uri), ''))
+        FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)""").fetchone()[0]
+
+
+def build_facet_node_bits(con, out, build_id):
     # #293: authoritative concept_uri -> bit_index assignment per tree dim. The
     # explorer loads this to turn a node selection into a bitmask and filter
     # sample_facet_masks with a cheap columnar bitwise predicate (replacing the
@@ -504,13 +516,14 @@ def build_facet_node_bits(con, out):
         raise SystemExit(f"FATAL: tree dim(s) exceed {MASK_MAX_BITS} nodes — bitmask overflow: {over}")
     con.execute(f"""COPY (
         SELECT facet_type, concept_uri,
-               (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1)::INTEGER AS bit_index
+               (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1)::INTEGER AS bit_index,
+               '{build_id}' AS build_id
         FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)
         ORDER BY facet_type, concept_uri
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
-def build_sample_facet_masks(con, out):
+def build_sample_facet_masks(con, out, build_id):
     # #293: one row per located pid that has ANY tree membership; a BIGINT mask
     # per tree dim where bit (1<<bit_index) is set iff the pid is a member of that
     # node (membership already encodes the ancestor closure, so a parent node's
@@ -527,7 +540,8 @@ def build_sample_facet_masks(con, out):
         SELECT m.pid,
           COALESCE(bit_or(CASE WHEN m.facet_type='material'    THEN nb.bitval END), 0)::BIGINT AS material_mask,
           COALESCE(bit_or(CASE WHEN m.facet_type='context'     THEN nb.bitval END), 0)::BIGINT AS context_mask,
-          COALESCE(bit_or(CASE WHEN m.facet_type='object_type' THEN nb.bitval END), 0)::BIGINT AS object_type_mask
+          COALESCE(bit_or(CASE WHEN m.facet_type='object_type' THEN nb.bitval END), 0)::BIGINT AS object_type_mask,
+          '{build_id}' AS build_id
         FROM membership m JOIN nb ON nb.facet_type=m.facet_type AND nb.concept_uri=m.concept_uri
         GROUP BY m.pid
         ORDER BY m.pid
@@ -613,9 +627,13 @@ def main():
             emit("facet_tree_summaries", lambda o: build_facet_tree_summaries(con, o))
             # #290/#293 cross-filter cube — needs membership (above) + samp_geo (source).
             emit("facet_tree_cross_filter", lambda o: build_facet_tree_cross_filter(con, o))
-            # #293 bitmask filter artifacts — needs membership (above).
-            emit("facet_node_bits", lambda o: build_facet_node_bits(con, o))
-            emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o))
+            # #293 bitmask filter artifacts — needs membership (above). node_bits
+            # and masks share a node-set build_id so the explorer only uses the mask
+            # path when the two are from the same generation (Codex P1).
+            if want("facet_node_bits") or want("sample_facet_masks"):
+                _bid = node_set_build_id(con)
+                emit("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
+                emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o, _bid))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)

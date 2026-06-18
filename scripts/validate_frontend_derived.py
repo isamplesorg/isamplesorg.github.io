@@ -427,6 +427,18 @@ def main():
         X = f"read_parquet('{masks}')"
         mdup = scalar(f"SELECT COUNT(*) FROM (SELECT pid FROM {X} GROUP BY pid HAVING COUNT(*)>1)")
         check("masks: one row per pid", mdup == 0, f"{mdup} duplicate pids in masks")
+        # build_id must be a single value AND match node_bits (Codex P1): the
+        # explorer enables the mask path only when these agree, so a mismatch here
+        # is a build error that would silently disable the fast path in prod.
+        mbids = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {X}")
+        check("masks: single build_id", mbids == 1, f"{mbids} distinct build_ids in masks (want 1)")
+        if nodebits:
+            nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}')")
+            check("node_bits: single build_id", nb_bid == 1, f"{nb_bid} distinct build_ids in node_bits")
+            same = scalar(f"SELECT (SELECT DISTINCT build_id FROM read_parquet('{nodebits}')) "
+                          f"= (SELECT DISTINCT build_id FROM {X})")
+            check("node_bits/masks build_id match", bool(same),
+                  "build_id differs between node_bits and masks (mixed generations)")
         if mem and nodebits:
             M = f"read_parquet('{mem}')"
             NB = f"read_parquet('{nodebits}')"

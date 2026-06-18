@@ -483,11 +483,28 @@ def test_facet_masks_validator_gate_bites(tmp_path):
     assert _build_tree(tmp_path, wide, vocab).returncode == 0
     masks = str(tmp_path / "t_sample_facet_masks.parquet")
     con = duckdb.connect(); tmp_m = masks + ".tmp"
-    con.execute(f"""COPY (SELECT pid, material_mask + 1 AS material_mask, context_mask, object_type_mask
+    con.execute(f"""COPY (SELECT pid, material_mask + 1 AS material_mask, context_mask, object_type_mask, build_id
                    FROM read_parquet('{masks}')) TO '{tmp_m}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_m, masks)
     v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
                        capture_output=True, text=True)
     assert v.returncode != 0 and "masks ==" in v.stdout, f"masks gate failed to catch corruption:\n{v.stdout}"
+
+
+def test_facet_masks_build_id_mismatch_caught(tmp_path):
+    """Codex P1.1: a masks file from a different generation than node_bits (different
+    build_id) must fail validation — that mismatch silently disables the fast path."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_tree_fixture(wide, vocab)
+    assert _build_tree(tmp_path, wide, vocab).returncode == 0
+    masks = str(tmp_path / "t_sample_facet_masks.parquet")
+    con = duckdb.connect(); tmp_m = masks + ".tmp"
+    con.execute(f"""COPY (SELECT pid, material_mask, context_mask, object_type_mask,
+                   'STALE_GENERATION' AS build_id FROM read_parquet('{masks}'))
+                   TO '{tmp_m}' (FORMAT PARQUET)"""); con.close(); os.replace(tmp_m, masks)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "build_id match" in v.stdout, \
+        f"build_id mismatch gate failed to catch a stale-generation masks file:\n{v.stdout}"
 
 
 def test_facet_masks_only_builds(tmp_path):
