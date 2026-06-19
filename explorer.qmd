@@ -1210,14 +1210,19 @@ function wantFilteredClusters() {
 // again AFTER the await so a filter change mid-query can't mislabel the cache
 // (Codex P0.2/P1.3). Deliberately NOT the SQL text: masks becoming ready can
 // change the SQL strategy without changing results.
-function desiredClusterSig() {
+function clusterSig(kind) {
     return JSON.stringify({
-        kind: wantFilteredClusters() ? 'filtered' : 'summary',
+        kind,   // 'filtered' | 'summary' — explicit so a caller can label what it
+                // ACTUALLY loaded, not what the live state currently wants
         sources: getActiveSources().slice().sort(),
         material: treeSelection('material').slice().sort(),
         context: treeSelection('context').slice().sort(),
         objectType: treeSelection('object_type').slice().sort(),
     });
+}
+// The signature for what the cluster layer SHOULD contain right now.
+function desiredClusterSig() {
+    return clusterSig(wantFilteredClusters() ? 'filtered' : 'summary');
 }
 
 // #300: the filtered-cluster aggregation off samples_map_lite (masks-backed via
@@ -2066,11 +2071,13 @@ phase1 = {
     // Cache cluster data for viewport counting
     viewer._clusterData = Array.from(data);
     viewer._clusterTotal = { clusters: data.length, samples: totalSamples };
-    // #300: phase1 loads the pre-aggregated summary (facet-blind) clusters, so
-    // label the cache with the current summary/source/tree signature. Without
-    // this seed, the first post-boot cluster reconcile couldn't tell whether the
-    // initial layer already matched the desired filter state (Codex P1.3).
-    viewer._clusterFilterSig = desiredClusterSig();
+    // #300: phase1 ALWAYS loads the pre-aggregated summary (facet-blind) clusters,
+    // so label the cache 'summary' explicitly — desiredClusterSig() could say
+    // 'filtered' if readiness + facet hydration already resolved, which would let
+    // the boot/readiness reconcile mistake this facet-blind layer for filtered
+    // data (Codex round-2 P1.3). Without this seed the first reconcile couldn't
+    // tell whether the initial layer matched the desired filter state.
+    viewer._clusterFilterSig = clusterSig('summary');
 
     performance.mark('p1-end');
     performance.measure('p1', 'p1-start', 'p1-end');
@@ -2832,6 +2839,16 @@ zoomWatcher = {
     // must use the return value rather than treating a normal `await` return
     // as success.
     let loadResGen = 0;  // generation counter to discard stale results
+
+    // #300: cancel any in-flight cluster load WITHOUT starting a successor. Bumping
+    // loadResGen alone makes the in-flight loadRes discard its result, but that
+    // call's `finally` only clears `loading` when ITS generation is still current
+    // (it no longer is) — so `loading` would stay true forever and every later
+    // camera handler's `!loading` reload guard would be wedged. Clear it here
+    // (Codex round-2 P1.2). Used when a transition supersedes clusters without a
+    // replacement load (entering point mode; a fresh hashchange).
+    const invalidateClusterLoads = () => { ++loadResGen; loading = false; };
+
     const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
         loading = true;
@@ -4153,8 +4170,9 @@ zoomWatcher = {
         if (computeTargetMode(h) === 'point') {
             // Invalidate any in-flight cluster load so a stale loadRes can't paint
             // clusters/stats under point mode — a search activation may start no
-            // newer loadRes of its own (Codex P1.4).
-            loadResGen++;
+            // newer loadRes of its own (Codex P1.4). Use the helper so `loading`
+            // is cleared too (P1.2).
+            invalidateClusterLoads();
             if (getMode() !== 'point') await enterPointMode(false);
             else await loadViewportSamples();            // re-filter the dots in place
         } else {
@@ -4176,6 +4194,11 @@ zoomWatcher = {
 
     async function handleFacetFilterChange() {
         busyAcquire();
+        // #300: capture the freshness token at ENTRY (like the source handler), so
+        // a second facet toggle during the reconcile await invalidates this run's
+        // later selection revalidation instead of hydrating stale cluster metadata
+        // (Codex round-2 P1.8).
+        const isStale = freshSelectionToken(viewer);
         try {
             syncFacetNote();
             writeQueryState();
@@ -4193,8 +4216,8 @@ zoomWatcher = {
             // can empty the cell (then drop the selection) or change its filtered
             // count/dominant_source. Revalidate via the (now filter-aware)
             // fetchClusterByH3, mirroring the source-filter handler (Codex P1.8).
-            // Guarded by a freshness token so a rapid second toggle wins.
-            const isStale = freshSelectionToken(viewer);
+            // Guarded by the entry-captured freshness token so a rapid second
+            // toggle wins.
             const sel = viewer._globeState;
             if (sel.selectedH3) {
                 const meta = await fetchClusterByH3(sel.selectedH3);
@@ -4266,7 +4289,12 @@ zoomWatcher = {
     setTimeout(() => {
         if (window.__filteredClustersReady === true && hasFacetFilters()) {
             const h = viewer.camera.positionCartographic.height;
-            if (computeTargetMode(h) !== getMode()) reconcileGlobeForFilters();
+            // Reconcile if the mode is wrong OR the cached cluster layer is still
+            // summary (facet-blind) data — at world zoom both modes read 'cluster'
+            // yet the layer needs to become FILTERED (Codex round-2 P1.4).
+            if (computeTargetMode(h) !== getMode() || viewer._clusterFilterSig !== desiredClusterSig()) {
+                reconcileGlobeForFilters();
+            }
         }
     }, 0);
 
@@ -4482,7 +4510,14 @@ zoomWatcher = {
             const applied = needLoad
                 ? await loadRes(res, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[res])
                 : true;
-            if (applied) exitPointMode();
+            if (applied) {
+                exitPointMode();
+                // An overlapping settle may have moved the camera below
+                // ENTER_POINT_ALT during the load await; chase so we re-enter
+                // point mode instead of stranding the user in clusters at point
+                // altitude (Codex round-2 P1.6 — the established invariant).
+                await tryEnterPointModeIfNeeded();
+            }
             return;
         }
         // In point mode and at point-mode altitude: refresh samples in
@@ -4667,6 +4702,11 @@ zoomWatcher = {
         // Bump the selection generation BEFORE any early-return so even
         // hashchanges that lack lat/lng invalidate stale async work.
         const isStale = freshSelectionToken(viewer);
+        // #300: also invalidate any in-flight cluster load from a PRIOR
+        // hashchange's restore callback, so it discards on its generation check
+        // instead of replacing points/cache/stats/currentRes for the superseded
+        // hash before the late isStale() guard fires (Codex round-2 P1.7).
+        invalidateClusterLoads();
         const state = readHash();
         if (state.lat == null || state.lng == null) return;
 
@@ -5954,9 +5994,19 @@ zoomWatcher = {
     const bootAlt = ih.alt != null ? ih.alt : viewer.camera.positionCartographic.height;
     const bootTarget = computeTargetMode(bootAlt, ih.mode === 'point' ? 'point' : 'cluster');
     if (bootTarget === 'point') {
-        // pushHistory: false — boot should reconcile state without adding
-        // a history entry (issue #207 item 3).
-        await tryEnterPointModeIfNeeded({ pushHistory: false });
+        if (getMode() !== 'point') {
+            // tryEnterPointModeIfNeeded() refuses at alt >= ENTER_POINT_ALT, so it
+            // can't restore an explicit saved point view in the hysteresis band,
+            // nor force point for a high-altitude facet/search when filtered
+            // clusters aren't available. Enter directly for those forced/saved
+            // cases; reserve the gentle helper (cold-cache messaging) for pure
+            // altitude-driven entry below ENTER (Codex round-2 P1.5).
+            if (searchIsActive() || hasFacetFilters() || ih.mode === 'point') {
+                await enterPointMode(false);  // pushHistory:false (#207 item 3)
+            } else {
+                await tryEnterPointModeIfNeeded({ pushHistory: false });
+            }
+        }
     } else if (wantFilteredClusters() && viewer._clusterFilterSig !== desiredClusterSig()) {
         // phase1 loaded UNFILTERED summary clusters, but a facet is active at
         // cluster altitude — reload the FILTERED clusters so the cold-boot world
@@ -5965,20 +6015,12 @@ zoomWatcher = {
         await loadRes(bootRes, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[bootRes]);
     }
 
-    // #267: a shared `?material=`/`?context=`/`?object_type=` deep link must
-    // force point mode like `?search=` does — cluster H3 summaries can't honor
-    // those facets. The altitude-gated trigger above won't promote a high-alt
-    // facet deep link, so enter point mode directly. We read the URL params
-    // (not the hydrated checkboxes) so this is independent of facet-loader
-    // timing; the latch points (targetMode / moveEnd / wantsPoint) keep it
-    // pinned once the checkboxes hydrate.
-    const _urlHasFacets = ['material', 'context', 'object_type'].some(p => {
-        const v = new URLSearchParams(location.search).get(p);
-        return v != null && v.trim() !== '';
-    });
-    if (_urlHasFacets && getMode() !== 'point') {
-        await enterPointMode(false);
-    }
+    // #300: the dedicated `?material=`/`?context=`/`?object_type=` boot
+    // force-point block was removed here — computeTargetMode() (driven above
+    // through `bootTarget`) now owns the facet boot decision: point below EXIT
+    // (or when filtered clusters aren't ready), FILTERED clusters above. Keeping
+    // the old unconditional enterPointMode() would immediately undo the
+    // filtered-cluster boot load (Codex round-2 P0).
 
     // #233 phase 1: hydrate heatmap overlay from `heatmap=1` URL param.
     // Reported by RY 2026-05-27 on PR #240 staging — toggle state was
