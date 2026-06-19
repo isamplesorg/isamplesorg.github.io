@@ -179,7 +179,7 @@ def test_semantic_gate_catches_corruption_that_internal_checks_miss(tmp_path):
     con = duckdb.connect()
     tmp_ml = ml + ".tmp"
     con.execute(f"""COPY (SELECT pid, label, source, 0.0::DOUBLE AS latitude, longitude,
-                   place_name, result_time, h3_res8, h3_res8_hex FROM read_parquet('{ml}'))
+                   place_name, result_time, h3_res4, h3_res6, h3_res8, h3_res8_hex FROM read_parquet('{ml}'))
                    TO '{tmp_ml}' (FORMAT PARQUET)""")
     con.close(); os.replace(tmp_ml, ml)
 
