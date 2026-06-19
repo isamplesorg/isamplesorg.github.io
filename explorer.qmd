@@ -1738,10 +1738,15 @@ db = {
     // (filteredClusterSQL, reading samples_map_lite + sample_facet_masks) issued
     // while boot's query storm is still in flight never resolves, even though the
     // identical query completes in ~2.5s once the connection is idle. Serialize
-    // EVERY query through a FIFO chain so at most one runs at a time. SQL queries
-    // are atomic (none awaits another mid-execution), so chaining can't deadlock,
-    // and the latency cost is small (boot queries are individually fast). This is
-    // the single-point fix; without it #300's filtered clusters never load.
+    // queries through a FIFO chain so at most one runs at a time.
+    //
+    // Scope: this wraps `.query()`. Every data call in this page goes through
+    // `db.query` (and `db.sql`, which calls `.query` internally) — verified — so
+    // that covers us. It does NOT serialize `queryStream`/`queryRow` (which open
+    // their own connection) or raw `db._db.connect()`; do not introduce those
+    // without serializing them too, or the deadlock returns. SQL queries are
+    // atomic (none awaits another mid-execution) so the chain can't re-enter; the
+    // one hazard is a query that never settles, which would stall the whole queue.
     const origQuery = instance.query.bind(instance);
     let queryChain = Promise.resolve();
     instance.query = (...args) => {
@@ -4192,6 +4197,11 @@ zoomWatcher = {
             if (getMode() !== 'point') await enterPointMode(false);
             else await loadViewportSamples();            // re-filter the dots in place
         } else {
+            // Dedup: if we're already in cluster mode showing the right filtered
+            // layer, there's nothing to do. Makes redundant reconciles (boot +
+            // readiness hook + setTimeout0 all firing) cheap no-ops instead of
+            // re-running the heavy filtered aggregation (Codex serialization-review).
+            if (getMode() === 'cluster' && viewer._clusterFilterSig === desiredClusterSig()) return;
             // Target is clusters at this altitude. Load FIRST (into the hidden h3
             // layer while still in point mode), and only drop point mode if the
             // load applied — so a failed/superseded filtered load never exposes
@@ -4299,11 +4309,16 @@ zoomWatcher = {
     // invokes this hook; if it resolved BEFORE this watcher registered the hook,
     // the deferred guarded check below catches it (and no-ops if boot already set
     // the right mode). Any later camera/moveEnd settle is a further backstop.
+    // NB: no `!loading` guard here — db.query is serialized (see the `db` cell),
+    // so a redundant reconcile can't deadlock; reconcileGlobeForFilters early-exits
+    // when the cluster layer already matches the desired filter. A `!loading` guard
+    // would be LOSSY: readiness arriving while an older unfiltered load is in flight
+    // would skip the only reconcile signal permanently (Codex serialization-review P1).
     window.__onFilteredClustersReady = () => {
-        if (hasFacetFilters() && !loading) reconcileGlobeForFilters();
+        if (hasFacetFilters()) reconcileGlobeForFilters();
     };
     setTimeout(() => {
-        if (window.__filteredClustersReady === true && hasFacetFilters() && !loading) {
+        if (window.__filteredClustersReady === true && hasFacetFilters()) {
             const h = viewer.camera.positionCartographic.height;
             // Reconcile if the mode is wrong OR the cached cluster layer is still
             // summary (facet-blind) data — at world zoom both modes read 'cluster'
