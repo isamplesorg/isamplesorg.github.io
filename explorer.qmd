@@ -1113,7 +1113,12 @@ function syncFacetNote() {
     const active = hasFacetFilters();
     const inCluster = (typeof viewer !== 'undefined') && viewer._globeState?.mode === 'cluster';
     const heatOn = document.getElementById('heatmapToggle')?.checked === true;
-    el.style.display = (active && inCluster && !heatOn) ? 'block' : 'none';
+    // #300: once filtered clusters are ready, cluster mode IS filter-aware (the
+    // h3 layer is aggregated off the filtered set), so the "filter only takes
+    // effect at neighborhood zoom" apology is false — hide it, same as the
+    // heatmap conjunct above.
+    const filteredClustersOk = (typeof window !== 'undefined') && window.__filteredClustersReady === true;
+    el.style.display = (active && inCluster && !heatOn && !filteredClustersOk) ? 'block' : 'none';
 }
 
 // Returns a portable predicate fragment (no outer-table alias dependency)
@@ -4183,6 +4188,27 @@ zoomWatcher = {
             // cluster mode, since the filter set changed).
             await reconcileGlobeForFilters();
             refreshFacetCounts();
+
+            // #300: a selected cluster card may now be stale — the facet change
+            // can empty the cell (then drop the selection) or change its filtered
+            // count/dominant_source. Revalidate via the (now filter-aware)
+            // fetchClusterByH3, mirroring the source-filter handler (Codex P1.8).
+            // Guarded by a freshness token so a rapid second toggle wins.
+            const isStale = freshSelectionToken(viewer);
+            const sel = viewer._globeState;
+            if (sel.selectedH3) {
+                const meta = await fetchClusterByH3(sel.selectedH3);
+                if (isStale()) return;
+                if (!meta) {
+                    sel.selectedH3 = null;
+                    updateClusterCard(null);
+                    const sampEl = document.getElementById('samplesSection');
+                    if (sampEl) sampEl.innerHTML = '';
+                    writeGlobeHash(viewer, { force: true });
+                } else {
+                    await hydrateClusterUI(meta, isStale);
+                }
+            }
             await new Promise(r => setTimeout(r, 300));
         } finally {
             busyRelease();
@@ -4493,7 +4519,25 @@ zoomWatcher = {
             // globe, so hydrating its side panel would mismatch the user's view
             // (and would inconsistently combine unfiltered cluster card with
             // source-filtered nearby-samples in hydrateClusterUI).
-            const result = await db.query(`
+            //
+            // #300: when a facet is active and filtered clusters are ready, the
+            // visible cell is the FILTERED aggregate, so hydrate from the same
+            // single-cell aggregation off lite (count / center / dominant_source
+            // over the filtered subset) — otherwise the card would show the cell's
+            // full unfiltered count and could even resolve a cell that the filter
+            // excludes entirely (Codex P1.8). Empty under the filter → sample_count
+            // 0 → treated as absent below.
+            const result = await db.query(wantFilteredClusters() ? `
+                WITH base AS (
+                    SELECT source, latitude, longitude FROM read_parquet('${lite_url}')
+                    WHERE h3_res${res} = CAST('${decimal}' AS UBIGINT)${sourceFilterSQL('source')}${facetFilterSQL()}
+                )
+                SELECT (SELECT COUNT(*) FROM base)::INTEGER AS sample_count,
+                       (SELECT ROUND(AVG(latitude), 6) FROM base) AS center_lat,
+                       (SELECT ROUND(AVG(longitude), 6) FROM base) AS center_lng,
+                       (SELECT source FROM base GROUP BY source ORDER BY COUNT(*) DESC, source ASC LIMIT 1) AS dominant_source,
+                       (SELECT COUNT(DISTINCT source) FROM base)::INTEGER AS source_count
+            ` : `
                 SELECT sample_count, center_lat, center_lng, dominant_source, source_count
                 FROM read_parquet('${url}')
                 WHERE h3_cell = CAST('${decimal}' AS UBIGINT)
@@ -4502,6 +4546,9 @@ zoomWatcher = {
             `);
             if (!result || result.length === 0) return null;
             const r = result[0];
+            // #300: filtered aggregation always returns one row; a cell empty under
+            // the active filter has sample_count 0 → treat as absent.
+            if (!r.sample_count) return null;
             return {
                 // The validated input `lower` is the canonical hex; round-tripping
                 // r.h3_cell would lose precision (DuckDB-WASM returns UBIGINT as
@@ -4641,14 +4688,30 @@ zoomWatcher = {
         // through a `#alt=8000` URL with no `mode=point` would exit point
         // mode here even though boot would have entered it.
         viewer._suppressTimer = setTimeout(async () => {
-            viewer._suppressHashWrite = false;
+            viewer._suppressHashWrite = false;   // release first (unconditional, as before)
+            if (isStale()) return;               // a newer hashchange superseded us (P1.6)
             const s = readHash();
-            // A1 (#234 Step 4): an active search forces point mode regardless
-            // of the restored altitude, so the back/forward globe state stays
-            // coherent with the (still-filtered) table/legend.
-            const wantsPoint = filtersForcePoint() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
-            if (wantsPoint && getMode() !== 'point') await enterPointMode(false);
-            else if (!wantsPoint && getMode() === 'point') exitPointMode(false);
+            // #300/#234 C3: resolve the restored mode through computeTargetMode.
+            // Search still forces point; a facet at world zoom now restores to
+            // FILTERED clusters instead of point. The hash encodes point
+            // explicitly and cluster by omission, so pass `s.mode` as the
+            // hysteresis latch — the band must resolve to the SAVED view, not the
+            // one being left (Codex P1.7). (Facets live in the query string, not
+            // the hash, so they're unchanged across this hash-only nav.)
+            const restoredAlt = s.alt != null ? s.alt : viewer.camera.positionCartographic.height;
+            const target = computeTargetMode(restoredAlt, s.mode === 'point' ? 'point' : 'cluster');
+            if (target === 'point') {
+                if (getMode() !== 'point') await enterPointMode(false);
+            } else {
+                // Clusters at the restored altitude. Load FIRST (filter-aware), then
+                // drop point mode only if it applied — no stale flash (P1.10) — and
+                // re-check freshness after the await (P1.6).
+                const res = restoredAlt > 3000000 ? 4 : restoredAlt > 300000 ? 6 : 8;
+                const wasPoint = getMode() === 'point';
+                const applied = await loadRes(res, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[res]);
+                if (isStale()) return;
+                if (applied && wasPoint) exitPointMode(false);
+            }
         }, 2000);
 
         // Handle pid / h3 selection (sample mode wins if both present — see
@@ -5882,10 +5945,24 @@ zoomWatcher = {
     // any URL whose altitude says it should. `tryEnterPointModeIfNeeded()`
     // short-circuits if alt >= ENTER_POINT_ALT or we're already in point
     // mode, so this is a no-op for cluster deep-links at cluster altitude.
-    if (ih.mode === 'point' || (ih.alt != null && ih.alt < ENTER_POINT_ALT)) {
+    // #300: resolve the boot mode through computeTargetMode so a cold boot with a
+    // facet active behaves like the live/hashchange paths — point below EXIT
+    // (or whenever filtered clusters aren't ready), FILTERED clusters above.
+    // The latch is the saved hash mode (point explicit, cluster by omission), so
+    // the hysteresis band restores the saved view (Codex P1.7). This still enters
+    // point for the #203 loophole (alt < ENTER without mode=point → point).
+    const bootAlt = ih.alt != null ? ih.alt : viewer.camera.positionCartographic.height;
+    const bootTarget = computeTargetMode(bootAlt, ih.mode === 'point' ? 'point' : 'cluster');
+    if (bootTarget === 'point') {
         // pushHistory: false — boot should reconcile state without adding
         // a history entry (issue #207 item 3).
         await tryEnterPointModeIfNeeded({ pushHistory: false });
+    } else if (wantFilteredClusters() && viewer._clusterFilterSig !== desiredClusterSig()) {
+        // phase1 loaded UNFILTERED summary clusters, but a facet is active at
+        // cluster altitude — reload the FILTERED clusters so the cold-boot world
+        // view matches the filter (Codex P1.7).
+        const bootRes = bootAlt > 3000000 ? 4 : bootAlt > 300000 ? 6 : 8;
+        await loadRes(bootRes, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[bootRes]);
     }
 
     // #267: a shared `?material=`/`?context=`/`?object_type=` deep link must
