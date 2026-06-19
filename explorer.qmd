@@ -763,7 +763,13 @@ R2_BASE = (() => {
 h3_res4_url = `${R2_BASE}/isamples_202608_h3_summary_res4.parquet`
 h3_res6_url = `${R2_BASE}/isamples_202608_h3_summary_res6.parquet`
 h3_res8_url = `${R2_BASE}/isamples_202608_h3_summary_res8.parquet`
-lite_url = `${R2_BASE}/isamples_202608_samples_map_lite.parquet`
+// #300: the _v2 lite carries h3_res4/h3_res6 (for in-browser filtered-cluster
+// aggregation). A new filename rather than overwriting the original keeps the
+// immutable-cache contract intact (isamples_YYYYMM_*.parquet is served
+// immutable/1-yr) — every visitor fetches fresh data, no cache purge. The next
+// generation builds res4/res6 into the canonical name natively (build change),
+// so this _v2 suffix is a one-off retrofit for 202608.
+lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v2.parquet`
 // Explicit versioned wide (#272: OC concept-enriched — popups read material/
 // object-type from this file). The stable alias `current/wide.parquet` still
 // points at the previous wide until the production cutover flips the manifest;
