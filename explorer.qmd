@@ -1191,6 +1191,55 @@ function facetFilterSQL() {
     return ' AND ' + parts.map(p => `(${p})`).join(' AND ');
 }
 
+// #300: true when a facet filter is active AND lite carries h3_res4/res6, so the
+// cluster layer should be aggregated from the FILTERED sample set instead of the
+// pre-aggregated (facet-blind) summary parquets. Top-level so both phase1 and the
+// zoom watcher's loadRes can use it.
+function wantFilteredClusters() {
+    return hasFacetFilters() && (typeof window !== 'undefined' && window.__filteredClustersReady === true);
+}
+
+// #300: a STABLE, SEMANTIC description of what the current cluster layer should
+// contain — data kind (filtered vs pre-aggregated summary), the active ?sources=
+// set, and the tree facet selections. Captured BEFORE a cluster load and compared
+// again AFTER the await so a filter change mid-query can't mislabel the cache
+// (Codex P0.2/P1.3). Deliberately NOT the SQL text: masks becoming ready can
+// change the SQL strategy without changing results.
+function desiredClusterSig() {
+    return JSON.stringify({
+        kind: wantFilteredClusters() ? 'filtered' : 'summary',
+        sources: getActiveSources().slice().sort(),
+        material: treeSelection('material').slice().sort(),
+        context: treeSelection('context').slice().sort(),
+        objectType: treeSelection('object_type').slice().sort(),
+    });
+}
+
+// #300: the filtered-cluster aggregation off samples_map_lite (masks-backed via
+// facetFilterSQL). Same columns + grain + INTEGER casts as the pre-aggregated h3
+// summary parquet (build_h3_summary), so the loadRes render/cache/stats path is
+// unchanged. dominant_source is recomputed over the FILTERED subset (source-
+// filtered at the row level), the coherent meaning when a filter is active.
+function filteredClusterSQL(res) {
+    return `
+        WITH base AS (
+            SELECT h3_res${res} AS cell, source, latitude, longitude
+            FROM read_parquet('${lite_url}')
+            WHERE h3_res${res} IS NOT NULL${sourceFilterSQL('source')}${facetFilterSQL()}
+        ),
+        sc AS (SELECT cell, source, COUNT(*) AS c FROM base GROUP BY cell, source),
+        dom AS (SELECT cell, source AS dominant_source,
+                ROW_NUMBER() OVER (PARTITION BY cell ORDER BY c DESC, source ASC) AS rn FROM sc),
+        agg AS (SELECT cell, COUNT(*)::INTEGER AS sample_count,
+                ROUND(AVG(latitude), 6) AS center_lat, ROUND(AVG(longitude), 6) AS center_lng,
+                COUNT(DISTINCT source)::INTEGER AS source_count
+                FROM base GROUP BY cell)
+        SELECT CAST(agg.cell AS VARCHAR) AS h3_cell_dec, agg.sample_count,
+               agg.center_lat, agg.center_lng, dom.dominant_source, agg.source_count
+        FROM agg JOIN dom ON dom.cell = agg.cell AND dom.rn = 1
+    `;
+}
+
 // Shared viewport-padding factor. The samples table (PR #219), the
 // point-mode sample loader, and the cluster-mode "Samples in View"
 // stat (issue #221 round 2) all expand the raw view rectangle by this
@@ -1728,6 +1777,35 @@ nodeBitsReady = {
 }
 ```
 
+```{ojs}
+//| echo: false
+//| output: false
+// #300: preflight whether samples_map_lite carries h3_res4/h3_res6. The explorer
+// aggregates FILTERED clusters on the fly off lite (GROUP BY the res-appropriate
+// h3 column + the #293 mask predicate) so a broad facet filter at world zoom
+// renders as fast filtered clusters instead of capped raw points. The hard
+// requirement is ONLY that lite has res4/res6 (masks readiness is orthogonal:
+// facetFilterSQL() self-falls-back to the membership scan when masks absent —
+// that affects speed, not correctness). Best-effort: on ANY failure the flag
+// stays false and computeTargetMode keeps today's point-mode behavior, so this
+// is safe to ship BEFORE the lite republish. When readiness flips true after a
+// facet is already active, window.__onFilteredClustersReady (set by the zoom
+// watcher) reconciles the globe.
+filteredClustersReady = {
+    window.__filteredClustersReady = false;
+    try {
+        await db.query(`SELECT h3_res4, h3_res6 FROM read_parquet('${lite_url}') LIMIT 1`);
+        window.__filteredClustersReady = true;
+        if (typeof window.__onFilteredClustersReady === 'function') window.__onFilteredClustersReady();
+        return true;
+    } catch (err) {
+        console.warn('samples_map_lite lacks h3_res4/h3_res6; #300 filtered clusters disabled (point-mode fallback):', err);
+        window.__filteredClustersReady = false;
+        return false;
+    }
+}
+```
+
 
 ```{ojs}
 //| echo: false
@@ -1983,6 +2061,11 @@ phase1 = {
     // Cache cluster data for viewport counting
     viewer._clusterData = Array.from(data);
     viewer._clusterTotal = { clusters: data.length, samples: totalSamples };
+    // #300: phase1 loads the pre-aggregated summary (facet-blind) clusters, so
+    // label the cache with the current summary/source/tree signature. Without
+    // this seed, the first post-boot cluster reconcile couldn't tell whether the
+    // initial layer already matched the desired filter state (Codex P1.3).
+    viewer._clusterFilterSig = desiredClusterSig();
 
     performance.mark('p1-end');
     performance.measure('p1', 'p1-start', 'p1-end');
@@ -2742,11 +2825,13 @@ zoomWatcher = {
     const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
         loading = true;
+        const filtered = wantFilteredClusters();      // #300: source vs filtered lite
+        const sig = desiredClusterSig();              // #300: snapshot BEFORE the await
         updatePhaseMsg(opts.loadingMsg || `Loading H3 res${res}...`, 'loading');
 
         try {
             performance.mark(`r${res}-s`);
-            const data = await db.query(`
+            const data = await db.query(filtered ? filteredClusterSQL(res) : `
                 SELECT CAST(h3_cell AS VARCHAR) AS h3_cell_dec,
                        sample_count, center_lat, center_lng,
                        dominant_source, source_count
@@ -2754,7 +2839,11 @@ zoomWatcher = {
                 WHERE 1=1${sourceFilterSQL('dominant_source')}
             `);
 
-            if (gen !== loadResGen) return false;  // stale — a newer call superseded this one
+            // Stale if a newer load superseded us (gen) OR the desired cluster
+            // CONTENTS changed while we queried (filters toggled mid-flight) —
+            // applying now would label the cache with the wrong filter sig
+            // (Codex P0.2/P1.3).
+            if (gen !== loadResGen || sig !== desiredClusterSig()) return false;
             viewer.h3Points.removeAll();
             const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.3);
             let total = 0;
@@ -2778,6 +2867,7 @@ zoomWatcher = {
             // Cache for viewport counting
             viewer._clusterData = Array.from(data);
             viewer._clusterTotal = { clusters: data.length, samples: total };
+            viewer._clusterFilterSig = sig;   // #300: label the cache with what it IS
 
             performance.mark(`r${res}-e`);
             performance.measure(`r${res}`, `r${res}-s`, `r${res}-e`);
