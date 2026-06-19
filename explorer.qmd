@@ -1740,26 +1740,25 @@ db = {
     performance.mark('duckdb-init-end');
     performance.measure('duckdb_init', 'duckdb-init-start', 'duckdb-init-end');
     // #300: DuckDB-WASM (the non-threaded MVP build this page loads) DEADLOCKS
-    // under concurrent queries — a heavy filtered-cluster aggregation
-    // (filteredClusterSQL, reading samples_map_lite + sample_facet_masks) issued
-    // while boot's query storm is still in flight never resolves, even though the
-    // identical query completes in ~2.5s once the connection is idle. Serialize
-    // queries through a FIFO chain so at most one runs at a time.
+    // when the heavy filtered-cluster aggregation (filteredClusterSQL, reading
+    // samples_map_lite + sample_facet_masks) runs CONCURRENTLY with boot's other
+    // queries — yet the identical query completes in ~2.5s once the connection is
+    // idle, and 2 concurrent post-boot queries are fine.
     //
-    // Scope: this wraps `.query()`. Every data call in this page goes through
-    // `db.query` (and `db.sql`, which calls `.query` internally) — verified — so
-    // that covers us. It does NOT serialize `queryStream`/`queryRow` (which open
-    // their own connection) or raw `db._db.connect()`; do not introduce those
-    // without serializing them too, or the deadlock returns. SQL queries are
-    // atomic (none awaits another mid-execution) so the chain can't re-enter; the
-    // one hazard is a query that never settles, which would stall the whole queue.
+    // We do NOT serialize all queries (that queued interactive search behind the
+    // whole boot storm and blew the smoke gate's search budget). Instead we keep
+    // queries concurrent (fast boot/search) and track in-flight count so the
+    // filtered-cluster load alone can wait for the connection to go idle before
+    // issuing (see whenConnectionIdle / loadRes). _inFlight is read there.
     const origQuery = instance.query.bind(instance);
-    let queryChain = Promise.resolve();
+    let inFlight = 0;
     instance.query = (...args) => {
-        const run = queryChain.then(() => origQuery(...args));
-        queryChain = run.then(() => {}, () => {});   // keep the chain alive past errors
-        return run;
+        inFlight++;
+        const p = origQuery(...args);
+        p.then(() => {}, () => {}).finally(() => { inFlight--; });
+        return p;
     };
+    instance._inFlight = () => inFlight;
     return instance;
 }
 ```
@@ -2876,6 +2875,20 @@ zoomWatcher = {
     // replacement load (entering point mode; a fresh hashchange).
     const invalidateClusterLoads = () => { ++loadResGen; loading = false; };
 
+    // #300: wait for the DuckDB-WASM connection to go idle (no other queries in
+    // flight) before issuing the heavy filtered-cluster aggregation — running it
+    // amid boot's concurrent query storm deadlocks the MVP build. Post-boot this
+    // resolves immediately (sparse queries); during boot it waits out the storm.
+    // Capped so a never-idle connection can't strand the load. Only the filtered
+    // path needs this; the light summary query is safe concurrent.
+    async function whenConnectionIdle(capMs = 20000) {
+        const t0 = performance.now();
+        while ((typeof db._inFlight === 'function' ? db._inFlight() : 0) > 0
+               && performance.now() - t0 < capMs) {
+            await new Promise(r => setTimeout(r, 120));
+        }
+    }
+
     const loadRes = async (res, url, opts = {}) => {
         const gen = ++loadResGen;  // claim a generation
         loading = true;
@@ -2885,6 +2898,12 @@ zoomWatcher = {
 
         try {
             performance.mark(`r${res}-s`);
+            // #300: gate the heavy filtered aggregation on an idle connection
+            // (deadlock-avoidance); no-op for the light summary path.
+            if (filtered) await whenConnectionIdle();
+            // Re-check supersession after the idle wait (a newer load or a filter
+            // change may have landed while we waited).
+            if (gen !== loadResGen || sig !== desiredClusterSig()) return false;
             const data = await db.query(filtered ? filteredClusterSQL(res) : `
                 SELECT CAST(h3_cell AS VARCHAR) AS h3_cell_dec,
                        sample_count, center_lat, center_lng,
