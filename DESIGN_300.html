@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>design_300 – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-46c1e64c2409ffa41d8278daa552b940.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#browser-design-filtered-h3-clusters-at-world-zoom" id="toc-browser-design-filtered-h3-clusters-at-world-zoom" class="nav-link active" data-scroll-target="#browser-design-filtered-h3-clusters-at-world-zoom"><span class="header-section-number">1</span> #300 browser design — filtered H3 clusters at world zoom</a>
+  <ul>
+  <li><a href="#components" id="toc-components" class="nav-link" data-scroll-target="#components"><span class="header-section-number">1.1</span> Components</a>
+  <ul class="collapse">
+  <li><a href="#readiness-preflight-new-ojs-cell-mirrors-nodebitsready" id="toc-readiness-preflight-new-ojs-cell-mirrors-nodebitsready" class="nav-link" data-scroll-target="#readiness-preflight-new-ojs-cell-mirrors-nodebitsready"><span class="header-section-number">1.1.1</span> 1. Readiness preflight (new ojs cell, mirrors <code>nodeBitsReady</code>)</a></li>
+  <li><a href="#computetargetmodealt-rule-change-was-any-filter-point" id="toc-computetargetmodealt-rule-change-was-any-filter-point" class="nav-link" data-scroll-target="#computetargetmodealt-rule-change-was-any-filter-point"><span class="header-section-number">1.1.2</span> 2. <code>computeTargetMode(alt)</code> rule change (was: any filter → point)</a></li>
+  <li><a href="#loadres-becomes-filter-aware-one-branch-everything-else-identical" id="toc-loadres-becomes-filter-aware-one-branch-everything-else-identical" class="nav-link" data-scroll-target="#loadres-becomes-filter-aware-one-branch-everything-else-identical"><span class="header-section-number">1.1.3</span> 3. <code>loadRes</code> becomes filter-aware (one branch; everything else identical)</a></li>
+  <li><a href="#the-stale-cluster-reload-problem-the-main-risk" id="toc-the-stale-cluster-reload-problem-the-main-risk" class="nav-link" data-scroll-target="#the-stale-cluster-reload-problem-the-main-risk"><span class="header-section-number">1.1.4</span> 4. The stale-cluster reload problem (the main risk)</a></li>
+  <li><a href="#handlers-handlefacetfilterchange-applysearchfilterchange" id="toc-handlers-handlefacetfilterchange-applysearchfilterchange" class="nav-link" data-scroll-target="#handlers-handlefacetfilterchange-applysearchfilterchange"><span class="header-section-number">1.1.5</span> 5. Handlers (<code>handleFacetFilterChange</code>, <code>applySearchFilterChange</code>)</a></li>
+  <li><a href="#deep-link-restore-wantspoint-4538" id="toc-deep-link-restore-wantspoint-4538" class="nav-link" data-scroll-target="#deep-link-restore-wantspoint-4538"><span class="header-section-number">1.1.6</span> 6. Deep-link restore (wantsPoint, ~4538)</a></li>
+  </ul></li>
+  <li><a href="#codex-review-integrated-2026-06-18-implementation-spec-of-record" id="toc-codex-review-integrated-2026-06-18-implementation-spec-of-record" class="nav-link" data-scroll-target="#codex-review-integrated-2026-06-18-implementation-spec-of-record"><span class="header-section-number">1.2</span> Codex review integrated (2026-06-18) — implementation spec of record</a></li>
+  <li><a href="#open-questions-for-review" id="toc-open-questions-for-review" class="nav-link" data-scroll-target="#open-questions-for-review"><span class="header-section-number">1.3</span> Open questions for review</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DESIGN_300.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="browser-design-filtered-h3-clusters-at-world-zoom" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> #300 browser design — filtered H3 clusters at world zoom</h1>
+<p>Goal: when a <strong>facet</strong> filter is active and the camera is zoomed out (above <code>EXIT_POINT_ALT</code>), render an h3-clustered view of the <strong>filtered</strong> set instead of forcing raw capped point mode (#267). Zoom-in still drops to individual dots. Search is OUT of scope (stays point-mode). Foundation: #293 masks make filtered h3 aggregation ~25× faster; build now adds <code>h3_res4/h3_res6</code> to <code>samples_map_lite</code>.</p>
+<section id="components" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="components"><span class="header-section-number">1.1</span> Components</h2>
+<section id="readiness-preflight-new-ojs-cell-mirrors-nodebitsready" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" data-anchor-id="readiness-preflight-new-ojs-cell-mirrors-nodebitsready"><span class="header-section-number">1.1.1</span> 1. Readiness preflight (new ojs cell, mirrors <code>nodeBitsReady</code>)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>filteredClustersReady <span class="op">=</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">window</span><span class="op">.</span><span class="at">__filteredClustersReady</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(<span class="vs">`SELECT h3_res4, h3_res6 FROM read_parquet('</span><span class="sc">${</span>lite_url<span class="sc">}</span><span class="vs">') LIMIT 1`</span>)<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">window</span><span class="op">.</span><span class="at">__filteredClustersReady</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span> <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">catch</span> (err) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">warn</span>(<span class="st">'lite lacks h3_res4/res6; #300 filtered clusters disabled (point fallback):'</span><span class="op">,</span> err)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Hard requirement is ONLY that lite has res4/res6. (masks readiness is orthogonal: <code>facetFilterSQL()</code> already self-falls-back to the membership scan when masks absent — affects speed, not correctness.) Safe to ship before the lite republish: flag stays false → today’s point-mode behavior.</p>
+</section>
+<section id="computetargetmodealt-rule-change-was-any-filter-point" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" data-anchor-id="computetargetmodealt-rule-change-was-any-filter-point"><span class="header-section-number">1.1.2</span> 2. <code>computeTargetMode(alt)</code> rule change (was: any filter → point)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> computeTargetMode <span class="op">=</span> (alt) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">searchIsActive</span>()) <span class="cf">return</span> <span class="st">'point'</span><span class="op">;</span>                         <span class="co">// search out of scope</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">hasFacetFilters</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="bu">window</span><span class="op">.</span><span class="at">__filteredClustersReady</span>) <span class="cf">return</span> <span class="st">'point'</span><span class="op">;</span> <span class="co">// pre-republish / preflight pending</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (alt <span class="op">&lt;</span> ENTER_POINT_ALT) <span class="cf">return</span> <span class="st">'point'</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (alt <span class="op">&gt;</span> EXIT_POINT_ALT) <span class="cf">return</span> <span class="st">'cluster'</span><span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">getMode</span>()<span class="op">;</span>                                              <span class="co">// hysteresis band</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Net: once ready, facets use the SAME altitude hysteresis as the unfiltered case (loadRes makes the clusters filter-aware). Flicker-safe (keeps ENTER/EXIT band). <code>filtersForcePoint()</code> stays = <code>searchIsActive() || hasFacetFilters()</code> and is still correct at the remaining call sites (see §5).</p>
+</section>
+<section id="loadres-becomes-filter-aware-one-branch-everything-else-identical" class="level3" data-number="1.1.3">
+<h3 data-number="1.1.3" data-anchor-id="loadres-becomes-filter-aware-one-branch-everything-else-identical"><span class="header-section-number">1.1.3</span> 3. <code>loadRes</code> becomes filter-aware (one branch; everything else identical)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> wantFiltered <span class="op">=</span> <span class="fu">hasFacetFilters</span>() <span class="op">&amp;&amp;</span> <span class="bu">window</span><span class="op">.</span><span class="at">__filteredClustersReady</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> data <span class="op">=</span> wantFiltered</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(<span class="fu">filteredClusterSQL</span>(res))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="cf">await</span> db<span class="op">.</span><span class="fu">query</span>(<span class="vs">`SELECT CAST(h3_cell AS VARCHAR) AS h3_cell_dec, sample_count,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="vs">        center_lat, center_lng, dominant_source, source_count</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="vs">        FROM read_parquet('</span><span class="sc">${</span>url<span class="sc">}</span><span class="vs">') WHERE 1=1</span><span class="sc">${</span><span class="fu">sourceFilterSQL</span>(<span class="st">'dominant_source'</span>)<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>filteredClusterSQL(res)</code> (off lite, masks-backed) returns the EXACT same columns:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> base <span class="kw">AS</span> (</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> h3_res{res} <span class="kw">AS</span> cell, <span class="kw">source</span>, latitude, longitude</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> read_parquet(<span class="st">'${lite_url}'</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">WHERE</span> h3_res{res} <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span> ${sourceFilterSQL(<span class="st">'source'</span>)} ${facetFilterSQL()}),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>sc <span class="kw">AS</span> (<span class="kw">SELECT</span> cell, <span class="kw">source</span>, <span class="fu">COUNT</span>(<span class="op">*</span>) c <span class="kw">FROM</span> base <span class="kw">GROUP</span> <span class="kw">BY</span> cell, <span class="kw">source</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>dom <span class="kw">AS</span> (<span class="kw">SELECT</span> cell, <span class="kw">source</span> <span class="kw">AS</span> dominant_source,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION</span> <span class="kw">BY</span> cell <span class="kw">ORDER</span> <span class="kw">BY</span> c <span class="kw">DESC</span>, <span class="kw">source</span> <span class="kw">ASC</span>) rn <span class="kw">FROM</span> sc),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>agg <span class="kw">AS</span> (<span class="kw">SELECT</span> cell, <span class="fu">COUNT</span>(<span class="op">*</span>) sample_count, <span class="fu">ROUND</span>(<span class="fu">AVG</span>(latitude),<span class="dv">6</span>) center_lat,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ROUND</span>(<span class="fu">AVG</span>(longitude),<span class="dv">6</span>) center_lng, <span class="fu">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">source</span>) source_count</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">FROM</span> base <span class="kw">GROUP</span> <span class="kw">BY</span> cell)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="fu">CAST</span>(agg.cell <span class="kw">AS</span> <span class="dt">VARCHAR</span>) <span class="kw">AS</span> h3_cell_dec, agg.sample_count, agg.center_lat,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>       agg.center_lng, dom.dominant_source, agg.source_count</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> agg <span class="kw">JOIN</span> dom <span class="kw">ON</span> dom.cell <span class="op">=</span> agg.cell <span class="kw">AND</span> dom.rn <span class="op">=</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Same <code>loadResGen</code> generation guard, render loop, <code>_clusterData</code>/<code>_clusterTotal</code> cache, and “Samples in View” stat — all unchanged. The exact in-view COUNT comes from <code>countInViewport(_clusterData)</code> as today (now over filtered cells).</p>
+</section>
+<section id="the-stale-cluster-reload-problem-the-main-risk" class="level3" data-number="1.1.4">
+<h3 data-number="1.1.4" data-anchor-id="the-stale-cluster-reload-problem-the-main-risk"><span class="header-section-number">1.1.4</span> 4. The stale-cluster reload problem (the main risk)</h3>
+<p>The camera <code>targetMode==='cluster'</code> branch only reloads when <code>target !== currentRes</code>. On point→cluster (zoom out with a facet active), <code>currentRes</code> may already equal <code>target</code>, so it would SKIP loadRes and show stale (unfiltered or previously-filtered) clusters. Also, toggling a facet while already in cluster mode at a fixed altitude is <code>target === currentRes</code> → no reload.</p>
+<p>Fix: track the filter signature the current <code>_clusterData</code> was built under and reload when it differs. Add:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>viewer<span class="op">.</span><span class="at">_clusterFilterSig</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span>                  <span class="co">// set in loadRes after a successful load</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">currentFilterSig</span>() {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="fu">hasFacetFilters</span>() <span class="op">&amp;&amp;</span> <span class="bu">window</span><span class="op">.</span><span class="at">__filteredClustersReady</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">?</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>({ <span class="dt">f</span><span class="op">:</span> <span class="fu">facetFilterSQL</span>()<span class="op">,</span> <span class="dt">s</span><span class="op">:</span> <span class="fu">sourceFilterSQL</span>(<span class="st">'source'</span>) }) <span class="op">:</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>In <code>loadRes</code> success: <code>viewer._clusterFilterSig = currentFilterSig();</code></li>
+<li>Camera <code>cluster</code> branch + the “already cluster, check resolution” branch: reload when <code>target !== currentRes || viewer._clusterFilterSig !== currentFilterSig()</code>.</li>
+</ul>
+</section>
+<section id="handlers-handlefacetfilterchange-applysearchfilterchange" class="level3" data-number="1.1.5">
+<h3 data-number="1.1.5" data-anchor-id="handlers-handlefacetfilterchange-applysearchfilterchange"><span class="header-section-number">1.1.5</span> 5. Handlers (<code>handleFacetFilterChange</code>, <code>applySearchFilterChange</code>)</h3>
+<p>Both currently force point when a filter is active. Replace the force-point block with a reconcile that honors <code>computeTargetMode</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">reconcileGlobeForFilters</span>() {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> h <span class="op">=</span> viewer<span class="op">.</span><span class="at">camera</span><span class="op">.</span><span class="at">positionCartographic</span><span class="op">.</span><span class="at">height</span><span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">computeTargetMode</span>(h) <span class="op">===</span> <span class="st">'point'</span>) {</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">getMode</span>() <span class="op">!==</span> <span class="st">'point'</span>) <span class="cf">await</span> <span class="fu">enterPointMode</span>(<span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">await</span> <span class="fu">loadViewportSamples</span>()<span class="op">;</span>                 <span class="co">// refilter the dots</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> { <span class="co">// cluster</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">getMode</span>() <span class="op">===</span> <span class="st">'point'</span>) <span class="fu">exitPointMode</span>(<span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> res <span class="op">=</span> h <span class="op">&gt;</span> <span class="dv">3000000</span> <span class="op">?</span> <span class="dv">4</span> <span class="op">:</span> h <span class="op">&gt;</span> <span class="dv">300000</span> <span class="op">?</span> <span class="dv">6</span> <span class="op">:</span> <span class="dv">8</span><span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">await</span> <span class="fu">loadRes</span>(res<span class="op">,</span> { <span class="dv">4</span><span class="op">:</span> h3_res4_url<span class="op">,</span> <span class="dv">6</span><span class="op">:</span> h3_res6_url<span class="op">,</span> <span class="dv">8</span><span class="op">:</span> h3_res8_url }[res])<span class="op">;</span> <span class="co">// filtered (incl. resig change)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>handleFacetFilterChange</code>: call <code>reconcileGlobeForFilters()</code> (replaces the hasFacetFilters() force-point + the facet-cleared exit logic — computeTargetMode subsumes both: cleared facet + search inactive + high alt → cluster; etc.)</li>
+<li><code>applySearchFilterChange</code>: same. Note clearing SEARCH while a facet remains must now land in filtered clusters at high alt — <code>reconcileGlobeForFilters</code> handles it because computeTargetMode sees only the facet (search inactive → not forced).</li>
+</ul>
+</section>
+<section id="deep-link-restore-wantspoint-4538" class="level3" data-number="1.1.6">
+<h3 data-number="1.1.6" data-anchor-id="deep-link-restore-wantspoint-4538"><span class="header-section-number">1.1.6</span> 6. Deep-link restore (wantsPoint, ~4538)</h3>
+<p>Today: <code>filtersForcePoint() || s.mode==='point' || (s.alt&lt;ENTER)</code>. For a facet-filtered world-zoom deep link this forces point (the slow case #300 fixes). Change to compute from restored altitude and load filtered clusters when cluster:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> restoredAlt <span class="op">=</span> s<span class="op">.</span><span class="at">alt</span> <span class="op">??</span> viewer<span class="op">.</span><span class="at">camera</span><span class="op">.</span><span class="at">positionCartographic</span><span class="op">.</span><span class="at">height</span><span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> target <span class="op">=</span> s<span class="op">.</span><span class="at">mode</span> <span class="op">===</span> <span class="st">'point'</span> <span class="op">?</span> <span class="st">'point'</span> <span class="op">:</span> <span class="fu">computeTargetMode</span>(restoredAlt)<span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (target <span class="op">===</span> <span class="st">'point'</span> <span class="op">&amp;&amp;</span> <span class="fu">getMode</span>() <span class="op">!==</span> <span class="st">'point'</span>) <span class="cf">await</span> <span class="fu">enterPointMode</span>(<span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span> <span class="cf">if</span> (target <span class="op">===</span> <span class="st">'cluster'</span>) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">getMode</span>() <span class="op">===</span> <span class="st">'point'</span>) <span class="fu">exitPointMode</span>(<span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> res <span class="op">=</span> restoredAlt <span class="op">&gt;</span> <span class="dv">3000000</span> <span class="op">?</span> <span class="dv">4</span> <span class="op">:</span> restoredAlt <span class="op">&gt;</span> <span class="dv">300000</span> <span class="op">?</span> <span class="dv">6</span> <span class="op">:</span> <span class="dv">8</span><span class="op">;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> <span class="fu">loadRes</span>(res<span class="op">,</span> {<span class="dv">4</span><span class="op">:</span>h3_res4_url<span class="op">,</span><span class="dv">6</span><span class="op">:</span>h3_res6_url<span class="op">,</span><span class="dv">8</span><span class="op">:</span>h3_res8_url}[res])<span class="op">;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>(<code>s.mode==='point'</code> still wins to honor an explicitly saved point view.)</p>
+</section>
+</section>
+<section id="codex-review-integrated-2026-06-18-implementation-spec-of-record" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="codex-review-integrated-2026-06-18-implementation-spec-of-record"><span class="header-section-number">1.2</span> Codex review integrated (2026-06-18) — implementation spec of record</h2>
+<p>Staged in 3 commits within the PR: - <strong>C1 (dormant infra):</strong> <code>filteredClustersReady</code> preflight cell; <code>filteredClusterSQL(res)</code> with <code>COUNT(*)::INTEGER</code>/<code>COUNT(DISTINCT source)::INTEGER</code> casts (P0.1); semantic <code>desiredClusterSig()</code> = <code>{kind, sources(always), material, context, objectType}</code> (P1.3, NOT sql text); <code>loadRes</code> filter-aware with <strong>snapshot sig captured before the await</strong>, re-checked after (<code>gen !== loadResGen || sig !== desiredClusterSig()</code>) (P0.2); set <code>viewer._clusterFilterSig = sig</code> on success; init the sig in phase1 (P1.3). Dormant because computeTargetMode still forces point until C2. - <strong>C2 (activation):</strong> <code>computeTargetMode(alt, latch = getMode())</code> — add restored-latch param (P1.7); rule = search→point, facet&amp;&amp;!ready→point, else ENTER/EXIT hysteresis. <code>reconcileGlobeForFilters()</code> used by both filter-change handlers; every <code>loadRes</code> caller captures <code>applied</code> + chases <code>tryEnterPointModeIfNeeded()</code> and invalidates pending cluster loads when target flips to point (P1.4). camera <code>cluster</code> branches reload on <code>target !== currentRes || viewer._clusterFilterSig !== desiredClusterSig()</code> (stale-cluster). <code>moveEnd</code> gate (4334) → <code>computeTargetMode(h)</code> + sig reload (P1.5). Readiness→reconcile hook (P1.9). Fail-safe: stay in point / hide stale clusters if a filtered load fails (P1.10). - <strong>C3 (coherence):</strong> deep-link restore (4538) with latch + filtered cluster load + <code>isStale()</code> before mode mutation and after each await + cluster-gen invalidation on newer hashchange (P1.6/P1.7); boot facet block (~5771) → computeTargetMode-aware (P1.7); <code>fetchClusterByH3()</code> (4365) filter-aware single-cell aggregation + revalidate <code>selectedH3</code> after facet changes (P1.8); <code>syncFacetNote()</code> message no longer claims “only at neighborhood zoom” when filtered clusters active (P1.10).</p>
+<p>Out of scope (pre-existing, documented): <code>AVG(longitude)</code> antimeridian skew and the cell-center “Samples in View” inexactness — both already in the shipped summaries.</p>
+</section>
+<section id="open-questions-for-review" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="open-questions-for-review"><span class="header-section-number">1.3</span> Open questions for review</h2>
+<ol type="1">
+<li>Is making <code>loadRes</code> filter-aware (vs a separate <code>loadFilteredClusters</code>) the right call? It reuses the generation guard / render / cache / stats exactly, but couples two data sources in one fn.</li>
+<li><code>_clusterFilterSig</code> approach for the stale-cluster reload — correct &amp; sufficient? Any path that loads clusters without setting the sig, or compares it wrong?</li>
+<li>Deep-link: is loading filtered clusters in the restore <code>setTimeout</code> safe wrt the <code>isStale()</code> / freshness-token races in that handler, and the suppress-hash gate?</li>
+<li>Should <code>handleFacetFilterChange</code>’s existing <code>await new Promise(r=&gt;setTimeout(r,300))</code> and busy-flag structure be preserved as-is around the new reconcile?</li>
+<li>Any hysteresis/latching regression from facets now using the ENTER/EXIT band instead of always-point? (Esp. #234 A1/C3 search-latch interactions.)</li>
+<li><code>filteredClusterSQL</code> correctness: <code>dominant_source</code> recomputed over the FILTERED subset (vs summary’s all-sample dominant) — intended and fine?</li>
+</ol>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DESIGN_300.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
