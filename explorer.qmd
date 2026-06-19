@@ -1733,6 +1733,22 @@ db = {
     const instance = await DuckDBClient.of();
     performance.mark('duckdb-init-end');
     performance.measure('duckdb_init', 'duckdb-init-start', 'duckdb-init-end');
+    // #300: DuckDB-WASM (the non-threaded MVP build this page loads) DEADLOCKS
+    // under concurrent queries — a heavy filtered-cluster aggregation
+    // (filteredClusterSQL, reading samples_map_lite + sample_facet_masks) issued
+    // while boot's query storm is still in flight never resolves, even though the
+    // identical query completes in ~2.5s once the connection is idle. Serialize
+    // EVERY query through a FIFO chain so at most one runs at a time. SQL queries
+    // are atomic (none awaits another mid-execution), so chaining can't deadlock,
+    // and the latency cost is small (boot queries are individually fast). This is
+    // the single-point fix; without it #300's filtered clusters never load.
+    const origQuery = instance.query.bind(instance);
+    let queryChain = Promise.resolve();
+    instance.query = (...args) => {
+        const run = queryChain.then(() => origQuery(...args));
+        queryChain = run.then(() => {}, () => {});   // keep the chain alive past errors
+        return run;
+    };
     return instance;
 }
 ```
@@ -4284,10 +4300,10 @@ zoomWatcher = {
     // the deferred guarded check below catches it (and no-ops if boot already set
     // the right mode). Any later camera/moveEnd settle is a further backstop.
     window.__onFilteredClustersReady = () => {
-        if (hasFacetFilters()) reconcileGlobeForFilters();
+        if (hasFacetFilters() && !loading) reconcileGlobeForFilters();
     };
     setTimeout(() => {
-        if (window.__filteredClustersReady === true && hasFacetFilters()) {
+        if (window.__filteredClustersReady === true && hasFacetFilters() && !loading) {
             const h = viewer.camera.positionCartographic.height;
             // Reconcile if the mode is wrong OR the cached cluster layer is still
             // summary (facet-blind) data — at world zoom both modes read 'cluster'
