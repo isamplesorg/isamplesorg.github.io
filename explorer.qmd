@@ -2694,6 +2694,30 @@ zoomWatcher = {
     const searchFilterSQL = (col = 'pid') =>
         searchIsActive() ? ` AND ${col} IN (SELECT pid FROM search_pids)` : '';
 
+    // #208/#267: the single predicate for "a filter is active that forces the
+    // map into point mode." Pre-#300 this is BOTH text-search and any facet
+    // (material/context/object_type) — the pre-aggregated H3 cluster summaries
+    // carry only dominant_source, so they can't honor those filters; point mode
+    // renders the actual filtered dots instead. This was duplicated verbatim at
+    // four sites (camera.changed targetMode, the two filter-change handlers, and
+    // the deep-link restore); centralizing it here is where the #300 rule change
+    // (relax the FACET case above EXIT_POINT_ALT to filtered clusters) will live.
+    const filtersForcePoint = () => searchIsActive() || hasFacetFilters();
+
+    // #208: the single authority that maps (altitude, current mode) → target
+    // mode, with the point/cluster hysteresis band. The camera-changed handler
+    // routes through this; pre-#300 behavior is preserved exactly:
+    //   - any active filter → point (at every altitude, #267)
+    //   - else below ENTER_POINT_ALT → point
+    //   - else above EXIT_POINT_ALT → cluster
+    //   - else (inside the hysteresis band) → unchanged
+    const computeTargetMode = (alt) =>
+        filtersForcePoint() ? 'point'
+        : alt < ENTER_POINT_ALT ? 'point'
+        : alt > EXIT_POINT_ALT ? 'cluster'
+        : getMode();   // evaluated only in the hysteresis band, exactly as the
+                       // original inline expression did (Codex PR4c caveat)
+
     // No viewport cache: the samples table (PR #219) re-queries on every
     // `moveEnd` against the current padded bbox, so reusing a cached
     // `cachedTotalCount` here would have point-mode show a stale count
@@ -4085,7 +4109,7 @@ zoomWatcher = {
             // facet is still checked (and vice-versa, handled in
             // handleFacetFilterChange). Use the same forced-point predicate as
             // every other latch.
-            const forcePoint = searchIsActive() || hasFacetFilters();
+            const forcePoint = filtersForcePoint();
             if (forcePoint) {
                 if (getMode() !== 'point') {
                     await enterPointMode(false);   // forces point; awaits filtered viewport load
@@ -4167,13 +4191,10 @@ zoomWatcher = {
             // A1 (#234 Step 4) / C3: while a search is active, latch point
             // mode regardless of altitude — clusters can't be text-filtered,
             // so we keep showing the filtered sample dots even when zoomed out.
-            const targetMode = (searchIsActive() || hasFacetFilters()) ? 'point'
-                             : h < ENTER_POINT_ALT ? 'point'
-                             : h > EXIT_POINT_ALT ? 'cluster'
-                             : getMode();
+            const targetMode = computeTargetMode(h);
 
             if (targetMode === 'point' && getMode() !== 'point') {
-                if (searchIsActive() || hasFacetFilters()) {
+                if (filtersForcePoint()) {
                     // Search or an active facet (#267) forces point mode even
                     // above ENTER_POINT_ALT, where tryEnterPointModeIfNeeded()
                     // would refuse; enter directly so the filtered dots render
@@ -4515,7 +4536,7 @@ zoomWatcher = {
             // A1 (#234 Step 4): an active search forces point mode regardless
             // of the restored altitude, so the back/forward globe state stays
             // coherent with the (still-filtered) table/legend.
-            const wantsPoint = searchIsActive() || hasFacetFilters() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
+            const wantsPoint = filtersForcePoint() || s.mode === 'point' || (s.alt != null && s.alt < ENTER_POINT_ALT);
             if (wantsPoint && getMode() !== 'point') await enterPointMode(false);
             else if (!wantsPoint && getMode() === 'point') exitPointMode(false);
         }, 2000);
