@@ -2787,19 +2787,24 @@ zoomWatcher = {
     // (relax the FACET case above EXIT_POINT_ALT to filtered clusters) will live.
     const filtersForcePoint = () => searchIsActive() || hasFacetFilters();
 
-    // #208: the single authority that maps (altitude, current mode) → target
-    // mode, with the point/cluster hysteresis band. The camera-changed handler
-    // routes through this; pre-#300 behavior is preserved exactly:
-    //   - any active filter → point (at every altitude, #267)
-    //   - else below ENTER_POINT_ALT → point
-    //   - else above EXIT_POINT_ALT → cluster
-    //   - else (inside the hysteresis band) → unchanged
-    const computeTargetMode = (alt) =>
-        filtersForcePoint() ? 'point'
+    // #208/#300: the single authority that maps (altitude, latch) → target mode,
+    // with the point/cluster hysteresis band.
+    //   - search active → point (clusters can't be text-filtered, #234 C3)
+    //   - facet active but filtered clusters NOT ready (pre-republish / preflight
+    //     pending) → point, exactly as pre-#300 (#267): the summary clusters are
+    //     facet-blind, so point mode renders the real filtered dots
+    //   - otherwise the ALTITUDE hysteresis decides for both filtered and
+    //     unfiltered (#300): facet-active cluster loads are filter-aware
+    //     (loadRes aggregates off the masks), so clusters stay coherent
+    //   - `latch` resolves the hysteresis band; defaults to the live mode, but a
+    //     URL/back-forward restore passes the saved latch (Codex P1.7) so the band
+    //     doesn't resolve to the mode of the view being LEFT
+    const computeTargetMode = (alt, latch = getMode()) =>
+        searchIsActive() ? 'point'
+        : (hasFacetFilters() && !(typeof window !== 'undefined' && window.__filteredClustersReady === true)) ? 'point'
         : alt < ENTER_POINT_ALT ? 'point'
         : alt > EXIT_POINT_ALT ? 'cluster'
-        : getMode();   // evaluated only in the hysteresis band, exactly as the
-                       // original inline expression did (Codex PR4c caveat)
+        : latch;
 
     // No viewport cache: the samples table (PR #219) re-queries on every
     // `moveEnd` against the current padded bbox, so reusing a cached
@@ -4132,39 +4137,51 @@ zoomWatcher = {
     // surface the explanatory `#facetNote` so users understand the filter
     // takes effect at neighborhood zoom. See issue #156, Phase 1, and
     // `syncFacetNote()` for the shared visibility invariant (#234 step 1).
+    // #300: drive the globe to the altitude- and filter-appropriate mode after a
+    // facet or search change — the single transition path shared by both
+    // filter-change handlers. Honors computeTargetMode:
+    //   - point: render the real filtered dots (search at any zoom; facets below
+    //     EXIT, or whenever filtered clusters aren't ready)
+    //   - cluster: render the FILTERED h3 clusters (facets above EXIT, once ready)
+    async function reconcileGlobeForFilters() {
+        const h = viewer.camera.positionCartographic.height;
+        if (computeTargetMode(h) === 'point') {
+            // Invalidate any in-flight cluster load so a stale loadRes can't paint
+            // clusters/stats under point mode — a search activation may start no
+            // newer loadRes of its own (Codex P1.4).
+            loadResGen++;
+            if (getMode() !== 'point') await enterPointMode(false);
+            else await loadViewportSamples();            // re-filter the dots in place
+        } else {
+            // Target is clusters at this altitude. Load FIRST (into the hidden h3
+            // layer while still in point mode), and only drop point mode if the
+            // load applied — so a failed/superseded filtered load never exposes
+            // stale clusters (Codex P1.10). loadRes is filter-aware: with a facet
+            // active + ready it aggregates the FILTERED set off the masks.
+            const res = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+            const wasPoint = getMode() === 'point';
+            const applied = await loadRes(res, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[res]);
+            if (!applied) return;                        // keep current mode; no stale flash
+            if (wasPoint) exitPointMode(false);
+            // Supersession invariant: a zoom below ENTER during the load still
+            // lands in point mode (Codex P1.4).
+            await tryEnterPointModeIfNeeded();
+        }
+    }
+
     async function handleFacetFilterChange() {
         busyAcquire();
         try {
             syncFacetNote();
             writeQueryState();
             refreshHeatmap();
-            // #267: facet selection must visibly drive the MAP, not just the
-            // table/legend. Cluster dots come from pre-aggregated H3 summaries
-            // that carry only `dominant_source`, so they cannot honor a
-            // material/context/object_type facet. Mirror the committed-search
-            // path (applySearchFilterChange / C3): when any such facet is
-            // active, FORCE point mode so the map shows the actual filtered
-            // dots (which already apply facetFilterSQL()). When facets are
-            // cleared, revert to the altitude-appropriate mode — unless a text
-            // search is still latching point mode.
-            if (hasFacetFilters()) {
-                if (getMode() !== 'point') {
-                    await enterPointMode(false);   // forces point; awaits filtered viewport load
-                } else {
-                    await loadViewportSamples();
-                }
-            } else if (getMode() === 'point') {
-                const h = viewer.camera.positionCartographic.height;
-                if (!searchIsActive() && h >= EXIT_POINT_ALT) {
-                    exitPointMode(false);
-                    const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
-                    if (target !== currentRes) {
-                        await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
-                    }
-                } else {
-                    await loadViewportSamples();
-                }
-            }
+            // #267/#300: a facet selection must visibly drive the MAP. Above
+            // EXIT_POINT_ALT (once filtered clusters are ready) the map shows the
+            // FILTERED h3 clusters; below it, the real filtered dots. The shared
+            // reconcile picks the right mode from the current altitude + filter
+            // state (and reloads filtered clusters in place when already in
+            // cluster mode, since the filter set changed).
+            await reconcileGlobeForFilters();
             refreshFacetCounts();
             await new Promise(r => setTimeout(r, 300));
         } finally {
@@ -4193,32 +4210,12 @@ zoomWatcher = {
             syncSearchPanelState();
             syncFacetNote();
             refreshHeatmap();
-            // #267: point mode is latched by EITHER an active search OR an
-            // active facet — both filter the sample set and can't be shown as
-            // clusters. So clearing the search must NOT revert to clusters if a
-            // facet is still checked (and vice-versa, handled in
-            // handleFacetFilterChange). Use the same forced-point predicate as
-            // every other latch.
-            const forcePoint = filtersForcePoint();
-            if (forcePoint) {
-                if (getMode() !== 'point') {
-                    await enterPointMode(false);   // forces point; awaits filtered viewport load
-                } else {
-                    await loadViewportSamples();
-                }
-            } else {
-                // Neither search nor facet active: revert to altitude-appropriate mode.
-                const h = viewer.camera.positionCartographic.height;
-                if (getMode() === 'point' && h >= EXIT_POINT_ALT) {
-                    exitPointMode(false);
-                    const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
-                    if (target !== currentRes) {
-                        await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
-                    }
-                } else if (getMode() === 'point') {
-                    await loadViewportSamples();  // still point altitude — reload now-unfiltered points
-                }
-            }
+            // #267/#300: search always latches point mode (clusters can't be
+            // text-filtered). Clearing search must NOT revert to clusters if a
+            // facet is still active — but at world zoom that now means FILTERED
+            // clusters, not point mode. The shared reconcile resolves all of this
+            // from the live search + facet + altitude state.
+            await reconcileGlobeForFilters();
             refreshFacetCounts();
             if (typeof window !== 'undefined') window.refreshSamplesTable?.();
         } finally {
@@ -4228,6 +4225,24 @@ zoomWatcher = {
     document.getElementById('materialFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('contextFilterBody').addEventListener('change', handleFacetFilterChange);
     document.getElementById('objectTypeFilterBody').addEventListener('change', handleFacetFilterChange);
+
+    // #300: filtered clusters may become usable AFTER the page already has a facet
+    // active — the lite preflight resolves asynchronously, or a republished lite
+    // lands on a later visit. When that readiness flips true, reconcile the globe
+    // so a world-zoom filtered view switches from forced point mode to filtered
+    // clusters without needing a camera nudge (Codex P1.9). The preflight cell
+    // invokes this hook; if it resolved BEFORE this watcher registered the hook,
+    // the deferred guarded check below catches it (and no-ops if boot already set
+    // the right mode). Any later camera/moveEnd settle is a further backstop.
+    window.__onFilteredClustersReady = () => {
+        if (hasFacetFilters()) reconcileGlobeForFilters();
+    };
+    setTimeout(() => {
+        if (window.__filteredClustersReady === true && hasFacetFilters()) {
+            const h = viewer.camera.positionCartographic.height;
+            if (computeTargetMode(h) !== getMode()) reconcileGlobeForFilters();
+        }
+    }, 0);
 
     // --- Shared settled-camera tail (#208 smell 1b) ---
     // The single reconciliation entry point both settled-camera listeners run
@@ -4299,21 +4314,25 @@ zoomWatcher = {
                     await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'cluster' && getMode() !== 'cluster') {
-                exitPointMode();
-                // Reload appropriate resolution
+                // point→cluster (e.g. zoom out past EXIT with a facet active →
+                // FILTERED clusters, #300). Load into the hidden h3 layer FIRST,
+                // then drop point mode, so a failed/superseded load never flashes
+                // stale clusters (Codex P1.10). Reload when the resolution OR the
+                // filter signature changed; if neither, the cached clusters are
+                // already correct and we just switch layers.
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
-                if (target !== currentRes && !loading) {
-                    const applied = await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
-                    // The user may have crossed below ENTER_POINT_ALT while
-                    // this cluster load was in flight; reconcile after it
-                    // settles so no extra camera nudge is required.
-                    //
-                    // Skip chase on non-applied returns (issue #193): a
-                    // stale return is recovered by the supersedor's own
-                    // chase, and a failed return should leave the user's
-                    // "Failed to load…" message visible instead of
-                    // overpainting it with "Fetching sample index…".
-                    if (applied) await tryEnterPointModeIfNeeded();
+                const needLoad = (target !== currentRes || viewer._clusterFilterSig !== desiredClusterSig()) && !loading;
+                const applied = needLoad
+                    ? await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target])
+                    : true;
+                if (applied) {
+                    exitPointMode();
+                    // The user may have crossed below ENTER_POINT_ALT while this
+                    // load was in flight; reconcile so no extra camera nudge is
+                    // required. Skip on non-applied returns (issue #193): a stale
+                    // return is recovered by the supersedor's chase, and a failed
+                    // return leaves point mode + the error message intact (P1.10).
+                    await tryEnterPointModeIfNeeded();
                 }
             } else if (targetMode === 'point') {
                 // Already in point mode — viewport sample refresh is driven
@@ -4322,9 +4341,12 @@ zoomWatcher = {
                 // (`percentageChanged = 0.1`) so sub-10% pans don't fire
                 // here; the `moveEnd` path catches every settled move.
             } else {
-                // Cluster mode — check if resolution should change
+                // Cluster mode — reload if the resolution OR the filter signature
+                // changed. The sig check makes a facet toggle that lands here
+                // (already in cluster mode at the same res) refresh the FILTERED
+                // clusters instead of leaving the previous filter's cells (#300).
                 const target = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
-                if (target !== currentRes && !loading) {
+                if ((target !== currentRes || viewer._clusterFilterSig !== desiredClusterSig()) && !loading) {
                     const applied = await loadRes(target, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[target]);
                     // The user may have crossed below ENTER_POINT_ALT while
                     // this cluster load was in flight; reconcile after it
@@ -4401,7 +4423,7 @@ zoomWatcher = {
         }
     });
 
-    viewer.camera.moveEnd.addEventListener(() => {
+    viewer.camera.moveEnd.addEventListener(async () => {
         // Settled-camera tail shared with `camera.changed` (#208 smell 1b):
         // URL-hash write + cluster "Samples in View" refresh. moveEnd fires on
         // every discrete settle including sub-10% pans that `camera.changed`
@@ -4416,27 +4438,25 @@ zoomWatcher = {
         refreshHeatmap();
         if (getMode() !== 'point') return;
         const h = viewer.camera.positionCartographic.height;
-        // A1 (#234 Step 4) / C3: while a search is active, point mode is
-        // LATCHED (clusters can't be text-filtered), so a high-altitude
-        // moveEnd must NOT exit to clusters — otherwise the post-search
-        // flyTo (200 km, above EXIT_POINT_ALT) would immediately undo the
-        // forced point mode and the globe would show unfiltered clusters.
-        if (h > EXIT_POINT_ALT && !searchIsActive() && !hasFacetFilters()) {
-            // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't
-            // fire `camera.changed`, so without driving the exit here we'd
-            // be stuck in point mode above `EXIT_POINT_ALT` until a larger
-            // camera move. Mirror the `camera.changed` cluster-transition
-            // branch's `exitPointMode()` (Codex round-2 review of #221).
-            // The cluster-resolution reload that `camera.changed` also
-            // does is not needed for these small zoom-outs: in the
-            // 180–300 km band the target resolution stays res8, which
-            // point mode already had loaded. Larger zoom-outs that cross
-            // a resolution threshold will themselves fire `camera.changed`
-            // and run the normal reload path. The reverse direction
-            // (sub-10% zoom-in past `ENTER_POINT_ALT` from cluster mode)
-            // is left to `camera.changed` — pre-existing behavior, out of
-            // scope here.
-            exitPointMode();
+        // A1 (#234 Step 4) / C3 + #300: route the sub-10% zoom-out transition
+        // through computeTargetMode so it matches `camera.changed`. Search keeps
+        // point mode LATCHED (computeTargetMode → 'point' while a search is
+        // active) so the post-search flyTo can't bounce to clusters. A facet at
+        // world zoom now targets FILTERED clusters instead of staying in point.
+        if (computeTargetMode(h) === 'cluster') {
+            // Sub-10% zoom-out from point mode (e.g. 175 km → 181 km) won't fire
+            // `camera.changed`, so without driving the transition here we'd be
+            // stuck in point mode above `EXIT_POINT_ALT` until a larger move.
+            // Unlike the old unfiltered path, point mode never loaded FILTERED
+            // clusters, so reload when the cached cluster signature doesn't match
+            // the current filter (#300). Load into the hidden h3 layer first,
+            // then exit — no stale-cluster flash on a failed load (P1.10).
+            const res = h > 3000000 ? 4 : h > 300000 ? 6 : 8;
+            const needLoad = res !== currentRes || viewer._clusterFilterSig !== desiredClusterSig();
+            const applied = needLoad
+                ? await loadRes(res, { 4: h3_res4_url, 6: h3_res6_url, 8: h3_res8_url }[res])
+                : true;
+            if (applied) exitPointMode();
             return;
         }
         // In point mode and at point-mode altitude: refresh samples in
