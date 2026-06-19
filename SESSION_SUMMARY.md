@@ -1,82 +1,103 @@
 # Session Summary
 
-## Session: 2026-05-30/31 (evening)
-**Directory**: `~/C/src/iSamples/isamplesorg.github.io`
-**Trust Level**: external-content
+## Session: 2026-06-18 (evening) — #300 filtered clusters at world zoom
+**Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
+**Trust Level**: medium (local Playwright + DuckDB; downloaded 3 R2 artifacts read-only; no prod writes, no secrets)
 
 ---
 
 ## What Happened
+Implemented **issue #300** — when a facet filter is active at world zoom, render a
+filtered H3-cluster view instead of forcing slow capped point mode (#267). Plus a
+prerequisite behavior-neutral refactor (PR4c).
 
-A long, productive session. Started as "tackle the fast-verify shakedown"; ended with **A1 shipped to production (isamples.org)** and **#248 underway**.
+### Shipped to PRs
+- **PR4c (#301, OPEN)** — `refactor/208-computeTargetMode`: extracted
+  `filtersForcePoint()` + `computeTargetMode()` (centralize the point/cluster mode
+  decision that was duplicated at 4 sites). Behavior-neutral; Codex-approved;
+  unit 13/13 + characterization green. **Should merge before the #300 PR.**
 
-1. **Shakedown root-caused & fixed.** The dev `?data_base=/data` override produced root-relative parquet URLs that DuckDB-WASM's httpfs can't fetch (read as a virtual-FS glob → zero fetches). Resolved to absolute against `location.origin`. This unblocked the fast verify loop (~2.3s to live).
-2. **The "globe logjam" was never real** — it was a **backgrounded-Chrome-MCP-tab artifact** (Chrome freezes rAF in hidden tabs → Cesium camera never settles → "globe won't enter point mode"). In any foreground/headless context the C3 fixes work. The reconciler refactor was unnecessary. **Lesson: drive the verify loop with `HEADLESS=1` Playwright, never the MCP tab.**
-3. **Fixed an A1 search perf regression** the CI smoke gate caught (double facets scan → materialize side-panel columns+score into `search_pids`, one scan).
-4. **Fixed the live facet-padding mismatch** RY hit (legend pad-0 vs table 0.3 → facet read low; e.g. material=rock ~166 vs ~481). Now facet == table.
-5. **Shipped A1**: opened **PR #251**, ran a 3-round **Codex review/revise loop to dual approval** (Codex caught a real `search_pids` staging-table race, heatmap search-blindness, and a stale-reader follow-on — all fixed), then **squash-merged to upstream → deployed to isamples.org** (smoke gate green).
-6. **Started #248 (Eric Kansa's concept-URI search)**: posted a connecting comment, Codex plan-reviewed ("mostly sound + guardrails"), and committed the **foundation** on `feat/described-by-concept`.
-7. **Investigated a transient camera freeze** (RY's `h3=`+`heading=` deep-link, also on isamples.org). Ruled out locked controller / tracked-entity / refresh-loop via a new `?debug=a1` `__a1camera` hook; **resolved on its own → likely transient WebGL context-loss / network**. Surfaced a real **testing gap**: no gate asserts post-hydration *interactivity*.
+### #300 work (branch `feat/300-filtered-clusters`, stacked on PR4c — NOT yet PR'd)
+Commits:
+- `837e877` build: add `h3_res4`/`h3_res6` to `samples_map_lite` (+validator/tests 23/23)
+- `ffe904d` C1 infra: filter-aware `loadRes`, `filteredClustersReady` preflight, semantic cluster sig
+- `f558c31` C2 activation: facets → filtered clusters above EXIT_POINT_ALT
+- `8c9f2c4` C3 coherence: deep-link/boot restore, filtered click hydration, facet note
+- `3891aaf` Codex round-2: P0 (missed `_urlHasFacets` boot force-point block) + 7 P1s
+- `b6f32e7` **boot-deadlock fix** + verification spec
+- `d4c0280` Codex serialization-review fixes (remove lossy `!loading` guards, dedup)
 
 ---
 
 ## Safe to Carry Forward
 
-### Key Decisions
-- A1 ships on plain ILIKE; **BM25 (#168–172) is a perceived-perf follow-up, not a correctness blocker.**
-- `search_pids` is a **singleton**; any new producer (#248) shares one `_searchFilterToken`/`_searchSeq` and the `kind: 'text'|'concept'` tag.
-- Codex-reviewed A1 invariants to preserve: **token-scoped staging table**, **empty-table clear** (never DROP the live table), **build-failure distinguished from empty results**.
-- `?debug=a1`-gated hooks: `__a1globe`, `__a1log`/`__a1state`, and (new, uncommitted/diagnostic) `__a1camera`.
+### Key decisions / discoveries
+- **THE hard bug**: filtered clusters never loaded at world zoom because the heavy
+  `filteredClusterSQL` query, issued during boot's concurrent query storm,
+  **deadlocked DuckDB-WASM** (non-threaded MVP build). Identical query runs in
+  ~2.5s once idle; even 2 concurrent post-boot queries are fine. **Fix: serialize
+  all `db.query` through a FIFO chain** in the `db` cell (single point; all 45
+  data calls use `db.query`, verified). Without it the feature is invisible.
+- Feature **gates on `filteredClustersReady`** (lite has res4/res6) AND
+  `window.__nodeBits` (masks fast-path). If absent → `computeTargetMode` keeps
+  pre-#300 point-mode behavior. **So the #300 code PR can merge BEFORE the data
+  republish — feature stays dormant until the lite is updated.**
+- H3 cells don't strictly nest: `h3_latlng_to_cell(...,4)` ≠ parent of
+  `...(...,8)`. The build computes each res independently; the local lite regen
+  (`scripts/regen_lite_res46.py`) matches by validating against the shipped h3
+  summaries (exact), not by parent-consistency.
+- Codex reviewed 3× (design, implementation, serialization) — all findings fixed.
 
-### Branch / ship state
-- **A1**: merged to upstream `main` as **`e6f9def`** (PR #251), live on isamples.org + rdhyee. Local `feat/search-global-filter-a1` is now redundant (squash-merged).
-- **#248**: branch **`feat/described-by-concept`** off merged main; foundation commit **`f2eac35`** (`conceptLabelForUri` + `buildConceptFilter`, behavior-neutral, verified).
+### Verification (local, `dev_server.py` on :8099 serving res46 lite, explorer on :5860)
+- `tests/playwright/filtered-clusters-300.spec.js` [data]: broad facet
+  (`anyanthropogenicmaterial`) at world zoom → `_clusterFilterSig` kind:filtered,
+  cluster mode (not point), 81 res4 cells, **count conservation** (cluster sum ==
+  masks-backed `COUNT(*)`); zoom-in → point. **2 passed.**
+- Offline: `filteredClusterSQL` sums == direct filtered counts at every res.
+- Regression (explorer-characterization + url-roundtrip, production data, feature
+  dormant): confirms serialization didn't break boot. The `(e)` facet-hydration
+  test is a known cold-cache flake (unrelated; passes warm).
 
-### Files Changed (this session, across A1 + #248)
-- `explorer.qmd` — A1 data_base fix, double-scan collapse, facet-padding, Codex fixes (staging race / heatmap / empty-clear / build-failure msg), `?debug=a1` gating; #248 `conceptLabelForUri` + `buildConceptFilter`.
-- `dev_server.py` — HTTP/1.1; `tests/playwright/a1-verify.mjs` — `HEADLESS=1` flag; new probes `globe-points-probe.mjs`, `shakedown-206.mjs`; `tests/playwright/facet-viewport.spec.js` — coherence test.
-
-### Patterns/Learnings
-- **Backgrounded tabs freeze rAF** → corrupts every globe/camera observation. Headless Playwright is the reliable instrument.
-- **Don't pile up runs**: accumulated hung browsers hold HTTP/1.1 keep-alive + peg CPU and starve `dev_server.py`. Restart between batches.
-- **Local mirror full-downloads** (GET 200, not 206) — fine on localhost; validate range/perf on the deploy, not the mirror.
-- Codex's `codex exec ... -o FILE` often fails to capture the final message when the diff is large; read the verdict from the streamed `.log` instead (resume the session for continuity).
-
----
-
-## External Content Processed
-
-| Source | Type | Notes |
-|---|---|---|
-| GitHub (gh) — issues/PRs #234/#242/#244/#245/#246/#247/#248/#250/#251, CI logs | web/API | Read issue bodies as data. **Authored**: PR #251 + its review comment, #248 comment. **Merged** #251 to upstream production (RY-authorized "push to isamples"). |
-| Codex CLI (gpt-5.4), session `019e7c8d…` | AI tool output | 3-round code review + #248 plan review. Findings **verified before applying**; treat as advisory. |
-| isamples.org / rdhyee.github.io / localhost explorer | browser DOM (headless + 1 MCP tab) | Our own app. The MCP tab is what misled earlier sessions (rAF freeze). |
-| `data.isamples.org`, local `docs/data/*.parquet` | remote/local data | Our own data. |
-
-No secrets accessed, no untrusted code executed (Codex output hand-reviewed).
+### New data artifact (validated, NOT yet uploaded)
+- `~/Data/iSample/pqg_refining/staged_202608/isamples_202608_samples_map_lite_res46.parquet`
+  (48 MB; res4/res6 added; reproduces shipped h3 summaries exactly).
 
 ---
 
-## Open Threads
+## Open Threads / Next Session Entry Point
 
-- [ ] **#248 Flavor A — finish the wiring** (the delicate half): `doDescribedBy(uri)` + extract shared `runPidSetResults({heading,emptyText,orderBy})` from `doSearch` (touches the just-reviewed stale-guards); `described-by=` URL param boot-trigger (search-ready timing) + `writeQueryState` kind-preservation; mutual exclusivity with `search=`; Playwright deep-link coherence test; Codex code-review; open PR. (Codex guardrails are in commit `f2eac35`'s message + the plan in `/tmp/p248.md`.)
-- [ ] **Close #245** (facet-padding) — superseded by #251 (RY hadn't confirmed; do at pickup).
-- [ ] **#244** (collection-facet DRAFT) and **#246** (points-over-heatmap) — need rebase on the new `main` (A1 + facet-padding); #246 worth checking points-over-heatmap *under a search*.
-- [ ] **#248 Flavor B** (arbitrary/Getty URIs) — needs URI→label resolution + free-text fallback; follow-up.
-- [ ] **Testing-gap follow-up**: add a deep-link **interactivity** regression test (assert `enableInputs`/no-trackedEntity + camera actually moves), using the `__a1camera` hook. (Hook is uncommitted/local; re-add when building the test.)
-- [ ] Deferred A1 items: selection revalidation on search change; BM25 substrate (#168–172).
+> **Start here:** #300 is implemented + verified locally; both PR4c and #300 are
+> green. RY chose: **merge #301 first, then open #300**, and activate via a
+> **versioned `_v2` lite filename**. Coordinated rollout sequence:
+>
+> 1. **RY merges PR4c #301** (neutral refactor; green + Codex-approved).
+> 2. **CC rebases** `feat/300-filtered-clusters` onto the merged `upstream/main`,
+>    adds the **`lite_url` → `isamples_202608_samples_map_lite_v2.parquet`** change
+>    (+ a local serve-dir symlink so the verify spec still passes), pushes, opens
+>    the **#300 PR**. (`diag-300.spec.js` already deleted; keep
+>    `filtered-clusters-300.spec.js`.)
+> 3. **RY uploads** the staged `_v2` lite to R2 bucket `isamples-ry` (Touch ID):
+>    `~/Data/iSample/pqg_refining/staged_202608/isamples_202608_samples_map_lite_v2.parquet`
+>    (48 MB, res4/res6/res8). **MUST happen before merging #300** — `lite_url`
+>    points at `_v2`, so a missing `_v2` would 404 the explorer's lite entirely.
+> 4. **RY merges #300** → feature live (filtered clusters activate immediately,
+>    since `_v2` carries res4/res6).
+>
+> Watch-item: the `db.query` serialization (boot-deadlock fix) ships to all users
+> and makes boot queries sequential. Local boot is fast; measure real-network boot
+> latency during review. Fallback if too slow: defer only the heavy filtered query
+> until the connection is idle (keep other queries concurrent).
 
----
-
-## Next Session Entry Point
-
-> Start here: continue **#248 Flavor A** on `feat/described-by-concept` (foundation `f2eac35` done). Next concrete step is `doDescribedBy` + extracting `runPidSetResults` from `doSearch`, then the `described-by=` URL plumbing + mutual-exclusivity, then test → Codex review → PR. Verify loop: `python3 dev_server.py --dir docs --port 8099` + `HEADLESS=1 node tests/playwright/a1-verify.mjs`.
+### Deferred / known
+- `(e)` characterization test is cold-cache flaky (environmental, not #300).
+- `listings.json` 404 = Quarto issue #295 (benign, pre-existing).
+- Serialization caveat: a query that never settles would stall the whole queue
+  (documented in the `db` cell). No such caller today.
 
 ---
 
 ## Session History
-
 | Date | Trust | Summary |
-|---|---|---|
-| 2026-05-30/31 | external-content | Shakedown root-caused; A1 logjam = backgrounded-tab artifact; A1 perf + facet-padding fixed; Codex loop → dual approval; **A1 merged & deployed to isamples.org** (#251); #248 started (`feat/described-by-concept` foundation). |
-| 2026-05-29 | external-content | (prior) A1 scoping + globe logjam framing (superseded — there was no logjam). |
+|------|------|---------|
+| 2026-06-18 pm | medium | #300 filtered clusters: build+C1/C2/C3+Codex×3+boot-deadlock fix; verified local; PR4c #301 open |
+| 2026-06-18 am | high-risk | Shipped #290 cube + #293 masks to prod (#298/#299); Tiered Cache; filed #300 |

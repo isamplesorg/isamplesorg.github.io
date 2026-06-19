@@ -213,9 +213,10 @@ def main():
               "facets rows differ from a re-derivation off the wide (corruption/stale/wrong-version)")
 
         ref_ml = ("SELECT pid, label, source, latitude, longitude, result_time, "
+                  "h3_res4::UBIGINT AS h3_res4, h3_res6::UBIGINT AS h3_res6, "
                   "h3_res8::UBIGINT AS h3_res8, h3_h3_to_string(h3_res8) AS h3_res8_hex, "
                   "place_name::VARCHAR AS pn FROM samp_geo")
-        file_ml = (f"SELECT pid, label, source, latitude, longitude, result_time, h3_res8, h3_res8_hex, "
+        file_ml = (f"SELECT pid, label, source, latitude, longitude, result_time, h3_res4, h3_res6, h3_res8, h3_res8_hex, "
                    f"place_name::VARCHAR AS pn FROM {ML}")
         check("map_lite == fresh build from --wide", except_diff(ref_ml, file_ml) == 0,
               "map_lite coords/h3/place_name differ from a re-derivation off the wide")

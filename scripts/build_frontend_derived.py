@@ -14,7 +14,7 @@ INPUT CONTRACT (enforced/handled):
 
 OUTPUTS (into --outdir, prefixed --tag):
   - {tag}_sample_facets_v2.parquet   pid, source, material, context, object_type, label, description (search-only; includes appended concept labels), place_name(VARCHAR)
-  - {tag}_samples_map_lite.parquet   pid, label, source, latitude, longitude, place_name(VARCHAR[]), result_time, h3_res8(UBIGINT), h3_res8_hex
+  - {tag}_samples_map_lite.parquet   pid, label, source, latitude, longitude, place_name(VARCHAR[]), result_time, h3_res4(UBIGINT), h3_res6(UBIGINT), h3_res8(UBIGINT), h3_res8_hex
   - {tag}_h3_summary_res{4,6,8}.parquet  h3_cell(UBIGINT), sample_count(INT), center_lat, center_lng, dominant_source, source_count(INT), resolution(INT)
   - {tag}_facet_summaries.parquet    facet_type, facet_value, scheme, count
   - {tag}_facet_cross_filter.parquet filter_source/material/context/object_type, facet_type, facet_value, count
@@ -231,8 +231,16 @@ def build_sample_facets_v2(con, out):
 
 
 def build_samples_map_lite(con, out):
+    # h3_res4/h3_res6 (#300): the browser aggregates filtered clusters on the
+    # fly off this file (GROUP BY the res-appropriate h3 column + the #293 mask
+    # predicate) so a broad facet filter at world zoom renders as fast filtered
+    # clusters instead of capped raw points. They dictionary-compress well (far
+    # fewer distinct values than res8), so the size delta is small. h3_res8 was
+    # already present (point-mode selected-cell lookups).
     con.execute(f"""COPY (
         SELECT pid, label, source, latitude, longitude, place_name, result_time,
+               h3_res4::UBIGINT AS h3_res4,
+               h3_res6::UBIGINT AS h3_res6,
                h3_res8::UBIGINT AS h3_res8,
                h3_h3_to_string(h3_res8) AS h3_res8_hex
         FROM samp_geo ORDER BY pid
