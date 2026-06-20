@@ -519,6 +519,180 @@ def test_facet_masks_only_builds(tmp_path):
     assert (tmp_path / "t_sample_facet_masks.parquet").exists()
 
 
+# ---------------------------------------------------------------------------
+# sample_facet_index — COMPLETE per-pid index (#305/#306)
+# Reuses the tree vocab but adds a LOCATED sample with NO tree membership
+# (root-only material, null context/object) — the exact #306 class that
+# sample_facet_masks silently omits. The index must include it, zero-masked.
+# ---------------------------------------------------------------------------
+# (pid, source, material_rids, context_rids, object_rids)
+INDEX_SAMPLES = [
+    ("s1", "A", [2], [11], [21]),    # mineral, earthinterior, othersolidobject (full membership)
+    ("s2", "A", [3], [11], [21]),    # rock,    earthinterior, othersolidobject (full membership)
+    ("s3", "B", [2], [11], [21]),    # mineral, earthinterior, othersolidobject (full membership)
+    ("s-nomem", "C", [1], None, None),  # material ROOT-only -> NULL material -> NO membership; located
+]
+
+
+def build_index_fixture(wide, vocab):
+    """Tree fixture + a located no-membership sample (the #306 case)."""
+    con = duckdb.connect(); con.execute("INSTALL spatial; LOAD spatial;")
+    ic_rows = " UNION ALL ".join(
+        f"SELECT 'IdentifiedConcept' AS otype, '{uri}' AS pid, {rid}::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        f"'lbl' AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
+        f"NULL AS geometry, NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
+        for rid, uri in TREE_CONCEPTS)
+    msr = []
+    for i, (pid, src, m, c, o) in enumerate(INDEX_SAMPLES):
+        msr.append(
+            f"SELECT 'MaterialSampleRecord' AS otype, '{pid}' AS pid, NULL::BIGINT AS row_id, '{src}' AS n, "
+            f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}']::VARCHAR[] AS place_name, "
+            f"NULL::TIMESTAMP AS result_time, ST_AsWKB(ST_Point({10.0+i},{40.0+i})) AS geometry, "
+            f"{_arr(m)} AS p__has_material_category, {_arr(c)} AS p__has_context_category, "
+            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+    con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) TO '{wide}' (FORMAT PARQUET)")
+    edges = " UNION ALL ".join(
+        f"SELECT '{u}' uri, {('NULL' if p is None else repr(p))}::VARCHAR broader, 'data_v1' uri_form"
+        for u, p in TREE_EDGES)
+    con.execute(f"COPY ({edges}) TO '{vocab}' (FORMAT PARQUET)")
+    con.close()
+
+
+def _build_index(tmp_path, wide, vocab, tag="t"):
+    cmd = [sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", tag,
+           "--skip", "wide_h3", "--no-manifest", "--vocab-labels", vocab]
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def test_sample_facet_index_complete_and_zero_masked(tmp_path):
+    """#305/#306: the index covers EVERY located pid (incl. the no-membership one,
+    which masks omits), carries source, and zero-masks no-membership pids while
+    staying bit-identical to masks for membership pids."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    r = _build_index(tmp_path, wide, vocab)
+    assert r.returncode == 0, f"index build failed:\n{r.stdout}\n{r.stderr}"
+    con = duckdb.connect()
+    IX = f"read_parquet('{tmp_path / 't_sample_facet_index.parquet'}')"
+    MK = f"read_parquet('{tmp_path / 't_sample_facet_masks.parquet'}')"
+    F = f"read_parquet('{tmp_path / 't_sample_facets_v2.parquet'}')"
+
+    # COMPLETENESS: index has all 4 located pids; masks has only the 3 with membership
+    assert con.sql(f"SELECT COUNT(*) FROM {IX}").fetchone()[0] == 4
+    assert con.sql(f"SELECT COUNT(*) FROM {MK}").fetchone()[0] == 3
+    # index pid set == facets_v2 pid set (the located universe)
+    diff = con.sql(f"""SELECT (SELECT COUNT(*) FROM (SELECT pid FROM {F} EXCEPT SELECT pid FROM {IX}))
+        + (SELECT COUNT(*) FROM (SELECT pid FROM {IX} EXCEPT SELECT pid FROM {F}))""").fetchone()[0]
+    assert diff == 0, "index pid set != facets_v2 located universe"
+    # the no-membership located sample IS present and FULLY zero-masked (#306)
+    row = con.sql(f"SELECT material_mask, context_mask, object_type_mask, source FROM {IX} WHERE pid='s-nomem'").fetchone()
+    assert row is not None, "s-nomem (located, no membership) missing from index — the #306 bug"
+    assert row[:3] == (0, 0, 0), f"s-nomem should be zero-masked, got {row[:3]}"
+    assert row[3] == "C", f"s-nomem source should be 'C', got {row[3]!r}"
+    # masks bit-identical for shared pids
+    mk_diff = con.sql(f"""SELECT COUNT(*) FROM {IX} i JOIN {MK} m ON i.pid=m.pid
+        WHERE i.material_mask IS DISTINCT FROM m.material_mask
+           OR i.context_mask IS DISTINCT FROM m.context_mask
+           OR i.object_type_mask IS DISTINCT FROM m.object_type_mask""").fetchone()[0]
+    assert mk_diff == 0, "index masks drift from sample_facet_masks for shared pids"
+    # build_id is structured "<membership>:<coverage>" and its membership half == node_bits
+    bid = con.sql(f"SELECT DISTINCT build_id FROM {IX}").fetchall()
+    assert len(bid) == 1 and ":" in bid[0][0], f"index build_id not single/structured: {bid}"
+    nb_bid = con.sql(f"SELECT DISTINCT build_id FROM read_parquet('{tmp_path / 't_facet_node_bits.parquet'}')").fetchone()[0]
+    assert bid[0][0].split(":", 1)[0] == nb_bid, "index build_id membership-half != node_bits build_id"
+
+
+def test_sample_facet_index_coverage_id_changes_with_source(tmp_path):
+    """The coverage half of build_id must change when source/coverage changes even
+    though membership is identical (the silent-staleness hole the plan calls out)."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab, tag="a").returncode == 0
+    con = duckdb.connect()
+    bid_a = con.sql(f"SELECT DISTINCT build_id FROM read_parquet('{tmp_path / 'a_sample_facet_index.parquet'}')").fetchone()[0]
+
+    # rebuild with a flipped source on s-nomem (same membership, different coverage)
+    wide2 = str(tmp_path / "wide2.parquet")
+    con.execute(f"""COPY (
+        SELECT * REPLACE (CASE WHEN pid='s-nomem' THEN 'Z' ELSE n END AS n) FROM read_parquet('{wide}')
+    ) TO '{wide2}' (FORMAT PARQUET)""")
+    assert _build_index(tmp_path, wide2, vocab, tag="b").returncode == 0
+    bid_b = con.sql(f"SELECT DISTINCT build_id FROM read_parquet('{tmp_path / 'b_sample_facet_index.parquet'}')").fetchone()[0]
+
+    mem_a, cov_a = bid_a.split(":", 1)
+    mem_b, cov_b = bid_b.split(":", 1)
+    assert mem_a == mem_b, "membership half should be unchanged (membership identical)"
+    assert cov_a != cov_b, "coverage half should change when a source value changes"
+
+
+def test_sample_facet_index_validator_passes_and_gates_bite(tmp_path):
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    # clean: validator (incl. the new index gates) must PASS
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert v.returncode == 0, f"validator failed on clean index fixture:\n{v.stdout}\n{v.stderr}"
+    assert "index.pid == facets_v2.pid" in v.stdout
+
+    # corrupt 1: drop the no-membership pid (re-introduce the #306 bug) -> completeness gate fires
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    con.execute(f"""COPY (SELECT * FROM read_parquet('{ix}') WHERE pid <> 's-nomem')
+                   TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v2 = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                        capture_output=True, text=True)
+    assert v2.returncode != 0 and "index.pid == facets_v2.pid" in v2.stdout, \
+        f"completeness gate failed to catch a dropped located pid:\n{v2.stdout}"
+
+
+def test_sample_facet_index_nonzero_mask_on_nomem_caught(tmp_path):
+    """A no-membership pid carrying a non-zero mask is a corruption the gate must catch."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    con.execute(f"""COPY (SELECT pid, source,
+                   CASE WHEN pid='s-nomem' THEN 1::BIGINT ELSE material_mask END AS material_mask,
+                   context_mask, object_type_mask, build_id, schema_version
+                   FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "zero-masked" in v.stdout, \
+        f"zero-mask gate failed to catch a non-zero no-membership pid:\n{v.stdout}"
+
+
+def test_sample_facet_index_source_drift_caught(tmp_path):
+    """index.source must equal facets_v2.source; a drifted source must fail the gate."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    con.execute(f"""COPY (SELECT pid,
+                   CASE WHEN pid='s1' THEN 'WRONG' ELSE source END AS source,
+                   material_mask, context_mask, object_type_mask, build_id, schema_version
+                   FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "index.source == facets_v2.source" in v.stdout, \
+        f"source-equality gate failed to catch drift:\n{v.stdout}"
+
+
+def test_sample_facet_index_only_builds(tmp_path):
+    """--only sample_facet_index must produce the file (and its prereqs build)."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
+                        "--no-manifest", "--vocab-labels", vocab,
+                        "--only", "sample_facet_index"], capture_output=True, text=True)
+    assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
+    assert (tmp_path / "t_sample_facet_index.parquet").exists(), \
+        f"--only sample_facet_index produced no file:\n{r.stdout}"
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0

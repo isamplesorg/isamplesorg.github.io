@@ -19,6 +19,7 @@ OUTPUTS (into --outdir, prefixed --tag):
   - {tag}_facet_summaries.parquet    facet_type, facet_value, scheme, count
   - {tag}_facet_cross_filter.parquet filter_source/material/context/object_type, facet_type, facet_value, count
   - {tag}_wide_h3.parquet            wide + h3_res4/6/8  (large; built only on --only wide_h3)
+  - {tag}_sample_facet_index.parquet pid, source, material_mask, context_mask, object_type_mask(BIGINT), build_id, schema_version(INT) — COMPLETE per-pid index over ALL located samples (incl. #306 no-membership pids, zero-masked); the multi-filter global-view count path (#304/#305) scans this
   - {tag}_manifest.json              provenance + per-output rowcount/schema/sha256
 
 MATERIAL SELECTION (issue #265/#271): the broad SKOS root
@@ -64,11 +65,16 @@ DIM_ROOT = {
 ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
              "facet_summaries", "facet_cross_filter", "wide_h3",
              "sample_facet_membership", "facet_tree_summaries",
-             "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks"]
+             "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks",
+             "sample_facet_index"]
 # #293: max tree nodes per dim that fit in a signed BIGINT mask (bits 0..62).
 # Live max is 22 (context); guard so a future vocab explosion fails loudly
 # instead of silently overflowing a mask bit.
 MASK_MAX_BITS = 63
+# #305/#306: schema version for the complete per-pid facet index. Bump when the
+# column set / semantics of sample_facet_index change so the explorer can refuse
+# an index it doesn't understand instead of mis-reading it.
+INDEX_SCHEMA_VERSION = 1
 
 # Shared SQL expression for sample_facets_v2.description (#277 part 2).
 # Appends space-joined concept labels (IC labels across all 4 concept dims)
@@ -508,6 +514,35 @@ def membership_build_id(con):
         FROM membership""").fetchone()[0]
 
 
+def coverage_build_id(con):
+    # #305/#306: fingerprint of the COMPLETE per-pid universe the index covers —
+    # the (pid, source) pairs over the LOCATED set (samp_geo), independent of tree
+    # membership. membership_build_id() alone is blind to this: an index built from
+    # the SAME membership but a changed source value or a changed located-pid set
+    # (exactly the #306 class of drift — located pids with no membership) would
+    # carry an identical membership id and go stale SILENTLY. Order-independent XOR
+    # of per-row hashes; samp_geo.pid is unique (hard-checked in build_base_tables),
+    # so no XOR cancellation. COALESCE(source,'') so a NULL→'' source flip is caught.
+    return con.sql("""
+        SELECT CAST(COALESCE(bit_xor(hash(pid || chr(31) || COALESCE(source, ''))), 0)
+                    AS VARCHAR)
+        FROM samp_geo""").fetchone()[0]
+
+
+def index_build_id(con):
+    # #305/#306: the index's generation identity = "<membership_id>:<coverage_id>".
+    # The two halves are deliberately separable so the explorer can BOTH:
+    #   1. gate the mask-bit interpretation by matching the membership half against
+    #      facet_node_bits.build_id (the bit assignment is a pure function of
+    #      membership — the index masks are only meaningful under the SAME node_bits
+    #      generation), and
+    #   2. detect coverage/source drift via the coverage half (would otherwise be
+    #      invisible to a membership-only id).
+    # ':' never appears in either half (both are decimal hash strings), so a single
+    # split is unambiguous. node_bits/masks keep their plain membership id.
+    return f"{membership_build_id(con)}:{coverage_build_id(con)}"
+
+
 def build_facet_node_bits(con, out, build_id):
     # #293: authoritative concept_uri -> bit_index assignment per tree dim. The
     # explorer loads this to turn a node selection into a bitmask and filter
@@ -556,6 +591,51 @@ def build_sample_facet_masks(con, out, build_id):
         FROM membership m JOIN nb ON nb.facet_type=m.facet_type AND nb.concept_uri=m.concept_uri
         GROUP BY m.pid
         ORDER BY m.pid
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
+def build_sample_facet_index(con, out, build_id):
+    # #305/#306: the COMPLETE per-pid facet index — one row for EVERY located
+    # sample (samp_geo), not only those with tree membership. This is the artifact
+    # the multi-filter global-view count path (#304) scans: it must be able to count
+    # over the whole located universe, including samples that carry NO tree concept.
+    #
+    # WHY this exists separately from sample_facet_masks: masks is built FROM
+    # `membership`, so it silently OMITS located samples with no membership row
+    # (~29,917 in the 202608 generation — #306). Counting/ filtering off masks alone
+    # undercounts the located universe. Here we start from samp_geo (the authoritative
+    # located set), LEFT JOIN the same membership-derived masks, and emit a ZERO mask
+    # for no-membership pids (a zero mask matches no node bit → contributes 0 to every
+    # tree facet, which is correct: the sample is in no subtree — but it IS still a
+    # located sample and still counts toward `source` and the located total).
+    #
+    # `source` is a plain VARCHAR (source is exclusive, not multi-valued — a mask
+    # would be wrong, a facets_v3 semi-join would add a second 6M-row read). The
+    # mask columns are bit-identical to sample_facet_masks for pids that have
+    # membership (validated). bit assignment == build_facet_node_bits / masks.
+    con.execute(f"""COPY (
+        WITH nb AS (
+          SELECT facet_type, concept_uri,
+                 (1::BIGINT << (ROW_NUMBER() OVER (PARTITION BY facet_type ORDER BY concept_uri) - 1)) AS bitval
+          FROM (SELECT DISTINCT facet_type, concept_uri FROM membership)
+        ),
+        masks AS (
+          SELECT m.pid,
+            COALESCE(bit_or(CASE WHEN m.facet_type='material'    THEN nb.bitval END), 0)::BIGINT AS material_mask,
+            COALESCE(bit_or(CASE WHEN m.facet_type='context'     THEN nb.bitval END), 0)::BIGINT AS context_mask,
+            COALESCE(bit_or(CASE WHEN m.facet_type='object_type' THEN nb.bitval END), 0)::BIGINT AS object_type_mask
+          FROM membership m JOIN nb ON nb.facet_type=m.facet_type AND nb.concept_uri=m.concept_uri
+          GROUP BY m.pid
+        )
+        SELECT sg.pid,
+               sg.source::VARCHAR                       AS source,
+               COALESCE(mk.material_mask, 0)::BIGINT     AS material_mask,
+               COALESCE(mk.context_mask, 0)::BIGINT      AS context_mask,
+               COALESCE(mk.object_type_mask, 0)::BIGINT  AS object_type_mask,
+               '{build_id}' AS build_id,
+               {INDEX_SCHEMA_VERSION}::INTEGER AS schema_version
+        FROM samp_geo sg LEFT JOIN masks mk ON mk.pid = sg.pid
+        ORDER BY sg.pid
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
@@ -623,7 +703,8 @@ def main():
 
     # Hierarchy artifacts (#281/#282) — need vocab_labels for the SKOS tree.
     HIER_ARTIFACTS = {"sample_facet_membership", "facet_tree_summaries",
-                      "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks"}
+                      "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks",
+                      "sample_facet_index"}
     if any(want(a) for a in HIER_ARTIFACTS):
         if not args.vocab_labels:
             # Fail loud if the user EXPLICITLY asked for a hierarchy artifact
@@ -641,10 +722,15 @@ def main():
             # #293 bitmask filter artifacts — needs membership (above). node_bits
             # and masks share a node-set build_id so the explorer only uses the mask
             # path when the two are from the same generation (Codex P1).
-            if want("facet_node_bits") or want("sample_facet_masks"):
+            if want("facet_node_bits") or want("sample_facet_masks") or want("sample_facet_index"):
                 _bid = membership_build_id(con)
                 emit("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
                 emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o, _bid))
+                # #305/#306: complete per-pid index (every located pid + source,
+                # zero-mask for no-membership pids). Its build_id embeds the SAME
+                # membership id as node_bits (mask-bit interpretation gate) PLUS a
+                # coverage id over samp_geo's (pid, source) universe (staleness gate).
+                emit("sample_facet_index", lambda o: build_sample_facet_index(con, o, index_build_id(con)))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)

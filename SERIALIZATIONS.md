@@ -122,6 +122,7 @@ builder — a fresh build is NOT bit-for-bit identical to them (see
 | `isamples_202601_sample_facets_v2.parquet` | `(pid, source, material, context, object_type, label, description, place_name)` — all VARCHAR scalars; each facet column is a single URI per sample (not an array) | 63 MB | 6.0 M | wide | Search Explorer multi-dim facet filtering | QUERY_SPEC §3.3, §5.1 |
 | `isamples_202601_facet_summaries.parquet` | Baseline `(facet_type, facet_value, scheme, count)` | 2 KB | 56 | wide | Every tutorial (instant initial facet counts) | QUERY_SPEC §3.3 tier 1 |
 | `isamples_202601_facet_cross_filter.parquet` | Pre-computed counts for single-filter cross-facet queries | 6 KB | 526 | wide | Search Explorer cross-filter UI | QUERY_SPEC §3.3 tier 2a |
+| `<tag>_sample_facet_index.parquet` | Complete per-pid facet index `(pid, source, material_mask, context_mask, object_type_mask, build_id, schema_version)` — **one row per located sample**, including samples with no tree membership (zero-masked, #306). Scanned by the multi-filter global-view count path (#304/#305). | ~60 MB | 6.0 M | wide (membership + samp_geo) | Interactive Explorer multi-filter facet counts | §4.12 below |
 
 ### Tier: vocabulary labels
 
@@ -295,6 +296,42 @@ for the alias when you want "latest."
 - **Headline schema**: PQG narrow (40 cols) and wide (47 cols). OC wide has slightly fewer `p__*` columns than the unified wide — this is schema drift, not semantically meaningful for standard queries.
 - **Consumer**: `scripts/enrich_wide_with_oc_thumbnails.py` uses OC narrow to fill thumbnails into 202604 unified wide. Also used directly in PQG benchmark work.
 - **Future**: these become the prototype upstream for per-source sidecars (see §3, bottom row).
+
+### 4.12 `<tag>_sample_facet_index.parquet` (complete per-pid facet index, #305/#306)
+
+- **Role**: The single artifact the **multi-filter** global-view count path scans
+  (#304/#305). Where `sample_facet_masks` is built FROM `membership` and therefore
+  silently omits located samples that carry no tree concept (~29,917 in the 202608
+  generation — **#306**), this index starts from `samp_geo` (the authoritative
+  located set) and is **complete**: one row per located `pid`. Samples with no
+  membership are present and **zero-masked**.
+- **Headline schema** (7 cols): `pid (VARCHAR), source (VARCHAR), material_mask
+  (BIGINT), context_mask (BIGINT), object_type_mask (BIGINT), build_id (VARCHAR),
+  schema_version (INTEGER)`. `source` is a plain VARCHAR (source is exclusive, not
+  multi-valued, so a mask would be wrong). Each `*_mask` bit `(1 << bit_index)` is
+  set iff the pid is a member of that node, under the bit assignment in
+  `facet_node_bits`; membership encodes ancestor closure, so a parent bit is set for
+  the whole subtree.
+- **`build_id` is structured** as `"<membership_id>:<coverage_id>"`:
+  - the **membership half** equals `facet_node_bits.build_id` — the explorer must
+    only interpret the mask bits when the two agree (else the bits are read under a
+    foreign assignment);
+  - the **coverage half** is a fingerprint of the `(pid, source)` universe over
+    `samp_geo`, so a changed source value or located-pid set (the #306 drift class)
+    changes `build_id` instead of going stale silently.
+- **Count contract (ratifies #276)**: a facet count is **membership / "anywhere in
+  the tree"** — a sample counts toward a node if that node is anywhere in the
+  sample's asserted-concept subtree closure (OR within a dimension, AND across
+  dimensions, **excluding the target dimension's own predicate**). This is the
+  already-shipped cube/UI semantics; this index does not change it, it serves the
+  same contract to the *multi-filter* case the single-filter cube cannot reach.
+- **Validation**: `validate_frontend_derived.py --index <file>` asserts: schema,
+  one row per pid, `pid` set == `sample_facets_v2.pid` (the located universe),
+  `source` == facets_v2 source, single structured `build_id` whose membership half
+  matches `node_bits`, masks bit-identical to `sample_facet_masks` for shared pids,
+  and that every no-membership pid is zero-masked.
+- **Immutability**: published under a **new** versioned filename — it is a new
+  artifact name and never overwrites a cached `sample_facet_masks` or any prior tag.
 
 ## 5. URL convention
 

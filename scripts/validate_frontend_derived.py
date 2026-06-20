@@ -13,6 +13,8 @@ Usage:
   python scripts/validate_frontend_derived.py \
       --facets URL --map-lite URL --summaries URL --cross-filter URL \
       --h3 URL4 URL6 URL8
+  # hierarchy + #305/#306 complete index (auto-discovered with --dir/--tag, or):
+  python scripts/validate_frontend_derived.py --dir DIR --tag TAG --index INDEX.parquet
 """
 import argparse, hashlib, json, os, sys
 import duckdb
@@ -55,6 +57,7 @@ def main():
     ap.add_argument("--tree-cross-filter", help="facet_tree_cross_filter parquet (#290/#293); optional")
     ap.add_argument("--node-bits", help="facet_node_bits parquet (#293); optional")
     ap.add_argument("--masks", help="sample_facet_masks parquet (#293); optional")
+    ap.add_argument("--index", help="sample_facet_index parquet (#305/#306); optional")
     ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
@@ -300,6 +303,7 @@ def main():
     treexf = _opt("facet_tree_cross_filter", "tree_cross_filter")
     nodebits = _opt("facet_node_bits", "node_bits")
     masks = _opt("sample_facet_masks", "masks")
+    index = _opt("sample_facet_index", "index")
     if tree:
         T = f"read_parquet('{tree}')"
         # parent ≥ child for every edge, every dim (distinct-pid UNION semantics —
@@ -476,6 +480,88 @@ def main():
                     SELECT (SELECT COUNT(*) FROM (SELECT * FROM a EXCEPT SELECT * FROM b))
                          + (SELECT COUNT(*) FROM (SELECT * FROM b EXCEPT SELECT * FROM a))""")
                 check(f"masks filter == membership ({dim})", d == 0, f"{d} pids differ for a real {dim} node")
+
+    # --- #305/#306 complete per-pid facet index (sample_facet_index) ---
+    # The multi-filter global-view count path scans THIS file. It must cover the
+    # ENTIRE located universe (facets_v2 = samp_geo), carry the correct source per
+    # pid, zero-mask the no-membership pids (#306), and be bit-identical to
+    # sample_facet_masks for pids that DO have membership — otherwise counts drift.
+    if index:
+        IX = f"read_parquet('{index}')"
+        # schema/types contract (the explorer reads these columns positionally-ish)
+        ix_sch = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM {IX}").fetchall()]
+        EXP_IX = [("pid", "VARCHAR"), ("source", "VARCHAR"),
+                  ("material_mask", "BIGINT"), ("context_mask", "BIGINT"),
+                  ("object_type_mask", "BIGINT"), ("build_id", "VARCHAR"),
+                  ("schema_version", "INTEGER")]
+        check("index schema matches contract", ix_sch == EXP_IX, f"got {ix_sch}")
+        # one row per pid
+        ixdup = scalar(f"SELECT COUNT(*) FROM (SELECT pid FROM {IX} GROUP BY pid HAVING COUNT(*)>1)")
+        check("index: one row per pid", ixdup == 0, f"{ixdup} duplicate pids in index")
+        # COMPLETENESS (#306): index pid SET == facets_v2 pid SET (the located universe).
+        # This is the whole point — masks omits no-membership located pids; the index
+        # must not. A symmetric set-diff catches both missing and extra pids.
+        ix_diff = scalar(f"""SELECT
+            (SELECT COUNT(*) FROM (SELECT pid FROM {F} EXCEPT SELECT pid FROM {IX})) +
+            (SELECT COUNT(*) FROM (SELECT pid FROM {IX} EXCEPT SELECT pid FROM {F}))""")
+        check("index.pid == facets_v2.pid (complete located universe, #306)", ix_diff == 0,
+              f"{ix_diff} pids differ between index and facets_v2")
+        # SOURCE equality: index.source must equal facets_v2.source for every pid
+        # (IS NOT DISTINCT FROM so NULL==NULL). A source-value drift is exactly what
+        # the coverage half of build_id is meant to catch — assert it directly too.
+        src_bad = scalar(f"""SELECT COUNT(*) FROM {IX} i JOIN {F} f ON i.pid=f.pid
+            WHERE i.source IS DISTINCT FROM f.source""")
+        check("index.source == facets_v2.source", src_bad == 0, f"{src_bad} pids with mismatched source")
+        # single build_id, structured "<membership_id>:<coverage_id>"
+        ix_bids = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {IX}")
+        check("index: single build_id", ix_bids == 1, f"{ix_bids} distinct build_ids (want 1)")
+        ix_bid_fmt = scalar(f"SELECT COUNT(*) FROM {IX} WHERE build_id NOT LIKE '%:%'")
+        check("index: build_id is '<membership>:<coverage>'", ix_bid_fmt == 0,
+              "build_id(s) missing the ':' coverage separator")
+        # single schema_version (sanity — the explorer keys behavior off it)
+        ix_sv = scalar(f"SELECT COUNT(DISTINCT schema_version) FROM {IX}")
+        check("index: single schema_version", ix_sv == 1, f"{ix_sv} distinct schema_versions")
+        if nodebits and ix_bids == 1:
+            # the membership half of the index build_id MUST equal node_bits.build_id
+            # so the mask bits are interpreted under the SAME assignment (else counts
+            # are computed against a stale/foreign bit layout — silently wrong).
+            nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}')")
+            if nb_bid == 1:
+                membership_half_matches = scalar(
+                    f"SELECT (SELECT split_part(MIN(build_id), ':', 1) FROM {IX}) "
+                    f"= (SELECT MIN(build_id) FROM read_parquet('{nodebits}'))")
+                check("index build_id membership-half == node_bits build_id",
+                      bool(membership_half_matches),
+                      "index masks would be read under a different bit assignment than node_bits")
+        if masks:
+            MK = f"read_parquet('{masks}')"
+            # For pids that ALSO appear in masks (i.e. have membership), the three
+            # mask columns must be byte-identical — the index is a superset, not a
+            # re-computation that could drift.
+            mk_diff = scalar(f"""SELECT COUNT(*) FROM {IX} i JOIN {MK} m ON i.pid=m.pid
+                WHERE i.material_mask    IS DISTINCT FROM m.material_mask
+                   OR i.context_mask     IS DISTINCT FROM m.context_mask
+                   OR i.object_type_mask IS DISTINCT FROM m.object_type_mask""")
+            check("index masks == sample_facet_masks (shared pids)", mk_diff == 0,
+                  f"{mk_diff} shared pids with differing masks")
+            # The ONLY pids allowed to differ between the two files are the
+            # no-membership located pids (#306): present in index, absent from masks,
+            # and they MUST be zero-masked. Verify (a) the extra pids are exactly the
+            # zero-mask ones and (b) none are in masks.
+            extra_nonzero = scalar(f"""SELECT COUNT(*) FROM {IX} i
+                WHERE NOT EXISTS (SELECT 1 FROM {MK} m WHERE m.pid=i.pid)
+                  AND (i.material_mask <> 0 OR i.context_mask <> 0 OR i.object_type_mask <> 0)""")
+            check("index: no-membership extra pids are zero-masked (#306)", extra_nonzero == 0,
+                  f"{extra_nonzero} index-only pids carry a non-zero mask (should be 0)")
+        elif mem:
+            # No masks file to diff against, but we can still assert the #306 invariant
+            # directly off membership: every index pid NOT in membership is zero-masked.
+            M = f"read_parquet('{mem}')"
+            extra_nonzero = scalar(f"""SELECT COUNT(*) FROM {IX} i
+                WHERE NOT EXISTS (SELECT 1 FROM {M} m WHERE m.pid=i.pid)
+                  AND (i.material_mask <> 0 OR i.context_mask <> 0 OR i.object_type_mask <> 0)""")
+            check("index: no-membership pids zero-masked (#306, vs membership)", extra_nonzero == 0,
+                  f"{extra_nonzero} no-membership pids carry a non-zero mask")
 
     print(f"\n{'CHECK':<44} {'RESULT':<6} DETAIL\n" + "-" * 90)
     ok = True
