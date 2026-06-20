@@ -816,15 +816,21 @@ def test_sample_facet_index_only_auto_pairs_bundle(tmp_path):
     build_index_fixture(wide, vocab)
     # 1) full build so the validator's non-index siblings (facets_v2, h3, …) exist
     assert _build_index(tmp_path, wide, vocab).returncode == 0
+    # delete the bundle the index-only rebuild must RE-EMIT, so a stale full-build
+    # file can't satisfy the existence checks (Codex r4: prove re-emission, not
+    # leftover presence).
+    bundle = ("t_sample_facet_index.parquet", "t_facet_node_bits.parquet",
+              "t_sample_facet_membership.parquet")
+    for sib in bundle:
+        os.remove(tmp_path / sib)
     # 2) rebuild ONLY the index into the same dir
     r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
                         "--no-manifest", "--vocab-labels", vocab,
                         "--only", "sample_facet_index"], capture_output=True, text=True)
     assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
     # the bundle the index needs to be validatable was (re)emitted, not orphaned
-    for sib in ("t_sample_facet_index.parquet", "t_facet_node_bits.parquet",
-                "t_sample_facet_membership.parquet"):
-        assert (tmp_path / sib).exists(), f"--only sample_facet_index did not emit {sib}:\n{r.stdout}"
+    for sib in bundle:
+        assert (tmp_path / sib).exists(), f"--only sample_facet_index did not re-emit {sib}:\n{r.stdout}"
     # 3) the rebuilt artifacts validate against the existing full-build siblings
     v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
                        capture_output=True, text=True)
