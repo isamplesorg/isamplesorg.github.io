@@ -770,6 +770,42 @@ def test_sample_facet_index_source_drift_caught(tmp_path):
         f"source-equality gate failed to catch drift:\n{v.stdout}"
 
 
+def test_sample_facet_index_validation_requires_siblings(tmp_path):
+    """Codex r2 #1: validating the index WITHOUT membership+node_bits must FAIL
+    (fail-closed), not silently run a partial pass. Reproduces the bypass where a
+    corrupt index + restamped node_bits passed once the siblings were removed."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    # delete the siblings the index validation depends on
+    os.remove(tmp_path / "t_sample_facet_membership.parquet")
+    os.remove(tmp_path / "t_facet_node_bits.parquet")
+    os.remove(tmp_path / "t_sample_facet_masks.parquet")
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "required to gate" in v.stdout, \
+        f"index validation should fail-closed without membership+node_bits:\n{v.stdout}"
+
+
+def test_sample_facet_index_bad_node_bits_build_id_caught(tmp_path):
+    """Codex r2 #2: a node_bits file with !=1 non-NULL build_id previously skipped
+    the membership-half match entirely. It must now FAIL."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    nb = str(tmp_path / "t_facet_node_bits.parquet")
+    con = duckdb.connect(); tmp_nb = nb + ".tmp"
+    # give node_bits TWO distinct build_ids (one row restamped)
+    con.execute(f"""COPY (SELECT facet_type, concept_uri, bit_index,
+                   CASE WHEN bit_index = (SELECT MIN(bit_index) FROM read_parquet('{nb}'))
+                        THEN 'OTHER_GEN' ELSE build_id END AS build_id
+                   FROM read_parquet('{nb}')) TO '{tmp_nb}' (FORMAT PARQUET)"""); os.replace(tmp_nb, nb)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "exactly one non-NULL build_id" in v.stdout, \
+        f"node_bits build_id gate failed to catch a multi-id file:\n{v.stdout}"
+
+
 def test_sample_facet_index_only_auto_pairs_node_bits(tmp_path):
     """Codex #4: --only sample_facet_index must NOT ship an orphan — facet_node_bits
     (the bit-interpretation file) is force-emitted alongside it. The resulting pair

@@ -502,6 +502,16 @@ def main():
             return f"{x}_{s}_{n}"
 
         IX = f"read_parquet('{index}')"
+        # GATING PRECONDITION (Codex r2 #1): the index cannot be fully validated
+        # without BOTH sample_facet_membership and facet_node_bits — they are what
+        # the independent build_id recompute and mask re-derivation depend on. If
+        # either is absent we must FAIL rather than silently run a partial (fail-open)
+        # validation that would pass a corrupt index/node_bits pair. They are always
+        # co-produced by a build, so --dir/--tag (or passing both) satisfies this.
+        check("index validation has membership + node_bits (required to gate)",
+              bool(mem and nodebits),
+              "pass --membership and --node-bits (or --dir/--tag with both present); "
+              "the index can't be validated in isolation")
         # schema/types contract (the explorer reads these columns by name)
         ix_sch = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM {IX}").fetchall()]
         EXP_IX = [("pid", "VARCHAR"), ("source", "VARCHAR"),
@@ -568,8 +578,13 @@ def main():
             # the membership half of the index build_id MUST equal node_bits.build_id
             # so the mask bits are interpreted under the SAME assignment (else counts
             # are computed against a stale/foreign bit layout — silently wrong).
-            nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}')")
-            if nb_bid == 1:
+            # (Codex r2 #2): assert node_bits has EXACTLY ONE non-NULL build_id FIRST —
+            # 0 or >1 distinct ids previously skipped the match entirely (fail-open).
+            nb_bid = scalar(f"SELECT COUNT(DISTINCT build_id) FROM read_parquet('{nodebits}') WHERE build_id IS NOT NULL")
+            nb_null = scalar(f"SELECT COUNT(*) FROM read_parquet('{nodebits}') WHERE build_id IS NULL")
+            check("node_bits: exactly one non-NULL build_id", nb_bid == 1 and nb_null == 0,
+                  f"{nb_bid} distinct non-NULL build_ids, {nb_null} NULLs (want 1 / 0)")
+            if nb_bid == 1 and nb_null == 0:
                 membership_half_matches = scalar(
                     f"SELECT (SELECT split_part(MIN(build_id), ':', 1) FROM {IX}) "
                     f"= (SELECT MIN(build_id) FROM read_parquet('{nodebits}'))")
