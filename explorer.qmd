@@ -1919,22 +1919,26 @@ facetIndexReady = {
         }
         // (d) runtime coverage handshake: the index must cover the SAME located
         // universe the counts are about. Compare the per-SOURCE histogram of the
-        // index to facets (the located set) — a symmetric diff that catches a
-        // stale/partial index (a per-source count drift) and SOURCE drift, which a
-        // bare total-row-count check would miss (Codex r2). This is a deliberately
-        // CHEAP proxy (a one-time projected source-column scan), NOT a complete
-        // staleness check: it does NOT detect a same-source, same-cardinality PID
-        // swap (mismatch stays 0). That residual is closed by (i) the generation-id
-        // match above — the membership half is a hash over membership *including pid*,
-        // so any swap of a pid that HAS membership changes it — leaving only swaps of
-        // the #306 no-membership pids, and (ii) the BUILD-TIME full coverage
-        // fingerprint + pid-set equality gate (validate_frontend_derived,
-        // SERIALIZATIONS §4.12), which is the authoritative coverage check. A future
-        // co-published expected-composite-id pointer would let the runtime assert the
-        // full fingerprint directly (deferred).
+        // index to facet_summaries' source rows (which the builder computes as
+        // GROUP BY source over the SAME located set, samp_geo) — a symmetric diff
+        // that catches a stale/partial index (per-source count drift) and SOURCE
+        // drift, which a bare total-row-count check would miss (Codex r2).
+        // facet_summaries is ~2 KB and already loaded at boot, so this is a near-free
+        // check; an earlier draft scanned the 60 MB facets_v3 and cost ~8.6 s of
+        // DuckDB-WASM connection time at boot (measured in-browser) — exactly the
+        // single-connection starvation this app guards against. It is still a CHEAP
+        // proxy, NOT a complete staleness check: it does NOT detect a same-source,
+        // same-cardinality PID swap (mismatch stays 0). That residual is closed by
+        // (i) the generation-id match above — the membership half is a hash over
+        // membership *including pid*, so any swap of a pid that HAS membership changes
+        // it, leaving only swaps of the #306 no-membership pids — and (ii) the
+        // BUILD-TIME full coverage fingerprint + pid-set equality gate
+        // (validate_frontend_derived, SERIALIZATIONS §4.12), the authoritative check.
         const cov = await db.query(`
-            WITH i AS (SELECT source, COUNT(*) c FROM read_parquet('${index_url}') GROUP BY source),
-                 f AS (SELECT source, COUNT(*) c FROM read_parquet('${facets_url}') GROUP BY source)
+            WITH i AS (SELECT source AS v, COUNT(*) c FROM read_parquet('${index_url}')
+                       WHERE NULLIF(TRIM(source), '') IS NOT NULL GROUP BY source),
+                 f AS (SELECT facet_value AS v, count AS c
+                       FROM read_parquet('${facet_summaries_url}') WHERE facet_type = 'source')
             SELECT (SELECT COUNT(*) FROM (SELECT * FROM i EXCEPT SELECT * FROM f))
                  + (SELECT COUNT(*) FROM (SELECT * FROM f EXCEPT SELECT * FROM i)) AS mismatch`);
         if (Number(cov[0].mismatch) !== 0) {
