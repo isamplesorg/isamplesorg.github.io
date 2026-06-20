@@ -495,11 +495,15 @@ def main():
         from build_frontend_derived import (INDEX_SCHEMA_VERSION, MEMBERSHIP_TOKEN_EXPR,
                                              COVERAGE_TOKEN_EXPR)
 
-        def _fp(relation, token_expr):  # mirror build_frontend_derived._fingerprint
+        def _fp(relation, token_expr):  # mirror build_frontend_derived._fingerprint (coverage trio)
             x, s, n = con.sql(
                 f"SELECT COALESCE(bit_xor(hash({token_expr})), 0), "
                 f"COALESCE(SUM(hash({token_expr})::HUGEINT), 0), COUNT(*) FROM {relation}").fetchone()
             return f"{x}_{s}_{n}"
+
+        def _xor_fp(relation, token_expr):  # mirror membership_build_id (bare XOR — deployed contract)
+            return str(con.sql(
+                f"SELECT CAST(COALESCE(bit_xor(hash({token_expr})), 0) AS VARCHAR) FROM {relation}").fetchone()[0])
 
         IX = f"read_parquet('{index}')"
         # GATING PRECONDITION (Codex r2 #1): the index cannot be fully validated
@@ -548,15 +552,16 @@ def main():
         ix_sv_bad = scalar(f"SELECT COUNT(*) FROM {IX} WHERE schema_version IS DISTINCT FROM {INDEX_SCHEMA_VERSION}")
         check(f"index: schema_version == {INDEX_SCHEMA_VERSION}", ix_sv_bad == 0,
               f"{ix_sv_bad} rows with schema_version != {INDEX_SCHEMA_VERSION}")
-        # build_id must be a SINGLE value of the EXACT shape "<m_xor>_<m_sum>_<m_cnt>:<c_xor>_<c_sum>_<c_cnt>"
-        # — exactly two ':'-separated halves, each exactly three '_'-separated decimals.
-        # (Codex #2: "a colon somewhere" accepted "<m>:bogus:extra".)
+        # build_id must be a SINGLE value of the EXACT shape "<m_xor>:<c_xor>_<c_sum>_<c_cnt>"
+        # — the membership half is the BARE bit_xor decimal (deployed node_bits contract),
+        # the coverage half is the three '_'-separated decimal trio. (Codex #2: "a colon
+        # somewhere" accepted "<m>:bogus:extra".)
         ix_bids = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {IX}")
         check("index: single build_id", ix_bids == 1, f"{ix_bids} distinct build_ids (want 1)")
-        bid_re = r'^[0-9]+_[0-9]+_[0-9]+:[0-9]+_[0-9]+_[0-9]+$'
+        bid_re = r'^[0-9]+:[0-9]+_[0-9]+_[0-9]+$'
         ix_bid_fmt = scalar(f"SELECT COUNT(*) FROM {IX} WHERE regexp_matches(build_id, '{bid_re}') = FALSE")
         check("index: build_id is well-formed '<membership>:<coverage>'", ix_bid_fmt == 0,
-              "build_id(s) not exactly <xor>_<sum>_<cnt>:<xor>_<sum>_<cnt>")
+              "build_id(s) not exactly <m_xor>:<c_xor>_<c_sum>_<c_cnt>")
         # INDEPENDENT build_id recomputation (Codex #1/#5): the coverage half is
         # recomputed from facets_v2 (the located (pid, source) universe — equivalent
         # to samp_geo) and, when membership is present, the membership half from it.
@@ -570,7 +575,7 @@ def main():
             check("index build_id coverage-half == recomputed from facets_v2", got_cov == exp_cov,
                   f"coverage half {got_cov!r} != expected {exp_cov!r} (stale/edited coverage)")
             if mem:
-                exp_mem = _fp(f"read_parquet('{mem}')", MEMBERSHIP_TOKEN_EXPR)
+                exp_mem = _xor_fp(f"read_parquet('{mem}')", MEMBERSHIP_TOKEN_EXPR)  # bare XOR (deployed contract)
                 got_mem = ix_bid.split(":", 1)[0]
                 check("index build_id membership-half == recomputed from membership", got_mem == exp_mem,
                       f"membership half {got_mem!r} != expected {exp_mem!r} (stale/foreign generation)")

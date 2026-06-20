@@ -539,8 +539,19 @@ def membership_build_id(con):
     # change that would alter either artifact (new/dropped pids, re-mapped concepts,
     # AND node-set changes). Embedding this id in both lets the explorer refuse the
     # mask path unless the two are from the SAME generation (guards a stale-cached
-    # masks file). membership grain is unique per (pid,facet_type,concept_uri).
-    return _fingerprint(con, "membership", MEMBERSHIP_TOKEN_EXPR)
+    # masks file).
+    #
+    # FORMAT IS A DEPLOYED CONTRACT (#305): the live facet_node_bits / sample_facet_masks
+    # (202608) carry this id as a BARE bit_xor decimal, and the explorer's facetIndexReady
+    # preflight matches the index's membership-half against the DEPLOYED node_bits.build_id.
+    # So this MUST stay the plain order-independent XOR — do NOT switch it to the
+    # _fingerprint trio (that would change the string and break generation-matching
+    # against every already-published artifact). membership grain is unique per
+    # (pid,facet_type,concept_uri) — validated — so no XOR cancellation. The richer
+    # trio is reserved for coverage_build_id, which is a NEW id with no compat constraint.
+    return con.sql(
+        f"SELECT CAST(COALESCE(bit_xor(hash({MEMBERSHIP_TOKEN_EXPR})), 0) AS VARCHAR) FROM membership"
+    ).fetchone()[0]
 
 
 def coverage_build_id(con):
@@ -563,9 +574,10 @@ def index_build_id(con):
     #      generation), and
     #   2. detect coverage/source drift via the coverage half (would otherwise be
     #      invisible to a membership-only id).
-    # Each half is "<xor>_<sum>_<count>" (decimal + underscore only); ':' never
-    # appears in either half, so split(':', 1) is unambiguous. node_bits/masks keep
-    # their plain membership id (== the membership half here, for the match gate).
+    # FORMATS DIFFER BY DESIGN: membership half is the BARE bit_xor decimal (the
+    # deployed node_bits/masks contract — see membership_build_id), coverage half is
+    # the richer "<xor>_<sum>_<count>" trio (a new id). ':' appears in neither half
+    # (decimals + underscores only), so split(':', 1) is unambiguous.
     return f"{membership_build_id(con)}:{coverage_build_id(con)}"
 
 
