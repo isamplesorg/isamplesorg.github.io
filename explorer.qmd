@@ -3772,29 +3772,32 @@ zoomWatcher = {
         // SEARCH (search_pids semi-join). The single-filter cube above stays a pure
         // global fast-path optimization.
         //
-        // FALLBACK SEMANTICS differ by view (the honesty rule):
-        //  - GLOBAL + no search: the legacy slow path reverts tree dims to the
-        //    unfiltered BASELINE — that IS the #304 bug. So on index miss/error here
-        //    we show the "unavailable" dash, NEVER baseline. (__onFacetIndexReady
-        //    re-runs this when readiness flips, turning the dash into real counts.)
-        //  - VIEWPORT or SEARCH: the legacy membership path below computes the
-        //    CORRECT viewport/search counts, so an index miss/error falls through to
-        //    it (both paths coexist until the membership path is retired — Phase 3
-        //    end, after characterization confirms parity).
+        // FALLBACK SEMANTICS differ by view (the honesty rule). The pivot is whether
+        // a viewport bbox exists, NOT whether search is active (Codex P3):
+        //  - GLOBAL (bboxSQL === null), with OR without search: the legacy tree path
+        //    below hits `if (treeActive && !bboxSQL) applyFacetCounts(d.key, null)` —
+        //    the unfiltered BASELINE — which IGNORES search and the cross-filters
+        //    (#304). There is NO correct legacy global tree path. So on index
+        //    miss/error at global we show the "unavailable" dash, NEVER baseline.
+        //    (__onFacetIndexReady re-runs this when readiness flips → real counts.)
+        //  - VIEWPORT (bboxSQL !== null), ±search: the legacy membership path JOINs
+        //    samples_map_lite + bbox + the search semi-join and is CORRECT, so an
+        //    index miss/error falls through to it (both paths coexist until the
+        //    membership path is retired — after in-app parity is confirmed).
         if (TREE_DIM_KEYS.every(treeActive)) {
             const snap = directFilterSnapshot();
-            const atGlobalNoSearch = (bboxSQL === null && !searchIsActive());
             const hasConstraint = snap.activeCount >= 1 || bboxSQL !== null || searchIsActive();
             if (hasConstraint) {
                 const res = await applyMaskIndexCounts(snap, dims, myReq, bboxSQL);
                 if (res === 'superseded' || res === 'ok') return;
                 if (myReq !== facetCountsReqId) return;   // defensive stale check (Codex)
-                if (atGlobalNoSearch) {
-                    // no correct legacy path here → honest dash, never baseline (#304)
+                if (bboxSQL === null) {
+                    // global (incl. global+search): no correct legacy tree path →
+                    // honest dash, never baseline (#304).
                     markFacetCountsUnavailable();
                     return;
                 }
-                // viewport/search: fall through to the correct legacy membership path
+                // viewport (±search): fall through to the correct legacy membership path
             }
         }
 
