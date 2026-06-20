@@ -1323,6 +1323,8 @@ function paddedViewportBounds(padFactor) {
 // - tableView (PR #219): scopes the samples table to the current viewport
 //   so "samples in view" in cluster/point mode == table row count.
 // - doSearch('area') (#178 light path): exact-viewport text search.
+// - loadViewportSamples() (#220): point-mode sample loader + "Samples in View"
+//   count, so point mode uses the same wrap-aware bbox as the table.
 function viewerBboxSQL(latCol, lngCol, padFactor) {
     const b = paddedViewportBounds(padFactor);
     if (!b) return null;
@@ -3024,17 +3026,19 @@ zoomWatcher = {
         const bounds = getViewportBounds();
         if (!bounds) return;
 
-        // Fetch with VIEWPORT_PAD_FACTOR (30%) padding so this fetch
-        // covers the same bbox as the table query and the cluster-mode
-        // "Samples in View" count (issue #221).
-        const latPad = (bounds.north - bounds.south) * VIEWPORT_PAD_FACTOR;
-        const lngPad = (bounds.east - bounds.west) * VIEWPORT_PAD_FACTOR;
-        const padded = {
-            south: bounds.south - latPad,
-            north: bounds.north + latPad,
-            west: bounds.west - lngPad,
-            east: bounds.east + lngPad
-        };
+        // #220: bbox via the shared `viewerBboxSQL()` (VIEWPORT_PAD_FACTOR padding),
+        // the SAME helper the table uses (since #219). The previous inline padding
+        // emitted a single `longitude BETWEEN padded.west AND padded.east`, which is
+        // WRONG at the antimeridian: a viewport that wraps the dateline has
+        // west > east (and, post-padding, `bounds.east - bounds.west` is negative, so
+        // the inline lngPad math was meaningless too), so `BETWEEN a-larger AND a-
+        // smaller` matched ZERO rows — point mode + the "Samples in View" count
+        // (computed off the same WHERE) read 0 / undercounted near the dateline while
+        // the table (via viewerBboxSQL) showed the correct set. viewerBboxSQL emits
+        // the split `(lng BETWEEN west AND 180 OR lng BETWEEN -180 AND east)` for the
+        // wrap case and also normalizes post-padding overflow back into [-180,180].
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
+        if (!bboxSQL) return;  // off-globe (rare) — same bail as the !bounds guard
 
         updatePhaseMsg('Loading individual samples...', 'loading');
 
@@ -3047,8 +3051,7 @@ zoomWatcher = {
             // POINT_BUDGET-worth of rows the LIMIT returns is undefined and
             // can differ across browsers/sessions for the same query.
             const whereClause = `
-                WHERE latitude BETWEEN ${padded.south} AND ${padded.north}
-                  AND longitude BETWEEN ${padded.west} AND ${padded.east}
+                WHERE 1=1${bboxSQL}
                   ${sourceFilterSQL('source')}
                   ${facetFilterSQL()}
                   ${searchFilterSQL('pid')}

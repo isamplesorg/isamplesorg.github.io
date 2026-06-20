@@ -525,27 +525,30 @@ the page and count queries now include
 dateline-crossing handling, including the post-padding wrap case
 where a non-wrapping rect spills past ±180 after the 30% expansion).
 
-**Known pre-existing wrap bug NOT fixed in this PR.**
+**Antimeridian wrap bug — FIXED in #220 (was scoped out of #219).**
 `loadViewportSamples()` in `zoomWatcher` (the point-mode sample
-loader) has its own padding logic that does *not* split the
+loader) previously had its own padding logic that did *not* split the
 longitude predicate when the padded rectangle wraps the
 antimeridian — `bounds.east - bounds.west` is meaningless for a
-wrapping viewport, and the resulting single `BETWEEN` clause can
-return zero matches. This PR's table queries now route through
+wrapping viewport, and the resulting single `BETWEEN` clause
+returned zero matches. #219's table queries route through
 `viewerBboxSQL()` and split the wrapped predicate correctly, so the
-**table is fine** at the dateline; the bug is now only in the
-point-mode count (phase-msg "Samples in View"). At wrapping
-viewports the two surfaces will therefore diverge: table shows the
-correct row set, phase-msg can read zero or undercount. Scoped out
-as a follow-up because the user's primary complaint (table=6M vs
-phase-msg=153 at Crete) is unrelated to the dateline. Right fix is
-to share the `viewerBboxSQL`-style normalization with point-mode.
+**table was already fine** at the dateline; the bug remained only in
+the point-mode loader + its count (phase-msg "Samples in View",
+computed off the same WHERE). #220 fixes it by routing
+`loadViewportSamples()` through the SAME `viewerBboxSQL('latitude',
+'longitude', VIEWPORT_PAD_FACTOR)` helper, so point mode, the
+"Samples in View" count, and the table now all use the identical
+wrap-aware, post-padding-normalized bbox. (Originally scoped out of
+#219 because the user's primary complaint — table=6M vs phase-msg=153
+at Crete — was unrelated to the dateline.)
 The shared `VIEWPORT_PAD_FACTOR` (0.3) is applied by the table query,
 the point-mode loader, and the cluster-mode `countInViewport()` call
 sites, so all three surfaces use the same padded bbox for their "in
 view" counts in the non-dateline, non-facet-filtered case. Caveats
-called out below: point mode still has the antimeridian padding bug
-(#220), cluster counts are H3-cell-granularity approximations, and
+called out below: the antimeridian padding bug is now fixed (#220 —
+point mode shares `viewerBboxSQL`), cluster counts are
+H3-cell-granularity approximations, and
 cluster H3 loads don't apply the material/context/object-type facet
 filters — so under those conditions the counts can still diverge
 independent of this PR. Issue #221 was three sources of divergence:
