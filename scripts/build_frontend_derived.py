@@ -741,29 +741,38 @@ def main():
             log("SKIP hierarchy artifacts: pass --vocab-labels <vocab_labels.parquet>", t0)
         else:
             build_concept_membership(con, args.wide, args.vocab_labels, t0)
-            emit("sample_facet_membership", lambda o: build_sample_facet_membership(con, o))
+            # The mask fast-path bundle = {membership, node_bits, masks?, index}.
+            # sample_facet_masks AND sample_facet_index store raw mask bits that are
+            # uninterpretable without facet_node_bits, and that the validator can only
+            # gate by re-deriving from sample_facet_membership. So whenever masks or
+            # index is requested, FORCE-emit membership + node_bits too (even under
+            # `--only sample_facet_index`) — otherwise the build ships an artifact its
+            # own validator must reject (Codex #4 / r3). force_dep() builds a not-wanted
+            # artifact exactly once and records it for the manifest.
+            need_fastpath = want("facet_node_bits") or want("sample_facet_masks") or want("sample_facet_index")
+            force_deps = want("sample_facet_masks") or want("sample_facet_index")
+            def force_dep(name, fn):
+                if want(name):
+                    emit(name, fn)
+                elif p(name) not in produced:
+                    fn(p(name)); produced.append(p(name)); log(f"{name} ✓ (auto-paired with masks/index)", t0)
+
+            if force_deps:
+                force_dep("sample_facet_membership", lambda o: build_sample_facet_membership(con, o))
+            else:
+                emit("sample_facet_membership", lambda o: build_sample_facet_membership(con, o))
             emit("facet_tree_summaries", lambda o: build_facet_tree_summaries(con, o))
             # #290/#293 cross-filter cube — needs membership (above) + samp_geo (source).
             emit("facet_tree_cross_filter", lambda o: build_facet_tree_cross_filter(con, o))
-            # #293 bitmask filter artifacts — needs membership (above). node_bits
-            # and masks share a node-set build_id so the explorer only uses the mask
-            # path when the two are from the same generation (Codex P1).
-            if want("facet_node_bits") or want("sample_facet_masks") or want("sample_facet_index"):
+            # #293 bitmask filter artifacts — needs membership (above). node_bits and
+            # masks share a node-set build_id so the explorer only uses the mask path
+            # when the two are from the same generation (Codex P1).
+            if need_fastpath:
                 _bid = membership_build_id(con)
-                # facet_node_bits is the bit-INTERPRETATION file: sample_facet_masks
-                # AND sample_facet_index store raw mask bits that are meaningless
-                # without it. So node_bits is FORCE-emitted whenever either consumer
-                # is built — even under `--only sample_facet_masks/_index` — so a
-                # build never ships an orphan mask file (Codex #4). The shared _bid
-                # lets the explorer gate the two on the same generation (Codex #293).
-                force_node_bits = want("sample_facet_masks") or want("sample_facet_index")
-                if want("facet_node_bits") or force_node_bits:
-                    build_node = lambda o: build_facet_node_bits(con, o, _bid)
-                    if want("facet_node_bits"):
-                        emit("facet_node_bits", build_node)
-                    else:
-                        build_node(p("facet_node_bits")); produced.append(p("facet_node_bits"))
-                        log("facet_node_bits ✓ (auto-paired with masks/index)", t0)
+                if force_deps:
+                    force_dep("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
+                else:
+                    emit("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
                 emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o, _bid))
                 # #305/#306: complete per-pid index (every located pid + source,
                 # zero-mask for no-membership pids). Its build_id embeds the SAME
