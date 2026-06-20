@@ -1828,10 +1828,15 @@ nodeBitsReady = {
     window.__nodeBits = null;
     window.__nodeBitsMap = null;
     window.__nodeBitsBuild = null;
+    let map, nbBuild;
+    // STEP 1: node_bits — its OWN try, so the count-path values it publishes are
+    // never cleared by a downstream masks failure (Codex r2 P1: the masks query
+    // previously threw into a shared catch that nulled __nodeBitsMap/__nodeBitsBuild,
+    // re-coupling the two and disabling valid counts).
     try {
         const rows = await db.query(
             `SELECT facet_type, concept_uri, bit_index, build_id FROM read_parquet('${node_bits_url}')`);
-        const map = { material: new Map(), context: new Map(), object_type: new Map() };
+        map = { material: new Map(), context: new Map(), object_type: new Map() };
         const nbBuilds = new Set();
         for (const r of rows) {
             if (map[r.facet_type]) map[r.facet_type].set(r.concept_uri, Number(r.bit_index));
@@ -1841,32 +1846,37 @@ nodeBitsReady = {
         // node_bits must carry exactly ONE build_id (a mixed file is corrupt; don't
         // let a last-row-wins value coincidentally match masks — Codex r2).
         if (!haveBits || nbBuilds.size !== 1) return false;
-        const nbBuild = [...nbBuilds][0];
+        nbBuild = [...nbBuilds][0];
         // node_bits is valid on its own → publish the bit map + generation NOW so the
-        // count path (which depends only on node_bits + the index) can run even if
-        // masks is absent. facetIndexReady consumes window.__nodeBitsBuild.
+        // count path (which depends only on node_bits + the index) runs even if masks
+        // is absent. facetIndexReady consumes window.__nodeBitsBuild.
         window.__nodeBitsMap = map;
         window.__nodeBitsBuild = nbBuild;
-        // Codex P1.1 + P1.2: PREFLIGHT the masks file AND require its build_id to
-        // match node_bits. This proves masks is present/readable (else the mask
-        // FILTER path would fail with no retry) and that both artifacts are from the
-        // SAME generation. Only then advertise __nodeBits for facetFilterSQL;
-        // otherwise facetFilterSQL uses the membership fallback (count path unaffected).
-        const mrows = await db.query(
-            `SELECT DISTINCT build_id FROM read_parquet('${masks_url}')`);
-        const maskBuilds = mrows.map(r => r.build_id);
-        if (maskBuilds.length !== 1 || maskBuilds[0] !== nbBuild) {
-            console.warn('masks/node_bits build_id mismatch or missing; using membership fallback',
-                         { nbBuild, maskBuilds });
-            return false;   // count path stays enabled via __nodeBitsMap
-        }
-        window.__nodeBits = map;
-        return true;
     } catch (err) {
         console.warn('node_bits preflight failed; facetFilterSQL + count path use fallbacks:', err);
         window.__nodeBits = null;
         window.__nodeBitsMap = null;
         window.__nodeBitsBuild = null;
+        return false;
+    }
+    // STEP 2: masks — a SEPARATE try. A masks failure here must leave __nodeBitsMap /
+    // __nodeBitsBuild intact (count path stays enabled) and only withhold __nodeBits
+    // (the masks-gated FILTER signal for facetFilterSQL). Codex P1.1 + P1.2: masks
+    // must be present/readable AND the SAME generation as node_bits, else
+    // facetFilterSQL uses the membership fallback.
+    try {
+        const mrows = await db.query(
+            `SELECT DISTINCT build_id FROM read_parquet('${masks_url}')`);
+        const maskBuilds = mrows.map(r => r.build_id);
+        if (maskBuilds.length !== 1 || maskBuilds[0] !== nbBuild) {
+            console.warn('masks/node_bits build_id mismatch; using membership fallback (count path unaffected)',
+                         { nbBuild, maskBuilds });
+            return false;
+        }
+        window.__nodeBits = map;
+        return true;
+    } catch (err) {
+        console.warn('masks preflight failed; facetFilterSQL uses membership fallback (count path unaffected):', err);
         return false;
     }
 }
@@ -1908,16 +1918,21 @@ facetIndexReady = {
             return false;
         }
         // (d) runtime coverage handshake: the index must cover the SAME located
-        // universe the counts are about. Compare its row count to facets (the
-        // located set). A stale/partial index (fewer pids) or a mixed-cache
-        // deployment fails here rather than returning convincing-but-low counts.
-        const cov = await db.query(
-            `SELECT (SELECT COUNT(*) FROM read_parquet('${index_url}')) AS idx_n,
-                    (SELECT COUNT(*) FROM read_parquet('${facets_url}')) AS facets_n`);
-        const idxN = Number(cov[0].idx_n), facetsN = Number(cov[0].facets_n);
-        if (idxN !== facetsN) {
-            console.warn('sample_facet_index coverage != located universe; multi-filter counts unavailable',
-                         { idxN, facetsN });
+        // universe the counts are about. Compare the per-SOURCE histogram of the
+        // index to facets (the located set) — a symmetric diff that catches a
+        // stale/partial index (fewer pids), an equal-cardinality PID replacement,
+        // AND source drift, all of which a bare row-count check would miss (Codex r2).
+        // It is still a cardinality/source proxy, NOT the full coverage fingerprint
+        // (that's the build-time gate, SERIALIZATIONS §4.12) — a same-source-histogram
+        // mask corruption could pass, which the generation-id match above guards.
+        const cov = await db.query(`
+            WITH i AS (SELECT source, COUNT(*) c FROM read_parquet('${index_url}') GROUP BY source),
+                 f AS (SELECT source, COUNT(*) c FROM read_parquet('${facets_url}') GROUP BY source)
+            SELECT (SELECT COUNT(*) FROM (SELECT * FROM i EXCEPT SELECT * FROM f))
+                 + (SELECT COUNT(*) FROM (SELECT * FROM f EXCEPT SELECT * FROM i)) AS mismatch`);
+        if (Number(cov[0].mismatch) !== 0) {
+            console.warn('sample_facet_index per-source coverage != located universe; multi-filter counts unavailable',
+                         { mismatch: Number(cov[0].mismatch) });
             return false;
         }
         window.__facetIndexReady = true;
@@ -4598,11 +4613,12 @@ zoomWatcher = {
         if (hasFacetFilters()) reconcileGlobeForFilters();
     };
     // #304/#305: when the facet-index preflight settles true AFTER boot already
-    // computed counts (async race), recompute so a multi-filter that fell back to
-    // the "unavailable" dash becomes correct counts without a user action.
-    window.__onFacetIndexReady = () => {
-        if (hasFacetFilters()) refreshFacetCounts();
-    };
+    // computed counts (async race), recompute so any filter that fell back to the
+    // "unavailable" dash becomes correct counts without a user action. Refresh
+    // UNCONDITIONALLY — hasFacetFilters() excludes SOURCE selections (Codex r2 P1),
+    // and refreshFacetCounts is debounced + facetCountsReqId-guarded, so a redundant
+    // no-filter refresh just recomputes the baseline harmlessly.
+    window.__onFacetIndexReady = () => { refreshFacetCounts(); };
     setTimeout(() => {
         if (window.__filteredClustersReady === true && hasFacetFilters()) {
             const h = viewer.camera.positionCartographic.height;
