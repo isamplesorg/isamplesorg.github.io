@@ -752,9 +752,20 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 //   localStorage ISAMPLES_DATA_BASE  (sticky per-browser override)
 // Defaults to the production R2 origin, so shipped builds are unchanged.
 R2_BASE = (() => {
+    const DEFAULT = "https://data.isamples.org";
     const raw = new URLSearchParams(location.search).get('data_base')
         || (typeof localStorage !== 'undefined' && localStorage.getItem('ISAMPLES_DATA_BASE'))
-        || "https://data.isamples.org";
+        || DEFAULT;
+    // The base is interpolated into `read_parquet('${url}/...')` in many queries, so
+    // a value containing a single quote (or backslash) could break out of the SQL
+    // string literal (Codex P2 — data_base is user-controllable via ?data_base= /
+    // localStorage). Reject any such value and fall back to the default. Also require
+    // an http(s) or root-relative form (httpfs only range-fetches absolute http(s);
+    // a relative is resolved against origin below).
+    if (/['"\\\x00-\x1f]/.test(raw) || !(/^https?:\/\//.test(raw) || raw.startsWith('/'))) {
+        if (raw !== DEFAULT) console.warn('Ignoring unsafe/invalid data_base override; using default origin:', raw);
+        return DEFAULT;
+    }
     // DuckDB-WASM's httpfs only range-fetches ABSOLUTE http(s) URLs. A root-
     // relative override (?data_base=/data) is read as a virtual-filesystem
     // glob and fails with "No files found that match the pattern" — silently,
@@ -1806,7 +1817,17 @@ db = {
 // null and facetFilterSQL falls back to the membership scan — so this is safe to
 // ship before sample_facet_masks / facet_node_bits are published.
 nodeBitsReady = {
+    // Two SEPARATE readiness signals (Codex P2 #4 — they were wrongly coupled):
+    //   __nodeBitsMap + __nodeBitsBuild → the concept_uri→bit map + its generation.
+    //       Valid as soon as node_bits itself is. The #304/#305 COUNT path
+    //       (sample_facet_index) needs ONLY this, not masks.
+    //   __nodeBits → the SAME map, but advertised only after the masks file
+    //       preflights & generation-matches. facetFilterSQL's mask FILTER path reads
+    //       masks_url, so it must not run until masks is proven present/consistent.
+    // A missing/mismatched masks file must NOT disable the (valid) count bundle.
     window.__nodeBits = null;
+    window.__nodeBitsMap = null;
+    window.__nodeBitsBuild = null;
     try {
         const rows = await db.query(
             `SELECT facet_type, concept_uri, bit_index, build_id FROM read_parquet('${node_bits_url}')`);
@@ -1821,27 +1842,30 @@ nodeBitsReady = {
         // let a last-row-wins value coincidentally match masks — Codex r2).
         if (!haveBits || nbBuilds.size !== 1) return false;
         const nbBuild = [...nbBuilds][0];
+        // node_bits is valid on its own → publish the bit map + generation NOW so the
+        // count path (which depends only on node_bits + the index) can run even if
+        // masks is absent. facetIndexReady consumes window.__nodeBitsBuild.
+        window.__nodeBitsMap = map;
+        window.__nodeBitsBuild = nbBuild;
         // Codex P1.1 + P1.2: PREFLIGHT the masks file AND require its build_id to
         // match node_bits. This proves masks is present/readable (else the mask
-        // query path would fail with no retry) and that both artifacts are from the
-        // SAME generation (else a stale-cached masks file would map bits wrong).
-        // Only then advertise readiness; otherwise facetFilterSQL uses membership.
+        // FILTER path would fail with no retry) and that both artifacts are from the
+        // SAME generation. Only then advertise __nodeBits for facetFilterSQL;
+        // otherwise facetFilterSQL uses the membership fallback (count path unaffected).
         const mrows = await db.query(
             `SELECT DISTINCT build_id FROM read_parquet('${masks_url}')`);
         const maskBuilds = mrows.map(r => r.build_id);
         if (maskBuilds.length !== 1 || maskBuilds[0] !== nbBuild) {
             console.warn('masks/node_bits build_id mismatch or missing; using membership fallback',
                          { nbBuild, maskBuilds });
-            return false;
+            return false;   // count path stays enabled via __nodeBitsMap
         }
         window.__nodeBits = map;
-        // #304/#305: stash the node_bits generation id so the facet-index preflight
-        // can require the index's mask bits be interpreted under THIS assignment.
-        window.__nodeBitsBuild = nbBuild;
         return true;
     } catch (err) {
-        console.warn('node_bits/masks preflight failed; facetFilterSQL will use the membership fallback:', err);
+        console.warn('node_bits preflight failed; facetFilterSQL + count path use fallbacks:', err);
         window.__nodeBits = null;
+        window.__nodeBitsMap = null;
         window.__nodeBitsBuild = null;
         return false;
     }
@@ -1853,11 +1877,15 @@ nodeBitsReady = {
 //| output: false
 // #304/#305: preflight the complete per-pid facet index (sample_facet_index). The
 // multi-filter global-view count path scans it; it must be (a) present/readable,
-// (b) schema_version we understand, and (c) from the SAME node_bits generation as
-// the bit map (its build_id's membership half == window.__nodeBitsBuild) so the
-// mask bits mean what we think. Only then advertise readiness; otherwise the
-// multi-filter path shows "unavailable" instead of a baseline (honesty rule).
-// Depends on nodeBitsReady so window.__nodeBitsBuild is populated first.
+// (b) schema_version we understand, (c) from the SAME node_bits generation as the
+// bit map (build_id membership half == window.__nodeBitsBuild) so the mask bits
+// mean what we think, AND (d) COVERAGE-COMPLETE — its pid count equals the located
+// universe (facets) so a stale/incomplete index (the #306 drift class, which a
+// membership-only id is blind to) can't silently undercount. The full coverage
+// fingerprint is enforced at BUILD time (validate_frontend_derived); this is the
+// cheap runtime handshake the plan calls for (SERIALIZATIONS §4.12). Only then
+// advertise readiness; otherwise the multi-filter path shows "unavailable" instead
+// of a baseline (honesty rule). Depends on nodeBitsReady for __nodeBitsBuild.
 facetIndexReady = {
     const _ = nodeBitsReady;          // sequence after the node_bits preflight
     window.__facetIndexReady = false;
@@ -1879,7 +1907,23 @@ facetIndexReady = {
                          { indexMembershipHalf: membershipHalf, nbBuild });
             return false;
         }
+        // (d) runtime coverage handshake: the index must cover the SAME located
+        // universe the counts are about. Compare its row count to facets (the
+        // located set). A stale/partial index (fewer pids) or a mixed-cache
+        // deployment fails here rather than returning convincing-but-low counts.
+        const cov = await db.query(
+            `SELECT (SELECT COUNT(*) FROM read_parquet('${index_url}')) AS idx_n,
+                    (SELECT COUNT(*) FROM read_parquet('${facets_url}')) AS facets_n`);
+        const idxN = Number(cov[0].idx_n), facetsN = Number(cov[0].facets_n);
+        if (idxN !== facetsN) {
+            console.warn('sample_facet_index coverage != located universe; multi-filter counts unavailable',
+                         { idxN, facetsN });
+            return false;
+        }
         window.__facetIndexReady = true;
+        // readiness can flip true AFTER boot already computed counts once (lost the
+        // async race) — reconcile any active multi-filter now (Codex P1 boot race).
+        if (typeof window.__onFacetIndexReady === 'function') window.__onFacetIndexReady();
         return true;
     } catch (err) {
         console.warn('sample_facet_index preflight failed; multi-filter global counts will show unavailable:', err);
@@ -3530,7 +3574,9 @@ zoomWatcher = {
     // bail honestly instead of under-constraining. A source-impossible state zeroes
     // every NON-source target (the source dim's own histogram still computes).
     function maskIndexWhere(snap, excludeKey) {
-        const bits = (typeof window !== 'undefined') ? window.__nodeBits : null;
+        // #304/#305: the count path uses __nodeBitsMap (valid as soon as node_bits is)
+        // — NOT __nodeBits, which is gated on the masks FILTER artifact (Codex #4).
+        const bits = (typeof window !== 'undefined') ? window.__nodeBitsMap : null;
         const conds = [];
         for (const key of TREE_DIM_KEYS) {
             if (key === excludeKey) continue;
@@ -3561,48 +3607,45 @@ zoomWatcher = {
     // (index/bitmap usable but a query failed → honesty: caller shows the dash), or
     // 'fallthrough' (index/bitmap not usable → caller uses legacy paths).
     async function applyMaskIndexCounts(snap, dims, myReq) {
-        if (!window.__facetIndexReady || !window.__nodeBits) return 'fallthrough';
+        if (!window.__facetIndexReady || !window.__nodeBitsMap) return 'fallthrough';
+        // Build ONE query (UNION ALL of per-dim arms) rather than 4 concurrent
+        // full-index scans — the documented DuckDB-WASM single-connection
+        // starvation risk (Codex P2). One statement = one connection slot. Each arm
+        // carries its OWN exclude-self cross-filter WHERE. Common output shape
+        // (dim, value, count) so one pass groups them.
+        const arms = [];
+        for (const d of dims) {
+            const conds = maskIndexWhere(snap, d.key);
+            if (conds === null) return 'unavailable';   // selected node missing a bit → can't compute honestly
+            const whereSQL = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+            if (d.key === 'source') {
+                // source target: COUNT(*) per source over the index (one row/pid),
+                // constrained by the tree dims only (exclude-self).
+                const w = conds.length ? `${whereSQL} AND source IS NOT NULL` : 'WHERE source IS NOT NULL';
+                arms.push(`SELECT 'source' AS dim, source AS value, COUNT(*) AS count
+                           FROM read_parquet('${index_url}') s ${w} GROUP BY source`);
+            } else {
+                // tree target: JOIN node_bits; each (pid,node) the pid is a member of
+                // yields one row, so COUNT(*) per concept_uri == distinct pids with
+                // that bit. Membership encodes ancestor closure → parent ≥ child.
+                arms.push(`SELECT '${d.key}' AS dim, nb.concept_uri AS value, COUNT(*) AS count
+                           FROM read_parquet('${index_url}') s
+                           JOIN read_parquet('${node_bits_url}') nb
+                             ON nb.facet_type = '${d.key}'
+                            AND (s.${d.key}_mask & (1::BIGINT << nb.bit_index)) <> 0
+                           ${whereSQL} GROUP BY nb.concept_uri`);
+            }
+        }
         try {
-            const results = await Promise.all(dims.map(async (d) => {
-                const conds = maskIndexWhere(snap, d.key);
-                if (conds === null) throw { __fallthrough: true };  // can't build masks → legacy
-                const whereSQL = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
-                let rows;
-                if (d.key === 'source') {
-                    // source target: COUNT(*) per source over the index (one row/pid),
-                    // constrained by the tree dims only (exclude-self).
-                    const w = conds.length ? `${whereSQL} AND source IS NOT NULL` : 'WHERE source IS NOT NULL';
-                    rows = await db.query(`
-                        SELECT source AS value, COUNT(*) AS count
-                        FROM read_parquet('${index_url}') s
-                        ${w}
-                        GROUP BY source
-                    `);
-                } else {
-                    // tree target: JOIN node_bits; each (pid,node) the pid is a member
-                    // of yields one row, so COUNT(*) per concept_uri == distinct pids
-                    // with that bit. Membership encodes ancestor closure → parent ≥ child.
-                    rows = await db.query(`
-                        SELECT nb.concept_uri AS value, COUNT(*) AS count
-                        FROM read_parquet('${index_url}') s
-                        JOIN read_parquet('${node_bits_url}') nb
-                          ON nb.facet_type = '${d.key}'
-                         AND (s.${d.key}_mask & (1::BIGINT << nb.bit_index)) <> 0
-                        ${whereSQL}
-                        GROUP BY nb.concept_uri
-                    `);
-                }
-                const map = new Map();
-                for (const r of rows) map.set(r.value, Number(r.count));
-                return { key: d.key, map };
-            }));
+            const rows = await db.query(arms.join('\nUNION ALL\n'));
             if (myReq !== facetCountsReqId) return 'superseded';
+            const grouped = { source: new Map(), material: new Map(), context: new Map(), object_type: new Map() };
+            for (const r of rows) if (grouped[r.dim]) grouped[r.dim].set(r.value, Number(r.count));
             // atomic repaint: all dims at once, only after the single stale check
-            for (const { key, map } of results) applyFacetCounts(key, map);
+            for (const d of dims) applyFacetCounts(d.key, grouped[d.key]);
             return 'ok';
         } catch (err) {
             if (myReq !== facetCountsReqId) return 'superseded';
-            if (err && err.__fallthrough) return 'fallthrough';
             console.warn('mask-index cross-filter counts failed; counts unavailable (not baseline):', err);
             return 'unavailable';
         }
@@ -3689,9 +3732,16 @@ zoomWatcher = {
             const snap = directFilterSnapshot();
             if (snap.activeCount >= 1) {
                 const res = await applyMaskIndexCounts(snap, dims, myReq);
-                if (res === 'ok' || res === 'superseded') return;
-                if (res === 'unavailable') { markFacetCountsUnavailable(); return; }
-                // res === 'fallthrough' → continue to the legacy paths below
+                if (res === 'superseded' || res === 'ok') return;
+                // res is 'unavailable' OR 'fallthrough' (index not ready / a node has
+                // no bit). At global + full tree + active filters there is NO correct
+                // legacy path — the legacy slow path reverts tree dims to the
+                // unfiltered BASELINE, which IS the #304 bug. Honesty rule: show the
+                // dash, never baseline. (When readiness flips true later,
+                // __onFacetIndexReady re-runs this and the dash becomes real counts.)
+                if (myReq !== facetCountsReqId) return;   // defensive stale check (Codex)
+                markFacetCountsUnavailable();
+                return;
             }
         }
 
@@ -4546,6 +4596,12 @@ zoomWatcher = {
     // would skip the only reconcile signal permanently (Codex serialization-review P1).
     window.__onFilteredClustersReady = () => {
         if (hasFacetFilters()) reconcileGlobeForFilters();
+    };
+    // #304/#305: when the facet-index preflight settles true AFTER boot already
+    // computed counts (async race), recompute so a multi-filter that fell back to
+    // the "unavailable" dash becomes correct counts without a user action.
+    window.__onFacetIndexReady = () => {
+        if (hasFacetFilters()) refreshFacetCounts();
     };
     setTimeout(() => {
         if (window.__filteredClustersReady === true && hasFacetFilters()) {
