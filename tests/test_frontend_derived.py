@@ -211,6 +211,24 @@ def test_duplicate_pid_hard_fails(tmp_path):
         f"builder should hard-fail on duplicate pids:\n{r.stdout}\n{r.stderr}"
 
 
+def test_null_pid_hard_fails(tmp_path):
+    """Codex (#305 SQL gap): a SINGLE NULL pid slips the GROUP BY...HAVING COUNT>1
+    dup check but breaks every pid join + the coverage fingerprint. Reject it."""
+    wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
+    con = duckdb.connect(); con.execute("INSTALL spatial; LOAD spatial;")
+    nullp = str(tmp_path / "wide_nullpid.parquet")
+    # append one located row with a NULL pid
+    con.execute(f"""COPY (
+        SELECT * FROM read_parquet('{wide}')
+        UNION ALL
+        SELECT * REPLACE (NULL::VARCHAR AS pid) FROM read_parquet('{wide}') WHERE pid='m-real-first'
+    ) TO '{nullp}' (FORMAT PARQUET)""")
+    con.close()
+    r = _build(tmp_path, nullp)
+    assert r.returncode != 0 and "null_pids=1" in (r.stdout + r.stderr).lower(), \
+        f"builder should hard-fail on a NULL pid:\n{r.stdout}\n{r.stderr}"
+
+
 def test_manifest_emitted(tmp_path):
     import json
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
@@ -648,7 +666,8 @@ def test_sample_facet_index_validator_passes_and_gates_bite(tmp_path):
 
 
 def test_sample_facet_index_nonzero_mask_on_nomem_caught(tmp_path):
-    """A no-membership pid carrying a non-zero mask is a corruption the gate must catch."""
+    """A no-membership pid carrying a non-zero mask is a corruption the gate must
+    catch. With membership+node_bits present the independent re-derivation fires."""
     wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
     build_index_fixture(wide, vocab)
     assert _build_index(tmp_path, wide, vocab).returncode == 0
@@ -660,8 +679,78 @@ def test_sample_facet_index_nonzero_mask_on_nomem_caught(tmp_path):
                    FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
     v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
                        capture_output=True, text=True)
-    assert v.returncode != 0 and "zero-masked" in v.stdout, \
-        f"zero-mask gate failed to catch a non-zero no-membership pid:\n{v.stdout}"
+    assert v.returncode != 0 and "re-derived from membership" in v.stdout, \
+        f"mask gate failed to catch a non-zero no-membership pid:\n{v.stdout}"
+
+
+def test_sample_facet_index_null_mask_caught(tmp_path):
+    """Codex #2: a NULL mask escaped the old `<> 0` predicate (NULL=unknown). The
+    NOT-NULL gate must catch it."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    con.execute(f"""COPY (SELECT pid, source,
+                   CASE WHEN pid='s-nomem' THEN NULL::BIGINT ELSE material_mask END AS material_mask,
+                   context_mask, object_type_mask, build_id, schema_version
+                   FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "non-NULL" in v.stdout, \
+        f"NOT-NULL gate failed to catch a NULL mask:\n{v.stdout}"
+
+
+def test_sample_facet_index_bad_schema_version_caught(tmp_path):
+    """Codex #2: schema_version=999 passed the old 'one distinct value' check."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    con.execute(f"""COPY (SELECT pid, source, material_mask, context_mask, object_type_mask,
+                   build_id, 999::INTEGER AS schema_version FROM read_parquet('{ix}'))
+                   TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "schema_version ==" in v.stdout, \
+        f"schema_version gate failed to catch 999:\n{v.stdout}"
+
+
+def test_sample_facet_index_malformed_build_id_caught(tmp_path):
+    """Codex #2: '<membership>:bogus:extra' passed the old 'a colon somewhere' check."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    # keep a correct membership half, append junk extra ':' segments
+    con.execute(f"""COPY (SELECT pid, source, material_mask, context_mask, object_type_mask,
+                   split_part(build_id, ':', 1) || ':bogus:extra' AS build_id, schema_version
+                   FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "well-formed" in v.stdout, \
+        f"build_id format gate failed to catch a malformed id:\n{v.stdout}"
+
+
+def test_sample_facet_index_stale_coverage_id_caught(tmp_path):
+    """Codex #1: a build_id whose coverage half doesn't match the actual (pid,source)
+    universe (e.g. membership-only id, or hand-edited coverage) must fail — even
+    though node_bits is unchanged."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix = str(tmp_path / "t_sample_facet_index.parquet")
+    con = duckdb.connect(); tmp_i = ix + ".tmp"
+    # replace the coverage half with a structurally-valid but WRONG fingerprint
+    con.execute(f"""COPY (SELECT pid, source, material_mask, context_mask, object_type_mask,
+                   split_part(build_id, ':', 1) || ':1_2_3' AS build_id, schema_version
+                   FROM read_parquet('{ix}')) TO '{tmp_i}' (FORMAT PARQUET)"""); os.replace(tmp_i, ix)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "coverage-half" in v.stdout, \
+        f"coverage staleness gate failed to catch a wrong coverage id:\n{v.stdout}"
 
 
 def test_sample_facet_index_source_drift_caught(tmp_path):
@@ -681,8 +770,10 @@ def test_sample_facet_index_source_drift_caught(tmp_path):
         f"source-equality gate failed to catch drift:\n{v.stdout}"
 
 
-def test_sample_facet_index_only_builds(tmp_path):
-    """--only sample_facet_index must produce the file (and its prereqs build)."""
+def test_sample_facet_index_only_auto_pairs_node_bits(tmp_path):
+    """Codex #4: --only sample_facet_index must NOT ship an orphan — facet_node_bits
+    (the bit-interpretation file) is force-emitted alongside it. The resulting pair
+    must pass the validator (which needs node_bits to re-derive the masks)."""
     wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
     build_index_fixture(wide, vocab)
     r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
@@ -690,7 +781,9 @@ def test_sample_facet_index_only_builds(tmp_path):
                         "--only", "sample_facet_index"], capture_output=True, text=True)
     assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
     assert (tmp_path / "t_sample_facet_index.parquet").exists(), \
-        f"--only sample_facet_index produced no file:\n{r.stdout}"
+        f"--only sample_facet_index produced no index file:\n{r.stdout}"
+    assert (tmp_path / "t_facet_node_bits.parquet").exists(), \
+        f"--only sample_facet_index did not auto-pair facet_node_bits (orphan):\n{r.stdout}"
 
 
 def test_scheme_corruption_caught(tmp_path):

@@ -325,11 +325,22 @@ for the alias when you want "latest."
   dimensions, **excluding the target dimension's own predicate**). This is the
   already-shipped cube/UI semantics; this index does not change it, it serves the
   same contract to the *multi-filter* case the single-filter cube cannot reach.
-- **Validation**: `validate_frontend_derived.py --index <file>` asserts: schema,
-  one row per pid, `pid` set == `sample_facets_v2.pid` (the located universe),
-  `source` == facets_v2 source, single structured `build_id` whose membership half
-  matches `node_bits`, masks bit-identical to `sample_facet_masks` for shared pids,
-  and that every no-membership pid is zero-masked.
+- **Validation**: `validate_frontend_derived.py --index <file>` is an INDEPENDENT
+  oracle — it asserts schema + NOT-NULL columns, one row per pid, `pid` set ==
+  `sample_facets_v2.pid` (the located universe), `source` == facets_v2 source,
+  `schema_version` == the exact contract version, a well-formed single `build_id`,
+  and then **recomputes** both `build_id` halves from the written sibling files (the
+  coverage half from `sample_facets_v2`, the membership half from
+  `sample_facet_membership`) and asserts equality — so a stale/edited coverage id is
+  caught at build time even though `node_bits` is unchanged. Masks are re-derived
+  directly from `membership` + `node_bits` for **every** index pid (zero rows
+  included) and symmetric-diffed against the file.
+- **Runtime staleness handshake (Phase 2)**: the *explorer* loads the index by URL
+  and so cannot, on its own, know the expected coverage half. The load-time refusal
+  of a stale-coverage index requires an external trusted pointer (e.g. the expected
+  composite id co-published in the manifest / a `current` alias the explorer reads);
+  that handshake lands with the count-query consumer in Phase 2. Build-time
+  validation (above) is the gate for now.
 - **Immutability**: published under a **new** versioned filename — it is a new
   artifact name and never overwrites a cached `sample_facet_masks` or any prior tag.
 

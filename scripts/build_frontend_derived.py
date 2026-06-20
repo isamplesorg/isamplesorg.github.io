@@ -208,12 +208,19 @@ def build_base_tables(con, wide, t0):
     n_geo = con.sql("SELECT COUNT(*) FROM samp_geo").fetchone()[0]
     n_dup = con.sql("SELECT COUNT(*) FROM (SELECT pid FROM samp_geo GROUP BY pid HAVING COUNT(*)>1)").fetchone()[0]
     n_icdup = con.sql("SELECT COUNT(*) FROM (SELECT row_id FROM ic GROUP BY row_id HAVING COUNT(*)>1)").fetchone()[0]
-    log(f"samp={n_samp:,}  samp_geo={n_geo:,}  duplicate_pids={n_dup:,}  duplicate_concept_row_ids={n_icdup:,}", t0)
-    if n_dup or n_icdup:
-        # HARD fail (Codex): non-unique keys make the output grain wrong (inflated
+    # #305/#306 (Codex): the GROUP BY...HAVING COUNT>1 dup check above collapses all
+    # NULL pids into ONE group, so a SINGLE NULL pid slips through — yet a NULL pid
+    # breaks every pid join (joins drop it) and is silently absent from the coverage
+    # fingerprint. Reject it explicitly.
+    n_null = con.sql("SELECT COUNT(*) FROM samp_geo WHERE pid IS NULL").fetchone()[0]
+    log(f"samp={n_samp:,}  samp_geo={n_geo:,}  duplicate_pids={n_dup:,}  "
+        f"null_pids={n_null:,}  duplicate_concept_row_ids={n_icdup:,}", t0)
+    if n_dup or n_icdup or n_null:
+        # HARD fail (Codex): non-unique/NULL keys make the output grain wrong (inflated
         # facet counts, ambiguous joins, non-total ORDER BY pid). Abort before writing.
         raise SystemExit(
-            f"FATAL: non-unique keys — duplicate_pids={n_dup}, duplicate_concept_row_ids={n_icdup}. "
+            f"FATAL: non-unique/NULL keys — duplicate_pids={n_dup}, null_pids={n_null}, "
+            f"duplicate_concept_row_ids={n_icdup}. "
             f"Output grain/joins would be wrong; refusing to write.")
 
 
@@ -499,6 +506,32 @@ def build_facet_tree_cross_filter(con, out):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
+# --- generation fingerprints (#293, #305/#306) -----------------------------
+# The per-row token expressions are module constants so the VALIDATOR can
+# recompute the exact same fingerprint independently from the written sibling
+# files (membership, sample_facets_v2) and assert the index's build_id — i.e.
+# the builder is not the sole authority on the index's generation identity.
+# chr(31) (US) separates fields. A NULL source is encoded with a distinct
+# sentinel byte so NULL and '' can never collide (Codex #5).
+MEMBERSHIP_TOKEN_EXPR = "pid || chr(31) || facet_type || chr(31) || concept_uri"
+COVERAGE_TOKEN_EXPR = ("pid || chr(31) || CASE WHEN source IS NULL THEN chr(0) ELSE chr(1) END "
+                       "|| chr(31) || COALESCE(source, '')")
+
+
+def _fingerprint(con, relation, token_expr):
+    # Order-independent generation fingerprint over `relation`. Combines THREE
+    # order-independent accumulators — XOR, SUM (HUGEINT, no overflow), and COUNT —
+    # of per-row hashes. XOR alone cancels identical rows and is vulnerable to a
+    # 2-row swap; SUM+COUNT defeat that. NOT a cryptographic digest: this defends
+    # against accidental drift / stale generations, not an adversary who engineers a
+    # multi-row hash collision. Grain is unique (validated), so the trio is stable.
+    x, s, n = con.sql(
+        f"SELECT COALESCE(bit_xor(hash({token_expr})), 0), "
+        f"       COALESCE(SUM(hash({token_expr})::HUGEINT), 0), COUNT(*) "
+        f"FROM {relation}").fetchone()
+    return f"{x}_{s}_{n}"
+
+
 def membership_build_id(con):
     # #293 (Codex P1, r2): a fingerprint of the FULL membership generation — not
     # just the node set. Both node_bits (positional bit assignment) and masks are
@@ -506,12 +539,8 @@ def membership_build_id(con):
     # change that would alter either artifact (new/dropped pids, re-mapped concepts,
     # AND node-set changes). Embedding this id in both lets the explorer refuse the
     # mask path unless the two are from the SAME generation (guards a stale-cached
-    # masks file). Order-independent XOR of per-row hashes (membership grain is
-    # unique per (pid,facet_type,concept_uri) — validated — so no XOR cancellation).
-    return con.sql("""
-        SELECT CAST(COALESCE(bit_xor(hash(pid || chr(31) || facet_type || chr(31) || concept_uri)), 0)
-                    AS VARCHAR)
-        FROM membership""").fetchone()[0]
+    # masks file). membership grain is unique per (pid,facet_type,concept_uri).
+    return _fingerprint(con, "membership", MEMBERSHIP_TOKEN_EXPR)
 
 
 def coverage_build_id(con):
@@ -519,14 +548,10 @@ def coverage_build_id(con):
     # the (pid, source) pairs over the LOCATED set (samp_geo), independent of tree
     # membership. membership_build_id() alone is blind to this: an index built from
     # the SAME membership but a changed source value or a changed located-pid set
-    # (exactly the #306 class of drift — located pids with no membership) would
-    # carry an identical membership id and go stale SILENTLY. Order-independent XOR
-    # of per-row hashes; samp_geo.pid is unique (hard-checked in build_base_tables),
-    # so no XOR cancellation. COALESCE(source,'') so a NULL→'' source flip is caught.
-    return con.sql("""
-        SELECT CAST(COALESCE(bit_xor(hash(pid || chr(31) || COALESCE(source, ''))), 0)
-                    AS VARCHAR)
-        FROM samp_geo""").fetchone()[0]
+    # (exactly the #306 class of drift — located pids with no membership) would carry
+    # an identical membership id and go stale SILENTLY. NULL vs '' source are encoded
+    # distinctly (sentinel byte) so a NULL↔'' flip changes the fingerprint.
+    return _fingerprint(con, "samp_geo", COVERAGE_TOKEN_EXPR)
 
 
 def index_build_id(con):
@@ -538,8 +563,9 @@ def index_build_id(con):
     #      generation), and
     #   2. detect coverage/source drift via the coverage half (would otherwise be
     #      invisible to a membership-only id).
-    # ':' never appears in either half (both are decimal hash strings), so a single
-    # split is unambiguous. node_bits/masks keep their plain membership id.
+    # Each half is "<xor>_<sum>_<count>" (decimal + underscore only); ':' never
+    # appears in either half, so split(':', 1) is unambiguous. node_bits/masks keep
+    # their plain membership id (== the membership half here, for the match gate).
     return f"{membership_build_id(con)}:{coverage_build_id(con)}"
 
 
@@ -724,7 +750,20 @@ def main():
             # path when the two are from the same generation (Codex P1).
             if want("facet_node_bits") or want("sample_facet_masks") or want("sample_facet_index"):
                 _bid = membership_build_id(con)
-                emit("facet_node_bits", lambda o: build_facet_node_bits(con, o, _bid))
+                # facet_node_bits is the bit-INTERPRETATION file: sample_facet_masks
+                # AND sample_facet_index store raw mask bits that are meaningless
+                # without it. So node_bits is FORCE-emitted whenever either consumer
+                # is built — even under `--only sample_facet_masks/_index` — so a
+                # build never ships an orphan mask file (Codex #4). The shared _bid
+                # lets the explorer gate the two on the same generation (Codex #293).
+                force_node_bits = want("sample_facet_masks") or want("sample_facet_index")
+                if want("facet_node_bits") or force_node_bits:
+                    build_node = lambda o: build_facet_node_bits(con, o, _bid)
+                    if want("facet_node_bits"):
+                        emit("facet_node_bits", build_node)
+                    else:
+                        build_node(p("facet_node_bits")); produced.append(p("facet_node_bits"))
+                        log("facet_node_bits ✓ (auto-paired with masks/index)", t0)
                 emit("sample_facet_masks", lambda o: build_sample_facet_masks(con, o, _bid))
                 # #305/#306: complete per-pid index (every located pid + source,
                 # zero-mask for no-membership pids). Its build_id embeds the SAME
