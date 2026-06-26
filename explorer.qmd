@@ -858,6 +858,9 @@ escSql = _sqlBuilders.escSql
 escapeIlikePattern = _sqlBuilders.escapeIlikePattern
 textSearchWhere = _sqlBuilders.textSearchWhere
 textSearchScore = _sqlBuilders.textSearchScore
+canonicalizePid = _sqlBuilders.canonicalizePid
+looksLikePid = _sqlBuilders.looksLikePid
+pidSearchWhere = _sqlBuilders.pidSearchWhere
 
 _explorerUtils = await import(new URL('assets/js/explorer-utils.js', document.baseURI).href)
 escapeHtml = _explorerUtils.escapeHtml
@@ -5379,6 +5382,22 @@ zoomWatcher = {
             { col: 'description',                 weight: 1 },
             { col: 'CAST(place_name AS VARCHAR)', weight: 2 },
         ]);
+
+        // #278/#26 — PID-aware search: when any term looks like a persistent
+        // identifier (ARK, IGSN, DOI, resolver URL), OR a normalised PID
+        // predicate into the WHERE so the sample is found even though its pid
+        // doesn't appear in label/description/place_name. Plain-text terms
+        // (e.g. "pottery") are unaffected — no pid column is touched for them,
+        // preserving the existing hot-path performance.
+        const pidPredicates = terms
+            .filter(t => looksLikePid(t))
+            .map(t => pidSearchWhere(t));
+        // Combine: original text-field match OR any pid predicate.
+        // If no terms look like PIDs, fullWhere equals searchWhere exactly.
+        const fullWhere = pidPredicates.length
+            ? `(${searchWhere} OR ${pidPredicates.join(' OR ')})`
+            : searchWhere;
+
         // pid is unique in facets_url (verified in A1 scoping), so the build
         // is naturally one row per pid — no DISTINCT needed. (The previous
         // `SELECT DISTINCT pid` deduped a single column; a 5-column DISTINCT
@@ -5397,7 +5416,7 @@ zoomWatcher = {
                 CREATE OR REPLACE TABLE ${staging} AS
                 SELECT pid, label, source, place_name, (${score}) AS relevance_score
                 FROM read_parquet('${facets_url}')
-                WHERE pid IS NOT NULL AND ${searchWhere}
+                WHERE pid IS NOT NULL AND ${fullWhere}
             `);
             if (token !== _searchFilterToken) return false;   // superseded mid-build
             await db.query(`CREATE OR REPLACE TABLE search_pids AS
