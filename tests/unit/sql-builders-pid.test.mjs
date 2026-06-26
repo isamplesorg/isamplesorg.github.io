@@ -156,3 +156,61 @@ test('pidSearchWhere: injection-safe — LIKE metacharacters escaped in localpar
     assert.ok(sql.includes('\\_'), 'underscore escaped');
     assert.ok(sql.includes('\\%'), 'percent escaped');
 });
+
+// ---------------------------------------------------------------------------
+// pid: escape hatch (scheme-agnostic substring search)
+// ---------------------------------------------------------------------------
+
+test('looksLikePid: pid: prefix is recognised', () => {
+    assert.equal(looksLikePid('pid:IEGIL000C'), true);
+    assert.equal(looksLikePid('pid:k2000027w'), true);
+    // case-insensitive prefix
+    assert.equal(looksLikePid('PID:foo'), true);
+    assert.equal(looksLikePid('Pid:foo'), true);
+});
+
+test('pidSearchWhere: pid: prefix — emits bare ILIKE, no canonical exact-match arm', () => {
+    // Verified against production: pid:IEGIL000C → 1 row (IGSN:IEGIL000C)
+    const sql = pidSearchWhere('pid:IEGIL000C');
+    // Fragment is preserved as-is (no lowercasing) — ILIKE is case-insensitive
+    // so the match still works regardless of stored case.
+    assert.equal(sql, "pid ILIKE '%IEGIL000C%' ESCAPE '\\'");
+    // No LOWER(REPLACE(...)) canonical arm present.
+    assert.ok(!sql.includes('LOWER(REPLACE'), 'no canonical arm for pid: terms');
+});
+
+test('pidSearchWhere: pid: prefix — localpart without scheme (k2000027w)', () => {
+    // Verified against production: pid:k2000027w → 1 row (ark:/28722/k2000027w)
+    const sql = pidSearchWhere('pid:k2000027w');
+    assert.equal(sql, "pid ILIKE '%k2000027w%' ESCAPE '\\'");
+});
+
+test('pidSearchWhere: pid: prefix — case-insensitive prefix strip (PID:)', () => {
+    // The "pid:" prefix is stripped regardless of case; remainder is lowercased
+    // by escapeIlikePattern → escSql (no lowercasing in the pid: path, but
+    // ILIKE is case-insensitive so the fragment matches regardless).
+    const sql = pidSearchWhere('PID:IEGIL000C');
+    // Fragment is kept as-is through escaping (ILIKE handles case).
+    assert.equal(sql, "pid ILIKE '%IEGIL000C%' ESCAPE '\\'");
+});
+
+test('pidSearchWhere: pid: prefix — injection-safe (single quote in fragment)', () => {
+    const sql = pidSearchWhere("pid:O'Brien");
+    // Single quote must be doubled; no raw quote in output.
+    assert.ok(!sql.includes("'O'Brien'"), 'raw unescaped single quote absent');
+    assert.ok(sql.includes("O''Brien"), 'single quote doubled');
+});
+
+test('pidSearchWhere: pid: prefix — injection-safe (LIKE metacharacters in fragment)', () => {
+    const sql = pidSearchWhere('pid:test_50%boom');
+    assert.ok(sql.includes('\\_'), 'underscore escaped');
+    assert.ok(sql.includes('\\%'), 'percent escaped');
+});
+
+test('Option A: bare local identifiers (no scheme) are NOT routed via looksLikePid', () => {
+    // This confirms the default behaviour is unchanged — only scheme-prefixed or
+    // pid:-prefixed terms get PID matching. Plain words go through text search.
+    assert.equal(looksLikePid('IEGIL000C'), false);
+    assert.equal(looksLikePid('vdm_19600211'), false);
+    assert.equal(looksLikePid('pottery'), false);
+});

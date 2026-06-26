@@ -70,6 +70,7 @@ export function canonicalizePid(value) {
 // search behaviour.
 //
 // Covered cases:
+//   pid:…   — explicit escape hatch: scheme-agnostic substring match on pid col
 //   ark:…   — both classic (ark:/) and modern (ark:) forms
 //   igsn:…  — SESAR-style identifiers
 //   doi:…   — DOI scheme
@@ -78,6 +79,7 @@ export function canonicalizePid(value) {
 export function looksLikePid(term) {
     const t = String(term).trim().toLowerCase();
     return (
+        t.startsWith('pid:') ||          // explicit escape hatch (see pidSearchWhere)
         t.startsWith('ark:') ||
         t.startsWith('igsn:') ||
         t.startsWith('doi:') ||
@@ -88,22 +90,41 @@ export function looksLikePid(term) {
 
 // Build a SQL predicate fragment for PID matching.
 //
-// Strategy (two-sided normalisation so stored format doesn't matter):
-//   A. Exact-match after canonicalising both sides in SQL:
-//        LOWER(REPLACE(pid, 'ark:/', 'ark:')) = '<canonical>'
-//      This handles the stored-side ARK-slash collapse and case normalisation.
-//      The stored pids have no resolver-URL prefix (verified), so we only need
-//      REPLACE + LOWER, not a full regex, in the SQL expression.
-//   B. Substring/tail fallback on the raw local identifier (the part after the
-//      last '/' or the bare value when there is no '/'):
-//        pid ILIKE '%<localpart>%' ESCAPE '\'
-//      This catches bare identifiers like `IEGIL000C` or `vdm_19600211` that
-//      users paste without a scheme prefix.
+// Two code paths:
 //
-// Both predicates are OR-ed; the caller is responsible for wrapping the result
-// in the appropriate AND chain when combining with other WHERE terms.
+// 1. `pid:` prefix (scheme-agnostic escape hatch) — user typed e.g. `pid:IEGIL000C`
+//    or `pid:k2000027w` to find a sample by a bare fragment without knowing the
+//    scheme. Emits a single ILIKE substring match against the pid column:
+//      pid ILIKE '%<fragment>%' ESCAPE '\'
+//    DuckDB's ILIKE is already case-insensitive so no LOWER is needed. The
+//    remainder after "pid:" is passed through escapeIlikePattern for safety.
+//    The canonical exact-match arm is intentionally skipped — the substring
+//    already spans all scheme variants.
+//
+// 2. Scheme-bearing / resolver-URL terms (ark:, igsn:, doi:, 10., https://…) —
+//    two-sided normalisation so stored format doesn't matter:
+//      A. Exact-match: LOWER(REPLACE(pid, 'ark:/', 'ark:')) = '<canonical>'
+//         Handles stored-side ARK-slash collapse and case normalisation.
+//         No resolver-URL prefix in stored data, so only REPLACE+LOWER needed.
+//      B. Local-part fallback: pid ILIKE '%<localpart>%' ESCAPE '\'
+//         The part after the last '/' (or the whole canonical if no '/')
+//         catches bare local identifiers that coincide with the query.
+//    Both predicates OR-ed.
+//
+// All user input passes through escSql / escapeIlikePattern — no raw interpolation.
 export function pidSearchWhere(rawTerm) {
-    const canonical = canonicalizePid(rawTerm);
+    const trimmed = String(rawTerm).trim();
+
+    // --- Path 1: pid: escape hatch ---
+    if (trimmed.toLowerCase().startsWith('pid:')) {
+        const fragment = trimmed.slice(4);   // strip the "pid:" prefix (any case)
+        const fragEsc = escapeIlikePattern(fragment);
+        // Single substring ILIKE — no scheme assumption, ILIKE is case-insensitive.
+        return `pid ILIKE '%${fragEsc}%' ESCAPE '\\'`;
+    }
+
+    // --- Path 2: scheme-bearing / resolver-URL term ---
+    const canonical = canonicalizePid(trimmed);
     // Safe interpolation via escSql (no raw user input in the SQL string).
     const canonEsc = escSql(canonical);
 
