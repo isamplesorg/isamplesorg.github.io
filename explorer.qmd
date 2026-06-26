@@ -3616,12 +3616,15 @@ zoomWatcher = {
                 mask |= (1n << BigInt(idx));
             }
             if (mask === 0n) return null;
-            conds.push(`(${key}_mask & ${mask}) <> 0`);        // BigInt → decimal BIGINT literal
+            // s.-qualified: Phase 3 JOINs samples_map_lite (which ALSO has a `source`
+            // column) for viewport scoping, so unqualified `source` would be ambiguous.
+            // Mask columns exist only on the index, but qualify everything for clarity.
+            conds.push(`(s.${key}_mask & ${mask}) <> 0`);      // BigInt → decimal BIGINT literal
         }
         if (excludeKey !== 'source') {
             if (snap.sourceImpossible) return ['1=0'];          // no source selectable → 0 for tree targets
             if (snap.source.length > 0) {
-                conds.push(`source IN (${snap.source.map(v => `'${escSql(v)}'`).join(',')})`);
+                conds.push(`s.source IN (${snap.source.map(v => `'${escSql(v)}'`).join(',')})`);
             }
         }
         return conds;
@@ -3632,24 +3635,40 @@ zoomWatcher = {
     // Returns: 'ok' (applied), 'superseded' (a newer request won), 'unavailable'
     // (index/bitmap usable but a query failed → honesty: caller shows the dash), or
     // 'fallthrough' (index/bitmap not usable → caller uses legacy paths).
-    async function applyMaskIndexCounts(snap, dims, myReq) {
+    async function applyMaskIndexCounts(snap, dims, myReq, bboxSQL = null) {
         if (!window.__facetIndexReady || !window.__nodeBitsMap) return 'fallthrough';
         // Build ONE query (UNION ALL of per-dim arms) rather than 4 concurrent
         // full-index scans — the documented DuckDB-WASM single-connection
         // starvation risk (Codex P2). One statement = one connection slot. Each arm
         // carries its OWN exclude-self cross-filter WHERE. Common output shape
         // (dim, value, count) so one pass groups them.
+        //
+        // #305 Phase 3 — viewport + search: the index carries no coordinates, so a
+        // viewport-scoped count JOINs samples_map_lite (l.latitude/l.longitude) on
+        // pid (one row/pid → no grain change) and appends the SAME padded bbox the
+        // table/heatmap use; an active search appends the search_pids semi-join.
+        // bboxSQL (when set) is already built against l.latitude/l.longitude by the
+        // caller. These are bare predicates (no leading AND) so the WHERE assembles
+        // cleanly even when there is no cross-filter constraint (viewport-only).
+        const liteJoin = bboxSQL ? `JOIN read_parquet('${lite_url}') l ON l.pid = s.pid` : '';
+        const bboxBare = bboxSQL ? bboxSQL.replace(/^\s*AND\s+/i, '') : null;
+        const searchBare = searchIsActive() ? 's.pid IN (SELECT pid FROM search_pids)' : null;
+        const buildWhere = (conds, extra = []) => {
+            const preds = [...conds, ...extra];
+            if (bboxBare) preds.push(bboxBare);
+            if (searchBare) preds.push(searchBare);
+            return preds.length ? `WHERE ${preds.join(' AND ')}` : '';
+        };
         const arms = [];
         for (const d of dims) {
             const conds = maskIndexWhere(snap, d.key);
             if (conds === null) return 'unavailable';   // selected node missing a bit → can't compute honestly
-            const whereSQL = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
             if (d.key === 'source') {
                 // source target: COUNT(*) per source over the index (one row/pid),
-                // constrained by the tree dims only (exclude-self).
-                const w = conds.length ? `${whereSQL} AND source IS NOT NULL` : 'WHERE source IS NOT NULL';
-                arms.push(`SELECT 'source' AS dim, source AS value, COUNT(*) AS count
-                           FROM read_parquet('${index_url}') s ${w} GROUP BY source`);
+                // constrained by the tree dims only (exclude-self) + viewport/search.
+                arms.push(`SELECT 'source' AS dim, s.source AS value, COUNT(*) AS count
+                           FROM read_parquet('${index_url}') s ${liteJoin}
+                           ${buildWhere(conds, ['s.source IS NOT NULL'])} GROUP BY s.source`);
             } else {
                 // tree target: JOIN node_bits; each (pid,node) the pid is a member of
                 // yields one row, so COUNT(*) per concept_uri == distinct pids with
@@ -3659,7 +3678,8 @@ zoomWatcher = {
                            JOIN read_parquet('${node_bits_url}') nb
                              ON nb.facet_type = '${d.key}'
                             AND (s.${d.key}_mask & (1::BIGINT << nb.bit_index)) <> 0
-                           ${whereSQL} GROUP BY nb.concept_uri`);
+                           ${liteJoin}
+                           ${buildWhere(conds)} GROUP BY nb.concept_uri`);
             }
         }
         try {
@@ -3745,29 +3765,39 @@ zoomWatcher = {
             if (myReq !== facetCountsReqId) return;
         }
 
-        // #304/#305: MULTI-filter (or multi-value single-dim, or source-impossible,
-        // or a single-filter cube MISS) at global view + full tree mode + no search.
-        // The single-filter cube above can't serve these, and the legacy slow path
-        // below reverts every tree dim to the unfiltered BASELINE at global view
-        // (the #304 bug). Route through the complete per-pid index instead — correct
-        // multi-filter counts in one columnar bitmask scan, applied atomically.
-        // HONESTY RULE: on any failure show "unavailable", NEVER the baseline. A
-        // 'fallthrough' (index/bitmap not usable, e.g. not yet published) defers to
-        // the legacy paths unchanged so this is safe to ship before the index lands.
-        if (bboxSQL === null && !searchIsActive() && TREE_DIM_KEYS.every(treeActive)) {
+        // #304/#305: route facet counts through the complete per-pid index whenever
+        // there is ANY constraint (cross-filter, viewport, or search) in full tree
+        // mode. Phase 2 covered global+no-search multi-filter; Phase 3 extends the
+        // SAME index path to VIEWPORT (JOIN samples_map_lite + padded bbox) and
+        // SEARCH (search_pids semi-join). The single-filter cube above stays a pure
+        // global fast-path optimization.
+        //
+        // FALLBACK SEMANTICS differ by view (the honesty rule). The pivot is whether
+        // a viewport bbox exists, NOT whether search is active (Codex P3):
+        //  - GLOBAL (bboxSQL === null), with OR without search: the legacy tree path
+        //    below hits `if (treeActive && !bboxSQL) applyFacetCounts(d.key, null)` —
+        //    the unfiltered BASELINE — which IGNORES search and the cross-filters
+        //    (#304). There is NO correct legacy global tree path. So on index
+        //    miss/error at global we show the "unavailable" dash, NEVER baseline.
+        //    (__onFacetIndexReady re-runs this when readiness flips → real counts.)
+        //  - VIEWPORT (bboxSQL !== null), ±search: the legacy membership path JOINs
+        //    samples_map_lite + bbox + the search semi-join and is CORRECT, so an
+        //    index miss/error falls through to it (both paths coexist until the
+        //    membership path is retired — after in-app parity is confirmed).
+        if (TREE_DIM_KEYS.every(treeActive)) {
             const snap = directFilterSnapshot();
-            if (snap.activeCount >= 1) {
-                const res = await applyMaskIndexCounts(snap, dims, myReq);
+            const hasConstraint = snap.activeCount >= 1 || bboxSQL !== null || searchIsActive();
+            if (hasConstraint) {
+                const res = await applyMaskIndexCounts(snap, dims, myReq, bboxSQL);
                 if (res === 'superseded' || res === 'ok') return;
-                // res is 'unavailable' OR 'fallthrough' (index not ready / a node has
-                // no bit). At global + full tree + active filters there is NO correct
-                // legacy path — the legacy slow path reverts tree dims to the
-                // unfiltered BASELINE, which IS the #304 bug. Honesty rule: show the
-                // dash, never baseline. (When readiness flips true later,
-                // __onFacetIndexReady re-runs this and the dash becomes real counts.)
                 if (myReq !== facetCountsReqId) return;   // defensive stale check (Codex)
-                markFacetCountsUnavailable();
-                return;
+                if (bboxSQL === null) {
+                    // global (incl. global+search): no correct legacy tree path →
+                    // honest dash, never baseline (#304).
+                    markFacetCountsUnavailable();
+                    return;
+                }
+                // viewport (±search): fall through to the correct legacy membership path
             }
         }
 
