@@ -45,6 +45,35 @@ export function sourceUrl(pid) {
     return `https://n2t.net/${pid}`;
 }
 
+// #313 P0: decide what the facet-count UI should show when the multi-filter
+// index path (sample_facet_index) can't directly answer a global-view
+// request — i.e. updateCrossFilteredCounts() has no correct legacy fallback
+// and applyMaskIndexCounts() returned something other than 'ok'/'superseded'.
+//
+// Before this fix the boot/load code used a single boolean
+// (window.__facetIndexReady) to mean BOTH "still loading" and "failed to
+// load", so the UI always rendered the same "—" dash for both — on a slow
+// connection the dash could sit there for the entire ~20-80s cold-boot
+// window looking exactly like a permanent failure (issue #313).
+//
+// `status` is window.__facetIndexStatus: 'pending' (boot/load still in
+// flight) | 'ready' (loaded + validated) | 'failed' (load threw, or a
+// preflight check — schema version, generation match, coverage — failed;
+// permanent for this session until refresh).
+// `res` is the applyMaskIndexCounts() outcome reaching this branch:
+// 'fallthrough' (index not ready/usable) | 'unavailable' (index usable but
+// the count query itself failed, e.g. a selected node had no bit, or the
+// query threw).
+//
+// Returns 'pending' (render "Loading…"; a real count is still coming, and
+// __onFacetIndexReady will repaint once status flips to 'ready') or
+// 'unavailable' (render the "—" dash + the existing "can't trust this
+// count" tooltip — this session genuinely can't compute it).
+export function facetCountsDisplayState(status, res) {
+    if (res === 'fallthrough' && status === 'pending') return 'pending';
+    return 'unavailable';
+}
+
 // Decode the explorer globe state from a URL hash fragment.
 // `hashStr` defaults to `location.hash` for in-browser callers (every current
 // call site is zero-arg); tests pass an explicit string so `location` is never
