@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     escapeHtml, searchTerms, parseNum, csvParamValues, sourceUrl, readHash,
+    facetCountsDisplayState,
 } from '../../assets/js/explorer-utils.js';
 
 test('escapeHtml escapes the five HTML-significant chars; nullish -> ""', () => {
@@ -67,4 +68,27 @@ test('readHash: clamps lat/lng/alt and treats heatmap!=1 as false', () => {
     assert.equal(h.alt, 100);     // clamp to min 100
     assert.equal(h.heading, 0);   // default
     assert.equal(h.heatmap, false);
+});
+
+// #313 P0: pending -> "Loading…", ready/failed (when reached at all) -> dash.
+// In practice the caller never reaches this decision with status === 'ready'
+// (applyMaskIndexCounts only returns 'fallthrough'/'unavailable' when the
+// index ISN'T ready), but the function still resolves a definite state for
+// every input so the UI logic stays a total function.
+test('facetCountsDisplayState: index still loading -> pending (Loading…, not the dash)', () => {
+    assert.equal(facetCountsDisplayState('pending', 'fallthrough'), 'pending');
+});
+
+test('facetCountsDisplayState: index load failed -> unavailable (dash + tooltip)', () => {
+    assert.equal(facetCountsDisplayState('failed', 'fallthrough'), 'unavailable');
+});
+
+test('facetCountsDisplayState: index ready but the count QUERY itself failed -> unavailable', () => {
+    assert.equal(facetCountsDisplayState('ready', 'unavailable'), 'unavailable');
+    assert.equal(facetCountsDisplayState('pending', 'unavailable'), 'unavailable');
+    assert.equal(facetCountsDisplayState('failed', 'unavailable'), 'unavailable');
+});
+
+test('facetCountsDisplayState: ready + fallthrough is not a state the caller produces, but resolves safely', () => {
+    assert.equal(facetCountsDisplayState('ready', 'fallthrough'), 'unavailable');
 });

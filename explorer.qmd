@@ -835,9 +835,10 @@ node_bits_url = `${R2_BASE}/isamples_202608_facet_node_bits.parquet`
 // The multi-filter global-view count path scans this with the node_bits bitmask
 // predicate so 2+ active filters get correct counts instead of reverting to the
 // unfiltered baseline (#304). Best-effort: if it isn't published/consistent,
-// facetIndexReady stays false and the multi-filter path shows "unavailable"
-// rather than a misleading baseline (the honesty rule — never baseline under
-// active filters).
+// window.__facetIndexStatus stays 'pending' (then flips to 'failed') and the
+// multi-filter path shows "Loading…"/"unavailable" (#313) rather than a
+// misleading baseline (the honesty rule — never baseline under active
+// filters).
 index_url = `${R2_BASE}/isamples_202608_sample_facet_index.parquet`
 
 // Canonical palette — see issue #113. Path-relative so this works under
@@ -864,6 +865,7 @@ pidSearchWhere = _sqlBuilders.pidSearchWhere
 
 _explorerUtils = await import(new URL('assets/js/explorer-utils.js', document.baseURI).href)
 escapeHtml = _explorerUtils.escapeHtml
+facetCountsDisplayState = _explorerUtils.facetCountsDisplayState
 searchTerms = _explorerUtils.searchTerms
 parseNum = _explorerUtils.parseNum
 csvParamValues = _explorerUtils.csvParamValues
@@ -1447,6 +1449,25 @@ function markFacetCountsUnavailable(facetKeys = null) {
     }
 }
 
+// #313 P0: the facet index (sample_facet_index) is still loading — distinct
+// from markFacetCountsUnavailable's "this session genuinely can't compute it"
+// dash. On a slow connection the cold-boot preflight can take ~20-80s; until
+// window.__facetIndexStatus settles to 'ready' or 'failed' the UI must say
+// "still coming" rather than show a dash that looks just as permanent as a
+// real failure. __onFacetIndexReady (wired below) reconciles real counts in
+// once status flips to 'ready'. Scoped to the given dim keys (default: all).
+function markFacetCountsPending(facetKeys = null) {
+    const keys = facetKeys || ['source', 'material', 'context', 'object_type'];
+    for (const key of keys) {
+        document.querySelectorAll(`.facet-count[data-facet="${key}"]`).forEach(el => {
+            el.textContent = '(Loading…)';
+            el.classList.add('recomputing');           // same dimmed/italic treatment as in-flight counts
+            el.classList.remove('count-unavailable');   // NOT the "—" dash — this is honest "still loading"
+            el.removeAttribute('title');
+        });
+    }
+}
+
 // === URL State: encode/decode globe state in hash fragment ===
 // (decode side — parseNum + readHash — extracted to assets/js/explorer-utils.js, PR3)
 function buildHash(v) {
@@ -1899,28 +1920,43 @@ nodeBitsReady = {
 // membership-only id is blind to) can't silently undercount. The full coverage
 // fingerprint is enforced at BUILD time (validate_frontend_derived); this is the
 // cheap runtime handshake the plan calls for (SERIALIZATIONS §4.12). Only then
-// advertise readiness; otherwise the multi-filter path shows "unavailable" instead
-// of a baseline (honesty rule). Depends on nodeBitsReady for __nodeBitsBuild.
+// advertise readiness; otherwise the multi-filter path shows "Loading…" while
+// this preflight is still in flight and "unavailable" once it's conclusively
+// failed — never a baseline (honesty rule; #313 P0 — see facetCountsDisplayState
+// in assets/js/explorer-utils.js for the pending-vs-failed UI decision).
+// Depends on nodeBitsReady for __nodeBitsBuild.
 facetIndexReady = {
     const _ = nodeBitsReady;          // sequence after the node_bits preflight
-    window.__facetIndexReady = false;
+    // #313 P0: window.__facetIndexStatus replaces the old boolean
+    // window.__facetIndexReady, which conflated "still loading" and "failed
+    // to load" into a single false value — so on a slow connection the UI
+    // showed the same permanent-looking dash for both during the entire
+    // ~20-80s cold-boot window. Three states instead: 'pending' (this
+    // preflight hasn't concluded yet — show "Loading…"), 'ready' (validated,
+    // counts are trustworthy), 'failed' (a check below failed, or the query
+    // threw — permanent for this session until refresh, matching the OLD
+    // dash-forever behavior but ONLY for the genuine-failure case).
+    window.__facetIndexStatus = 'pending';
+    const fail = (...warnArgs) => {       // every preflight-failed exit goes through here
+        if (warnArgs.length) console.warn(...warnArgs);
+        window.__facetIndexStatus = 'failed';
+        return false;
+    };
     const INDEX_SCHEMA_VERSION = 1;   // mirrors build_frontend_derived.INDEX_SCHEMA_VERSION
     try {
         const nbBuild = window.__nodeBitsBuild;
-        if (!nbBuild) return false;   // no usable bit map → index path can't run
+        if (!nbBuild) return fail();   // no usable bit map → index path can't run
         const rows = await db.query(
             `SELECT DISTINCT build_id, schema_version FROM read_parquet('${index_url}')`);
-        if (!rows || rows.length !== 1) return false;           // missing / mixed generations
+        if (!rows || rows.length !== 1) return fail();           // missing / mixed generations
         const sv = Number(rows[0].schema_version);
         if (sv !== INDEX_SCHEMA_VERSION) {
-            console.warn('sample_facet_index schema_version unsupported; multi-filter counts unavailable', sv);
-            return false;
+            return fail('sample_facet_index schema_version unsupported; multi-filter counts unavailable', sv);
         }
         const membershipHalf = String(rows[0].build_id).split(':', 1)[0];
         if (membershipHalf !== nbBuild) {
-            console.warn('sample_facet_index/node_bits generation mismatch; multi-filter counts unavailable',
+            return fail('sample_facet_index/node_bits generation mismatch; multi-filter counts unavailable',
                          { indexMembershipHalf: membershipHalf, nbBuild });
-            return false;
         }
         // (d) runtime coverage handshake: the index must cover the SAME located
         // universe the counts are about. Compare the per-SOURCE histogram of the
@@ -1947,19 +1983,16 @@ facetIndexReady = {
             SELECT (SELECT COUNT(*) FROM (SELECT * FROM i EXCEPT SELECT * FROM f))
                  + (SELECT COUNT(*) FROM (SELECT * FROM f EXCEPT SELECT * FROM i)) AS mismatch`);
         if (Number(cov[0].mismatch) !== 0) {
-            console.warn('sample_facet_index per-source coverage != located universe; multi-filter counts unavailable',
+            return fail('sample_facet_index per-source coverage != located universe; multi-filter counts unavailable',
                          { mismatch: Number(cov[0].mismatch) });
-            return false;
         }
-        window.__facetIndexReady = true;
+        window.__facetIndexStatus = 'ready';
         // readiness can flip true AFTER boot already computed counts once (lost the
         // async race) — reconcile any active multi-filter now (Codex P1 boot race).
         if (typeof window.__onFacetIndexReady === 'function') window.__onFacetIndexReady();
         return true;
     } catch (err) {
-        console.warn('sample_facet_index preflight failed; multi-filter global counts will show unavailable:', err);
-        window.__facetIndexReady = false;
-        return false;
+        return fail('sample_facet_index preflight failed; multi-filter global counts will show unavailable:', err);
     }
 }
 ```
@@ -3640,9 +3673,10 @@ zoomWatcher = {
     // complete per-pid index and apply them ATOMICALLY after a single stale check.
     // Returns: 'ok' (applied), 'superseded' (a newer request won), 'unavailable'
     // (index/bitmap usable but a query failed → honesty: caller shows the dash), or
-    // 'fallthrough' (index/bitmap not usable → caller uses legacy paths).
+    // 'fallthrough' (index/bitmap not usable yet — status 'pending' or 'failed' —
+    // caller uses legacy paths / facetCountsDisplayState decides Loading vs dash, #313).
     async function applyMaskIndexCounts(snap, dims, myReq, bboxSQL = null) {
-        if (!window.__facetIndexReady || !window.__nodeBitsMap) return 'fallthrough';
+        if (window.__facetIndexStatus !== 'ready' || !window.__nodeBitsMap) return 'fallthrough';
         // Build ONE query (UNION ALL of per-dim arms) rather than 4 concurrent
         // full-index scans — the documented DuckDB-WASM single-connection
         // starvation risk (Codex P2). One statement = one connection slot. Each arm
@@ -3784,7 +3818,8 @@ zoomWatcher = {
         //    below hits `if (treeActive && !bboxSQL) applyFacetCounts(d.key, null)` —
         //    the unfiltered BASELINE — which IGNORES search and the cross-filters
         //    (#304). There is NO correct legacy global tree path. So on index
-        //    miss/error at global we show the "unavailable" dash, NEVER baseline.
+        //    miss/error at global we show "Loading…" (index still booting, #313) or
+        //    the "unavailable" dash (index load genuinely failed) — NEVER baseline.
         //    (__onFacetIndexReady re-runs this when readiness flips → real counts.)
         //  - VIEWPORT (bboxSQL !== null), ±search: the legacy membership path JOINs
         //    samples_map_lite + bbox + the search semi-join and is CORRECT, so an
@@ -3799,8 +3834,12 @@ zoomWatcher = {
                 if (myReq !== facetCountsReqId) return;   // defensive stale check (Codex)
                 if (bboxSQL === null) {
                     // global (incl. global+search): no correct legacy tree path →
-                    // honest dash, never baseline (#304).
-                    markFacetCountsUnavailable();
+                    // #313 P0: distinguish "index still loading" (Loading…, real
+                    // counts are still coming) from "index load genuinely failed
+                    // this session" (the honest dash) — NEVER baseline (#304).
+                    const displayState = facetCountsDisplayState(window.__facetIndexStatus, res);
+                    if (displayState === 'pending') markFacetCountsPending();
+                    else markFacetCountsUnavailable();
                     return;
                 }
                 // viewport (±search): fall through to the correct legacy membership path
