@@ -123,6 +123,7 @@ builder — a fresh build is NOT bit-for-bit identical to them (see
 | `isamples_202601_facet_summaries.parquet` | Baseline `(facet_type, facet_value, scheme, count)` | 2 KB | 56 | wide | Every tutorial (instant initial facet counts) | QUERY_SPEC §3.3 tier 1 |
 | `isamples_202601_facet_cross_filter.parquet` | Pre-computed counts for single-filter cross-facet queries | 6 KB | 526 | wide | Search Explorer cross-filter UI | QUERY_SPEC §3.3 tier 2a |
 | `<tag>_sample_facet_index.parquet` | Complete per-pid facet index `(pid, source, material_mask, context_mask, object_type_mask, build_id, schema_version)` — **one row per located sample**, including samples with no tree membership (zero-masked, #306). Scanned by the multi-filter global-view count path (#304/#305). | ~60 MB | 6.0 M | wide (membership + samp_geo) | Interactive Explorer multi-filter facet counts | §4.12 below |
+| `<tag>_sample_facet_index_meta.parquet` | Tiny trusted manifest `(source, count, build_id, schema_version, total_rows)` — per-source histogram + generation id, built DIRECTLY from `samp_geo` (**not** by reading back `sample_facet_index`). Read by the explorer's `facetIndexReady` boot preflight instead of a live GROUP BY scan of the 9.68 MB index (#313 P1). **Must always be uploaded/deployed paired with `sample_facet_index` of the same `build_id`.** | ~1 KB | ~30 | samp_geo (same source as sample_facet_index) | Interactive Explorer boot-time facet-index readiness check | §4.13 below |
 
 ### Tier: vocabulary labels
 
@@ -343,6 +344,50 @@ for the alias when you want "latest."
   validation (above) is the gate for now.
 - **Immutability**: published under a **new** versioned filename — it is a new
   artifact name and never overwrites a cached `sample_facet_masks` or any prior tag.
+
+### 4.13 `<tag>_sample_facet_index_meta.parquet` (tiny trusted manifest, #313 P1)
+
+- **Role**: replaces the explorer's former boot-time live queries against
+  `sample_facet_index.parquet` — a `SELECT DISTINCT build_id, schema_version`
+  plus a full `GROUP BY source` coverage scan that forced a near-full read of the
+  9.68 MB / 6 M-row index on **every page load** (issue #313: this could block
+  multi-filter count readiness for 20–80 s on a slow connection). The explorer's
+  `facetIndexReady` cell now fetches this KB-sized manifest instead.
+- **Headline schema** (5 cols, one row per non-null/non-empty `source`):
+  `source (VARCHAR), count (BIGINT), build_id (VARCHAR), schema_version
+  (INTEGER), total_rows (BIGINT)`. `build_id` and `schema_version` are the
+  **same values** written into `sample_facet_index` for the same build (repeated
+  as constants on every row); `total_rows` is the **full** located universe count
+  from `samp_geo` (`COUNT(*)`, including null/empty-source pids) — matching how
+  `sample_facet_index` covers **all** of `samp_geo`, not just pids with a source
+  (#306).
+- **Independence (Codex requirement)**: built DIRECTLY from `samp_geo` — the same
+  authoritative table `build_facet_summaries`/`build_sample_facet_index` derive
+  from — and NEVER by reading back `sample_facet_index.parquet`. Embedding
+  metadata only inside the same index file would not be an independent staleness
+  guarantee; deriving it from the shared upstream source, then validating it
+  independently against the actual on-disk index (below), is.
+- **Validation**: `validate_frontend_derived.py --index <index file> --index-meta
+  <meta file>` (or `--dir/--tag` auto-discovery) reads the ACTUAL on-disk
+  `sample_facet_index.parquet` (full scan — fine at CI/batch time, never on the
+  browser critical path), independently recomputes the per-source histogram,
+  `build_id`, `schema_version`, and row count, and asserts they match the meta
+  file's content (relational content, not byte-identical Parquet). Also
+  cross-checked against `facet_summaries`' `source` facet, mirroring the
+  comparison the explorer's runtime preflight performs.
+- **Build invocation / escape hatch**: produced alongside `sample_facet_index`
+  in a normal build or `--only sample_facet_index,sample_facet_index_meta`. A
+  narrower `--only sample_facet_index_meta` (used ALONE) builds **just** this
+  file without forcing a full `sample_facet_index` rebuild — useful for pairing
+  a newly-built meta file with an already-deployed index built from the
+  identical wide input (same `build_id`).
+- **Deployment contract**: `sample_facet_index_meta` and `sample_facet_index`
+  **must always be uploaded to R2 together, with the same `build_id`** — the
+  explorer's preflight compares `meta.build_id` against
+  `window.__nodeBitsBuild` and would (correctly) mark the index `failed` if a
+  mismatched pair were ever deployed.
+- **Immutability**: published under the same versioned tag as its paired
+  `sample_facet_index` (never overwrites a prior tag's meta file).
 
 ## 5. URL convention
 
