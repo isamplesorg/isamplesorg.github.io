@@ -93,7 +93,24 @@ test.describe('#313 P6: facetIndexReady pending/failed/ready UI, fed by a delaye
   });
 
   test('2. pending -> failed -> ready UI contract for 2 active Material filters at global view', async ({ page }) => {
-    test.setTimeout(180000);
+    test.setTimeout(300000); // generous: sum of the individual polls below can approach this in a slow run
+
+    // NOTE on a flaky run observed in this environment: blocking the real
+    // sample_facet_index_meta fetch here (to "neutralize" the real boot-time
+    // preflight so it can't race these manual window.__facetIndexStatus
+    // injections) was tried and reverted — it reintroduces the exact FIFO
+    // single-worker starvation the file-header DESIGN NOTE documents:
+    // Material's own facet_tree_summaries query gets stuck behind the held
+    // route on the same DuckDB-WASM worker, so the checkboxes never render at
+    // all. The real flakiness source is more likely general worker-queue
+    // congestion in this sandbox's network path (the SAME Firefox slowness
+    // documented for the 'ready' step below, just also affecting the
+    // pending->failed transition's repaint timing occasionally) rather than a
+    // status race — the real preflight resolves to 'failed' quickly (a 404,
+    // not a large download) well before this test's manual steps run. Given
+    // generous-but-bounded timeouts (below) rather than blocking real
+    // traffic is the right tradeoff: this keeps the test meaningful without
+    // reintroducing the starvation bug.
     await page.goto(explorerUrl(GLOBAL_HASH), { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Material section is collapsed by default (`display: none` on
@@ -170,7 +187,7 @@ test.describe('#313 P6: facetIndexReady pending/failed/ready UI, fed by a delaye
       window.__facetIndexStatus = 'pending';
       document.getElementById('materialFilterBody').dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await expect.poll(materialCount, { timeout: 45000, intervals: [250, 500, 1000] }).toEqual({
+    await expect.poll(materialCount, { timeout: 90000, intervals: [250, 500, 1000, 2000] }).toEqual({
       text: '(Loading…)', recomputing: true, unavailable: false, title: '',
     });
 
@@ -179,7 +196,12 @@ test.describe('#313 P6: facetIndexReady pending/failed/ready UI, fed by a delaye
       window.__facetIndexStatus = 'failed';
       document.getElementById('materialFilterBody').dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await expect.poll(materialCount, { timeout: 45000, intervals: [250, 500, 1000] }).toEqual({
+    // Generous timeout (observed flaky at 45s in this sandbox): the repaint
+    // rides behind handleFacetFilterChange's full async chain on the single
+    // DuckDB-WASM worker, which can be queued behind other real, slow
+    // (Firefox + this sandbox's network path) queries from page boot — see
+    // the NOTE above the page.goto call in this test.
+    await expect.poll(materialCount, { timeout: 90000, intervals: [250, 500, 1000, 2000] }).toEqual({
       text: '(—)', recomputing: false, unavailable: true,
       title: 'Count unavailable for this filter combination',
     });
