@@ -103,13 +103,23 @@ async function loadData() {
 
   const scalar = new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.5);
 
+  // Issue #280: fade points near the globe limb so they don't appear as raised
+  // "blisters" at the horizon. At the fixed capture altitude (~22 Mm), nadir
+  // points are ~22 Mm from the camera and limb points are ~23 Mm away.
+  // Fading from fully opaque at 20 Mm to 15 % opaque at 24 Mm keeps center
+  // points vivid while visually dissolving the limb protrusion.
+  const limbFade = new Cesium.NearFarScalar(20.0e6, 1.0, 24.0e6, 0.15);
+
   for (const d of data) {
-    const sz = Math.min(2 + Math.log2(d.count + 1) * 1.2, 14);
+    // Cap pixelSize at 10 px (was 14): smaller sprites protrude less at the
+    // limb and the size difference is imperceptible at globe-overview zoom.
+    const sz = Math.min(2 + Math.log2(d.count + 1) * 1.2, 10);
     points.add({
       position: Cesium.Cartesian3.fromDegrees(d.lon, d.lat),
       pixelSize: sz,
       color: sourceColors[d.source] || Cesium.Color.WHITE,
-      scaleByDistance: scalar
+      scaleByDistance: scalar,
+      translucencyByDistance: limbFade  // issue #280
     });
   }
 
