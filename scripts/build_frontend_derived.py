@@ -20,6 +20,7 @@ OUTPUTS (into --outdir, prefixed --tag):
   - {tag}_facet_cross_filter.parquet filter_source/material/context/object_type, facet_type, facet_value, count
   - {tag}_wide_h3.parquet            wide + h3_res4/6/8  (large; built only on --only wide_h3)
   - {tag}_sample_facet_index.parquet pid, source, material_mask, context_mask, object_type_mask(BIGINT), build_id, schema_version(INT) — COMPLETE per-pid index over ALL located samples (incl. #306 no-membership pids, zero-masked); the multi-filter global-view count path (#304/#305) scans this
+  - {tag}_sample_facet_index_meta.parquet  source, count, build_id, schema_version(INT), total_rows — #313 P1: tiny trusted manifest (per-source histogram + build_id/schema_version/total_rows over the FULL located universe), built DIRECTLY from samp_geo (same source as sample_facet_index, NOT read back from it) so the explorer's facetIndexReady preflight can validate staleness/coverage from a KB-sized file instead of a 6M-row GROUP BY scan of the 9.68MB index. Always paired with sample_facet_index (same build_id) when uploaded to R2.
   - {tag}_manifest.json              provenance + per-output rowcount/schema/sha256
 
 MATERIAL SELECTION (issue #265/#271): the broad SKOS root
@@ -66,7 +67,7 @@ ARTIFACTS = ["sample_facets_v2", "samples_map_lite", "h3_summaries",
              "facet_summaries", "facet_cross_filter", "wide_h3",
              "sample_facet_membership", "facet_tree_summaries",
              "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks",
-             "sample_facet_index"]
+             "sample_facet_index", "sample_facet_index_meta"]
 # #293: max tree nodes per dim that fit in a signed BIGINT mask (bits 0..62).
 # Live max is 22 (context); guard so a future vocab explosion fails loudly
 # instead of silently overflowing a mask bit.
@@ -677,6 +678,42 @@ def build_sample_facet_index(con, out, build_id):
     ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
 
 
+def build_sample_facet_index_meta(con, out, build_id):
+    # #313 P1: tiny trusted manifest for the explorer's facetIndexReady preflight.
+    # Built DIRECTLY from samp_geo — the SAME authoritative source
+    # build_sample_facet_index/build_facet_summaries derive from — NOT by reading
+    # back sample_facet_index.parquet itself. That independence is the whole point:
+    # a buggy/stale sample_facet_index build could carry self-consistent-but-wrong
+    # embedded metadata; deriving meta from samp_geo means an independent validator
+    # (scripts/validate_frontend_derived.py) can read the actual on-disk index file
+    # and prove meta/index/facet_summaries all agree, rather than the index
+    # "grading its own homework".
+    #
+    # Same normalization as build_facet_summaries' per-source histogram and the
+    # explorer's (former) live coverage check: NULLIF(TRIM(source), '') IS NOT NULL
+    # excludes null/blank source from the per-source rows. total_rows is the FULL
+    # located universe from samp_geo INCLUDING null/empty-source pids — matching how
+    # build_sample_facet_index covers ALL of samp_geo, not just pids with a source
+    # (#306: located pids with no tree membership are still counted).
+    #
+    # build_id MUST be the caller-supplied index_build_id(con) (membership half +
+    # coverage half) — the SAME id embedded in sample_facet_index.parquet for this
+    # run — so the explorer can compare window.__nodeBitsBuild (membership half)
+    # against meta.build_id exactly as it previously compared against a live
+    # DISTINCT build_id scan of the index.
+    total_rows = con.sql("SELECT COUNT(*) FROM samp_geo").fetchone()[0]
+    con.execute(f"""COPY (
+        SELECT source, COUNT(*)::BIGINT AS count,
+               '{build_id}' AS build_id,
+               {INDEX_SCHEMA_VERSION}::INTEGER AS schema_version,
+               {total_rows}::BIGINT AS total_rows
+        FROM samp_geo
+        WHERE NULLIF(TRIM(source), '') IS NOT NULL
+        GROUP BY source
+        ORDER BY source
+    ) TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)""")
+
+
 def file_meta(con, path):
     n = con.sql(f"SELECT COUNT(*) FROM read_parquet('{path}')").fetchone()[0]
     schema = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM read_parquet('{path}')").fetchall()]
@@ -742,7 +779,7 @@ def main():
     # Hierarchy artifacts (#281/#282) — need vocab_labels for the SKOS tree.
     HIER_ARTIFACTS = {"sample_facet_membership", "facet_tree_summaries",
                       "facet_tree_cross_filter", "facet_node_bits", "sample_facet_masks",
-                      "sample_facet_index"}
+                      "sample_facet_index", "sample_facet_index_meta"}
     if any(want(a) for a in HIER_ARTIFACTS):
         if not args.vocab_labels:
             # Fail loud if the user EXPLICITLY asked for a hierarchy artifact
@@ -761,7 +798,17 @@ def main():
             # `--only sample_facet_index`) — otherwise the build ships an artifact its
             # own validator must reject (Codex #4 / r3). force_dep() builds a not-wanted
             # artifact exactly once and records it for the manifest.
-            need_fastpath = want("facet_node_bits") or want("sample_facet_masks") or want("sample_facet_index")
+            # #313 P1: sample_facet_index_meta needs index_build_id(con) (membership
+            # half via the `membership` temp table), so it must trigger the fastpath
+            # membership_build_id computation too. It is DELIBERATELY EXCLUDED from
+            # force_deps: `--only sample_facet_index_meta` alone must build JUST the
+            # meta file (no forced facet_node_bits/sample_facet_masks/sample_facet_index
+            # rebuild) — the escape hatch for pairing a new meta file with an
+            # already-R2-deployed index built from the identical wide input. Requesting
+            # sample_facet_index_meta together with sample_facet_index (or a normal
+            # full build with neither --only'd) still pairs them via force_deps below.
+            need_fastpath = (want("facet_node_bits") or want("sample_facet_masks")
+                             or want("sample_facet_index") or want("sample_facet_index_meta"))
             force_deps = want("sample_facet_masks") or want("sample_facet_index")
             def force_dep(name, fn):
                 if want(name):
@@ -791,6 +838,11 @@ def main():
                 # membership id as node_bits (mask-bit interpretation gate) PLUS a
                 # coverage id over samp_geo's (pid, source) universe (staleness gate).
                 emit("sample_facet_index", lambda o: build_sample_facet_index(con, o, index_build_id(con)))
+                # #313 P1: build_id recomputed fresh here (cheap — same temp tables as
+                # the sample_facet_index call above) so meta always carries the SAME
+                # build_id as sample_facet_index for this run, even when only one of
+                # the two is --only'd (see need_fastpath/force_deps comment above).
+                emit("sample_facet_index_meta", lambda o: build_sample_facet_index_meta(con, o, index_build_id(con)))
 
     if not args.no_manifest:
         log("hashing inputs/outputs for manifest…", t0)
