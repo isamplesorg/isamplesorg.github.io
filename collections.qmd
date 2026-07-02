@@ -1,0 +1,62 @@
+---
+title: "Featured Collections"
+subtitle: "Jump straight to well-known sample collections on the interactive globe"
+toc: true
+categories: [explore, collections]
+---
+
+::: {.callout-note}
+**Identity-based collection filtering** (issue
+[#243](https://github.com/isamplesorg/isamplesorg.github.io/issues/243)). Each
+link applies the explorer's `collection` facet (`&collection=<id>`) so you see
+*exactly* that collection's samples — not just whatever is near a location — and
+flies the globe to the collection's centroid. From there, layer on the Material,
+Sampled Feature, or Specimen Type facets to narrow further.
+:::
+
+## How to use these
+
+1. Click **Open in Explorer** — the `collection` facet filters to exactly that
+   collection's samples and the globe flies to its centroid in point mode.
+2. **Layer on facets**: open the *Material*, *Sampled Feature*, or *Specimen
+   Type* panels and check values to narrow within the collection.
+3. **Find any collection** — in the explorer, open the **Collection** panel and
+   type in its search box; the top ~100 collections also appear as checkboxes.
+4. **Share what you see** — the URL captures the full view (`collection` +
+   other facets + camera), so you can bookmark or send any state you reach.
+
+## Featured collections
+
+These are the largest OpenContext project areas in the current snapshot
+(`202604`), by sample count.
+
+| Collection | Source | Samples | |
+|---|---|---:|---|
+| **PKAP — Pyla-Koutsopetria Survey Area** (Cyprus) | OpenContext | 15,446 | [Open in Explorer](explorer.html?collection=dd74c71982da0e21#v=1&lat=34.9836&lng=33.7071&alt=40000&mode=point) |
+| Çatalhöyük (Turkey) | OpenContext | 145,884 | [Open in Explorer](explorer.html?collection=20365f0e3b27dc8e#v=1&lat=37.6682&lng=32.8272&alt=40000&mode=point) |
+| Petra Great Temple (Jordan) | OpenContext | 108,846 | [Open in Explorer](explorer.html?collection=1ef8673aa89023c1#v=1&lat=30.3287&lng=35.4421&alt=40000&mode=point) |
+| Polis Chrysochous (Cyprus) | OpenContext | 52,252 | [Open in Explorer](explorer.html?collection=756f324a7d902068#v=1&lat=35.0349&lng=32.4218&alt=40000&mode=point) |
+| Kenan Tepe (Turkey) | OpenContext | 42,294 | [Open in Explorer](explorer.html?collection=732469b20b632815#v=1&lat=37.8307&lng=40.8137&alt=40000&mode=point) |
+| Poggio Civitate (Italy) | OpenContext | 41,679 | [Open in Explorer](explorer.html?collection=a5e653d3b3704b95#v=1&lat=43.1529&lng=11.4016&alt=40000&mode=point) |
+| Ilıpınar (Turkey) | OpenContext | 36,947 | [Open in Explorer](explorer.html?collection=2308de8c25a27090#v=1&lat=40.4683&lng=29.3091&alt=40000&mode=point) |
+| Čḯxwicən (Washington, USA) | OpenContext | 29,793 | [Open in Explorer](explorer.html?collection=84eb590024898ba9#v=1&lat=48.1315&lng=-123.4628&alt=40000&mode=point) |
+| Heit el-Ghurab / Giza (Egypt) | OpenContext | 28,940 | [Open in Explorer](explorer.html?collection=cb1775e663696ce6#v=1&lat=29.9711&lng=31.1413&alt=40000&mode=point) |
+| Domuztepe (Turkey) | OpenContext | 22,394 | [Open in Explorer](explorer.html?collection=d452bbb04ea0d100#v=1&lat=37.3226&lng=37.0349&alt=40000&mode=point) |
+| Forcello Bagnolo San Vito (Italy) | OpenContext | 18,573 | [Open in Explorer](explorer.html?collection=c59e2c8620cde574#v=1&lat=45.0897&lng=10.8754&alt=40000&mode=point) |
+| Chogha Mish (Iran) | OpenContext | 16,827 | [Open in Explorer](explorer.html?collection=49e189be61689b3d#v=1&lat=32.2240&lng=48.5559&alt=40000&mode=point) |
+
+## What a preset URL is made of
+
+```
+explorer.html
+  ?collection=dd74c71982da0e21  # the collection facet (PKAP Survey Area)
+  #v=1                          # hash schema version
+  &lat=34.9836&lng=33.7071      # camera target (collection centroid)
+  &alt=40000                    # 40 km altitude → point mode
+  &mode=point                   # force individual sample dots
+```
+
+The `collection` value is a stable id (a hash of source + collection name) from
+`collections.parquet`. To build your own view, apply any combination of facets
+and camera in the explorer, then copy the browser's URL — every part of the
+state is encoded there.
