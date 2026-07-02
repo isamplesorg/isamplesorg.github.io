@@ -15,6 +15,10 @@ Usage:
       --h3 URL4 URL6 URL8
   # hierarchy + #305/#306 complete index (auto-discovered with --dir/--tag, or):
   python scripts/validate_frontend_derived.py --dir DIR --tag TAG --index INDEX.parquet
+  # #313 P1 tiny manifest (auto-discovered with --dir/--tag, or --index-meta):
+  #   validated INDEPENDENTLY against a fresh full scan of --index, not against
+  #   itself — see the "sample_facet_index_meta" block below.
+  python scripts/validate_frontend_derived.py --dir DIR --tag TAG --index INDEX.parquet --index-meta META.parquet
 """
 import argparse, hashlib, json, os, sys
 import duckdb
@@ -58,6 +62,7 @@ def main():
     ap.add_argument("--node-bits", help="facet_node_bits parquet (#293); optional")
     ap.add_argument("--masks", help="sample_facet_masks parquet (#293); optional")
     ap.add_argument("--index", help="sample_facet_index parquet (#305/#306); optional")
+    ap.add_argument("--index-meta", help="sample_facet_index_meta parquet (#313 P1); optional")
     ap.add_argument("--wide", help="source wide parquet — enables the SEMANTIC gate "
                     "(re-derive and diff the written files against a fresh build)")
     ap.add_argument("--min-rows", type=int, default=1_000_000,
@@ -635,6 +640,85 @@ def main():
                        OR i.object_type_mask IS DISTINCT FROM 0)""")
             check("index: no-membership extra pids are zero-masked (#306)", extra_nonzero == 0,
                   f"{extra_nonzero} index-only pids carry a non-zero/NULL mask (should be 0)")
+
+    # --- #313 P1: sample_facet_index_meta — INDEPENDENT cross-check against the
+    # ACTUAL on-disk sample_facet_index.parquet ---
+    # The explorer's boot-time facetIndexReady preflight now reads this tiny
+    # manifest instead of scanning the 9.68MB sample_facet_index.parquet (#313).
+    # Independence (Codex requirement #1) means: this validator reads the REAL
+    # index file (full scan is fine here — CI/batch-time, not browser-critical-path)
+    # and recomputes the per-source histogram/build_id/schema_version/row_count
+    # itself, then asserts the meta file agrees — it does NOT trust meta's own
+    # self-reported numbers, and it does NOT derive meta's "expected" values by
+    # reading meta back (that would be circular).
+    index_meta = _opt("sample_facet_index_meta", "index_meta")
+    if index_meta:
+        IM = f"read_parquet('{index_meta}')"
+        im_sch = [(r[0], r[1]) for r in con.sql(f"DESCRIBE SELECT * FROM {IM}").fetchall()]
+        EXP_IM = [("source", "VARCHAR"), ("count", "BIGINT"), ("build_id", "VARCHAR"),
+                  ("schema_version", "INTEGER"), ("total_rows", "BIGINT")]
+        check("index_meta schema matches contract", im_sch == EXP_IM, f"got {im_sch}")
+        im_dup = scalar(f"SELECT COUNT(*) FROM (SELECT source FROM {IM} GROUP BY source HAVING COUNT(*)>1)")
+        check("index_meta: one row per source", im_dup == 0, f"{im_dup} duplicate source rows in meta")
+        im_bids = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {IM}")
+        check("index_meta: single build_id", im_bids == 1, f"{im_bids} distinct build_ids (want 1)")
+        im_svs = scalar(f"SELECT COUNT(DISTINCT schema_version) FROM {IM}")
+        check("index_meta: single schema_version", im_svs == 1, f"{im_svs} distinct schema_versions (want 1)")
+        im_trs = scalar(f"SELECT COUNT(DISTINCT total_rows) FROM {IM}")
+        check("index_meta: single total_rows", im_trs == 1, f"{im_trs} distinct total_rows values (want 1)")
+
+        if index:
+            # per-source histogram: relational CONTENT comparison (not byte identity)
+            # against a FRESH full scan of the real index file.
+            ix_hist_diff = scalar(f"""
+                WITH ix_hist AS (
+                    SELECT source, COUNT(*)::BIGINT AS count FROM {IX}
+                    WHERE NULLIF(TRIM(source), '') IS NOT NULL GROUP BY source
+                ), meta_hist AS (SELECT source, count FROM {IM})
+                SELECT (SELECT COUNT(*) FROM (SELECT * FROM ix_hist EXCEPT SELECT * FROM meta_hist))
+                     + (SELECT COUNT(*) FROM (SELECT * FROM meta_hist EXCEPT SELECT * FROM ix_hist))""")
+            check("index_meta per-source histogram == recomputed from sample_facet_index",
+                  ix_hist_diff == 0, f"{ix_hist_diff} (source,count) rows disagree with the on-disk index")
+
+            ix_total = scalar(f"SELECT COUNT(*) FROM {IX}")
+            im_total = scalar(f"SELECT MIN(total_rows) FROM {IM}") if im_trs == 1 else None
+            check("index_meta.total_rows == COUNT(*) of sample_facet_index", im_total == ix_total,
+                  f"meta total_rows={im_total} vs index row count={ix_total}")
+
+            ix_bids_local = scalar(f"SELECT COUNT(DISTINCT build_id) FROM {IX}")
+            if ix_bids_local == 1 and im_bids == 1:
+                ix_build_id = scalar(f"SELECT MIN(build_id) FROM {IX}")
+                im_build_id = scalar(f"SELECT MIN(build_id) FROM {IM}")
+                check("index_meta.build_id == sample_facet_index.build_id", im_build_id == ix_build_id,
+                      f"meta build_id={im_build_id!r} vs index build_id={ix_build_id!r}")
+            else:
+                check("index_meta.build_id == sample_facet_index.build_id", False,
+                      "cannot compare — an artifact has zero/multiple distinct build_ids")
+
+            ix_sv_single = scalar(f"SELECT COUNT(DISTINCT schema_version) FROM {IX}")
+            if ix_sv_single == 1 and im_svs == 1:
+                ix_sv = scalar(f"SELECT MIN(schema_version) FROM {IX}")
+                im_sv = scalar(f"SELECT MIN(schema_version) FROM {IM}")
+                check("index_meta.schema_version == sample_facet_index.schema_version", im_sv == ix_sv,
+                      f"meta schema_version={im_sv} vs index schema_version={ix_sv}")
+            else:
+                check("index_meta.schema_version == sample_facet_index.schema_version", False,
+                      "cannot compare — an artifact has zero/multiple distinct schema_versions")
+        else:
+            info.append("sample_facet_index_meta present but sample_facet_index not provided — "
+                         "skipped the independent on-disk-index cross-check (pass --index, or "
+                         "--dir/--tag with the index file present)")
+
+        # Also cross-check against facet_summaries' 'source' facet — the SAME
+        # comparison the explorer's runtime preflight performs (meta vs
+        # facet_summaries), independent of whether the index file itself was passed.
+        fs_diff = scalar(f"""
+            WITH fs_src AS (SELECT facet_value AS source, count FROM {S} WHERE facet_type='source'),
+                 meta_hist AS (SELECT source, count FROM {IM})
+            SELECT (SELECT COUNT(*) FROM (SELECT * FROM fs_src EXCEPT SELECT * FROM meta_hist))
+                 + (SELECT COUNT(*) FROM (SELECT * FROM meta_hist EXCEPT SELECT * FROM fs_src))""")
+        check("index_meta per-source histogram == facet_summaries (source facet)", fs_diff == 0,
+              f"{fs_diff} (source,count) rows disagree with facet_summaries")
 
     print(f"\n{'CHECK':<44} {'RESULT':<6} DETAIL\n" + "-" * 90)
     ok = True

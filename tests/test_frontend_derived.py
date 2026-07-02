@@ -838,6 +838,102 @@ def test_sample_facet_index_only_auto_pairs_bundle(tmp_path):
     assert "index.pid == facets_v2.pid" in v.stdout
 
 
+# ---------------------------------------------------------------------------
+# sample_facet_index_meta — tiny trusted manifest paired with sample_facet_index
+# (#313 P1). Built DIRECTLY from samp_geo (not by reading back the index), then
+# independently cross-checked by the validator against the ACTUAL on-disk index.
+# ---------------------------------------------------------------------------
+def test_sample_facet_index_meta_matches_index_and_validates(tmp_path):
+    """A normal build (no --only) produces sample_facet_index_meta paired with
+    sample_facet_index: same build_id, matching per-source histogram, and
+    total_rows == the full located universe. The validator's independent
+    on-disk-index cross-check passes."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    r = _build_index(tmp_path, wide, vocab)
+    assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
+    assert (tmp_path / "t_sample_facet_index_meta.parquet").exists(), \
+        "sample_facet_index_meta not produced by a normal (unfiltered) build"
+
+    con = duckdb.connect()
+    IX = f"read_parquet('{tmp_path / 't_sample_facet_index.parquet'}')"
+    IM = f"read_parquet('{tmp_path / 't_sample_facet_index_meta.parquet'}')"
+
+    # build_id matches exactly
+    ix_bid = con.sql(f"SELECT DISTINCT build_id FROM {IX}").fetchone()[0]
+    im_bid = con.sql(f"SELECT DISTINCT build_id FROM {IM}").fetchone()[0]
+    assert ix_bid == im_bid, f"meta build_id {im_bid!r} != index build_id {ix_bid!r}"
+
+    # per-source histogram: A=2 (s1,s2), B=1 (s3), C=1 (s-nomem)
+    hist = dict(con.sql(f"SELECT source, count FROM {IM} ORDER BY source").fetchall())
+    assert hist == {"A": 2, "B": 1, "C": 1}, f"unexpected meta histogram: {hist}"
+    ix_hist = dict(con.sql(f"SELECT source, COUNT(*) FROM {IX} GROUP BY source ORDER BY source").fetchall())
+    assert hist == ix_hist, f"meta histogram {hist} != recomputed index histogram {ix_hist}"
+
+    # total_rows == full located universe (all 4 INDEX_SAMPLES rows)
+    total_rows = con.sql(f"SELECT DISTINCT total_rows FROM {IM}").fetchone()[0]
+    ix_count = con.sql(f"SELECT COUNT(*) FROM {IX}").fetchone()[0]
+    assert total_rows == ix_count == 4, f"meta total_rows={total_rows}, index rows={ix_count}"
+
+    # the validator's independent cross-check (reads the ACTUAL on-disk index)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t",
+                        "--min-rows", "1", "--wide", wide], capture_output=True, text=True)
+    assert v.returncode == 0, f"validator failed on clean index+meta fixture:\n{v.stdout}\n{v.stderr}"
+    assert "index_meta per-source histogram == recomputed from sample_facet_index" in v.stdout
+    assert "index_meta.build_id == sample_facet_index.build_id" in v.stdout
+
+
+def test_sample_facet_index_meta_only_does_not_force_index_rebuild(tmp_path):
+    """The escape hatch (Codex requirement #2): `--only sample_facet_index_meta`
+    ALONE must build just the meta file, without forcing a full sample_facet_index
+    rebuild — needed to pair a fresh meta file with an already-deployed index built
+    from the identical input."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    ix_path = tmp_path / "t_sample_facet_index.parquet"
+    meta_path = tmp_path / "t_sample_facet_index_meta.parquet"
+    assert ix_path.exists() and meta_path.exists()
+
+    con = duckdb.connect()
+    orig_bid = con.sql(f"SELECT DISTINCT build_id FROM read_parquet('{ix_path}')").fetchone()[0]
+
+    # simulate "meta needs re-pairing with an already-deployed index": delete BOTH
+    # locally so we can prove --only sample_facet_index_meta re-creates ONLY meta.
+    os.remove(ix_path)
+    os.remove(meta_path)
+    r = subprocess.run([sys.executable, BUILD, "--wide", wide, "--outdir", str(tmp_path), "--tag", "t",
+                        "--no-manifest", "--vocab-labels", vocab,
+                        "--only", "sample_facet_index_meta"], capture_output=True, text=True)
+    assert r.returncode == 0, f"{r.stdout}\n{r.stderr}"
+    assert meta_path.exists(), "--only sample_facet_index_meta did not produce the meta file"
+    assert not ix_path.exists(), \
+        "--only sample_facet_index_meta must NOT force a sample_facet_index rebuild (escape hatch broken)"
+
+    # the re-created meta still carries the SAME build_id (same wide/vocab inputs)
+    new_bid = con.sql(f"SELECT DISTINCT build_id FROM read_parquet('{meta_path}')").fetchone()[0]
+    assert new_bid == orig_bid, f"meta-only rebuild produced a different build_id: {new_bid!r} != {orig_bid!r}"
+
+
+def test_sample_facet_index_meta_drift_caught_by_validator(tmp_path):
+    """A meta file whose histogram disagrees with the actual on-disk index must
+    fail the validator's independent cross-check."""
+    wide = str(tmp_path / "wide.parquet"); vocab = str(tmp_path / "vocab.parquet")
+    build_index_fixture(wide, vocab)
+    assert _build_index(tmp_path, wide, vocab).returncode == 0
+    meta = str(tmp_path / "t_sample_facet_index_meta.parquet")
+    con = duckdb.connect(); tmp_m = meta + ".tmp"
+    # corrupt source 'A' count (2 -> 99), keeping the contract column order
+    con.execute(f"""COPY (SELECT source,
+                   CASE WHEN source='A' THEN count + 97 ELSE count END AS count,
+                   build_id, schema_version, total_rows
+                   FROM read_parquet('{meta}')) TO '{tmp_m}' (FORMAT PARQUET)"""); os.replace(tmp_m, meta)
+    v = subprocess.run([sys.executable, VALIDATE, "--dir", str(tmp_path), "--tag", "t", "--min-rows", "1"],
+                       capture_output=True, text=True)
+    assert v.returncode != 0 and "index_meta per-source histogram == recomputed from sample_facet_index" in v.stdout, \
+        f"meta/index drift gate failed to catch a corrupted histogram:\n{v.stdout}"
+
+
 def test_scheme_corruption_caught(tmp_path):
     wide = str(tmp_path / "wide.parquet"); build_fixture_wide(wide, "blob")
     assert _build(tmp_path, wide).returncode == 0

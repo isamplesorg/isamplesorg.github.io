@@ -53,7 +53,22 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // Uncomment to test on other browsers
+    // #313 P6: narrow, targeted Firefox coverage — scoped to ONLY the
+    // facetIndexReady pending/failed race spec (tests/playwright/
+    // facet-index-meta-pending.spec.js). This is NOT "enable Firefox
+    // broadly" (Codex's review explicitly warned that would add flake risk
+    // — Cesium/DuckDB-WASM under Firefox/WebKit — without catching this
+    // class of bug, since the existing smoke suite avoids data-dependent
+    // facet-count assertions). Firefox's background-tab/network throttling
+    // behavior is exactly what the #313 findings doc flags as the
+    // Firefox-specific amplifier of the boot race this spec exercises.
+    {
+      name: 'firefox-facet-index-meta',
+      use: { ...devices['Desktop Firefox'] },
+      testMatch: /facet-index-meta-pending\.spec\.js/,
+    },
+
+    // Uncomment to broadly enable other browsers
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
