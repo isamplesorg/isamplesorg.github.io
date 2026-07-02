@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="iSamples team">
-<meta name="dcterms.date" content="2026-07-01">
+<meta name="dcterms.date" content="2026-07-02">
 
 <title>iSamples Data Serializations – iSamples</title>
 <style>
@@ -285,6 +285,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#isamples_202601_facet_cross_filter.parquet" id="toc-isamples_202601_facet_cross_filter.parquet" class="nav-link" data-scroll-target="#isamples_202601_facet_cross_filter.parquet"><span class="header-section-number">4.10</span> 4.10 <code>isamples_202601_facet_cross_filter.parquet</code></a></li>
   <li><a href="#oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants" id="toc-oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants" class="nav-link" data-scroll-target="#oc_isamples_pqg.parquet-and-oc_isamples_pqg_wide.parquet-oc-variants"><span class="header-section-number">4.11</span> 4.11 <code>oc_isamples_pqg.parquet</code> and <code>oc_isamples_pqg_wide.parquet</code> (OC variants)</a></li>
   <li><a href="#tag_sample_facet_index.parquet-complete-per-pid-facet-index-305306" id="toc-tag_sample_facet_index.parquet-complete-per-pid-facet-index-305306" class="nav-link" data-scroll-target="#tag_sample_facet_index.parquet-complete-per-pid-facet-index-305306"><span class="header-section-number">4.12</span> 4.12 <code>&lt;tag&gt;_sample_facet_index.parquet</code> (complete per-pid facet index, #305/#306)</a></li>
+  <li><a href="#tag_sample_facet_index_meta.parquet-tiny-trusted-manifest-313-p1" id="toc-tag_sample_facet_index_meta.parquet-tiny-trusted-manifest-313-p1" class="nav-link" data-scroll-target="#tag_sample_facet_index_meta.parquet-tiny-trusted-manifest-313-p1"><span class="header-section-number">4.13</span> 4.13 <code>&lt;tag&gt;_sample_facet_index_meta.parquet</code> (tiny trusted manifest, #313 P1)</a></li>
   </ul></li>
   <li><a href="#url-convention" id="toc-url-convention" class="nav-link" data-scroll-target="#url-convention"><span class="header-section-number">5</span> 5. URL convention</a></li>
   <li><a href="#relationship-to-other-documents" id="toc-relationship-to-other-documents" class="nav-link" data-scroll-target="#relationship-to-other-documents"><span class="header-section-number">6</span> 6. Relationship to other documents</a></li>
@@ -319,7 +320,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 1, 2026</p>
+      <p class="date">July 2, 2026</p>
     </div>
   </div>
   
@@ -634,6 +635,15 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 <td>Interactive Explorer multi-filter facet counts</td>
 <td>§4.12 below</td>
 </tr>
+<tr class="odd">
+<td><code>&lt;tag&gt;_sample_facet_index_meta.parquet</code></td>
+<td>Tiny trusted manifest <code>(source, count, build_id, schema_version, total_rows)</code> — per-source histogram + generation id, built DIRECTLY from <code>samp_geo</code> (<strong>not</strong> by reading back <code>sample_facet_index</code>). Read by the explorer’s <code>facetIndexReady</code> boot preflight instead of a live GROUP BY scan of the 9.68 MB index (#313 P1). <strong>Must always be uploaded/deployed paired with <code>sample_facet_index</code> of the same <code>build_id</code>.</strong></td>
+<td style="text-align: right;">~1 KB</td>
+<td style="text-align: right;">~30</td>
+<td>samp_geo (same source as sample_facet_index)</td>
+<td>Interactive Explorer boot-time facet-index readiness check</td>
+<td>§4.13 below</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -943,6 +953,18 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 <li><strong>Validation</strong>: <code>validate_frontend_derived.py --index &lt;file&gt;</code> is an INDEPENDENT oracle — it asserts schema + NOT-NULL columns, one row per pid, <code>pid</code> set == <code>sample_facets_v2.pid</code> (the located universe), <code>source</code> == facets_v2 source, <code>schema_version</code> == the exact contract version, a well-formed single <code>build_id</code>, and then <strong>recomputes</strong> both <code>build_id</code> halves from the written sibling files (the coverage half from <code>sample_facets_v2</code>, the membership half from <code>sample_facet_membership</code>) and asserts equality — so a stale/edited coverage id is caught at build time even though <code>node_bits</code> is unchanged. Masks are re-derived directly from <code>membership</code> + <code>node_bits</code> for <strong>every</strong> index pid (zero rows included) and symmetric-diffed against the file.</li>
 <li><strong>Runtime staleness handshake (Phase 2)</strong>: the <em>explorer</em> loads the index by URL and so cannot, on its own, know the expected coverage half. The load-time refusal of a stale-coverage index requires an external trusted pointer (e.g.&nbsp;the expected composite id co-published in the manifest / a <code>current</code> alias the explorer reads); that handshake lands with the count-query consumer in Phase 2. Build-time validation (above) is the gate for now.</li>
 <li><strong>Immutability</strong>: published under a <strong>new</strong> versioned filename — it is a new artifact name and never overwrites a cached <code>sample_facet_masks</code> or any prior tag.</li>
+</ul>
+</section>
+<section id="tag_sample_facet_index_meta.parquet-tiny-trusted-manifest-313-p1" class="level3" data-number="4.13">
+<h3 data-number="4.13" data-anchor-id="tag_sample_facet_index_meta.parquet-tiny-trusted-manifest-313-p1"><span class="header-section-number">4.13</span> 4.13 <code>&lt;tag&gt;_sample_facet_index_meta.parquet</code> (tiny trusted manifest, #313 P1)</h3>
+<ul>
+<li><strong>Role</strong>: replaces the explorer’s former boot-time live queries against <code>sample_facet_index.parquet</code> — a <code>SELECT DISTINCT build_id, schema_version</code> plus a full <code>GROUP BY source</code> coverage scan that forced a near-full read of the 9.68 MB / 6 M-row index on <strong>every page load</strong> (issue #313: this could block multi-filter count readiness for 20–80 s on a slow connection). The explorer’s <code>facetIndexReady</code> cell now fetches this KB-sized manifest instead.</li>
+<li><strong>Headline schema</strong> (5 cols, one row per non-null/non-empty <code>source</code>): <code>source (VARCHAR), count (BIGINT), build_id (VARCHAR), schema_version (INTEGER), total_rows (BIGINT)</code>. <code>build_id</code> and <code>schema_version</code> are the <strong>same values</strong> written into <code>sample_facet_index</code> for the same build (repeated as constants on every row); <code>total_rows</code> is the <strong>full</strong> located universe count from <code>samp_geo</code> (<code>COUNT(*)</code>, including null/empty-source pids) — matching how <code>sample_facet_index</code> covers <strong>all</strong> of <code>samp_geo</code>, not just pids with a source (#306).</li>
+<li><strong>Independence (Codex requirement)</strong>: built DIRECTLY from <code>samp_geo</code> — the same authoritative table <code>build_facet_summaries</code>/<code>build_sample_facet_index</code> derive from — and NEVER by reading back <code>sample_facet_index.parquet</code>. Embedding metadata only inside the same index file would not be an independent staleness guarantee; deriving it from the shared upstream source, then validating it independently against the actual on-disk index (below), is.</li>
+<li><strong>Validation</strong>: <code>validate_frontend_derived.py --index &lt;index file&gt; --index-meta &lt;meta file&gt;</code> (or <code>--dir/--tag</code> auto-discovery) reads the ACTUAL on-disk <code>sample_facet_index.parquet</code> (full scan — fine at CI/batch time, never on the browser critical path), independently recomputes the per-source histogram, <code>build_id</code>, <code>schema_version</code>, and row count, and asserts they match the meta file’s content (relational content, not byte-identical Parquet). Also cross-checked against <code>facet_summaries</code>’ <code>source</code> facet, mirroring the comparison the explorer’s runtime preflight performs.</li>
+<li><strong>Build invocation / escape hatch</strong>: produced alongside <code>sample_facet_index</code> in a normal build or <code>--only sample_facet_index,sample_facet_index_meta</code>. A narrower <code>--only sample_facet_index_meta</code> (used ALONE) builds <strong>just</strong> this file without forcing a full <code>sample_facet_index</code> rebuild — useful for pairing a newly-built meta file with an already-deployed index built from the identical wide input (same <code>build_id</code>).</li>
+<li><strong>Deployment contract</strong>: <code>sample_facet_index_meta</code> and <code>sample_facet_index</code> <strong>must always be uploaded to R2 together, with the same <code>build_id</code></strong> — the explorer’s preflight compares <code>meta.build_id</code> against <code>window.__nodeBitsBuild</code> and would (correctly) mark the index <code>failed</code> if a mismatched pair were ever deployed.</li>
+<li><strong>Immutability</strong>: published under the same versioned tag as its paired <code>sample_facet_index</code> (never overwrites a prior tag’s meta file).</li>
 </ul>
 </section>
 </section>
