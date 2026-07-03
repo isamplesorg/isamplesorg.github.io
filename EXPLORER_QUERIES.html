@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>explorer_queries – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-46c1e64c2409ffa41d8278daa552b940.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/zenodo_isamples_analysis.html">
+ <span class="dropdown-text">Deep-Dive Analysis</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-the-interactive-explorer-queries-data-plain-english-walkthrough" id="toc-how-the-interactive-explorer-queries-data-plain-english-walkthrough" class="nav-link active" data-scroll-target="#how-the-interactive-explorer-queries-data-plain-english-walkthrough"><span class="header-section-number">1</span> How the Interactive Explorer queries data (plain-English walkthrough)</a>
+  <ul>
+  <li><a href="#the-one-sentence-version" id="toc-the-one-sentence-version" class="nav-link" data-scroll-target="#the-one-sentence-version"><span class="header-section-number">1.1</span> The one-sentence version</a></li>
+  <li><a href="#where-the-files-live" id="toc-where-the-files-live" class="nav-link" data-scroll-target="#where-the-files-live"><span class="header-section-number">1.2</span> Where the files live</a></li>
+  <li><a href="#what-happens-when-you" id="toc-what-happens-when-you" class="nav-link" data-scroll-target="#what-happens-when-you"><span class="header-section-number">1.3</span> What happens when you…</a>
+  <ul class="collapse">
+  <li><a href="#load-the-page" id="toc-load-the-page" class="nav-link" data-scroll-target="#load-the-page"><span class="header-section-number">1.3.1</span> …load the page</a></li>
+  <li><a href="#zoom-in" id="toc-zoom-in" class="nav-link" data-scroll-target="#zoom-in"><span class="header-section-number">1.3.2</span> …zoom in</a></li>
+  <li><a href="#click-a-facet-checkbox-material-sampled-feature-object-type-source" id="toc-click-a-facet-checkbox-material-sampled-feature-object-type-source" class="nav-link" data-scroll-target="#click-a-facet-checkbox-material-sampled-feature-object-type-source"><span class="header-section-number">1.3.3</span> …click a facet checkbox (Material / Sampled Feature / Object Type / Source)</a></li>
+  <li><a href="#search-for-text" id="toc-search-for-text" class="nav-link" data-scroll-target="#search-for-text"><span class="header-section-number">1.3.4</span> …search for text</a></li>
+  <li><a href="#view-the-samples-table" id="toc-view-the-samples-table" class="nav-link" data-scroll-target="#view-the-samples-table"><span class="header-section-number">1.3.5</span> …view the Samples table</a></li>
+  <li><a href="#click-a-sample-point" id="toc-click-a-sample-point" class="nav-link" data-scroll-target="#click-a-sample-point"><span class="header-section-number">1.3.6</span> …click a sample point</a></li>
+  </ul></li>
+  <li><a href="#try-it-yourself" id="toc-try-it-yourself" class="nav-link" data-scroll-target="#try-it-yourself"><span class="header-section-number">1.4</span> Try it yourself</a></li>
+  <li><a href="#where-to-go-deeper" id="toc-where-to-go-deeper" class="nav-link" data-scroll-target="#where-to-go-deeper"><span class="header-section-number">1.5</span> Where to go deeper</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_QUERIES.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="how-the-interactive-explorer-queries-data-plain-english-walkthrough" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> How the Interactive Explorer queries data (plain-English walkthrough)</h1>
+<p><em>Written for Eric (#268: “where’s the SQL and what parquet files are getting queried”). This is a guided tour, not the full reference — for the exhaustive file-by-file schema catalog see <code>SERIALIZATIONS.md</code>, and for how those files get built from the raw export see <code>DATA_PROVENANCE.md</code>.</em></p>
+<section id="the-one-sentence-version" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="the-one-sentence-version"><span class="header-section-number">1.1</span> The one-sentence version</h2>
+<p>There is no server and no database. The Explorer is a static webpage (<code>explorer.qmd</code>, compiled to <code>explorer.html</code>) that runs a real SQL engine <strong>inside your browser tab</strong> (DuckDB-WASM) and points it at plain <code>.parquet</code> files sitting on a public URL. Every “query” is your browser fetching just the byte-ranges of a file it needs and running SQL against them locally — no request ever goes to an iSamples server.</p>
+</section>
+<section id="where-the-files-live" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="where-the-files-live"><span class="header-section-number">1.2</span> Where the files live</h2>
+<p>Every file is served from <code>https://data.isamples.org/&lt;filename&gt;.parquet</code> — that’s a Cloudflare Worker in front of a storage bucket, not a database server. You can open any of these URLs directly, or point DuckDB at them (see “Try it yourself” below). The Explorer picks the current filenames in one place, <code>explorer.qmd</code> around <strong>line 800-864</strong>, e.g.:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>lite_url    <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_samples_map_lite_v2.parquet`</span>   <span class="co">// map points + table</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>wide_url    <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_wide.parquet`</span>                  <span class="co">// full sample detail</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>facets_url  <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_sample_facets_v3.parquet`</span>      <span class="co">// material/context/object_type + search text</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>h3_res4_url <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_h3_summary_res4.parquet`</span>       <span class="co">// pre-counted globe dots (world zoom)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Plain-English role</th>
+<th>Roughly how big</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>..._wide.parquet</code></td>
+<td>Full detail for every sample (one row each) — everything else is derived from this</td>
+<td>~280 MB</td>
+</tr>
+<tr class="even">
+<td><code>..._samples_map_lite_v2.parquet</code></td>
+<td>Slim version with just what the map/table need: coords, label, place, date</td>
+<td>~50-60 MB</td>
+</tr>
+<tr class="odd">
+<td><code>..._sample_facets_v3.parquet</code></td>
+<td>One row per sample: material/context(sampled feature)/object_type as plain URIs, plus a search-text blob</td>
+<td>~60 MB</td>
+</tr>
+<tr class="even">
+<td><code>..._h3_summary_res{4,6,8}.parquet</code></td>
+<td>Pre-counted dots for the globe at 3 zoom tiers (continent / region / neighborhood), so zooming out never counts 6M rows live</td>
+<td>tiny–few MB</td>
+</tr>
+<tr class="odd">
+<td><code>..._facet_summaries.parquet</code>, <code>..._facet_cross_filter.parquet</code>, <code>..._facet_tree_*.parquet</code></td>
+<td>Pre-computed facet-checkbox counts at various levels of “how many filters are active” — the whole point of these is to avoid a live COUNT over millions of rows</td>
+<td>KB–tens of MB</td>
+</tr>
+<tr class="even">
+<td><code>..._sample_facet_masks.parquet</code>, <code>..._sample_facet_index.parquet</code></td>
+<td>Bitmask tricks so 2+ facet filters at once are still fast (see <code>SERIALIZATIONS.md</code> §4.12 if you want the gory detail)</td>
+<td>~10 MB each</td>
+</tr>
+<tr class="odd">
+<td><code>vocab_labels_*.parquet</code></td>
+<td>URI → human-readable label lookup (e.g.&nbsp;<code>.../material/1.0/rock</code> → “Rock”)</td>
+<td>~60 KB</td>
+</tr>
+</tbody>
+</table>
+<p><em>Full list with exact schemas: <code>SERIALIZATIONS.md</code>. This table is the subset that matters for “what happens when I click around the Explorer.”</em></p>
+</section>
+<section id="what-happens-when-you" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="what-happens-when-you"><span class="header-section-number">1.3</span> What happens when you…</h2>
+<section id="load-the-page" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" data-anchor-id="load-the-page"><span class="header-section-number">1.3.1</span> …load the page</h3>
+<p>The globe draws immediately from <code>h3_res4_url</code> — one query, pre-aggregated, instant:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> h3_cell, sample_count, center_lat, center_lng, dominant_source</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'h3_summary_res4.parquet'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(<code>explorer.qmd</code> — the <code>phase1</code> cell, ~line 2209.)</em> This is why the globe never feels like it’s “loading 6 million points” — it’s loading ~38,000 pre-counted hexagon summaries instead.</p>
+</section>
+<section id="zoom-in" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" data-anchor-id="zoom-in"><span class="header-section-number">1.3.2</span> …zoom in</h3>
+<p>As you zoom past a threshold, the Explorer swaps to res6, then res8 H3 tiles (same idea, finer hexagons), and eventually to individual points from <code>samples_map_lite_v2.parquet</code> once there are few enough in view to draw directly.</p>
+</section>
+<section id="click-a-facet-checkbox-material-sampled-feature-object-type-source" class="level3" data-number="1.3.3">
+<h3 data-number="1.3.3" data-anchor-id="click-a-facet-checkbox-material-sampled-feature-object-type-source"><span class="header-section-number">1.3.3</span> …click a facet checkbox (Material / Sampled Feature / Object Type / Source)</h3>
+<p>Two things happen. First, the map/table re-query with an added <code>WHERE</code> clause built from your selection (<code>facetFilterSQL()</code> in <code>explorer.qmd</code>). Second, the OTHER facets’ counts need to update (“if I also filtered by SESAR, how many rocks would there be”) — that’s the expensive part, and it’s answered by pre-computed cross-filter tables (<code>facet_cross_filter</code>, <code>facet_tree_cross_filter</code>) rather than a live scan, <em>unless</em> you have 2+ filters active at world zoom, in which case a bitmask index (<code>sample_facet_masks</code> + <code>facet_node_bits</code>) does a fast columnar AND/OR instead of scanning the full membership table. This part has had the most engineering attention (issues #290/#293/#304/#305/#306) because it’s the slowest possible query shape — “count matches under an arbitrary combination of filters” doesn’t pre-aggregate cleanly.</p>
+</section>
+<section id="search-for-text" class="level3" data-number="1.3.4">
+<h3 data-number="1.3.4" data-anchor-id="search-for-text"><span class="header-section-number">1.3.4</span> …search for text</h3>
+<p>Search runs <code>ILIKE</code>-style matching against <code>sample_facets_v3.parquet</code>’s description column (which has vocabulary-concept labels appended at build time, so a search for “pottery” also matches samples only tagged with a pottery <em>concept</em>, not just the word):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, place_name <span class="kw">FROM</span> read_parquet(<span class="st">'sample_facets_v3.parquet'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(<code>buildSearchFilter()</code>, <code>explorer.qmd</code> ~line 5370-5415.)</em> Matching pids are staged into a table (<code>search_pids</code>) that every other query — map, table, facet counts — then filters against, so search composes with facets instead of being a separate mode.</p>
+</section>
+<section id="view-the-samples-table" class="level3" data-number="1.3.5">
+<h3 data-number="1.3.5" data-anchor-id="view-the-samples-table"><span class="header-section-number">1.3.5</span> …view the Samples table</h3>
+<p>The table pages through <code>samples_map_lite_v2.parquet</code> (coords/label/place/ date) and, as of #311, joins in <code>sample_facets_v3.parquet</code> for material/object type/sampled feature — one query per page (default page size), not the whole result set:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> page <span class="kw">AS</span> (</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, latitude, longitude, place_name, result_time</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> read_parquet(<span class="st">'samples_map_lite_v2.parquet'</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> <span class="op">&lt;</span>your active filters<span class="op">&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ORDER</span> <span class="kw">BY</span> pid <span class="kw">LIMIT</span> <span class="dv">50</span> OFFSET <span class="dv">0</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> page.<span class="op">*</span>, f.material, f.<span class="kw">context</span>, f.object_type</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> page <span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'sample_facets_v3.parquet'</span>) <span class="kw">AS</span> f <span class="kw">ON</span> f.pid <span class="op">=</span> page.pid</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>(<code>loadPage()</code>, <code>explorer.qmd</code> ~line 2755-2775.)</em> “Download CSV” (#312) runs the same shape without the <code>LIMIT</code>/<code>OFFSET</code> (capped at 50,000 rows so an unfiltered world-zoom export can’t hang the tab).</p>
+</section>
+<section id="click-a-sample-point" class="level3" data-number="1.3.6">
+<h3 data-number="1.3.6" data-anchor-id="click-a-sample-point"><span class="header-section-number">1.3.6</span> …click a sample point</h3>
+<p>One <code>wide.parquet</code> self-join to pull the full detail row plus its material/ object-type concept labels (<code>explorer.qmd</code> ~line 2114-2135):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> s.description, s.thumbnail_url, mat_lbl.pref_label <span class="kw">AS</span> material_label, obj_lbl.pref_label <span class="kw">AS</span> object_type_label</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'wide.parquet'</span>) s</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'wide.parquet'</span>) mat <span class="kw">ON</span> mat.row_id <span class="op">=</span> s.p__has_material_category[<span class="dv">1</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'vocab_labels.parquet'</span>) mat_lbl <span class="kw">ON</span> mat_lbl.uri <span class="op">=</span> mat.pid</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> s.pid <span class="op">=</span> <span class="st">'&lt;clicked pid&gt;'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the one query that reads from <code>wide.parquet</code> on click (everything above deliberately avoids touching the 280 MB wide file until you actually need full detail on one sample).</p>
+</section>
+</section>
+<section id="try-it-yourself" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="try-it-yourself"><span class="header-section-number">1.4</span> Try it yourself</h2>
+<p>You don’t need the browser — any of this works from the DuckDB CLI or <code>isamples-python</code>, against the exact same public URLs the Explorer uses:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- how many samples per source, right now, live off the public URL</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> n <span class="kw">AS</span> <span class="kw">source</span>, <span class="fu">COUNT</span>(<span class="op">*</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_wide.parquet'</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> otype <span class="op">=</span> <span class="st">'MaterialSampleRecord'</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">GROUP</span> <span class="kw">BY</span> n <span class="kw">ORDER</span> <span class="kw">BY</span> <span class="dv">2</span> <span class="kw">DESC</span>;</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- same "pottery" search the Explorer runs</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_sample_facets_v3.parquet'</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">LIMIT</span> <span class="dv">20</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>DuckDB only fetches the byte ranges it needs (via HTTP range requests), so this is fast even though the files are hundreds of MB — you’re not downloading the whole thing to run a filtered query.</p>
+</section>
+<section id="where-to-go-deeper" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="where-to-go-deeper"><span class="header-section-number">1.5</span> Where to go deeper</h2>
+<ul>
+<li><strong><code>SERIALIZATIONS.md</code></strong> — every file, full schema, exact row/byte counts, the URL convention (versioned vs <code>/current/</code> alias).</li>
+<li><strong><code>DATA_PROVENANCE.md</code></strong> — how <code>wide.parquet</code> itself gets built from the frozen Zenodo export, and the sidecar-enrichment pattern Eric’s OpenContext PQG feeds into.</li>
+<li><strong><code>query-spec.qmd</code></strong> — the dimension-to-file binding table (source/material/bbox/h3/time/text → which file answers each).</li>
+<li><strong><code>scripts/build_frontend_derived.py</code></strong> — the actual SQL that produces every file in the table above, if you want the ground truth rather than my paraphrase of it.</li>
+</ul>
+<hr>
+<p><em>Written 2026-07 in response to #268. If something above doesn’t match what you’re actually seeing when you click around, that’s a bug in this doc (or a real bug) — file it.</em></p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/EXPLORER_QUERIES.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
