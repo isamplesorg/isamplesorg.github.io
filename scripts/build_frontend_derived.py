@@ -7,14 +7,17 @@ checksums, argv, git SHA, DuckDB + extension versions) so a build is
 machine-identifiable and re-verifiable.
 
 INPUT CONTRACT (enforced/handled):
-  A wide PQG parquet with entity rows incl. MaterialSampleRecord +
-  IdentifiedConcept. The `geometry` column may be **WKB BLOB** or DuckDB
-  **GEOMETRY** — both are handled (detected at runtime). Concept references
-  live in `p__has_{material,context,sample_object}_category` row-id arrays.
+  A wide PQG parquet with entity rows incl. MaterialSampleRecord,
+  IdentifiedConcept, SamplingEvent, and SamplingSite. The `geometry` column
+  may be **WKB BLOB** or DuckDB **GEOMETRY** — both are handled (detected at
+  runtime). Concept references live in
+  `p__has_{material,context,sample_object}_category` row-id arrays.
+  `p__produced_by[1]` (Sample->SamplingEvent) and SamplingEvent's
+  `p__sampling_site[1]` (->SamplingSite) resolve place_name/result_time (#311).
 
 OUTPUTS (into --outdir, prefixed --tag):
-  - {tag}_sample_facets_v2.parquet   pid, source, material, context, object_type, label, description (search-only; includes appended concept labels), place_name(VARCHAR)
-  - {tag}_samples_map_lite.parquet   pid, label, source, latitude, longitude, place_name(VARCHAR[]), result_time, h3_res4(UBIGINT), h3_res6(UBIGINT), h3_res8(UBIGINT), h3_res8_hex
+  - {tag}_sample_facets_v2.parquet   pid, source, material, context, object_type, label, description (search-only; includes appended concept labels), place_name(VARCHAR) [resolved via SamplingEvent/SamplingSite traversal, #311]
+  - {tag}_samples_map_lite.parquet   pid, label, source, latitude, longitude, place_name(VARCHAR[]) [SamplingSite, #311], result_time [SamplingEvent, #311], h3_res4(UBIGINT), h3_res6(UBIGINT), h3_res8(UBIGINT), h3_res8_hex
   - {tag}_h3_summary_res{4,6,8}.parquet  h3_cell(UBIGINT), sample_count(INT), center_lat, center_lng, dominant_source, source_count(INT), resolution(INT)
   - {tag}_facet_summaries.parquet    facet_type, facet_value, scheme, count
   - {tag}_facet_cross_filter.parquet filter_source/material/context/object_type, facet_type, facet_value, count
@@ -176,6 +179,23 @@ def build_base_tables(con, wide, t0):
       WHERE ic.label IS NOT NULL AND TRIM(ic.label) != ''
       GROUP BY r.pid;
 
+    -- #311: place_name and result_time are declared on MaterialSampleRecord's
+    -- own schema, but empirically (production wide, 2026-07) they are 100%
+    -- NULL there for BOTH fields — s.place_name/s.result_time is a dead read.
+    -- The real values live one (result_time) or two (place_name) hops away in
+    -- the standard iSamples graph: Sample -produced_by-> SamplingEvent
+    -- [-sampling_site-> SamplingSite]. Verified against production data:
+    -- SamplingEvent.result_time is ~95% populated over the located universe;
+    -- SamplingSite.place_name (via SamplingEvent.p__sampling_site) ~37%.
+    -- `ev`/`site` mirror the existing `mat`/`ctx`/`obj` row_id-join pattern.
+    CREATE OR REPLACE TEMP TABLE ev AS
+      SELECT row_id, result_time, p__sampling_site[1] AS site_row_id
+      FROM read_parquet('{wide}') WHERE otype='SamplingEvent';
+
+    CREATE OR REPLACE TEMP TABLE site AS
+      SELECT row_id, place_name
+      FROM read_parquet('{wide}') WHERE otype='SamplingSite';
+
     -- one row per MaterialSampleRecord; all concept resolution via JOINs (decorrelated).
     CREATE OR REPLACE TEMP TABLE samp AS
       SELECT
@@ -183,8 +203,11 @@ def build_base_tables(con, wide, t0):
         s.n                              AS source,
         s.label,
         s.description,
-        s.place_name,                    -- VARCHAR[]
-        s.result_time,
+        -- COALESCE keeps this backward-compatible with any future wide build
+        -- that DOES populate these directly on the sample row; today the
+        -- traversal is the only source that's ever non-NULL (#311).
+        COALESCE(s.place_name, site.place_name)  AS place_name,    -- VARCHAR[]
+        COALESCE(s.result_time, ev.result_time)  AS result_time,
         ROUND(ST_Y({geom}), 6)           AS latitude,
         ROUND(ST_X({geom}), 6)           AS longitude,
         mat.material                     AS material,
@@ -196,6 +219,8 @@ def build_base_tables(con, wide, t0):
       LEFT JOIN ic AS ctx ON ctx.row_id = s.p__has_context_category[1]
       LEFT JOIN ic AS obj ON obj.row_id = s.p__has_sample_object_type[1]
       LEFT JOIN concept_labels cl ON cl.pid = s.pid
+      LEFT JOIN ev ON ev.row_id = s.p__produced_by[1]
+      LEFT JOIN site ON site.row_id = ev.site_row_id
       WHERE s.otype='MaterialSampleRecord';
 
     CREATE OR REPLACE TEMP TABLE samp_geo AS

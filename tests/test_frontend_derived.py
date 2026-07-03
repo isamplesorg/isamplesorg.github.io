@@ -63,12 +63,20 @@ def build_fixture_wide(path, geom_mode):
     geom = (lambda lng, lat: f"ST_AsWKB(ST_Point({lng},{lat}))") if geom_mode == "blob" \
         else (lambda lng, lat: f"ST_Point({lng},{lat})")
 
+    # p__produced_by / p__sampling_site (#311): NULL for every row here — this
+    # fixture never links to a SamplingEvent/SamplingSite, so the new
+    # traversal joins in build_frontend_derived.py are no-ops and every
+    # existing assertion in this file (place_name/result_time as set
+    # directly on the MSR row below) is unaffected. See
+    # test_place_name_and_result_time_via_graph_traversal for the
+    # traversal-populated case.
     ic_rows = " UNION ALL ".join(
         f"SELECT 'IdentifiedConcept' AS otype, '{uri}' AS pid, {rid}::BIGINT AS row_id, NULL::VARCHAR AS n, "
         f"NULL::VARCHAR AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, "
         f"NULL::TIMESTAMP AS result_time, NULL AS geometry, "
         f"NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
-        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site"
         for rid, uri in CONCEPTS)
 
     msr = []
@@ -79,13 +87,15 @@ def build_fixture_wide(path, geom_mode):
             f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}','x''q']::VARCHAR[] AS place_name, "
             f"NULL::TIMESTAMP AS result_time, {geom(lng, lat)} AS geometry, "
             f"{_arr(marr)} AS p__has_material_category, [10]::BIGINT[] AS p__has_context_category, "
-            f"[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+            f"[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+            f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site")
     # one NULL-geometry sample -> must be EXCLUDED from located outputs
     msr.append(
         "SELECT 'MaterialSampleRecord' AS otype, 'm-nogeo' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
         "'l' AS label, 'd' AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
         "NULL AS geometry, [4]::BIGINT[] AS p__has_material_category, [10]::BIGINT[] AS p__has_context_category, "
-        "[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+        "[20]::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site")
 
     con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) "
                 f"TO '{path}' (FORMAT PARQUET)")
@@ -141,6 +151,105 @@ def test_place_name_serialized_and_quotes(tmp_path):
     pn = con.sql(f"SELECT place_name FROM read_parquet('{tmp_path / 't_sample_facets_v2.parquet'}') "
                  f"WHERE pid='m-real-first'").fetchone()[0]
     assert isinstance(pn, str) and "plc-m-real-first" in pn  # VARCHAR, not array, embedded quote survived
+
+
+# ---------------------------------------------------------------------------
+# #311 — place_name/result_time are declared on MaterialSampleRecord but are
+# 100% NULL there in production; the real values live on SamplingEvent
+# (result_time) and SamplingSite (place_name), reached via
+# Sample -produced_by-> SamplingEvent [-sampling_site-> SamplingSite].
+# Verified against production wide.parquet 2026-07 before writing this fix:
+# SamplingEvent.result_time ~95% populated over the located universe;
+# SamplingSite.place_name (via SamplingEvent.p__sampling_site) ~37%.
+# ---------------------------------------------------------------------------
+
+def build_traversal_fixture(path, geom_mode="blob"):
+    """A wide parquet with 3 MaterialSampleRecords exercising every
+    traversal case: full chain (event + site), event with no site, and no
+    produced_by link at all (nothing to traverse -> stays NULL)."""
+    con = duckdb.connect()
+    con.execute("INSTALL spatial; LOAD spatial;")
+    geom = (lambda lng, lat: f"ST_AsWKB(ST_Point({lng},{lat}))") if geom_mode == "blob" \
+        else (lambda lng, lat: f"ST_Point({lng},{lat})")
+
+    # otype, pid, row_id, n, label, description, place_name, result_time,
+    # geometry, p__has_material_category, p__has_context_category,
+    # p__has_sample_object_type, p__keywords, p__produced_by, p__sampling_site
+    rows = [
+        # t-full: MSR has NULL place_name/result_time directly; produced_by=[100]
+        # -> SamplingEvent row_id=100 (result_time set, sampling_site=[200])
+        # -> SamplingSite row_id=200 (place_name set). Both must resolve.
+        "SELECT 'MaterialSampleRecord' AS otype, 't-full' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
+        "'label' AS label, 'desc' AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
+        f"{geom(10.0, 40.0)} AS geometry, NULL::BIGINT[] AS p__has_material_category, "
+        "NULL::BIGINT[] AS p__has_context_category, NULL::BIGINT[] AS p__has_sample_object_type, "
+        "NULL::BIGINT[] AS p__keywords, [100]::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        "SELECT 'SamplingEvent' AS otype, 'ev-100' AS pid, 100::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        "NULL::VARCHAR AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, "
+        "TIMESTAMP '2020-06-15 00:00:00' AS result_time, NULL AS geometry, "
+        "NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        "NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, [200]::BIGINT[] AS p__sampling_site",
+
+        "SELECT 'SamplingSite' AS otype, 'site-200' AS pid, 200::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        "NULL::VARCHAR AS label, NULL::VARCHAR AS description, ['Full Chain Site']::VARCHAR[] AS place_name, "
+        "NULL::TIMESTAMP AS result_time, NULL AS geometry, "
+        "NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        "NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        # t-event-only: produced_by=[101] -> SamplingEvent with result_time but
+        # NO sampling_site -> result_time resolves, place_name stays NULL.
+        "SELECT 'MaterialSampleRecord' AS otype, 't-event-only' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
+        "'label' AS label, 'desc' AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
+        f"{geom(11.0, 41.0)} AS geometry, NULL::BIGINT[] AS p__has_material_category, "
+        "NULL::BIGINT[] AS p__has_context_category, NULL::BIGINT[] AS p__has_sample_object_type, "
+        "NULL::BIGINT[] AS p__keywords, [101]::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        "SELECT 'SamplingEvent' AS otype, 'ev-101' AS pid, 101::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        "NULL::VARCHAR AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, "
+        "TIMESTAMP '2021-03-01 00:00:00' AS result_time, NULL AS geometry, "
+        "NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        "NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        # t-no-event: no produced_by link at all -> both stay NULL (no crash).
+        "SELECT 'MaterialSampleRecord' AS otype, 't-no-event' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
+        "'label' AS label, 'desc' AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
+        f"{geom(12.0, 42.0)} AS geometry, NULL::BIGINT[] AS p__has_material_category, "
+        "NULL::BIGINT[] AS p__has_context_category, NULL::BIGINT[] AS p__has_sample_object_type, "
+        "NULL::BIGINT[] AS p__keywords, NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+    ]
+    con.execute(f"COPY ({' UNION ALL '.join(rows)}) TO '{path}' (FORMAT PARQUET)")
+    con.close()
+
+
+def test_place_name_and_result_time_via_graph_traversal(tmp_path):
+    wide = str(tmp_path / "wide.parquet")
+    build_traversal_fixture(wide)
+    r = run_builder(wide, str(tmp_path), "t")
+    assert r.returncode == 0, f"builder failed:\n{r.stdout}\n{r.stderr}"
+
+    con = duckdb.connect()
+    ml = f"read_parquet('{tmp_path / 't_samples_map_lite.parquet'}')"
+    rows = {r[0]: (r[1], r[2]) for r in
+            con.sql(f"SELECT pid, place_name, result_time FROM {ml}").fetchall()}
+
+    place, result_time = rows["t-full"]
+    assert place is not None and "Full Chain Site" in list(place), \
+        f"t-full place_name should resolve via SamplingEvent->SamplingSite, got {place!r}"
+    assert result_time is not None and "2020-06-15" in str(result_time), \
+        f"t-full result_time should resolve via SamplingEvent, got {result_time!r}"
+
+    place, result_time = rows["t-event-only"]
+    assert result_time is not None and "2021-03-01" in str(result_time), \
+        f"t-event-only result_time should resolve via SamplingEvent, got {result_time!r}"
+    assert not place, f"t-event-only has no sampling_site; place_name should stay NULL, got {place!r}"
+
+    place, result_time = rows["t-no-event"]
+    assert not place and not result_time, \
+        f"t-no-event has no produced_by link; both should stay NULL, got place={place!r} result_time={result_time!r}"
 
 
 def test_cli_rejects_unknown_only(tmp_path):
@@ -342,7 +451,8 @@ def build_tree_fixture(wide, vocab):
         f"SELECT 'IdentifiedConcept' AS otype, '{uri}' AS pid, {rid}::BIGINT AS row_id, NULL::VARCHAR AS n, "
         f"'lbl' AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
         f"NULL AS geometry, NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
-        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site"
         for rid, uri in TREE_CONCEPTS)
     msr = []
     for i, (pid, src, m, c, o) in enumerate(TREE_SAMPLES):
@@ -351,7 +461,8 @@ def build_tree_fixture(wide, vocab):
             f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}']::VARCHAR[] AS place_name, "
             f"NULL::TIMESTAMP AS result_time, ST_AsWKB(ST_Point({10.0+i},{40.0+i})) AS geometry, "
             f"{_arr(m)} AS p__has_material_category, {_arr(c)} AS p__has_context_category, "
-            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+            f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site")
     con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) TO '{wide}' (FORMAT PARQUET)")
     edges = " UNION ALL ".join(
         f"SELECT '{u}' uri, {('NULL' if p is None else repr(p))}::VARCHAR broader, 'data_v1' uri_form"
@@ -559,7 +670,8 @@ def build_index_fixture(wide, vocab):
         f"SELECT 'IdentifiedConcept' AS otype, '{uri}' AS pid, {rid}::BIGINT AS row_id, NULL::VARCHAR AS n, "
         f"'lbl' AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, NULL::TIMESTAMP AS result_time, "
         f"NULL AS geometry, NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
-        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords"
+        f"NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site"
         for rid, uri in TREE_CONCEPTS)
     msr = []
     for i, (pid, src, m, c, o) in enumerate(INDEX_SAMPLES):
@@ -568,7 +680,8 @@ def build_index_fixture(wide, vocab):
             f"'label {pid}' AS label, 'desc {pid}' AS description, ['plc-{pid}']::VARCHAR[] AS place_name, "
             f"NULL::TIMESTAMP AS result_time, ST_AsWKB(ST_Point({10.0+i},{40.0+i})) AS geometry, "
             f"{_arr(m)} AS p__has_material_category, {_arr(c)} AS p__has_context_category, "
-            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords")
+            f"{_arr(o)} AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+            f"NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site")
     con.execute(f"COPY ({ic_rows} UNION ALL {' UNION ALL '.join(msr)}) TO '{wide}' (FORMAT PARQUET)")
     edges = " UNION ALL ".join(
         f"SELECT '{u}' uri, {('NULL' if p is None else repr(p))}::VARCHAR broader, 'data_v1' uri_form"
