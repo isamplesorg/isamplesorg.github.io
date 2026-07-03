@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     escapeHtml, searchTerms, parseNum, csvParamValues, sourceUrl, readHash,
-    facetCountsDisplayState,
+    facetCountsDisplayState, formatPlaceName,
 } from '../../assets/js/explorer-utils.js';
 
 test('escapeHtml escapes the five HTML-significant chars; nullish -> ""', () => {
@@ -15,6 +15,29 @@ test('escapeHtml escapes the five HTML-significant chars; nullish -> ""', () => 
     assert.equal(escapeHtml(null), '');
     assert.equal(escapeHtml(undefined), '');
     assert.equal(escapeHtml(0), '0');
+});
+
+test('formatPlaceName: array -> joined string; null/empty -> ""', () => {
+    assert.equal(formatPlaceName(['Country', 'Region', 'Site']), 'Country › Region › Site');
+    assert.equal(formatPlaceName(['Only']), 'Only');
+    assert.equal(formatPlaceName([]), '');
+    assert.equal(formatPlaceName(null), '');
+    assert.equal(formatPlaceName(undefined), '');
+    assert.equal(formatPlaceName(['A', null, 'B']), 'A › B');  // filter(Boolean) drops null entries
+});
+
+test('formatPlaceName: works on a non-Array iterable (Arrow Vector shape) — #311', () => {
+    // Reproduces the actual bug: DuckDB-WASM/Arrow LIST columns come back as
+    // an iterable, .length-bearing object that is NOT a plain JS Array —
+    // Array.isArray() on this returns false, which is exactly what silently
+    // blanked every Place cell once place_name started carrying real data.
+    class FakeArrowVector {
+        constructor(items) { this._items = items; this.length = items.length; }
+        [Symbol.iterator]() { return this._items[Symbol.iterator](); }
+    }
+    const vector = new FakeArrowVector(['Axial Seamount summit caldera']);
+    assert.equal(Array.isArray(vector), false, 'sanity: the fake vector must NOT be a plain Array');
+    assert.equal(formatPlaceName(vector), 'Axial Seamount summit caldera');
 });
 
 test('searchTerms splits on whitespace, drops empties', () => {

@@ -806,7 +806,16 @@ h3_res8_url = `${R2_BASE}/isamples_202608_h3_summary_res8.parquet`
 // immutable/1-yr) — every visitor fetches fresh data, no cache purge. The next
 // generation builds res4/res6 into the canonical name natively (build change),
 // so this _v2 suffix is a one-off retrofit for 202608.
-lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v2.parquet`
+//
+// #311: _v3 rebuilds place_name/result_time via the SamplingEvent/
+// SamplingSite graph traversal (the fix in build_frontend_derived.py) — _v2's
+// place_name/result_time were 100% NULL, a dead read off MaterialSampleRecord
+// directly (see build_frontend_derived.py's `samp` CTE for the traversal).
+// Rebuilt from the SAME wide.parquet as _v2 (row-count and per-source
+// min/max-pid verified identical against the live wide before rebuilding),
+// so this is a pure column-content fix, not a data-vintage change. Same
+// immutable-cache reasoning as _v2: new filename, never overwrite.
+lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`
 // Explicit versioned wide (#272: OC concept-enriched — popups read material/
 // object-type from this file). The stable alias `current/wide.parquet` still
 // points at the previous wide until the production cutover flips the manifest;
@@ -902,6 +911,7 @@ parseNum = _explorerUtils.parseNum
 csvParamValues = _explorerUtils.csvParamValues
 sourceUrl = _explorerUtils.sourceUrl
 readHash = _explorerUtils.readHash
+formatPlaceName = _explorerUtils.formatPlaceName
 
 // === Source Filter: get active sources and build SQL clause ===
 function getActiveSources() {
@@ -1617,10 +1627,7 @@ function updateSampleCard(sample) {
     if (!el) return;
     const color = SOURCE_COLORS[sample.source] || '#666';
     const name = SOURCE_NAMES[sample.source] || sample.source;
-    const placeParts = sample.place_name;
-    const placeStr = Array.isArray(placeParts) && placeParts.length > 0
-        ? placeParts.filter(Boolean).join(' › ')
-        : '';
+    const placeStr = formatPlaceName(sample.place_name);
     const srcUrl = sourceUrl(sample.pid);
     el.innerHTML = `<h4>Sample</h4>
         <div class="cluster-card" style="border-left-color: ${color}">
@@ -1633,8 +1640,8 @@ function updateSampleCard(sample) {
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
                 ${sample.lat.toFixed(5)}, ${sample.lng.toFixed(5)}
             </div>
-            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${placeStr}</div>` : ''}
-            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${sample.result_time}</div>` : ''}
+            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${escapeHtml(placeStr)}</div>` : ''}
+            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${escapeHtml(sample.result_time)}</div>` : ''}
             ${srcUrl ? `<div style="margin-top: 4px;"><a class="detail-link" href="${srcUrl}" target="_blank" rel="noopener noreferrer">View at ${name} →</a></div>` : ''}
             <div id="sampleDetail" class="detail-loading">Loading full details...</div>
         </div>`;
@@ -1802,17 +1809,14 @@ function updateSamples(samples) {
     for (const s of samples) {
         const color = SOURCE_COLORS[s.source] || '#666';
         const name = SOURCE_NAMES[s.source] || s.source;
-        const placeParts = s.place_name;
-        const desc = Array.isArray(placeParts) && placeParts.length > 0
-            ? placeParts.filter(Boolean).join(' › ')
-            : '';
+        const desc = formatPlaceName(s.place_name);
         const sUrl = sourceUrl(s.pid);
         h += `<div class="sample-row">
             <div style="display: flex; align-items: center; gap: 6px;">
                 ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
                 <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
             </div>
-            ${desc ? `<div class="sample-desc">${desc}</div>` : ''}
+            ${desc ? `<div class="sample-desc">${escapeHtml(desc)}</div>` : ''}
         </div>`;
     }
     el.innerHTML = h;
@@ -2633,10 +2637,7 @@ tableView = {
             tableEl.innerHTML = '<div class="table-scroll"><table class="samples-table"><tbody><tr><td>No samples match the current filters.</td></tr></tbody></table></div>';
         } else if (pageRows.length > 0) {
             const body = pageRows.map(r => {
-                const placeParts = r.place_name;
-                const place = Array.isArray(placeParts) && placeParts.length > 0
-                    ? placeParts.filter(Boolean).join(' › ')
-                    : '';
+                const place = formatPlaceName(r.place_name);
                 const lat = r.latitude != null ? Number(r.latitude).toFixed(5) : '';
                 const lng = r.longitude != null ? Number(r.longitude).toFixed(5) : '';
                 const label = r.label || r.pid || '';
@@ -3016,9 +3017,7 @@ tableView = {
     }
 
     function csvRow(r) {
-        const placeParts = r.place_name;
-        const place = Array.isArray(placeParts) && placeParts.length > 0
-            ? placeParts.filter(Boolean).join(' › ') : '';
+        const place = formatPlaceName(r.place_name);
         const labelFor = (uri) => uri
             ? ((typeof window !== 'undefined' && window.conceptLabelForUri) ? window.conceptLabelForUri(uri) : uri)
             : '';
