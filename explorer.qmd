@@ -1640,8 +1640,8 @@ function updateSampleCard(sample) {
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
                 ${sample.lat.toFixed(5)}, ${sample.lng.toFixed(5)}
             </div>
-            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${placeStr}</div>` : ''}
-            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${sample.result_time}</div>` : ''}
+            ${placeStr ? `<div style="font-size: 12px; color: #555; margin-bottom: 4px;">${escapeHtml(placeStr)}</div>` : ''}
+            ${sample.result_time ? `<div style="font-size: 11px; color: #888;">Date: ${escapeHtml(sample.result_time)}</div>` : ''}
             ${srcUrl ? `<div style="margin-top: 4px;"><a class="detail-link" href="${srcUrl}" target="_blank" rel="noopener noreferrer">View at ${name} →</a></div>` : ''}
             <div id="sampleDetail" class="detail-loading">Loading full details...</div>
         </div>`;
@@ -1816,7 +1816,7 @@ function updateSamples(samples) {
                 ${sUrl ? `<a class="sample-label" href="${sUrl}" target="_blank" rel="noopener noreferrer" style="color: #1565c0; text-decoration: none;">${s.label || s.pid}</a>` : `<span class="sample-label">${s.label || s.pid}</span>`}
                 <span class="source-badge" style="background: ${color}; font-size: 10px;">${name}</span>
             </div>
-            ${desc ? `<div class="sample-desc">${desc}</div>` : ''}
+            ${desc ? `<div class="sample-desc">${escapeHtml(desc)}</div>` : ''}
         </div>`;
     }
     el.innerHTML = h;
