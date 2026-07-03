@@ -17,6 +17,23 @@ export function searchTerms(value) {
     return String(value || '').trim().split(/\s+/).filter(Boolean);
 }
 
+// Format a place_name VARCHAR[] column value (from DuckDB-WASM) into a
+// display string, e.g. ['Country', 'Region', 'Site'] -> 'Country › Region ›
+// Site'. #311 (Codex-adjacent catch, discovered once place_name started
+// carrying real data): Observable's DuckDBClient returns Arrow LIST columns
+// as an Arrow `Vector` (iterable, has .length), NOT a plain JS Array —
+// `Array.isArray(vector)` is FALSE, so the four call sites in explorer.qmd
+// that used to check `Array.isArray(placeParts)` silently rendered every
+// non-null place as blank. This was invisible until now because place_name
+// was 100% NULL in production before the #311 pipeline fix landed. Array.from
+// works on both a plain Array and an Arrow Vector (both are iterable); the
+// null/undefined guard is required because Array.from(null) throws.
+export function formatPlaceName(placeParts) {
+    if (placeParts == null) return '';
+    const arr = Array.from(placeParts);
+    return arr.length > 0 ? arr.filter(Boolean).join(' › ') : '';
+}
+
 // Parse a numeric URL param with a default and optional clamping.
 export function parseNum(val, def, min, max) {
     if (val == null) return def;
