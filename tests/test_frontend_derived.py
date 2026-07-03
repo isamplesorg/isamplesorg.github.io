@@ -220,6 +220,31 @@ def build_traversal_fixture(path, geom_mode="blob"):
         f"{geom(12.0, 42.0)} AS geometry, NULL::BIGINT[] AS p__has_material_category, "
         "NULL::BIGINT[] AS p__has_context_category, NULL::BIGINT[] AS p__has_sample_object_type, "
         "NULL::BIGINT[] AS p__keywords, NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        # t-empty-direct (Codex review catch): MSR carries an EMPTY array/string
+        # directly (not NULL) for place_name/result_time — a naive COALESCE
+        # would let the empty value win (COALESCE([]::VARCHAR[], [...]) = [],
+        # not [...], since [] is non-NULL). The CASE form must still fall
+        # through to the traversal here, same as the NULL case.
+        "SELECT 'MaterialSampleRecord' AS otype, 't-empty-direct' AS pid, NULL::BIGINT AS row_id, 'TEST' AS n, "
+        "'label' AS label, 'desc' AS description, []::VARCHAR[] AS place_name, ''::VARCHAR AS result_time, "
+        f"{geom(13.0, 43.0)} AS geometry, NULL::BIGINT[] AS p__has_material_category, "
+        "NULL::BIGINT[] AS p__has_context_category, NULL::BIGINT[] AS p__has_sample_object_type, "
+        "NULL::BIGINT[] AS p__keywords, [102]::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
+
+        "SELECT 'SamplingEvent' AS otype, 'ev-102' AS pid, 102::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        "NULL::VARCHAR AS label, NULL::VARCHAR AS description, NULL::VARCHAR[] AS place_name, "
+        "TIMESTAMP '2022-11-20 00:00:00' AS result_time, NULL AS geometry, "
+        "NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        "NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, [201]::BIGINT[] AS p__sampling_site",
+
+        "SELECT 'SamplingSite' AS otype, 'site-201' AS pid, 201::BIGINT AS row_id, NULL::VARCHAR AS n, "
+        "NULL::VARCHAR AS label, NULL::VARCHAR AS description, ['Empty-Direct Fallthrough Site']::VARCHAR[] AS place_name, "
+        "NULL::TIMESTAMP AS result_time, NULL AS geometry, "
+        "NULL::BIGINT[] AS p__has_material_category, NULL::BIGINT[] AS p__has_context_category, "
+        "NULL::BIGINT[] AS p__has_sample_object_type, NULL::BIGINT[] AS p__keywords, "
+        "NULL::BIGINT[] AS p__produced_by, NULL::BIGINT[] AS p__sampling_site",
     ]
     con.execute(f"COPY ({' UNION ALL '.join(rows)}) TO '{path}' (FORMAT PARQUET)")
     con.close()
@@ -246,6 +271,14 @@ def test_place_name_and_result_time_via_graph_traversal(tmp_path):
     assert result_time is not None and "2021-03-01" in str(result_time), \
         f"t-event-only result_time should resolve via SamplingEvent, got {result_time!r}"
     assert not place, f"t-event-only has no sampling_site; place_name should stay NULL, got {place!r}"
+
+    # Codex review catch: an EMPTY (not NULL) direct value must still fall
+    # through to the traversal — COALESCE would have let '' / [] win here.
+    place, result_time = rows["t-empty-direct"]
+    assert place is not None and "Empty-Direct Fallthrough Site" in list(place), \
+        f"t-empty-direct's EMPTY place_name array must fall through to the traversal, got {place!r}"
+    assert result_time is not None and "2022-11-20" in str(result_time), \
+        f"t-empty-direct's EMPTY '' result_time must fall through to the traversal, got {result_time!r}"
 
     place, result_time = rows["t-no-event"]
     assert not place and not result_time, \

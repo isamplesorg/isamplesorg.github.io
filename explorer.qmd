@@ -3000,8 +3000,19 @@ tableView = {
     const CSV_HEADERS = ['pid', 'source', 'label', 'place', 'date', 'material', 'object_type', 'sampled_feature', 'latitude', 'longitude'];
 
     function csvField(v) {
-        const s = v == null ? '' : String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        let s = v == null ? '' : String(v);
+        // Formula-injection hardening: a label/place_name is public data we
+        // don't control, and this file is expected to land in Excel/Sheets.
+        // A cell starting with =, +, -, or @ is interpreted as a formula
+        // there — prefix with a single quote (a no-op in spreadsheet apps,
+        // rendered as plain text) so no downstream formula ever executes.
+        // Skipped for actual JS numbers (latitude/longitude): a negative
+        // coordinate like -122.27 stringifies to "-122.27", which would
+        // otherwise be misidentified as a formula and corrupted.
+        if (typeof v !== 'number' && /^[=+\-@]/.test(s)) s = `'${s}`;
+        // \r included (not just \n) — a bare carriage return in a field
+        // still breaks row structure for RFC 4180 parsers (Codex review).
+        return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     }
 
     function csvRow(r) {

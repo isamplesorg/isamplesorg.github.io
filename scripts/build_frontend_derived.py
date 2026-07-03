@@ -187,7 +187,13 @@ def build_base_tables(con, wide, t0):
     -- [-sampling_site-> SamplingSite]. Verified against production data:
     -- SamplingEvent.result_time is ~95% populated over the located universe;
     -- SamplingSite.place_name (via SamplingEvent.p__sampling_site) ~37%.
-    -- `ev`/`site` mirror the existing `mat`/`ctx`/`obj` row_id-join pattern.
+    -- `ev`/`site` mirror the existing `mat`/`ctx`/`obj` row_id-join pattern,
+    -- including its same [1]-pick limitation: a sample with MULTIPLE
+    -- produced_by events would only ever consult the first. Verified against
+    -- production (202608 wide): 0 of 6.68M located samples have more than one
+    -- p__produced_by entry today, so this matches reality now; if that ever
+    -- stops being true, revisit alongside context/object_type's [1]-pick
+    -- (same tradeoff, tracked in the pipeline epic).
     CREATE OR REPLACE TEMP TABLE ev AS
       SELECT row_id, result_time, p__sampling_site[1] AS site_row_id
       FROM read_parquet('{wide}') WHERE otype='SamplingEvent';
@@ -203,11 +209,20 @@ def build_base_tables(con, wide, t0):
         s.n                              AS source,
         s.label,
         s.description,
-        -- COALESCE keeps this backward-compatible with any future wide build
-        -- that DOES populate these directly on the sample row; today the
-        -- traversal is the only source that's ever non-NULL (#311).
-        COALESCE(s.place_name, site.place_name)  AS place_name,    -- VARCHAR[]
-        COALESCE(s.result_time, ev.result_time)  AS result_time,
+        -- CASE (not COALESCE) so an EMPTY s.place_name array doesn't win over a
+        -- populated site.place_name — COALESCE(([]::VARCHAR[]), [...]) returns
+        -- [], not [...], because [] is non-NULL (Codex review catch). Keeps the
+        -- same backward-compat intent: a future wide build that populates
+        -- place_name/result_time directly on the sample row still wins over
+        -- the traversal, for both NULL and empty-array/empty-string forms.
+        CASE WHEN s.place_name IS NOT NULL AND len(s.place_name) > 0
+             THEN s.place_name ELSE site.place_name END  AS place_name,   -- VARCHAR[]
+        -- CAST to VARCHAR before TRIM: s.result_time's declared type varies
+        -- (VARCHAR in production wide; the test fixtures below use TIMESTAMP
+        -- literals) and TRIM only accepts VARCHAR — cast explicitly so this
+        -- works regardless of which type this particular wide build carries.
+        CASE WHEN s.result_time IS NOT NULL AND TRIM(CAST(s.result_time AS VARCHAR)) != ''
+             THEN s.result_time ELSE ev.result_time END  AS result_time,
         ROUND(ST_Y({geom}), 6)           AS latitude,
         ROUND(ST_X({geom}), 6)           AS longitude,
         mat.material                     AS material,
