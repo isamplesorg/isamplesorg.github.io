@@ -5,6 +5,16 @@ project:
     - assets/js/source-palette.js
     - assets/js/sql-builders.js
     - assets/js/explorer-utils.js
+    # #295: quarto.js unconditionally fetches /listings.json on every page
+    # whose frontmatter declares `categories:` (explorer.qmd and others do,
+    # for the tag chips under the title). Quarto only ever GENERATES that
+    # file for sites with an actual `listing:` page — this project has none,
+    # so the fetch 404s on every load (harmless — the JS no-ops on non-200 —
+    # but it's a real, reported console error, see #295/#297). Shipping a
+    # static empty-array listings.json is exactly what Quarto itself would
+    # emit for a site with zero listings: same shape, zero behavior change,
+    # just a 200 instead of a 404.
+    - listings.json
 
 website:
   title: "iSamples"

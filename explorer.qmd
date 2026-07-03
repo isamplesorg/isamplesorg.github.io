@@ -473,11 +473,31 @@ format:
     @media (prefers-reduced-motion: reduce) {
         .table-loading-spinner { animation: none; border-top-color: #1565c0; }
     }
+    .samples-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin: 18px 0 8px;
+    }
     .samples-section-heading {
         font-size: 15px;
         font-weight: 600;
         color: #234;
-        margin: 18px 0 8px;
+        margin: 0;
+    }
+    .table-download-btn {
+        background: #1565c0;
+        color: white;
+        border: 0;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .table-download-btn:disabled {
+        background: #c7d2df;
+        cursor: default;
     }
     .samples-table tbody tr {
         cursor: pointer;
@@ -721,7 +741,10 @@ Loading H3 global overview...
 </div>
 </div>
 
+<div class="samples-section-header">
 <h3 class="samples-section-heading">Samples table</h3>
+<button id="tableDownloadCsv" type="button" class="table-download-btn">Download CSV</button>
+</div>
 <div id="tableContainer" aria-busy="false">
 <div id="tableMeta" class="table-meta">Loading samples matching the current filters...</div>
 <div id="samplesTable"></div>
@@ -2537,6 +2560,7 @@ tableView = {
     const pageInfoEl = document.getElementById('tablePageInfo');
     const tableEl = document.getElementById('samplesTable');
     const containerEl = document.getElementById('tableContainer');
+    const downloadBtn = document.getElementById('tableDownloadCsv');
 
     function totalPagesFor(total) {
         return Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
@@ -2629,18 +2653,30 @@ tableView = {
                 const labelHtml = `<span class="table-link" role="button" tabindex="0" aria-label="Open details for ${safeLabel}">${safeLabel}</span>`;
                 const pidAttr = escapeHtml(r.pid || '');
                 const selectedClass = (r.pid && r.pid === selectedPid) ? ' class="selected"' : '';
+                // #311: material/context/object_type are URIs (from facets_url,
+                // joined in loadPage()); resolve to human labels the same way
+                // the facet tree and search results already do. context is
+                // Andrea's "Sampled feature" (matches #291's facet-tree naming:
+                // context -> Sampled Feature, object_type -> Specimen Type).
+                const uriLabel = (uri) => uri
+                    ? escapeHtml((typeof window !== 'undefined' && window.conceptLabelForUri)
+                        ? window.conceptLabelForUri(uri) : uri)
+                    : '';
                 return `<tr data-pid="${pidAttr}"${selectedClass}>
                     <td>${tableSourceBadge(r.source)}</td>
                     <td>${labelHtml}</td>
                     <td>${escapeHtml(place)}</td>
                     <td>${escapeHtml(r.result_time || '')}</td>
+                    <td>${uriLabel(r.material)}</td>
+                    <td>${uriLabel(r.object_type)}</td>
+                    <td>${uriLabel(r.context)}</td>
                     <td>${escapeHtml(lat)}</td>
                     <td>${escapeHtml(lng)}</td>
                 </tr>`;
             }).join('');
             tableEl.innerHTML = `<div class="table-scroll">
                 <table class="samples-table">
-                    <thead><tr><th>Source</th><th>Label</th><th>Place</th><th>Date</th><th>Lat</th><th>Lon</th></tr></thead>
+                    <thead><tr><th>Source</th><th>Label</th><th>Place</th><th>Date</th><th>Material</th><th>Object type</th><th>Sampled feature</th><th>Lat</th><th>Lon</th></tr></thead>
                     <tbody>${body}</tbody>
                 </table>
             </div>`;
@@ -2823,16 +2859,26 @@ tableView = {
             // that contains nulls is only deterministic by accident on a
             // read-only parquet snapshot. Filter them defensively so the
             // page contract holds even if a future parquet rev allows nulls.
+            // #311: material/context/object_type come from facets_url (scalar
+            // URI columns keyed by pid), joined AFTER paging (CTE) so the join
+            // only ever touches TABLE_PAGE_SIZE rows, not a full facets scan.
+            // Labels are resolved client-side via window.conceptLabelForUri()
+            // in renderTable() rather than joining vocab_labels here too.
             const data = await db.query(`
-                SELECT pid, label, source, latitude, longitude, place_name, result_time
-                FROM read_parquet('${lite_url}')
-                WHERE pid IS NOT NULL
-                  ${sourceFilterSQL('source')}
-                  ${facetFilterSQL()}
-                  ${bboxSQL}
-                  ${searchFilterSQL('pid')}
-                ORDER BY pid
-                LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
+                WITH page AS (
+                    SELECT pid, label, source, latitude, longitude, place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    WHERE pid IS NOT NULL
+                      ${sourceFilterSQL('source')}
+                      ${facetFilterSQL()}
+                      ${bboxSQL}
+                      ${searchFilterSQL('pid')}
+                    ORDER BY pid
+                    LIMIT ${TABLE_PAGE_SIZE} OFFSET ${offset}
+                )
+                SELECT page.*, f.material, f.context, f.object_type
+                FROM page
+                LEFT JOIN read_parquet('${facets_url}') AS f ON f.pid = page.pid
             `);
             if (genAtStart !== pageGen) return true;
             const arr = Array.from(data);
@@ -2943,6 +2989,109 @@ tableView = {
             setMeta('Page query failed; adjust filters and try again.', true);
         }
     }
+
+    // #312: "Download CSV" exports the CURRENT FILTERED result set (viewport
+    // + source/facet/search filters), not just the visible page. Capped at
+    // CSV_ROW_CAP rows so a broad/unfiltered export at world zoom can't hang
+    // the tab on a multi-million-row pull; the meta line says so honestly
+    // (same "honesty" convention as the rest of this table) rather than
+    // silently truncating.
+    const CSV_ROW_CAP = 50000;
+    const CSV_HEADERS = ['pid', 'source', 'label', 'place', 'date', 'material', 'object_type', 'sampled_feature', 'latitude', 'longitude'];
+
+    function csvField(v) {
+        let s = v == null ? '' : String(v);
+        // Formula-injection hardening: a label/place_name is public data we
+        // don't control, and this file is expected to land in Excel/Sheets.
+        // A cell starting with =, +, -, or @ is interpreted as a formula
+        // there — prefix with a single quote (a no-op in spreadsheet apps,
+        // rendered as plain text) so no downstream formula ever executes.
+        // Skipped for actual JS numbers (latitude/longitude): a negative
+        // coordinate like -122.27 stringifies to "-122.27", which would
+        // otherwise be misidentified as a formula and corrupted.
+        if (typeof v !== 'number' && /^[=+\-@]/.test(s)) s = `'${s}`;
+        // \r included (not just \n) — a bare carriage return in a field
+        // still breaks row structure for RFC 4180 parsers (Codex review).
+        return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+
+    function csvRow(r) {
+        const placeParts = r.place_name;
+        const place = Array.isArray(placeParts) && placeParts.length > 0
+            ? placeParts.filter(Boolean).join(' › ') : '';
+        const labelFor = (uri) => uri
+            ? ((typeof window !== 'undefined' && window.conceptLabelForUri) ? window.conceptLabelForUri(uri) : uri)
+            : '';
+        return [r.pid, r.source, r.label, place, r.result_time,
+                 labelFor(r.material), labelFor(r.object_type), labelFor(r.context),
+                 r.latitude, r.longitude].map(csvField).join(',');
+    }
+
+    let downloadInFlight = false;
+
+    async function downloadCsv() {
+        if (downloadInFlight || !downloadBtn) return;
+        const bboxSQL = viewerBboxSQL('latitude', 'longitude', VIEWPORT_PAD_FACTOR);
+        if (bboxSQL === null) {
+            setMeta('No globe area in view; pan or zoom the globe before downloading.', true);
+            return;
+        }
+        downloadInFlight = true;
+        downloadBtn.disabled = true;
+        const prevLabel = downloadBtn.textContent;
+        downloadBtn.textContent = 'Preparing…';
+        try {
+            const where = `
+                WHERE pid IS NOT NULL
+                  ${sourceFilterSQL('source')}
+                  ${facetFilterSQL()}
+                  ${bboxSQL}
+                  ${searchFilterSQL('pid')}
+            `;
+            const countData = await db.query(`SELECT COUNT(*) AS n FROM read_parquet('${lite_url}') ${where}`);
+            const total = Number(Array.from(countData)[0]?.n ?? 0);
+            if (total === 0) {
+                setMeta('No samples match the current filters — nothing to download.', true);
+                return;
+            }
+            const capped = total > CSV_ROW_CAP;
+            const rowsData = await db.query(`
+                WITH page AS (
+                    SELECT pid, label, source, latitude, longitude, place_name, result_time
+                    FROM read_parquet('${lite_url}')
+                    ${where}
+                    ORDER BY pid
+                    LIMIT ${CSV_ROW_CAP}
+                )
+                SELECT page.*, f.material, f.context, f.object_type
+                FROM page
+                LEFT JOIN read_parquet('${facets_url}') AS f ON f.pid = page.pid
+            `);
+            const rows = Array.from(rowsData);
+            const csv = [CSV_HEADERS.join(','), ...rows.map(csvRow)].join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `isamples-explorer-samples-${rows.length}${capped ? `-of-${total}` : ''}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            setMeta(capped
+                ? `Downloaded first ${rows.length.toLocaleString()} of ${total.toLocaleString()} matching samples as CSV — narrow your filters for a complete export.`
+                : `Downloaded ${rows.length.toLocaleString()} samples as CSV.`);
+        } catch (err) {
+            console.error('CSV download failed:', err);
+            setMeta('CSV download failed; adjust filters and try again.', true);
+        } finally {
+            downloadInFlight = false;
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = prevLabel;
+        }
+    }
+
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadCsv);
 
     if (prevBtn) prevBtn.addEventListener('click', () => {
         if (currentPage <= 0) return;
