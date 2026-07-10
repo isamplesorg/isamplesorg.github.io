@@ -1,6 +1,82 @@
 # Session Summary
 
-## Session: 2026-06-18 (evening) — #300 filtered clusters at world zoom
+## Session: 2026-07-03 — Eric/Andrea Explorer fixes shipped to prod; #311 place/date; John K showcase
+**Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
+**Trust Level**: high-risk (used R2 credentials via 1Password service-account token → uploaded to production `isamples-ry` bucket; merged 2 PRs to production isamples.org; posted public GitHub comments; browser automation against live sites)
+
+---
+
+### What Happened
+
+Worked the open issues from Eric Kansa, Andrea Thomer, and John Kunze. Shipped several to production; one prototype awaiting John.
+
+**Merged to production isamples.org (verified live, fresh browser context):**
+- **PR #318** — Eric #295 (listings.json 404 → ship static empty-array `listings.json`), Andrea #311 (samples-table Material/Object type/Sampled feature columns + the pipeline fix for blank Place/Date), Andrea #312 (Download CSV button, 50k cap). Two Codex rounds (empty-array COALESCE, CSV `\r`+formula-injection); final LGTM.
+- **PR #319** — deployed the #311 place/date fix to real data: rebuilt `samples_map_lite` from the live wide (verified byte-identical first), uploaded as **`isamples_202608_samples_map_lite_v3.parquet`** (NEW filename — never overwrite the immutable-cached `_v2`), pointed `lite_url` at it. Surfaced + fixed a latent `Array.isArray()` bug (see gotchas). Codex LGTM.
+
+**Also written (docs) / posted:**
+- `EXPLORER_QUERIES.md` (Eric #268 — plain-English explainer of which parquet files the Explorer queries).
+- `ISSUE_313_GUIDANCE_2026-07-03.md` (Andrea #313 — bandwidth/browser guidance draft, NOT yet posted to the issue).
+- Verified #278 (John K's original PID ask): search-by-PID half already shipped; charismatic-samples half is #142.
+
+**John Kunze showcase thread (#142) — prototype only, NOT merged:**
+- Front-page "charismatic samples": 2 of 4 (diamond, fish) are real specimens at their source repos but NOT in the iSamples aggregation; coral + askoi ARE in.
+- **I twice wrongly called John's photos "stock/illustrative." They are real photos of real specimens** he/Saebs/Eric each personally sourced. Corrected on-thread ([#142 comment](https://github.com/isamplesorg/isamplesorg.github.io/issues/142#issuecomment-4878706706)).
+- **PR #321** (branch `fix/142-showcase-honest-links`): keeps ALL John's images/links untouched, adds one line deep-linking the 2 in-collection samples into the Explorer (`/explorer.html#pid=<pid>&v=1`, both verified working live). Assigned to jkunze.
+- **#320** filed: ingest the 2 missing specimens (SESAR diamond, Smithsonian fish) — separate data gap.
+
+**Dropped:** PR-specific preview deploys (rossjrw/pr-preview-action). Codex + GitHub docs confirmed it can't work for this repo's fork-only PRs without either `pull_request_target` (security anti-pattern) or the "Send write tokens to fork PRs" repo setting (too broad). Branch deleted. Raymond said forget it.
+
+---
+
+### Safe to Carry Forward
+
+**Gotchas / patterns (load-bearing):**
+- **Arrow Vector ≠ Array**: DuckDB-WASM / Observable `DuckDBClient` returns `VARCHAR[]` columns as an Arrow `Vector` (iterable, has `.length`, but `Array.isArray()` is FALSE). Use `Array.from()` with a null-guard. This silently blanked `place_name` for years until #311 gave it real data. Helper: `formatPlaceName()` in `assets/js/explorer-utils.js` (unit-tested).
+- **R2 immutable-cache rule**: `data.isamples.org/*.parquet` is served `Cache-Control: immutable, max-age=31536000`. NEVER overwrite a filename — always a new suffix (`_v3`, etc.). Overwriting leaves broken cached copies at CDN edges + browsers for up to a year.
+- **10-min JS cache = false-positive stale errors**: `assets/js/*.js` on GitHub Pages has `Cache-Control: max-age=600`. Repeated same-session Playwright testing kept showing phantom `formatPlaceName is not a function` errors — pure browser cache staleness. **Always verify deploys with a FRESH isolated context** (`browser.newContext()` via `browser_run_code_unsafe`), never a reused tab.
+- **Deploy cadence**: fork (`rdhyee`) preview via `gh workflow run "Render using Quarto and push to GH-pages" --ref <branch>` → verify `rdhyee.github.io/isamplesorg.github.io/...` → Codex review → PR to upstream `main` → merge (`--merge`, matches #317/#318 convention) → prod deploy fires on push to main (~5 min, includes Playwright smoke gate) → verify isamples.org.
+- **R2 upload**: `op://Private/Cloudflare R2 Admin Token - All Buckets` (via `op run --env-file`), bucket `isamples-ry`. Script refuses to overwrite an existing key (immutable-cache safety). `cloudflare-r2` skill has the boto3 pattern.
+- **#311 pipeline fix**: `place_name`/`result_time` are 100% NULL on MaterialSampleRecord directly; real values come via `Sample -produced_by-> SamplingEvent [-sampling_site-> SamplingSite]` traversal (in `build_frontend_derived.py`'s `samp` CTE). Deploying it requires a `samples_map_lite` rebuild + R2 upload (done: `_v3`).
+
+**Files changed / created (all committed):**
+- `explorer.qmd` (table columns, CSV export, `formatPlaceName`), `assets/js/explorer-utils.js` (+`formatPlaceName`), `scripts/build_frontend_derived.py` (traversal), `tests/test_frontend_derived.py` + `tests/unit/explorer-utils.test.mjs` (new tests), `_quarto.yml` + `listings.json`, `EXPLORER_QUERIES.md`, `ISSUE_313_GUIDANCE_2026-07-03.md`, `index.qmd` (#321 branch).
+
+**Data artifacts:**
+- Live R2: `isamples_202608_samples_map_lite_v3.parquet` (place/date fix, in prod). Local build: `/tmp/rebuild_311/` (ephemeral).
+
+---
+
+## External Content Processed
+
+| Source | Type | Notes |
+|--------|------|-------|
+| GitHub issues/PRs #142/#278/#295/#311/#312/#313/#268 + comments | GitHub (Eric Kansa, Andrea Thomer, John Kunze) | Trusted collaborators; John corrected my "stock photos" error |
+| Slack #technical thread | Slack | Andrea's positive feedback on the shipped fixes |
+| Codex reviews (local `codex exec`) | AI reviewer | 3 review rounds across the PRs |
+| n2t.net / doi.org PID resolution checks | web (curl HEAD) | Verifying showcase PIDs resolve |
+
+No untrusted/anonymous web content fetched.
+
+---
+
+## Open Threads
+
+- [ ] **John Kunze** to weigh in on PR #321 / #142 (deep-link the 2 in-collection showcase samples vs. leave all as source links). Assigned to him. Do NOT merge over his call.
+- [ ] **#320** — ingest the 2 missing showcase specimens (SESAR diamond `IGSN:DIA0000YL`, Smithsonian fish) into the aggregation. Blocked on a fresher export (April-2025 export is frozen).
+- [ ] **Andrea #313** — `ISSUE_313_GUIDANCE_2026-07-03.md` drafted but NOT posted to the issue; awaiting Raymond's OK to post.
+- [ ] **Zenodo grant closeout** (from earlier session, still open): awaiting Raymond's creator-list/ORCID answer before building the deposition. Grant ends 2026-07-31.
+- [ ] `index_alt.qmd` not synced with #321's change (deliberate — pending approval).
+
+---
+
+## Next Session Entry Point
+
+> Start here: check if John Kunze replied on PR #321 / #142. If he wants the deep-link direction, merge #321 (it's already verified live-working) + sync `index_alt.qmd`. Separately, Zenodo creator-list is still the one blocking ask for the grant-closeout deposition (deadline 7/31).
+
+---
+
+## PREVIOUS Session: 2026-06-18 (evening) — #300 filtered clusters at world zoom
 **Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
 **Trust Level**: medium (local Playwright + DuckDB; downloaded 3 R2 artifacts read-only; no prod writes, no secrets)
 
