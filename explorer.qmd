@@ -540,6 +540,26 @@ format:
         white-space: nowrap;
     }
     .samples-table tr:last-child td { border-bottom: 0; }
+    /* #323: PID column — pids are long (ark:/28722/…); keep the column
+       compact with ellipsis, full pid available on hover (title attr) and
+       always complete in the CSV export. */
+    .samples-table td.pid-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        color: #555;
+    }
+    /* #323: Source URL column — dedicated external link (see activateRow's
+       anchor guard: clicking it must not also select/fly the row). */
+    .samples-table a.row-source-link {
+        color: #1565c0;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+    .samples-table a.row-source-link:hover { text-decoration: underline; }
     .table-badge {
         color: white;
         padding: 2px 7px;
@@ -2654,6 +2674,18 @@ tableView = {
                 const labelHtml = `<span class="table-link" role="button" tabindex="0" aria-label="Open details for ${safeLabel}">${safeLabel}</span>`;
                 const pidAttr = escapeHtml(r.pid || '');
                 const selectedClass = (r.pid && r.pid === selectedPid) ? ' class="selected"' : '';
+                // #323: PID column (Andrea) — pids are long (ark:/28722/…), so
+                // the cell ellipsizes via CSS with the full pid in title/hover.
+                // Source URL column: an explicit external link to the sample's
+                // landing page at its source repository. This does NOT reopen
+                // #226 (which removed the *label* cell's href because click-
+                // anywhere = open card): here the external link is its own
+                // dedicated, honestly-labeled cell; activateRow ignores clicks
+                // that originate inside an <a> so the row doesn't also fly.
+                const rowSrcUrl = sourceUrl(r.pid);
+                const srcUrlHtml = rowSrcUrl
+                    ? `<a class="row-source-link" href="${escapeHtml(rowSrcUrl)}" target="_blank" rel="noopener noreferrer" title="Open this sample's record at its source repository">record ↗</a>`
+                    : '';
                 // #311: material/context/object_type are URIs (from facets_url,
                 // joined in loadPage()); resolve to human labels the same way
                 // the facet tree and search results already do. context is
@@ -2666,6 +2698,7 @@ tableView = {
                 return `<tr data-pid="${pidAttr}"${selectedClass}>
                     <td>${tableSourceBadge(r.source)}</td>
                     <td>${labelHtml}</td>
+                    <td class="pid-cell" title="${pidAttr}">${pidAttr}</td>
                     <td>${escapeHtml(place)}</td>
                     <td>${escapeHtml(r.result_time || '')}</td>
                     <td>${uriLabel(r.material)}</td>
@@ -2673,11 +2706,12 @@ tableView = {
                     <td>${uriLabel(r.context)}</td>
                     <td>${escapeHtml(lat)}</td>
                     <td>${escapeHtml(lng)}</td>
+                    <td>${srcUrlHtml}</td>
                 </tr>`;
             }).join('');
             tableEl.innerHTML = `<div class="table-scroll">
                 <table class="samples-table">
-                    <thead><tr><th>Source</th><th>Label</th><th>Place</th><th>Date</th><th>Material</th><th>Object type</th><th>Sampled feature</th><th>Lat</th><th>Lon</th></tr></thead>
+                    <thead><tr><th>Source</th><th>Label</th><th>PID</th><th>Place</th><th>Date</th><th>Material</th><th>Object type</th><th>Sampled feature</th><th>Lat</th><th>Lon</th><th>Source URL</th></tr></thead>
                     <tbody>${body}</tbody>
                 </table>
             </div>`;
@@ -2695,6 +2729,10 @@ tableView = {
                 // #226: there is no longer an <a href> in the row, so
                 // the activation is uniform across surfaces.
                 const activateRow = async (e) => {
+                    // #323: a click on the Source URL <a> (or any future in-row
+                    // anchor) means "open the external record", not "select this
+                    // row" — let the browser handle the link alone.
+                    if (e && e.target && e.target.closest && e.target.closest('a')) return;
                     const pid = tr.dataset.pid;
                     const sample = pid ? pageRowsByPid.get(pid) : null;
                     if (!sample || sample.latitude == null || sample.longitude == null) return;
@@ -2998,7 +3036,10 @@ tableView = {
     // (same "honesty" convention as the rest of this table) rather than
     // silently truncating.
     const CSV_ROW_CAP = 50000;
-    const CSV_HEADERS = ['pid', 'source', 'label', 'place', 'date', 'material', 'object_type', 'sampled_feature', 'latitude', 'longitude'];
+    // #323: source_url appended LAST so existing consumers of the #312 column
+    // order keep working; it's the same n2t.net resolver link the table's
+    // "Source URL" column shows.
+    const CSV_HEADERS = ['pid', 'source', 'label', 'place', 'date', 'material', 'object_type', 'sampled_feature', 'latitude', 'longitude', 'source_url'];
 
     function csvField(v) {
         let s = v == null ? '' : String(v);
@@ -3023,7 +3064,7 @@ tableView = {
             : '';
         return [r.pid, r.source, r.label, place, r.result_time,
                  labelFor(r.material), labelFor(r.object_type), labelFor(r.context),
-                 r.latitude, r.longitude].map(csvField).join(',');
+                 r.latitude, r.longitude, sourceUrl(r.pid) || ''].map(csvField).join(',');
     }
 
     let downloadInFlight = false;
