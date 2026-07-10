@@ -189,13 +189,23 @@ builds — the original text predates the discovery manifest.)*
   written to `hot/<key>_p{0..M-1}.parquet`, where `<key>` is the token's
   fnv1a32 hex (suffixed `-1`, `-2`… on the rare 32-bit collision) and M
   is sized so each sub-file fits the cap (verified after writing;
-  re-split at 2×M until compliant). Sub-file membership uses DuckDB's
-  `hash(pid) % M` internally — readers never compute it: **a reader
-  fetches ALL M sub-files for a hot token.**
+  re-split at 2×M until compliant). **These postings files are NOT
+  fetched at query time** (they exist for offline analysis and the #172
+  oracle) — by definition they exceed the cold-bytes budget, so the
+  query path never depends on them (Codex round-2 finding, 2026-07-10).
+- **Common-term query rule** (the reconciliation): hot tokens carry
+  almost no selectivity (the 202608 build's hot set sits on ~5M of 6.7M
+  samples each). A query mixing hot + non-hot terms DROPS the hot terms
+  from the AND (documented in UI copy, same register as the stopword
+  note). A query whose surviving terms are ALL hot ranks via
+  **`hot_topk.parquet`** — a build-time sidecar holding each hot
+  token's static single-token BM25 top-500 (field-weighted per §5;
+  single small file, cap-checked). Multi-hot AND intersects the top-K
+  lists (documented approximation).
 - **Discovery manifest `hot_tokens.json`** ships beside the shards:
-  `{cap_bytes, tokens: {token: {key, sub_files, postings}}}`. Reader
-  algorithm: token in manifest → fetch its `hot/` sub-files; otherwise →
-  fetch `shard_{fnv1a32(token) % N}.parquet`.
+  `{cap_bytes, query_policy, topk_k, tokens: {token: {key, sub_files,
+  postings}}}`. Reader algorithm: token in manifest → common-term rule
+  above; otherwise → fetch `shard_{fnv1a32(token) % N}.parquet`.
 - Near-hot skew guard: after writing each base shard, its heaviest
   tokens are promoted to `hot/` until the file fits the cap.
 - Number of top-level shards (`N`): **256** (64 proved too few — ~9 MB
@@ -216,6 +226,10 @@ this table.
 | filter-composed cold search                     | ≤ 3 s            |
 | bytes transferred cold                          | ≤ 5 MB           |
 | bytes transferred warm                          | ≤ 1 MB per query |
+
+Budgets hold for **every** query shape: selective queries fetch base
+shards (each ≤ cap); hot terms fetch nothing (dropped from AND) or the
+single `hot_topk.parquet` sidecar (≤ cap) — see §6 common-term rule.
 
 **"Warm" disambiguation** (resolves [#174](https://github.com/isamplesorg/isamplesorg.github.io/issues/174)):
 

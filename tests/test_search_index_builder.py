@@ -224,7 +224,8 @@ def test_hot_token_isolation_on_tiny_cap(tmp_path):
     assert res.returncode == 0, res.stderr
     root = tmp_path / "out" / "cap_test_search_index_v1"
 
-    manifest = json.loads((root / "hot_tokens.json").read_text())
+    manifest_full = json.loads((root / "hot_tokens.json").read_text())
+    manifest = manifest_full
     assert "pottery" in manifest["tokens"]
     key = manifest["tokens"]["pottery"]["key"]
     assert key == f"{fnv1a32('pottery'):08x}"
@@ -240,6 +241,17 @@ def test_hot_token_isolation_on_tiny_cap(tmp_path):
         f"SELECT count(*) FROM read_parquet('{root}/shard_*.parquet') WHERE token='pottery'"
     ).fetchone()[0]
     assert base == 0
+    # hot_topk sidecar: the query-time path for hot tokens (contract §6
+    # common-term rule). Every hot token has ranked rows, rank 1 first,
+    # <= topk_k rows per token, higher tf ranks above lower (same field).
+    assert manifest_full["topk_k"] == 500
+    topk = duckdb.sql(
+        f"SELECT token, pid, tf, rank FROM read_parquet('{root}/hot_topk.parquet') "
+        "WHERE token='pottery' ORDER BY rank").fetchall()
+    assert [r[3] for r in topk] == list(range(1, len(topk) + 1))
+    assert len(topk) <= 500
+    # pid:x has tf=3, pid:y tf=1 (same field sample.label) -> pid:x ranks first
+    assert topk[0][1] == "pid:x" and topk[1][1] == "pid:y"
 
 
 def test_hot_key_collision_gets_distinct_files(tmp_path):

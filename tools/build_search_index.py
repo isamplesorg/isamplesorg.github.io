@@ -440,9 +440,74 @@ def main() -> int:
                 cap_violations.append(f"{shard_path.name}: {size/1e6:.1f} MB after promotions")
         shard_max_bytes = max(shard_max_bytes, size)
         shard_files += 1
+    # hot_topk.parquet — the all-hot-query path (Codex round-2 finding: a
+    # hot token's full postings exceed the cold-bytes budget BY DEFINITION,
+    # so readers must never need them). For each hot token, precompute its
+    # top-K postings by STATIC single-token BM25 (IDF and doc_len norm are
+    # both query-independent for a single token), field-weighted per §5.
+    # Query policy (contract §3 amendment): queries mixing hot + selective
+    # terms DROP the hot terms from AND matching (common-term rule); pure-
+    # hot queries rank via this sidecar. K=500 keeps headroom for source/
+    # facet post-filtering while staying a single small file.
+    topk_path = out_root / "hot_topk.parquet"
+    if hot_manifest:
+        total_docs_for_idf = con.sql(
+            f"SELECT count(*) FROM read_parquet('{rows_glob}')").fetchone()[0]
+        hot_list_sql = ",".join(
+            "'" + t.replace("'", "''") + "'" for t in hot_manifest)
+        con.execute(f"""
+            COPY (
+                WITH hot_rows AS (
+                    SELECT r.token, r.pid, r.field, r.tf, r.doc_len,
+                           d.df,
+                           avg(r.doc_len) OVER (PARTITION BY r.token) AS avg_dl
+                    FROM read_parquet('{rows_glob}') r
+                    JOIN read_parquet('{out_root / "df.parquet"}') d USING (token)
+                    WHERE r.token IN ({hot_list_sql})
+                ), scored AS (
+                    SELECT token, pid, field, tf, doc_len,
+                        (CASE field
+                            WHEN 'sample.label' THEN 3.0
+                            WHEN 'concept.label' THEN 2.5
+                            WHEN 'sample.place_name' THEN 2.0
+                            ELSE 1.0 END)
+                        * ln((({total_docs_for_idf} - df + 0.5) / (df + 0.5)) + 1)
+                        * (tf * 2.2) / (tf + 1.2 * (0.25 + 0.75 * doc_len / avg_dl))
+                        AS static_score
+                    FROM hot_rows
+                ), ranked AS (
+                    SELECT *, row_number() OVER (
+                        PARTITION BY token ORDER BY static_score DESC, pid
+                    ) AS rank
+                    FROM scored
+                )
+                SELECT token, pid, field, tf, doc_len,
+                       round(static_score, 4) AS static_score, rank
+                FROM ranked WHERE rank <= 500
+                ORDER BY token, rank
+            ) TO '{topk_path}' (FORMAT PARQUET);
+        """)
+        topk_bytes = topk_path.stat().st_size
+        if topk_bytes > cap_bytes:
+            cap_violations.append(f"hot_topk.parquet: {topk_bytes/1e6:.1f} MB")
+    else:
+        topk_bytes = 0
     with open(out_root / "hot_tokens.json", "w") as f:
-        json.dump({"cap_bytes": cap_bytes, "sub_shard_hash": "fnv1a32(utf8(pid)) is NOT used; sub-file membership uses DuckDB hash(pid) — readers fetch ALL sub_files for a hot token, so the split function never needs client-side computation",
-                   "tokens": hot_manifest}, f, indent=1)
+        json.dump({
+            "cap_bytes": cap_bytes,
+            "query_policy": ("hot tokens are COMMON TERMS: drop from AND when the "
+                             "query has >=1 non-hot term (fetch nothing for them); "
+                             "all-hot queries rank via hot_topk.parquet (static "
+                             "single-token BM25 top-500 per token). Readers never "
+                             "fetch hot/<key>_p*.parquet postings at query time; "
+                             "those files exist for offline/#172-oracle use."),
+            "sub_shard_hash": ("sub-file membership uses DuckDB hash(pid) — a "
+                               "consumer that DOES read hot postings fetches ALL "
+                               "sub_files; the split function never needs "
+                               "client-side computation"),
+            "topk_k": 500,
+            "topk_bytes": topk_bytes,
+            "tokens": hot_manifest}, f, indent=1)
         f.write("\n")
     if cap_violations:
         print("WARNING: shard-cap violations (raise --shards or lower ratio):",
