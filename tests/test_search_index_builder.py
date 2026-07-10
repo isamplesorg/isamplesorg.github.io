@@ -1,0 +1,209 @@
+"""End-to-end fixture test for tools/build_search_index.py (#170 §4).
+
+Scope: URI dereferencing + document projection + shard structure — the
+things the tokenizer tests deliberately do NOT prove. Builds a tiny corpus
+(10 docs) with a fixture vocab_labels table, runs the real builder, and
+asserts against the produced substrate.
+"""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import duckdb
+import pytest
+
+REPO = Path(__file__).resolve().parent.parent
+BUILDER = REPO / "tools" / "build_search_index.py"
+sys.path.insert(0, str(REPO / "tools"))
+from build_search_index import fnv1a32  # noqa: E402
+
+SHARDS = 8  # small fixture -> few shards keeps file count readable
+
+# 10 docs. Materials: 2×Pottery, 1×Ceramic, 1×Bone, 1×unresolvable URI,
+# rest no material. (Issue spec: >=3 docs with resolvable URIs, >=1 without.)
+DOCS = [
+    # pid, label, description, material_uri, place_names
+    ("pid:001", "Red Pottery Bowl", None, "test://Pottery", ["Murlo, Italy"]),
+    ("pid:002", "Pottery sherd", "Iron-Age context", "test://Pottery", []),
+    ("pid:003", "Ceramic figurine", None, "test://Ceramic", ["Çatalhöyük"]),
+    ("pid:004", "Worked bone awl", "carved bone tool", "test://Bone", []),
+    ("pid:005", "Mystery lump", None, "test://weird/UnknownStuff", []),
+    ("pid:006", "Basalt core", "columnar basalt", None, ["Axial Seamount summit caldera"]),
+    ("pid:007", "Soil sample", None, None, []),
+    ("pid:008", "Water sample", "filtered seawater", None, ["North Pacific Ocean"]),
+    ("pid:009", "Coral fragment", None, None, []),
+    ("pid:010", "Obsidian flake", None, None, []),
+]
+VOCAB = [
+    ("test://Pottery", "Pottery", "en"),
+    ("test://Ceramic", "Ceramic", "en"),
+    ("test://Bone", "Bone", "en"),
+    # deliberately NO entry for test://weird/UnknownStuff
+]
+
+
+@pytest.fixture(scope="module")
+def built_index(tmp_path_factory):
+    tmp = tmp_path_factory.mktemp("fts_fixture")
+    con = duckdb.connect()
+
+    # Concept rows get row_ids 100+; samples reference them by row_id array.
+    uris = sorted({d[3] for d in DOCS if d[3]})
+    uri_rowid = {u: 100 + i for i, u in enumerate(uris)}
+    con.execute("""
+        CREATE TABLE wide (
+            row_id BIGINT, pid VARCHAR, otype VARCHAR, label VARCHAR,
+            description VARCHAR,
+            p__has_material_category BIGINT[],
+            p__has_context_category BIGINT[],
+            p__has_sample_object_type BIGINT[]
+        )""")
+    for i, (pid, label, desc, mat, _places) in enumerate(DOCS):
+        con.execute(
+            "INSERT INTO wide VALUES (?, ?, 'MaterialSampleRecord', ?, ?, ?, NULL, NULL)",
+            [i, pid, label, desc, [uri_rowid[mat]] if mat else None])
+    for uri, rid in uri_rowid.items():
+        con.execute(
+            "INSERT INTO wide VALUES (?, ?, 'IdentifiedConcept', NULL, NULL, NULL, NULL, NULL)",
+            [rid, uri])
+
+    con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
+    for pid, _l, _d, _m, places in DOCS:
+        con.execute("INSERT INTO lite VALUES (?, ?)", [pid, places or None])
+
+    con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
+    for row in VOCAB:
+        con.execute("INSERT INTO vocab VALUES (?, ?, ?)", list(row))
+
+    wide_p, lite_p, vocab_p = (str(tmp / f"{n}.parquet") for n in ("wide", "lite", "vocab"))
+    con.execute(f"COPY wide TO '{wide_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY lite TO '{lite_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY vocab TO '{vocab_p}' (FORMAT PARQUET)")
+
+    out = tmp / "out"
+    res = subprocess.run(
+        [sys.executable, str(BUILDER),
+         "--wide", wide_p, "--lite", lite_p, "--vocab", vocab_p,
+         "--outdir", str(out), "--tag", "test_202601", "--shards", str(SHARDS)],
+        capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    root = out / "test_202601_search_index_v1"
+    q = duckdb.connect()
+    rows = q.sql(f"SELECT * FROM read_parquet('{root}/shard_*.parquet')").df()
+    return root, rows
+
+
+def test_outputs_exist(built_index):
+    root, _ = built_index
+    assert (root / "df.parquet").exists()
+    assert (root / "build_stats.json").exists()
+    assert list(root.glob("shard_*.parquet"))
+
+
+def test_uri_dereferencing_end_to_end(built_index):
+    """THE core proof: searching 'pottery' finds exactly the pids whose
+    material URI is <test://Pottery> — via dereferenced concept labels."""
+    _, rows = built_index
+    hits = rows[(rows.token == "pottery") & (rows.field == "concept.label")]
+    assert sorted(hits.pid) == ["pid:001", "pid:002"]
+
+
+def test_uri_tail_fallback_and_counter(built_index):
+    root, rows = built_index
+    # test://weird/UnknownStuff has no prefLabel -> URI tail 'unknownstuff'.
+    hits = rows[(rows.token == "unknownstuff") & (rows.field == "concept.label")]
+    assert list(hits.pid) == ["pid:005"]
+    stats = json.loads((root / "build_stats.json").read_text())
+    assert stats["concept_label_missing_pref_label"] == 1
+    assert stats["concept_label_uri_resolution"]["material_missing_pref"] > 0
+
+
+def test_field_projection_and_doc_len(built_index):
+    _, rows = built_index
+    # pid:001 label 'Red Pottery Bowl' -> 3 tokens, tf('pottery')=1, doc_len=3
+    r = rows[(rows.pid == "pid:001") & (rows.field == "sample.label")]
+    assert sorted(r.token) == ["bowl", "pottery", "red"]
+    assert set(r.doc_len) == {3}
+    assert set(r.tf) == {1}
+    # place_name projection, diacritics folded
+    r = rows[(rows.pid == "pid:003") & (rows.field == "sample.place_name")]
+    assert list(r.token) == ["catalhoyuk"]
+    # description projection
+    r = rows[(rows.pid == "pid:002") & (rows.field == "sample.description")]
+    assert sorted(r.token) == ["age", "context", "iron"]
+
+
+def test_shard_assignment_matches_fnv1a(built_index):
+    root, rows = built_index
+    for token in ("pottery", "basalt", "catalhoyuk"):
+        expected_shard = fnv1a32(token) % SHARDS
+        for f in root.glob("shard_*.parquet"):
+            got = duckdb.sql(
+                f"SELECT count(*) FROM read_parquet('{f}') WHERE token = '{token}'"
+            ).fetchone()[0]
+            shard_no = int(f.stem.split("_")[1])
+            if shard_no == expected_shard:
+                assert got > 0, f"{token} missing from its home shard {f.name}"
+            else:
+                assert got == 0, f"{token} leaked into {f.name}"
+
+
+def test_df_sidecar(built_index):
+    root, rows = built_index
+    df = duckdb.sql(f"SELECT * FROM read_parquet('{root}/df.parquet')").df()
+    # 'pottery' appears in: pid:001 label, pid:002 label, pid:001+002
+    # concept.label -> 4 (pid, field) docs.
+    assert int(df[df.token == "pottery"].df.iloc[0]) == 4
+    # DF must equal the distinct (pid, field) count for every token.
+    joined = rows.groupby("token").size()
+    for token, n in joined.items():
+        assert int(df[df.token == token].df.iloc[0]) == n
+
+
+def test_build_stats_field_coverage(built_index):
+    root, _ = built_index
+    stats = json.loads((root / "build_stats.json").read_text())
+    assert stats["total_samples"] == 10
+    assert stats["fields"]["sample.label"]["samples_with_field"] == 10
+    assert stats["fields"]["sample.description"]["samples_with_field"] == 4
+    assert stats["fields"]["sample.place_name"]["samples_with_field"] == 4
+    assert stats["fields"]["concept.label"]["samples_with_field"] == 5
+    assert stats["shard_hash"] == "fnv1a32(utf8(token)) % shards"
+
+
+def test_sub_sharding_triggers_on_tiny_cap(tmp_path):
+    """Force the byte cap to ~0 so every non-empty shard sub-shards; assert
+    the mechanism produces shard_XXX_pY files and removes the base file."""
+    # Reuse the module fixture's inputs by rebuilding tiny parquets inline.
+    con = duckdb.connect()
+    con.execute("CREATE TABLE wide (row_id BIGINT, pid VARCHAR, otype VARCHAR,"
+                " label VARCHAR, description VARCHAR,"
+                " p__has_material_category BIGINT[],"
+                " p__has_context_category BIGINT[],"
+                " p__has_sample_object_type BIGINT[])")
+    con.execute("INSERT INTO wide VALUES (0, 'pid:x', 'MaterialSampleRecord',"
+                " 'pottery pottery pottery', NULL, NULL, NULL, NULL)")
+    con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
+    con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
+    wide_p, lite_p, vocab_p = (str(tmp_path / f"{n}.parquet") for n in ("w", "l", "v"))
+    con.execute(f"COPY wide TO '{wide_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY lite TO '{lite_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY vocab TO '{vocab_p}' (FORMAT PARQUET)")
+    res = subprocess.run(
+        [sys.executable, str(BUILDER), "--wide", wide_p, "--lite", lite_p,
+         "--vocab", vocab_p, "--outdir", str(tmp_path / "out"),
+         "--tag", "cap_test", "--shards", "2", "--sub-shards", "2",
+         "--shard-cap-mb", "0.000001"],
+        capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    root = tmp_path / "out" / "cap_test_search_index_v1"
+    home = fnv1a32("pottery") % 2
+    assert not (root / f"shard_{home:03d}.parquet").exists()
+    subs = list(root.glob(f"shard_{home:03d}_p*.parquet"))
+    assert len(subs) == 2
+    total = duckdb.sql(
+        f"SELECT count(*) FROM read_parquet('{root}/shard_{home:03d}_p*.parquet')"
+    ).fetchone()[0]
+    assert total == 1  # one (pottery, pid:x, sample.label) row survives intact
