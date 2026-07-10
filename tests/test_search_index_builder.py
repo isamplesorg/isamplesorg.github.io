@@ -242,6 +242,47 @@ def test_hot_token_isolation_on_tiny_cap(tmp_path):
     assert base == 0
 
 
+def test_hot_key_collision_gets_distinct_files(tmp_path):
+    """fnv1a32 is 32-bit: distinct tokens CAN collide (this pair was
+    produced by Codex review and verified: both hash to 0xa7c9bf62).
+    Colliding hot tokens must get DISTINCT manifest keys and files —
+    silent overwrite would merge two tokens' postings."""
+    a, b = "tywtopf1ri", "32jnqttihd"
+    assert fnv1a32(a) == fnv1a32(b)  # the premise
+    con = duckdb.connect()
+    con.execute("CREATE TABLE wide (row_id BIGINT, pid VARCHAR, otype VARCHAR,"
+                " label VARCHAR, description VARCHAR,"
+                " p__has_material_category BIGINT[],"
+                " p__has_context_category BIGINT[],"
+                " p__has_sample_object_type BIGINT[],"
+                " p__keywords BIGINT[])")
+    con.execute(f"INSERT INTO wide VALUES (0,'pid:a','MaterialSampleRecord','{a}',NULL,NULL,NULL,NULL,NULL)")
+    con.execute(f"INSERT INTO wide VALUES (1,'pid:b','MaterialSampleRecord','{b}',NULL,NULL,NULL,NULL,NULL)")
+    con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
+    con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
+    wide_p, lite_p, vocab_p = (str(tmp_path / f"{n}.parquet") for n in ("w", "l", "v"))
+    con.execute(f"COPY wide TO '{wide_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY lite TO '{lite_p}' (FORMAT PARQUET)")
+    con.execute(f"COPY vocab TO '{vocab_p}' (FORMAT PARQUET)")
+    res = subprocess.run(
+        [sys.executable, str(BUILDER), "--wide", wide_p, "--lite", lite_p,
+         "--vocab", vocab_p, "--outdir", str(tmp_path / "out"),
+         "--tag", "coll_test", "--shards", "2", "--shard-cap-mb", "0.000001"],
+        capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    root = tmp_path / "out" / "coll_test_search_index_v1"
+    manifest = json.loads((root / "hot_tokens.json").read_text())["tokens"]
+    assert a in manifest and b in manifest
+    assert manifest[a]["key"] != manifest[b]["key"]
+    # each token's rows are exactly its own pid — no cross-contamination
+    for tok, pid in ((a, "pid:a"), (b, "pid:b")):
+        key = manifest[tok]["key"]
+        rows = duckdb.sql(
+            f"SELECT DISTINCT token, pid FROM read_parquet('{root}/hot/{key}_p*.parquet')"
+        ).fetchall()
+        assert rows == [(tok, pid)], rows
+
+
 def test_no_hot_tokens_at_default_cap(built_index):
     """Fixture-scale corpus: nothing is hot at the 5 MB default; base shards
     carry everything and hot_tokens.json is an empty manifest."""

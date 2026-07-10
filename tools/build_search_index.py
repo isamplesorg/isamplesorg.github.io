@@ -22,10 +22,12 @@ cap is sub-sharded by FNV-1a(pid) % M into shard_XXX_pY.parquet — a
 query must then read all sub-files of its shard (documented for #171).
 
 Memory model: DuckDB aggregates text fragments per (pid, field) and
-streams them in Arrow batches; Python tokenizes and counts (bounded
-memory); intermediate token-row parquets go to a temp dir; DuckDB then
-does the global DF + per-shard ordered writes. Scales to the 6.7M-sample
-corpus without holding token rows in RAM.
+streams them in Arrow batches; Python tokenizes and counts; token rows
+spill to intermediate parquets every ~2M rows; DuckDB then does the
+global DF + per-shard ordered writes. The PYTHON side is bounded (batch
++ 2M-row buffer); DuckDB's aggregation/sort working set still scales
+with the corpus (fine at 6.7M samples on a dev machine; not a hard
+guarantee).
 
 Usage:
   python tools/build_search_index.py \
@@ -215,6 +217,10 @@ def main() -> int:
     """)
 
     field_stats = {f: {"samples_with_field": 0, "total_tokens": 0} for f in V1_FIELDS}
+    # USMALLINT truncation is a contract-semantics change when it fires, so
+    # it is COUNTED, not silent (Codex review of #329): build_stats records
+    # both counters + observed maxima; a non-zero count prints a warning.
+    trunc = {"doc_len_docs": 0, "tf_rows": 0, "max_doc_len": 0, "max_tf": 0}
     tmp_dir = tempfile.mkdtemp(prefix="search_index_rows_")
     tmp_files: list[str] = []
     buf: dict[str, list] = {k: [] for k in ("token", "pid", "field", "tf", "doc_len", "shard")}
@@ -252,11 +258,18 @@ def main() -> int:
                 tokens.extend(tokenize(t))
             if not tokens:
                 continue
-            doc_len = min(len(tokens), 65535)
+            raw_len = len(tokens)
+            trunc["max_doc_len"] = max(trunc["max_doc_len"], raw_len)
+            if raw_len > 65535:
+                trunc["doc_len_docs"] += 1
+            doc_len = min(raw_len, 65535)
             fs = field_stats[field]
             fs["samples_with_field"] += 1
-            fs["total_tokens"] += len(tokens)
+            fs["total_tokens"] += raw_len
             for token, tf in Counter(tokens).items():
+                trunc["max_tf"] = max(trunc["max_tf"], tf)
+                if tf > 65535:
+                    trunc["tf_rows"] += 1
                 buf["token"].append(token)
                 buf["pid"].append(pid)
                 buf["field"].append(field)
@@ -325,10 +338,21 @@ def main() -> int:
     shard_max_bytes = 0
     shard_files = 0
     cap_violations: list[str] = []
+    _hot_keys_used: set[str] = set()
 
     def write_hot_token(token: str, n: int) -> None:
         nonlocal shard_max_bytes, shard_files
-        key = f"{fnv1a32(token):08x}"
+        # FNV-1a is 32-bit, so distinct hot tokens CAN collide (Codex review
+        # of #329 produced a real pair: 'tywtopf1ri'/'32jnqttihd' → a7c9bf62).
+        # Readers locate hot files via hot_tokens.json (never by recomputing
+        # the hash), so uniqueness only has to hold here: suffix on collision.
+        base_key = f"{fnv1a32(token):08x}"
+        key = base_key
+        seq = 0
+        while key in _hot_keys_used:
+            seq += 1
+            key = f"{base_key}-{seq}"
+        _hot_keys_used.add(key)
         tok_sql = token.replace("'", "''")
         m_count = max(2, -(-int(n * est * compress_ratio) // cap_bytes))
         max_attempts = 6  # 2x per retry; 6 doublings is plenty
@@ -396,7 +420,24 @@ def main() -> int:
             con.execute("INSERT INTO hot_tokens VALUES (?)", [heaviest[0]])
             write_hot_token(heaviest[0], heaviest[1])
         else:
-            cap_violations.append(f"{shard_path.name}: {size/1e6:.1f} MB after promotions")
+            # Attempts exhausted with the LAST promotion never re-written:
+            # without this final rewrite the just-promoted token would sit in
+            # BOTH the base file and hot/ — duplicate postings that inflate
+            # tf-side scores (Codex review of #329). Rewrite once more so the
+            # base shard reflects every promotion, then record the violation
+            # if it still doesn't fit.
+            con.execute(f"""
+                COPY (
+                    SELECT token, pid, field, tf, doc_len
+                    FROM read_parquet('{rows_glob}')
+                    WHERE shard = {shard}
+                      AND token NOT IN (SELECT token FROM hot_tokens)
+                    ORDER BY token, pid, field
+                ) TO '{shard_path}' (FORMAT PARQUET);
+            """)
+            size = shard_path.stat().st_size
+            if size > cap_bytes:
+                cap_violations.append(f"{shard_path.name}: {size/1e6:.1f} MB after promotions")
         shard_max_bytes = max(shard_max_bytes, size)
         shard_files += 1
     with open(out_root / "hot_tokens.json", "w") as f:
@@ -432,6 +473,12 @@ def main() -> int:
         },
         "concept_label_uri_resolution": resolution,
         "concept_label_missing_pref_label": missing_pref_count,
+        "usmallint_truncation": {
+            "doc_len_docs_truncated": trunc["doc_len_docs"],
+            "tf_rows_truncated": trunc["tf_rows"],
+            "max_doc_len_observed": trunc["max_doc_len"],
+            "max_tf_observed": trunc["max_tf"],
+        },
         "shard_count": args.shards,
         "shard_files": shard_files,
         "hot_tokens": len(hot_manifest),
@@ -450,6 +497,11 @@ def main() -> int:
         os.unlink(p)
     os.rmdir(tmp_dir)
 
+    if trunc["doc_len_docs"] or trunc["tf_rows"]:
+        print(f"WARNING: USMALLINT truncation occurred — doc_len docs: "
+              f"{trunc['doc_len_docs']}, tf rows: {trunc['tf_rows']} "
+              f"(max observed doc_len {trunc['max_doc_len']}, tf {trunc['max_tf']}) "
+              "— BM25 semantics degraded for those documents", file=sys.stderr)
     print(f"built {args.tag}_search_index_v1: {shard_files} shard files, "
           f"max {stats['shard_max_size_mb']} MB, "
           f"{total_samples:,} samples, {stats['build_seconds']}s")

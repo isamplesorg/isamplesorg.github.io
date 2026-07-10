@@ -18,6 +18,12 @@
 
 export const MAX_TOKEN_LEN = 64;
 
+// Length is counted in Unicode CODE POINTS ([...t].length), not UTF-16
+// units (t.length) — Python's len(str) counts code points, so astral-plane
+// tokens (e.g. Deseret 𐐀, 2 UTF-16 units each) would otherwise pass the
+// filter in Python and fail it here (Codex review of #329, verified).
+const codePointLen = (t) => [...t].length;
+
 export function tokenize(text) {
     if (!text) return [];
     let s = String(text).normalize('NFKC');          // 1
@@ -25,5 +31,8 @@ export function tokenize(text) {
     s = s.normalize('NFD').replace(/\p{Mn}/gu, '').normalize('NFC'); // 3
     s = s.replace(/[^\p{L}\p{N}]/gu, ' ');            // 4
     return s.split(' ')                               // 5
-        .filter(t => t.length >= 1 && t.length <= MAX_TOKEN_LEN); // 6
+        .filter(t => {                                // 6
+            const n = codePointLen(t);
+            return n >= 1 && n <= MAX_TOKEN_LEN;
+        });
 }

@@ -51,7 +51,7 @@ name** (entity dot field), not the source parquet column.
 | `sample.label`        | `MaterialSampleRecord.label` (~6.68M coverage)                      | canonical title; near-universal                            |
 | `sample.description`  | `MaterialSampleRecord.description` (~1.61M ≈ 24%)                   | sparse but high-signal where present                       |
 | `sample.place_name`   | `samples_map_lite.parquet.place_name[]` (~2.21M)                    | already proven valuable in current ILIKE search            |
-| `concept.label`       | `material` / `context` / `object_type` URIs dereferenced via `vocab_labels.parquet` (`pref_label`, `lang=en`) | **load-bearing**: facet URIs are near-universal but raw URIs are useless to FTS; dereferenced labels make `pottery`, `ceramic`, `basalt`, `bone`, `marine` work as the user expects |
+| `concept.label`       | `material` / `context` / `object_type` / **`keywords`** concept refs, resolved `vocab_labels.pref_label` → `IdentifiedConcept.label` → URI tail (2026-07-10 amendment — see header note) | **load-bearing**: facet URIs are near-universal but raw URIs are useless to FTS; dereferenced labels make `ceramic`, `basalt`, `bone`, `marine` work — and the keyword-concept labels are the ONLY path by which `pottery` reaches samples |
 
 A sample whose `material` URI is `<…>/Pottery` gets a row
 `{token: 'pottery', pid: …, field: 'concept.label', tf: 1, …}`. One row
@@ -77,7 +77,7 @@ per sample per facet URI per token after tokenization.
 | `curation.label`         | `curation_label`                                      |
 | `curation.description`   | `curation_description`                                |
 | `curation.location`      | `curation_location`                                   |
-| `keywords`               | (if present)                                          |
+| ~~`keywords`~~           | **moved into v1** (2026-07-10 amendment — header note) |
 | `source`                 | `source` enum (low value as FTS — facet UI suffices)  |
 
 ---
@@ -176,13 +176,30 @@ in `EXPLORER_STATE.md` §6).
 
 ## 6. Partition shape
 
-- Hash-partition by token: `hash(token) % N` shards.
-- Per-shard byte cap: **≤ 5 MB** uncompressed parquet.
-- High-frequency token rule: if a single token's postings would exceed
-  the cap, sub-shard by `hash(pid) % M` within that token's logical
-  shard.
-- Number of top-level shards (`N`): start with **64**; refine in build
-  measurement.
+*(Amended 2026-07-10 with the concrete mechanics from #170's full-corpus
+builds — the original text predates the discovery manifest.)*
+
+- Hash-partition by token: `fnv1a32(utf8(token)) % N` base shards
+  (`shard_000.parquet` … zero-padded). FNV-1a-32 is normative — the
+  browser reader (#171) must compute it in JS.
+- Per-shard byte cap: **≤ 5 MB** parquet FILE bytes (stricter than
+  uncompressed — file bytes are what a browser transfers).
+- **Hot-token rule** (token-level, not shard-level): a token whose
+  postings alone would exceed the cap is REMOVED from its base shard and
+  written to `hot/<key>_p{0..M-1}.parquet`, where `<key>` is the token's
+  fnv1a32 hex (suffixed `-1`, `-2`… on the rare 32-bit collision) and M
+  is sized so each sub-file fits the cap (verified after writing;
+  re-split at 2×M until compliant). Sub-file membership uses DuckDB's
+  `hash(pid) % M` internally — readers never compute it: **a reader
+  fetches ALL M sub-files for a hot token.**
+- **Discovery manifest `hot_tokens.json`** ships beside the shards:
+  `{cap_bytes, tokens: {token: {key, sub_files, postings}}}`. Reader
+  algorithm: token in manifest → fetch its `hot/` sub-files; otherwise →
+  fetch `shard_{fnv1a32(token) % N}.parquet`.
+- Near-hot skew guard: after writing each base shard, its heaviest
+  tokens are promoted to `hot/` until the file fits the cap.
+- Number of top-level shards (`N`): **256** (64 proved too few — ~9 MB
+  base shards on the 202608 corpus); recorded in `build_stats.json`.
 
 ---
 
@@ -222,7 +239,8 @@ the specific percentages.
 ## 8. Versioning
 
 - URL pattern: `https://data.isamples.org/isamples_YYYYMM_search_index_v1/<shard>.parquet`
-  with sidecar `df.parquet` and `build_stats.json` (§10).
+  with `hot/<key>_pN.parquet` sub-files and sidecars `df.parquet`,
+  `hot_tokens.json` (§6), and `build_stats.json` (§10).
 - Explorer pins to a specific `YYYYMM` so a dataset rebuild can't
   break a deployed site mid-flight.
 - Index version is tied to data version. v1.x format bumps require
