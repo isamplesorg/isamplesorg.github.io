@@ -285,6 +285,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="search-index-v1-contract" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Search Index v1 Contract</h1>
+<blockquote class="blockquote">
+<p><strong>Amendment 2026-07-10</strong> (first full-corpus build, #170): two changes to §1’s v1 minimum, discovered empirically. (1) <strong><code>keywords</code> is pulled forward from the v2 list</strong> into <code>concept.label</code>’s sources; (2) URI dereferencing falls back to <strong>the concept’s own <code>label</code> column in the wide</strong> before the URI tail. Rationale: as originally written, v1 indexed ZERO results for the benchmark’s own example query <code>pottery Cyprus</code> — “Pottery” is not a concept in the 537-entry curated vocabulary; it reaches samples only as an OpenContext <em>keyword</em> concept whose label lives on the IdentifiedConcept row. The interim ILIKE search already covers keyword-concept labels (via <code>build_frontend_derived.py</code>’s appended <code>concept_labels</code>), so v1-as-written was a recall REGRESSION and an automatic #172 NO-GO. Resolution order is now: <code>vocab_labels.pref_label</code> → <code>IdentifiedConcept.label</code> → URI tail (with the missing-label counter tracking the last case only).</p>
+</blockquote>
 <p>Doc-only contract for the iSamples Explorer’s full-text search substrate. Closes <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a>; inputs are consumed by the offline builder (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/170">#170</a>), the browser query prototype (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/171">#171</a>), and the GO/NO-GO gate (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/172">#172</a>).</p>
 <p>Companion to <a href="./EXPLORER_STATE.html"><code>EXPLORER_STATE.md</code></a>: that doc pins the <em>UI surface</em> contract (option C — side-panel + result-pin overlay); this doc pins the <em>search backend</em> contract. The two are intentionally orthogonal.</p>
 <blockquote class="blockquote">
@@ -327,8 +330,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><code>concept.label</code></td>
-<td><code>material</code> / <code>context</code> / <code>object_type</code> URIs dereferenced via <code>vocab_labels.parquet</code> (<code>pref_label</code>, <code>lang=en</code>)</td>
-<td><strong>load-bearing</strong>: facet URIs are near-universal but raw URIs are useless to FTS; dereferenced labels make <code>pottery</code>, <code>ceramic</code>, <code>basalt</code>, <code>bone</code>, <code>marine</code> work as the user expects</td>
+<td><code>material</code> / <code>context</code> / <code>object_type</code> / <strong><code>keywords</code></strong> concept refs, resolved <code>vocab_labels.pref_label</code> → <code>IdentifiedConcept.label</code> → URI tail (2026-07-10 amendment — see header note)</td>
+<td><strong>load-bearing</strong>: facet URIs are near-universal but raw URIs are useless to FTS; dereferenced labels make <code>ceramic</code>, <code>basalt</code>, <code>bone</code>, <code>marine</code> work — and the keyword-concept labels are the ONLY path by which <code>pottery</code> reaches samples</td>
 </tr>
 </tbody>
 </table>
@@ -410,8 +413,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>curation_location</code></td>
 </tr>
 <tr class="odd">
-<td><code>keywords</code></td>
-<td>(if present)</td>
+<td><del><code>keywords</code></del></td>
+<td><strong>moved into v1</strong> (2026-07-10 amendment — header note)</td>
 </tr>
 <tr class="even">
 <td><code>source</code></td>
@@ -442,6 +445,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Tokenize the user input</strong> with the same tokenizer used at build (lowercase + NFKC + diacritic strip + whitespace split + length filter). Round-trip invariant must hold.</li>
 <li><strong>Drop English stopwords</strong> from the bag-of-words AND. Curated list: <code>a</code>, <code>an</code>, <code>the</code>, <code>of</code>, <code>from</code>, <code>for</code>, <code>to</code>, <code>in</code>, <code>on</code>, <code>at</code>, <code>is</code>, <code>was</code>, <code>with</code>, <code>and</code>, <code>or</code>. Small, conservative, no language detection. Rationale: a query like <code>pottery from Cyprus</code> should not require <code>from</code> to match. Build-time skipping would lose phrase-query potential; query-time skipping is reversible policy.</li>
 <li><strong>AND-combine the surviving tokens.</strong> Empty surviving set ⇒ controlled empty state with helpful copy (“All terms in your query are common words. Add a more specific term to search.”) — never a full-corpus dump or an error.</li>
+<li><strong>Non-fetchable hot (common-term) tokens</strong> (§6): after stopword removal, manifest tokens with <code>fetchable: false</code> are ALSO dropped from the AND when at least one other token survives — the UI must disclose exactly which terms were ignored. If ALL surviving tokens are non-fetchable-hot, rank via <code>hot_topk.parquet</code> (§6). Fetchable hot tokens participate in the AND normally (their sub-files fit the budget). #172’s benchmark quantifies the semantic cost (dropped-term recall, multi-common top-K intersection empty-rate).</li>
 <li><strong>No query-language syntax in v1.</strong> No quoted phrases, no field-prefix operators, no booleans, no negation, no wildcards, no fuzzy. Documented v2 path: phrase quoting first (cheap and high-value), then field-prefix and negation.</li>
 </ul>
 <hr>
@@ -459,7 +463,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   tf:         USMALLINT  -- term frequency in this (pid, field) pair
   doc_len:    USMALLINT  -- token count of (pid, field) for BM25 length norm
 }</code></pre>
-<p><strong>Sidecar <code>df.parquet</code></strong> (global per-token document frequency):</p>
+<p><strong>Shipped shard/hot rows additionally carry <code>df: UINTEGER</code></strong> (round-5 amendment): df is constant per token and the files are token-sorted, so the column RLE-compresses to almost nothing — and the query path then needs NO extra fetch for IDF. Corpus constants (<code>total_documents</code>, per-field <code>avg_doc_len</code>) ship in <code>build_stats.json</code> (KB-sized).</p>
+<p><strong>Sidecar <code>df.parquet</code></strong> (global per-token document frequency — an OFFLINE artifact for builds/analysis/#172 oracle; ~8 MB at corpus scale, over-cap, never fetched by the query path):</p>
 <pre><code>{
   token:  VARCHAR
   df:     UINTEGER  -- documents (pid × field) containing this token
@@ -501,11 +506,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="partition-shape" class="level2" data-number="1.6">
 <h2 data-number="1.6" data-anchor-id="partition-shape"><span class="header-section-number">1.6</span> 6. Partition shape</h2>
+<p><em>(Amended 2026-07-10 with the concrete mechanics from #170’s full-corpus builds — the original text predates the discovery manifest.)</em></p>
 <ul>
-<li>Hash-partition by token: <code>hash(token) % N</code> shards.</li>
-<li>Per-shard byte cap: <strong>≤ 5 MB</strong> uncompressed parquet.</li>
-<li>High-frequency token rule: if a single token’s postings would exceed the cap, sub-shard by <code>hash(pid) % M</code> within that token’s logical shard.</li>
-<li>Number of top-level shards (<code>N</code>): start with <strong>64</strong>; refine in build measurement.</li>
+<li>Hash-partition by token: <code>fnv1a32(utf8(token)) % N</code> base shards (<code>shard_000.parquet</code> … zero-padded). FNV-1a-32 is normative — the browser reader (#171) must compute it in JS.</li>
+<li>Per-shard byte cap: <strong>≤ 5 MB</strong> parquet FILE bytes (stricter than uncompressed — file bytes are what a browser transfers).</li>
+<li><strong>Hot-token rule</strong> (token-level, not shard-level): a token whose postings alone would exceed the cap is REMOVED from its base shard and written to <code>hot/&lt;key&gt;_p{0..M-1}.parquet</code>, where <code>&lt;key&gt;</code> is the token’s fnv1a32 hex (suffixed <code>-1</code>, <code>-2</code>… on the rare 32-bit collision) and M is sized so each sub-file fits the cap (verified after writing; re-split at 2×M until compliant). Whether a hot token’s postings are fetched at query time is decided by the two-tier rule below; NON-fetchable hot postings exist for offline analysis and the #172 oracle only (Codex round-2 finding, 2026-07-10; tiering round-3/4).</li>
+<li><strong>Two-tier hot-token query rule</strong> (the reconciliation, refined per round-3 review): hotness is a STORAGE property; selectivity is semantic, and the manifest records both. Each hot entry carries <code>total_bytes</code> and <code>fetchable</code> (= total_bytes ≤ cap).
+<ul>
+<li><strong>Fetchable hot</strong> (e.g.&nbsp;‘island’, ~82K postings, ~2.5 MB total): the reader fetches ALL its <code>hot/</code> sub-files and treats the token exactly like a normal AND term — still within the cold budget.</li>
+<li><strong>Non-fetchable hot</strong> (true common terms — ‘sample’, ‘material’, millions of postings): NEVER fetched. Mixed with ≥1 selective term → dropped from the AND (UI discloses exactly which terms were ignored). All-common queries rank via <strong><code>hot_topk.parquet</code></strong> — a build-time sidecar holding each hot token’s static single-token BM25 top-500 <strong>per-pid summed, field-weighted per §5</strong> (single small file, cap-checked). Multi-common AND intersects top-K lists (documented approximation; #172 benchmarks the empty-rate).</li>
+</ul></li>
+<li><strong>Discovery manifest <code>hot_tokens.json</code></strong> ships beside the shards: <code>{cap_bytes, query_policy, topk_k, topk_bytes, tokens: {token: {key, sub_files, postings, total_bytes, fetchable}}}</code>. Reader algorithm: token in manifest → two-tier rule above; otherwise → fetch <code>shard_{fnv1a32(token) % N}.parquet</code>.</li>
+<li><strong><code>shard_sizes.json</code></strong> (sidecar): file byte size of every base shard, so the reader can compute a query’s expected transfer BEFORE fetching (per-query budgeting + the benchmark’s bytes-transferred metric are computed from it, not guessed).</li>
+<li>Near-hot skew guard: after writing each base shard, its heaviest tokens are promoted to <code>hot/</code> until the file fits the cap.</li>
+<li>Number of top-level shards (<code>N</code>): <strong>256</strong> (64 proved too few — ~9 MB base shards on the 202608 corpus); recorded in <code>build_stats.json</code>.</li>
 </ul>
 <hr>
 </section>
@@ -521,7 +535,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>cold first search (P50)</td>
+<td>cold first search (P50 over the §9 benchmark)</td>
 <td>≤ 2 s</td>
 </tr>
 <tr class="even">
@@ -537,7 +551,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>≤ 3 s</td>
 </tr>
 <tr class="odd">
-<td>bytes transferred cold</td>
+<td>bytes transferred cold (P50 over the §9 benchmark)</td>
 <td>≤ 5 MB</td>
 </tr>
 <tr class="even">
@@ -546,6 +560,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<p><strong>What is guaranteed vs measured</strong> (round-4 honesty pass): the BUILD enforces a per-FILE invariant — every base shard, hot sub-file, and the <code>hot_topk</code> sidecar is ≤ cap (5 MiB). A query’s cold transfer is the SUM of its tokens’ files: bounded by <code>n_selective_tokens × cap</code> (+ one sidecar read for common terms), NOT by a flat 5 MB for arbitrarily long queries — a 4-term query can legitimately fetch ~9 MB worst-case. The budget row above is therefore defined over the §9 canonical benchmark (realistic 1–3 term queries) at P50, which is what the #172 gate mechanically evaluates; per-query expected transfer is computable up-front from <code>shard_sizes.json</code> + the manifest, and the benchmark records actual bytes per query. The query path’s ONLY fetches are: token shard/hot sub-files (each ≤ cap, df embedded), optionally <code>hot_topk.parquet</code> (≤ cap), and the KB-scale <code>build_stats.json</code> + <code>hot_tokens.json</code> + <code>shard_sizes.json</code> loaded once at boot — <code>df.parquet</code> is offline-only. Row-group pruning under HTTP range requests (when #190’s fallback doesn’t fire) reduces real transfer below file sizes; budgets do NOT assume it.</p>
 <p><strong>“Warm” disambiguation</strong> (resolves <a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/174">#174</a>):</p>
 <ul>
 <li><em>Warm-repeat-same-query</em>: same query, second invocation, same page. Measures end-to-end cache + render path.</li>
@@ -558,7 +573,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="versioning" class="level2" data-number="1.8">
 <h2 data-number="1.8" data-anchor-id="versioning"><span class="header-section-number">1.8</span> 8. Versioning</h2>
 <ul>
-<li>URL pattern: <code>https://data.isamples.org/isamples_YYYYMM_search_index_v1/&lt;shard&gt;.parquet</code> with sidecar <code>df.parquet</code> and <code>build_stats.json</code> (§10).</li>
+<li>URL pattern: <code>https://data.isamples.org/isamples_YYYYMM_search_index_v1/&lt;shard&gt;.parquet</code> with <code>hot/&lt;key&gt;_pN.parquet</code> sub-files and sidecars <code>df.parquet</code>, <code>hot_tokens.json</code> (§6), and <code>build_stats.json</code> (§10).</li>
 <li>Explorer pins to a specific <code>YYYYMM</code> so a dataset rebuild can’t break a deployed site mid-flight.</li>
 <li>Index version is tied to data version. v1.x format bumps require URL-path bump (<code>_v1</code> → <code>_v2</code>).</li>
 </ul>
