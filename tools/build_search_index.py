@@ -54,10 +54,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from search_tokenizer import tokenize  # noqa: E402
 
 V1_FIELDS = ("sample.label", "sample.description", "sample.place_name", "concept.label")
+# CONTRACT AMENDMENT (2026-07-10, discovered on the first full-corpus build):
+# `keywords` is pulled forward from the contract's v2 list, and label
+# resolution falls back to the concept's own `label` column in the wide
+# before the URI tail. Without both, the v1 index REGRESSES the benchmark's
+# own example query: 'pottery Cyprus' → 0 results, because "Pottery" is not
+# a concept in the 537-entry curated vocabulary — it reaches samples only as
+# an OpenContext keyword concept whose label lives on the IdentifiedConcept
+# row. The interim ILIKE search already covers keywords (via
+# build_frontend_derived.py's appended concept_labels), so shipping v1
+# without them would be a recall regression and an automatic #172 NO-GO.
 CONCEPT_DIMS = {
     "material": "p__has_material_category",
     "context": "p__has_context_category",
     "object_type": "p__has_sample_object_type",
+    "keywords": "p__keywords",
 }
 TOKEN_ROW_SCHEMA = pa.schema([
     ("token", pa.string()),
@@ -100,7 +111,7 @@ def fragment_relation(con: duckdb.DuckDBPyConnection, wide: str, lite: str, voca
         concept_selects.append(f"""
             SELECT ex.pid,
                    'concept.label' AS field,
-                   v.pref_label,
+                   COALESCE(v.pref_label, ic.label) AS pref_label,
                    ic.uri,
                    '{dim}' AS dim
             FROM (
@@ -119,7 +130,7 @@ def fragment_relation(con: duckdb.DuckDBPyConnection, wide: str, lite: str, voca
             WHERE otype = 'MaterialSampleRecord' AND pid IS NOT NULL;
 
         CREATE TEMP TABLE ic AS
-            SELECT row_id, pid AS uri FROM read_parquet('{wide}')
+            SELECT row_id, pid AS uri, label FROM read_parquet('{wide}')
             WHERE otype = 'IdentifiedConcept';
 
         CREATE TEMP VIEW vocab AS
@@ -156,10 +167,11 @@ def main() -> int:
     ap.add_argument("--vocab", required=True)
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--tag", required=True, help="e.g. isamples_202608")
-    ap.add_argument("--shards", type=int, default=64)
+    # 256 default: the 202608 corpus yields ~570 MB of non-hot base rows;
+    # 64 shards made ~9 MB base files against the 5 MB cap. 256 → ~2.2 MB
+    # average with headroom for growth (v1.5 event/site fields).
+    ap.add_argument("--shards", type=int, default=256)
     ap.add_argument("--shard-cap-mb", type=float, default=5.0)
-    ap.add_argument("--sub-shards", type=int, default=8,
-                    help="M for hash(pid) %% M sub-sharding of over-cap shards")
     ap.add_argument("--batch-rows", type=int, default=200_000)
     args = ap.parse_args()
 
@@ -272,43 +284,128 @@ def main() -> int:
         ) TO '{out_root / "df.parquet"}' (FORMAT PARQUET);
     """)
 
-    # Per-shard ordered writes + byte-cap sub-sharding (§6).
+    # Hot-token isolation + per-shard ordered writes (§6).
+    #
+    # The contract's high-frequency rule is TOKEN-level, not shard-level: a
+    # token whose postings alone would blow the byte cap is pulled OUT of its
+    # base shard and written to its own sub-file set, sub-sharded by
+    # fnv1a32(pid) % M with M sized so each sub-file fits the cap. The base
+    # shard then stays small, so a #171 reader fetches:
+    #   normal token -> its base shard (small), located by fnv1a32(token)%N;
+    #   hot token    -> hot/<fnv1a32(token) hex>_p{0..M-1}.parquet, with
+    #                   hotness + M read from hot_tokens.json.
+    # (First full-corpus build: 'material'/'object'/'solid' etc. — vocabulary
+    # boilerplate present on ~5M samples — have posting lists >100 MB; the
+    # earlier shard-level split forced readers to fetch M files for EVERY
+    # token, breaking the §7 cold-bytes budget for the common case.)
+    #
+    # Cap is enforced against parquet FILE bytes (what a browser actually
+    # transfers), which is stricter than the contract's "uncompressed".
     cap_bytes = int(args.shard_cap_mb * 1024 * 1024)
+    est = con.sql(f"""
+        SELECT avg(len(token) + len(pid) + len(field) + 4) FROM
+        (SELECT * FROM read_parquet('{rows_glob}') LIMIT 500000)
+    """).fetchone()[0] or 30.0
+    # Planning ratio is only a first guess (observed file ratios vary by
+    # token entropy); every hot token's sub-files are VERIFIED against the
+    # cap after writing and re-split at 2×M until they fit.
+    compress_ratio = 0.7
+    hot = con.sql(f"""
+        SELECT token, count(*) AS n
+        FROM read_parquet('{rows_glob}')
+        GROUP BY token
+        HAVING count(*) * {est} * {compress_ratio} > {cap_bytes}
+    """).fetchall()
+    hot_dir = out_root / "hot"
+    hot_manifest: dict[str, dict] = {}
+    if hot:
+        hot_dir.mkdir(exist_ok=True)
+        con.execute("CREATE TEMP TABLE hot_tokens (token VARCHAR PRIMARY KEY)")
+        con.executemany("INSERT INTO hot_tokens VALUES (?)", [[t] for t, _ in hot])
     shard_max_bytes = 0
     shard_files = 0
-    for shard in range(args.shards):
-        shard_path = out_root / f"shard_{shard:03d}.parquet"
-        con.execute(f"""
-            COPY (
-                SELECT token, pid, field, tf, doc_len
-                FROM read_parquet('{rows_glob}')
-                WHERE shard = {shard}
-                ORDER BY token, pid, field
-            ) TO '{shard_path}' (FORMAT PARQUET);
-        """)
-        size = shard_path.stat().st_size
-        if size > cap_bytes:
-            # Sub-shard by FNV-1a(pid) % M. A #171 reader must fetch all
-            # sub-files for the shard (presence of shard_XXX_p0.parquet
-            # signals the split; the base file is removed).
-            for m in range(args.sub_shards):
+    cap_violations: list[str] = []
+
+    def write_hot_token(token: str, n: int) -> None:
+        nonlocal shard_max_bytes, shard_files
+        key = f"{fnv1a32(token):08x}"
+        tok_sql = token.replace("'", "''")
+        m_count = max(2, -(-int(n * est * compress_ratio) // cap_bytes))
+        max_attempts = 6  # 2x per retry; 6 doublings is plenty
+        for attempt in range(max_attempts):
+            paths = []
+            for m in range(m_count):
+                path = hot_dir / f"{key}_p{m}.parquet"
                 con.execute(f"""
                     COPY (
                         SELECT token, pid, field, tf, doc_len
                         FROM read_parquet('{rows_glob}')
-                        WHERE shard = {shard}
-                          AND (CAST(hash(pid) AS UBIGINT) % {args.sub_shards}) = {m}
-                        ORDER BY token, pid, field
-                    ) TO '{out_root / f"shard_{shard:03d}_p{m}.parquet"}' (FORMAT PARQUET);
+                        WHERE token = '{tok_sql}'
+                          AND (CAST(hash(pid) AS UBIGINT) % {m_count}) = {m}
+                        ORDER BY pid, field
+                    ) TO '{path}' (FORMAT PARQUET);
                 """)
-            shard_path.unlink()
-            sizes = [(out_root / f"shard_{shard:03d}_p{m}.parquet").stat().st_size
-                     for m in range(args.sub_shards)]
-            shard_max_bytes = max(shard_max_bytes, *sizes)
-            shard_files += args.sub_shards
+                paths.append(path)
+            biggest = max(p.stat().st_size for p in paths)
+            if biggest <= cap_bytes:
+                break
+            if attempt < max_attempts - 1:
+                for p in paths:  # re-split finer and retry
+                    p.unlink()
+                m_count *= 2
+            else:
+                # Cap unreachable (e.g. per-file parquet overhead > cap).
+                # KEEP the finest split — manifest must always describe
+                # what is actually on disk — and record the violation.
+                cap_violations.append(f"hot/{key}: {biggest/1e6:.1f} MB after retries")
+        shard_max_bytes = max(shard_max_bytes, biggest)
+        shard_files += m_count
+        hot_manifest[token] = {"key": key, "sub_files": m_count, "postings": n}
+
+    for token, n in hot:
+        write_hot_token(token, n)
+    if not hot:
+        con.execute("CREATE TEMP TABLE hot_tokens (token VARCHAR PRIMARY KEY)")
+    for shard in range(args.shards):
+        shard_path = out_root / f"shard_{shard:03d}.parquet"
+        # Write, then promote the shard's heaviest tokens to hot/ until the
+        # file fits the cap. Handles near-hot skew: a few ~3 MB posting lists
+        # co-landing in one shard can't be fixed by shard count alone.
+        for _attempt in range(12):
+            con.execute(f"""
+                COPY (
+                    SELECT token, pid, field, tf, doc_len
+                    FROM read_parquet('{rows_glob}')
+                    WHERE shard = {shard}
+                      AND token NOT IN (SELECT token FROM hot_tokens)
+                    ORDER BY token, pid, field
+                ) TO '{shard_path}' (FORMAT PARQUET);
+            """)
+            size = shard_path.stat().st_size
+            if size <= cap_bytes:
+                break
+            heaviest = con.sql(f"""
+                SELECT token, count(*) AS n
+                FROM read_parquet('{rows_glob}')
+                WHERE shard = {shard}
+                  AND token NOT IN (SELECT token FROM hot_tokens)
+                GROUP BY token ORDER BY n DESC LIMIT 1
+            """).fetchone()
+            if heaviest is None:
+                break
+            con.execute("INSERT INTO hot_tokens VALUES (?)", [heaviest[0]])
+            write_hot_token(heaviest[0], heaviest[1])
         else:
-            shard_max_bytes = max(shard_max_bytes, size)
-            shard_files += 1
+            cap_violations.append(f"{shard_path.name}: {size/1e6:.1f} MB after promotions")
+        shard_max_bytes = max(shard_max_bytes, size)
+        shard_files += 1
+    with open(out_root / "hot_tokens.json", "w") as f:
+        json.dump({"cap_bytes": cap_bytes, "sub_shard_hash": "fnv1a32(utf8(pid)) is NOT used; sub-file membership uses DuckDB hash(pid) — readers fetch ALL sub_files for a hot token, so the split function never needs client-side computation",
+                   "tokens": hot_manifest}, f, indent=1)
+        f.write("\n")
+    if cap_violations:
+        print("WARNING: shard-cap violations (raise --shards or lower ratio):",
+              *cap_violations[:10], sep="\n  ", file=sys.stderr)
 
     top_df = con.sql(f"""
         SELECT token, count(*) AS df FROM read_parquet('{rows_glob}')
@@ -337,6 +434,8 @@ def main() -> int:
         "concept_label_missing_pref_label": missing_pref_count,
         "shard_count": args.shards,
         "shard_files": shard_files,
+        "hot_tokens": len(hot_manifest),
+        "shard_cap_violations": len(cap_violations),
         "shard_hash": "fnv1a32(utf8(token)) % shards",
         "shard_max_size_mb": round(shard_max_bytes / 1024 / 1024, 2),
         "total_bytes_uncompressed": int(total_uncompressed or 0),

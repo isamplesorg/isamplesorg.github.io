@@ -1,5 +1,20 @@
 # Search Index v1 Contract
 
+> **Amendment 2026-07-10** (first full-corpus build, #170): two changes to
+> §1's v1 minimum, discovered empirically. (1) **`keywords` is pulled
+> forward from the v2 list** into `concept.label`'s sources; (2) URI
+> dereferencing falls back to **the concept's own `label` column in the
+> wide** before the URI tail. Rationale: as originally written, v1 indexed
+> ZERO results for the benchmark's own example query `pottery Cyprus` —
+> "Pottery" is not a concept in the 537-entry curated vocabulary; it
+> reaches samples only as an OpenContext *keyword* concept whose label
+> lives on the IdentifiedConcept row. The interim ILIKE search already
+> covers keyword-concept labels (via `build_frontend_derived.py`'s
+> appended `concept_labels`), so v1-as-written was a recall REGRESSION
+> and an automatic #172 NO-GO. Resolution order is now:
+> `vocab_labels.pref_label` → `IdentifiedConcept.label` → URI tail
+> (with the missing-label counter tracking the last case only).
+
 Doc-only contract for the iSamples Explorer's full-text search substrate.
 Closes [#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169);
 inputs are consumed by the offline builder ([#170](https://github.com/isamplesorg/isamplesorg.github.io/issues/170)),

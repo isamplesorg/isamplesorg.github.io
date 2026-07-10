@@ -1,0 +1,128 @@
+{
+ "data_version": "isamples_202608",
+ "built_at_utc": "2026-07-10T18:45:01Z",
+ "total_samples": 6726892,
+ "fields": {
+  "sample.label": {
+   "samples_with_field": 6723722,
+   "total_tokens": 37802291,
+   "avg_doc_len": 5.62
+  },
+  "sample.description": {
+   "samples_with_field": 1652569,
+   "total_tokens": 30849932,
+   "avg_doc_len": 18.67
+  },
+  "sample.place_name": {
+   "samples_with_field": 2263648,
+   "total_tokens": 17311647,
+   "avg_doc_len": 7.65
+  },
+  "concept.label": {
+   "samples_with_field": 6726892,
+   "total_tokens": 87138723,
+   "avg_doc_len": 12.95
+  }
+ },
+ "concept_label_uri_resolution": {
+  "material_resolved": 1.0,
+  "material_missing_pref": 0.0,
+  "context_resolved": 1.0,
+  "context_missing_pref": 0.0,
+  "object_type_resolved": 1.0,
+  "object_type_missing_pref": 0.0,
+  "keywords_resolved": 1.0,
+  "keywords_missing_pref": 0.0
+ },
+ "concept_label_missing_pref_label": 0,
+ "shard_count": 256,
+ "shard_files": 870,
+ "hot_tokens": 132,
+ "shard_cap_violations": 0,
+ "shard_hash": "fnv1a32(utf8(token)) % shards",
+ "shard_max_size_mb": 4.93,
+ "total_bytes_uncompressed": 7245750192,
+ "build_seconds": 506.1,
+ "top_df_tokens": [
+  [
+   "sample",
+   7538687
+  ],
+  [
+   "material",
+   5083658
+  ],
+  [
+   "object",
+   4962091
+  ],
+  [
+   "other",
+   4677450
+  ],
+  [
+   "solid",
+   4531240
+  ],
+  [
+   "feature",
+   4025455
+  ],
+  [
+   "sampled",
+   4023625
+  ],
+  [
+   "any",
+   4023265
+  ],
+  [
+   "individual",
+   3164007
+  ],
+  [
+   "cm",
+   2593846
+  ],
+  [
+   "organic",
+   2305649
+  ],
+  [
+   "natural",
+   2235884
+  ],
+  [
+   "rock",
+   1802337
+  ],
+  [
+   "section",
+   1791371
+  ],
+  [
+   "1",
+   1490718
+  ],
+  [
+   "organism",
+   1444732
+  ],
+  [
+   "core",
+   1419466
+  ],
+  [
+   "animal",
+   1340485
+  ],
+  [
+   "of",
+   1240868
+  ],
+  [
+   "asia",
+   1210156
+  ]
+ ]
+}

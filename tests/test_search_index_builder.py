@@ -22,25 +22,30 @@ from build_search_index import fnv1a32  # noqa: E402
 SHARDS = 8  # small fixture -> few shards keeps file count readable
 
 # 10 docs. Materials: 2×Pottery, 1×Ceramic, 1×Bone, 1×unresolvable URI,
-# rest no material. (Issue spec: >=3 docs with resolvable URIs, >=1 without.)
+# rest no material; one doc carries a KEYWORD concept whose label exists only
+# on the IdentifiedConcept row (no vocab entry) — the ic.label fallback path
+# that makes OpenContext keyword concepts ('Pottery' etc.) searchable.
+# (Issue spec: >=3 docs with resolvable URIs, >=1 without.)
 DOCS = [
-    # pid, label, description, material_uri, place_names
-    ("pid:001", "Red Pottery Bowl", None, "test://Pottery", ["Murlo, Italy"]),
-    ("pid:002", "Pottery sherd", "Iron-Age context", "test://Pottery", []),
-    ("pid:003", "Ceramic figurine", None, "test://Ceramic", ["Çatalhöyük"]),
-    ("pid:004", "Worked bone awl", "carved bone tool", "test://Bone", []),
-    ("pid:005", "Mystery lump", None, "test://weird/UnknownStuff", []),
-    ("pid:006", "Basalt core", "columnar basalt", None, ["Axial Seamount summit caldera"]),
-    ("pid:007", "Soil sample", None, None, []),
-    ("pid:008", "Water sample", "filtered seawater", None, ["North Pacific Ocean"]),
-    ("pid:009", "Coral fragment", None, None, []),
-    ("pid:010", "Obsidian flake", None, None, []),
+    # pid, label, description, material_uri, keyword_uri, place_names
+    ("pid:001", "Red Pottery Bowl", None, "test://Pottery", None, ["Murlo, Italy"]),
+    ("pid:002", "Pottery sherd", "Iron-Age context", "test://Pottery", None, []),
+    ("pid:003", "Ceramic figurine", None, "test://Ceramic", None, ["Çatalhöyük"]),
+    ("pid:004", "Worked bone awl", "carved bone tool", "test://Bone", None, []),
+    ("pid:005", "Mystery lump", None, "test://weird/UnknownStuff", None, []),
+    ("pid:006", "Basalt core", "columnar basalt", None, "test://kw/VolcanicRock", ["Axial Seamount summit caldera"]),
+    ("pid:007", "Soil sample", None, None, None, []),
+    ("pid:008", "Water sample", "filtered seawater", None, None, ["North Pacific Ocean"]),
+    ("pid:009", "Coral fragment", None, None, None, []),
+    ("pid:010", "Obsidian flake", None, None, None, []),
 ]
+# Keyword concept has an IC label but NO vocab entry (the OC-keyword shape).
+IC_LABELS = {"test://kw/VolcanicRock": "Volcanic rock"}
 VOCAB = [
     ("test://Pottery", "Pottery", "en"),
     ("test://Ceramic", "Ceramic", "en"),
     ("test://Bone", "Bone", "en"),
-    # deliberately NO entry for test://weird/UnknownStuff
+    # deliberately NO entry for test://weird/UnknownStuff or test://kw/*
 ]
 
 
@@ -50,7 +55,7 @@ def built_index(tmp_path_factory):
     con = duckdb.connect()
 
     # Concept rows get row_ids 100+; samples reference them by row_id array.
-    uris = sorted({d[3] for d in DOCS if d[3]})
+    uris = sorted({d[3] for d in DOCS if d[3]} | {d[4] for d in DOCS if d[4]})
     uri_rowid = {u: 100 + i for i, u in enumerate(uris)}
     con.execute("""
         CREATE TABLE wide (
@@ -58,19 +63,22 @@ def built_index(tmp_path_factory):
             description VARCHAR,
             p__has_material_category BIGINT[],
             p__has_context_category BIGINT[],
-            p__has_sample_object_type BIGINT[]
+            p__has_sample_object_type BIGINT[],
+            p__keywords BIGINT[]
         )""")
-    for i, (pid, label, desc, mat, _places) in enumerate(DOCS):
+    for i, (pid, label, desc, mat, kw, _places) in enumerate(DOCS):
         con.execute(
-            "INSERT INTO wide VALUES (?, ?, 'MaterialSampleRecord', ?, ?, ?, NULL, NULL)",
-            [i, pid, label, desc, [uri_rowid[mat]] if mat else None])
+            "INSERT INTO wide VALUES (?, ?, 'MaterialSampleRecord', ?, ?, ?, NULL, NULL, ?)",
+            [i, pid, label, desc,
+             [uri_rowid[mat]] if mat else None,
+             [uri_rowid[kw]] if kw else None])
     for uri, rid in uri_rowid.items():
         con.execute(
-            "INSERT INTO wide VALUES (?, ?, 'IdentifiedConcept', NULL, NULL, NULL, NULL, NULL)",
-            [rid, uri])
+            "INSERT INTO wide VALUES (?, ?, 'IdentifiedConcept', ?, NULL, NULL, NULL, NULL, NULL)",
+            [rid, uri, IC_LABELS.get(uri)])
 
     con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
-    for pid, _l, _d, _m, places in DOCS:
+    for pid, _l, _d, _m, _k, places in DOCS:
         con.execute("INSERT INTO lite VALUES (?, ?)", [pid, places or None])
 
     con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
@@ -118,6 +126,17 @@ def test_uri_tail_fallback_and_counter(built_index):
     stats = json.loads((root / "build_stats.json").read_text())
     assert stats["concept_label_missing_pref_label"] == 1
     assert stats["concept_label_uri_resolution"]["material_missing_pref"] > 0
+
+
+def test_keyword_concept_via_ic_label_fallback(built_index):
+    """A keyword concept with no vocab entry resolves through the concept's
+    own label (contract amendment 2026-07-10) — the path that makes
+    'pottery Cyprus' work against OpenContext keyword concepts."""
+    _, rows = built_index
+    hits = rows[(rows.token == "volcanic") & (rows.field == "concept.label")]
+    assert list(hits.pid) == ["pid:006"]
+    hits2 = rows[(rows.token == "rock") & (rows.field == "concept.label")]
+    assert list(hits2.pid) == ["pid:006"]
 
 
 def test_field_projection_and_doc_len(built_index):
@@ -169,22 +188,28 @@ def test_build_stats_field_coverage(built_index):
     assert stats["fields"]["sample.label"]["samples_with_field"] == 10
     assert stats["fields"]["sample.description"]["samples_with_field"] == 4
     assert stats["fields"]["sample.place_name"]["samples_with_field"] == 4
-    assert stats["fields"]["concept.label"]["samples_with_field"] == 5
+    assert stats["fields"]["concept.label"]["samples_with_field"] == 6  # 5 material + 1 keyword
+    assert stats["concept_label_uri_resolution"]["keywords_resolved"] == 1.0
     assert stats["shard_hash"] == "fnv1a32(utf8(token)) % shards"
 
 
-def test_sub_sharding_triggers_on_tiny_cap(tmp_path):
-    """Force the byte cap to ~0 so every non-empty shard sub-shards; assert
-    the mechanism produces shard_XXX_pY files and removes the base file."""
-    # Reuse the module fixture's inputs by rebuilding tiny parquets inline.
+def test_hot_token_isolation_on_tiny_cap(tmp_path):
+    """Force the byte cap to ~0 so every token is 'hot'; assert the token-level
+    isolation semantics: hot tokens leave the base shards, land in
+    hot/<fnv hex>_p*.parquet, are listed in hot_tokens.json, and no rows are
+    lost. (At production scale only vocabulary-boilerplate tokens like
+    'material' trip this — with posting lists on ~5M samples each.)"""
     con = duckdb.connect()
     con.execute("CREATE TABLE wide (row_id BIGINT, pid VARCHAR, otype VARCHAR,"
                 " label VARCHAR, description VARCHAR,"
                 " p__has_material_category BIGINT[],"
                 " p__has_context_category BIGINT[],"
-                " p__has_sample_object_type BIGINT[])")
+                " p__has_sample_object_type BIGINT[],"
+                " p__keywords BIGINT[])")
     con.execute("INSERT INTO wide VALUES (0, 'pid:x', 'MaterialSampleRecord',"
-                " 'pottery pottery pottery', NULL, NULL, NULL, NULL)")
+                " 'pottery pottery pottery', NULL, NULL, NULL, NULL, NULL)")
+    con.execute("INSERT INTO wide VALUES (1, 'pid:y', 'MaterialSampleRecord',"
+                " 'pottery basalt', NULL, NULL, NULL, NULL, NULL)")
     con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
     con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
     wide_p, lite_p, vocab_p = (str(tmp_path / f"{n}.parquet") for n in ("w", "l", "v"))
@@ -194,16 +219,35 @@ def test_sub_sharding_triggers_on_tiny_cap(tmp_path):
     res = subprocess.run(
         [sys.executable, str(BUILDER), "--wide", wide_p, "--lite", lite_p,
          "--vocab", vocab_p, "--outdir", str(tmp_path / "out"),
-         "--tag", "cap_test", "--shards", "2", "--sub-shards", "2",
-         "--shard-cap-mb", "0.000001"],
+         "--tag", "cap_test", "--shards", "2", "--shard-cap-mb", "0.000001"],
         capture_output=True, text=True)
     assert res.returncode == 0, res.stderr
     root = tmp_path / "out" / "cap_test_search_index_v1"
-    home = fnv1a32("pottery") % 2
-    assert not (root / f"shard_{home:03d}.parquet").exists()
-    subs = list(root.glob(f"shard_{home:03d}_p*.parquet"))
-    assert len(subs) == 2
-    total = duckdb.sql(
-        f"SELECT count(*) FROM read_parquet('{root}/shard_{home:03d}_p*.parquet')"
+
+    manifest = json.loads((root / "hot_tokens.json").read_text())
+    assert "pottery" in manifest["tokens"]
+    key = manifest["tokens"]["pottery"]["key"]
+    assert key == f"{fnv1a32('pottery'):08x}"
+    subs = list((root / "hot").glob(f"{key}_p*.parquet"))
+    assert len(subs) == manifest["tokens"]["pottery"]["sub_files"] >= 2
+    # hot token's rows all present across its sub-files (both pids, no dupes)
+    hot_rows = duckdb.sql(
+        f"SELECT pid, tf FROM read_parquet('{root}/hot/{key}_p*.parquet') ORDER BY pid"
+    ).fetchall()
+    assert hot_rows == [("pid:x", 3), ("pid:y", 1)]
+    # ...and absent from every base shard
+    base = duckdb.sql(
+        f"SELECT count(*) FROM read_parquet('{root}/shard_*.parquet') WHERE token='pottery'"
     ).fetchone()[0]
-    assert total == 1  # one (pottery, pid:x, sample.label) row survives intact
+    assert base == 0
+
+
+def test_no_hot_tokens_at_default_cap(built_index):
+    """Fixture-scale corpus: nothing is hot at the 5 MB default; base shards
+    carry everything and hot_tokens.json is an empty manifest."""
+    root, rows = built_index
+    manifest = json.loads((root / "hot_tokens.json").read_text())
+    assert manifest["tokens"] == {}
+    stats = json.loads((root / "build_stats.json").read_text())
+    assert stats["hot_tokens"] == 0
+    assert stats["shard_cap_violations"] == 0
