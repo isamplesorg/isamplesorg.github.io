@@ -197,10 +197,10 @@ builds — the original text predates the discovery manifest.)*
   written to `hot/<key>_p{0..M-1}.parquet`, where `<key>` is the token's
   fnv1a32 hex (suffixed `-1`, `-2`… on the rare 32-bit collision) and M
   is sized so each sub-file fits the cap (verified after writing;
-  re-split at 2×M until compliant). **These postings files are NOT
-  fetched at query time** (they exist for offline analysis and the #172
-  oracle) — by definition they exceed the cold-bytes budget, so the
-  query path never depends on them (Codex round-2 finding, 2026-07-10).
+  re-split at 2×M until compliant). Whether a hot token's postings are
+  fetched at query time is decided by the two-tier rule below;
+  NON-fetchable hot postings exist for offline analysis and the #172
+  oracle only (Codex round-2 finding, 2026-07-10; tiering round-3/4).
 - **Two-tier hot-token query rule** (the reconciliation, refined per
   round-3 review): hotness is a STORAGE property; selectivity is
   semantic, and the manifest records both. Each hot entry carries
@@ -217,9 +217,14 @@ builds — the original text predates the discovery manifest.)*
     small file, cap-checked). Multi-common AND intersects top-K lists
     (documented approximation; #172 benchmarks the empty-rate).
 - **Discovery manifest `hot_tokens.json`** ships beside the shards:
-  `{cap_bytes, query_policy, topk_k, tokens: {token: {key, sub_files,
-  postings}}}`. Reader algorithm: token in manifest → common-term rule
-  above; otherwise → fetch `shard_{fnv1a32(token) % N}.parquet`.
+  `{cap_bytes, query_policy, topk_k, topk_bytes, tokens: {token: {key,
+  sub_files, postings, total_bytes, fetchable}}}`. Reader algorithm:
+  token in manifest → two-tier rule above; otherwise → fetch
+  `shard_{fnv1a32(token) % N}.parquet`.
+- **`shard_sizes.json`** (sidecar): file byte size of every base shard,
+  so the reader can compute a query's expected transfer BEFORE fetching
+  (per-query budgeting + the benchmark's bytes-transferred metric are
+  computed from it, not guessed).
 - Near-hot skew guard: after writing each base shard, its heaviest
   tokens are promoted to `hot/` until the file fits the cap.
 - Number of top-level shards (`N`): **256** (64 proved too few — ~9 MB
@@ -234,16 +239,26 @@ this table.
 
 | metric                                          | target           |
 |-------------------------------------------------|------------------|
-| cold first search (P50)                         | ≤ 2 s            |
+| cold first search (P50 over the §9 benchmark)   | ≤ 2 s            |
 | warm repeat-same-query search                   | ≤ 500 ms         |
 | warm new-query-after-warm-up search             | ≤ 500 ms         |
 | filter-composed cold search                     | ≤ 3 s            |
-| bytes transferred cold                          | ≤ 5 MB           |
+| bytes transferred cold (P50 over the §9 benchmark) | ≤ 5 MB        |
 | bytes transferred warm                          | ≤ 1 MB per query |
 
-Budgets hold for **every** query shape: selective queries fetch base
-shards (each ≤ cap); hot terms fetch nothing (dropped from AND) or the
-single `hot_topk.parquet` sidecar (≤ cap) — see §6 common-term rule.
+**What is guaranteed vs measured** (round-4 honesty pass): the BUILD
+enforces a per-FILE invariant — every base shard, hot sub-file, and the
+`hot_topk` sidecar is ≤ cap (5 MiB). A query's cold transfer is the SUM
+of its tokens' files: bounded by `n_selective_tokens × cap` (+ one
+sidecar read for common terms), NOT by a flat 5 MB for arbitrarily long
+queries — a 4-term query can legitimately fetch ~9 MB worst-case. The
+budget row above is therefore defined over the §9 canonical benchmark
+(realistic 1–3 term queries) at P50, which is what the #172 gate
+mechanically evaluates; per-query expected transfer is computable
+up-front from `shard_sizes.json` + the manifest, and the benchmark
+records actual bytes per query. Row-group pruning under HTTP range
+requests (when #190's fallback doesn't fire) reduces real transfer
+below file sizes; budgets do NOT assume it.
 
 **"Warm" disambiguation** (resolves [#174](https://github.com/isamplesorg/isamplesorg.github.io/issues/174)):
 

@@ -524,6 +524,14 @@ def main() -> int:
             cap_violations.append(f"hot_topk.parquet: {topk_bytes/1e6:.1f} MB")
     else:
         topk_bytes = 0
+    # shard_sizes.json — file bytes of every base shard, so the reader can
+    # compute a query's expected transfer BEFORE fetching (contract §6/§7,
+    # round-4 review: per-query budgeting must be computable, not guessed).
+    with open(out_root / "shard_sizes.json", "w") as f:
+        json.dump({f"shard_{i:03d}.parquet":
+                   (out_root / f"shard_{i:03d}.parquet").stat().st_size
+                   for i in range(args.shards)}, f, indent=1)
+        f.write("\n")
     with open(out_root / "hot_tokens.json", "w") as f:
         json.dump({
             "cap_bytes": cap_bytes,

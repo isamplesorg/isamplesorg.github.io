@@ -108,6 +108,11 @@ def test_outputs_exist(built_index):
     assert (root / "df.parquet").exists()
     assert (root / "build_stats.json").exists()
     assert list(root.glob("shard_*.parquet"))
+    # shard_sizes.json: every base shard listed with its true file size
+    sizes = json.loads((root / "shard_sizes.json").read_text())
+    assert len(sizes) == SHARDS
+    for name, size in sizes.items():
+        assert (root / name).stat().st_size == size
 
 
 def test_uri_dereferencing_end_to_end(built_index):
