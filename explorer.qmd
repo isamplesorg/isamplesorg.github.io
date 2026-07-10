@@ -2683,8 +2683,11 @@ tableView = {
                 // dedicated, honestly-labeled cell; activateRow ignores clicks
                 // that originate inside an <a> so the row doesn't also fly.
                 const rowSrcUrl = sourceUrl(r.pid);
+                // Row-specific aria-label (Codex review): screen-reader users
+                // tabbing the column hear WHICH record each identical
+                // "record ↗" link opens.
                 const srcUrlHtml = rowSrcUrl
-                    ? `<a class="row-source-link" href="${escapeHtml(rowSrcUrl)}" target="_blank" rel="noopener noreferrer" title="Open this sample's record at its source repository">record ↗</a>`
+                    ? `<a class="row-source-link" href="${escapeHtml(rowSrcUrl)}" target="_blank" rel="noopener noreferrer" title="Open this sample's record at its source repository" aria-label="Open record for ${safeLabel} at its source repository">record ↗</a>`
                     : '';
                 // #311: material/context/object_type are URIs (from facets_url,
                 // joined in loadPage()); resolve to human labels the same way
