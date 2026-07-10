@@ -1,0 +1,48 @@
+name: Search-index tests (tokenizer parity + builder)
+
+# The #170 gate: the Python and JS tokenizers must produce identical output
+# for every entry in tests/search_tokenizer_regression.json (both suites run
+# against the same JSON — divergence is a hard fail per SEARCH_INDEX_V1.md
+# §2), and the offline index builder must pass its end-to-end fixture
+# (URI dereferencing, shard structure, DF/doc_len, build_stats).
+on:
+  pull_request:
+    paths:
+      - "tools/search_tokenizer.py"
+      - "tools/build_search_index.py"
+      - "assets/js/search_tokenizer.js"
+      - "tests/search_tokenizer_regression.json"
+      - "tests/test_search_tokenizer.py"
+      - "tests/test_search_index_builder.py"
+      - "tests/unit/search-tokenizer.test.mjs"
+      - "scripts/requirements.txt"
+      - ".github/workflows/search-index-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/search_tokenizer.py"
+      - "tools/build_search_index.py"
+      - "assets/js/search_tokenizer.js"
+      - "tests/search_tokenizer_regression.json"
+      - "tests/test_search_tokenizer.py"
+      - "tests/test_search_index_builder.py"
+      - "tests/unit/search-tokenizer.test.mjs"
+  workflow_dispatch:
+
+jobs:
+  tokenizer-parity-and-builder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Python deps
+        run: pip install -r scripts/requirements.txt
+      - name: Python tokenizer + builder fixture tests
+        run: python -m pytest tests/test_search_tokenizer.py tests/test_search_index_builder.py -q
+      - name: JS tokenizer parity (same regression JSON)
+        run: node --test tests/unit/search-tokenizer.test.mjs
