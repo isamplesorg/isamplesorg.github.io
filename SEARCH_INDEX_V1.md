@@ -117,6 +117,14 @@ filtering applied to the user input *before* combining tokens.
   empty state with helpful copy ("All terms in your query are common
   words. Add a more specific term to search.") — never a full-corpus
   dump or an error.
+- **Non-fetchable hot (common-term) tokens** (§6): after stopword
+  removal, manifest tokens with `fetchable: false` are ALSO dropped
+  from the AND when at least one other token survives — the UI must
+  disclose exactly which terms were ignored. If ALL surviving tokens
+  are non-fetchable-hot, rank via `hot_topk.parquet` (§6). Fetchable
+  hot tokens participate in the AND normally (their sub-files fit the
+  budget). #172's benchmark quantifies the semantic cost (dropped-term
+  recall, multi-common top-K intersection empty-rate).
 - **No query-language syntax in v1.** No quoted phrases, no
   field-prefix operators, no booleans, no negation, no wildcards, no
   fuzzy. Documented v2 path: phrase quoting first (cheap and
@@ -193,15 +201,21 @@ builds — the original text predates the discovery manifest.)*
   fetched at query time** (they exist for offline analysis and the #172
   oracle) — by definition they exceed the cold-bytes budget, so the
   query path never depends on them (Codex round-2 finding, 2026-07-10).
-- **Common-term query rule** (the reconciliation): hot tokens carry
-  almost no selectivity (the 202608 build's hot set sits on ~5M of 6.7M
-  samples each). A query mixing hot + non-hot terms DROPS the hot terms
-  from the AND (documented in UI copy, same register as the stopword
-  note). A query whose surviving terms are ALL hot ranks via
-  **`hot_topk.parquet`** — a build-time sidecar holding each hot
-  token's static single-token BM25 top-500 (field-weighted per §5;
-  single small file, cap-checked). Multi-hot AND intersects the top-K
-  lists (documented approximation).
+- **Two-tier hot-token query rule** (the reconciliation, refined per
+  round-3 review): hotness is a STORAGE property; selectivity is
+  semantic, and the manifest records both. Each hot entry carries
+  `total_bytes` and `fetchable` (= total_bytes ≤ cap).
+  - **Fetchable hot** (e.g. 'island', ~82K postings, ~2.5 MB total):
+    the reader fetches ALL its `hot/` sub-files and treats the token
+    exactly like a normal AND term — still within the cold budget.
+  - **Non-fetchable hot** (true common terms — 'sample', 'material',
+    millions of postings): NEVER fetched. Mixed with ≥1 selective term
+    → dropped from the AND (UI discloses exactly which terms were
+    ignored). All-common queries rank via **`hot_topk.parquet`** — a
+    build-time sidecar holding each hot token's static single-token
+    BM25 top-500 **per-pid summed, field-weighted per §5** (single
+    small file, cap-checked). Multi-common AND intersects top-K lists
+    (documented approximation; #172 benchmarks the empty-rate).
 - **Discovery manifest `hot_tokens.json`** ships beside the shards:
   `{cap_bytes, query_policy, topk_k, tokens: {token: {key, sub_files,
   postings}}}`. Reader algorithm: token in manifest → common-term rule

@@ -206,12 +206,23 @@ def test_hot_token_isolation_on_tiny_cap(tmp_path):
                 " p__has_context_category BIGINT[],"
                 " p__has_sample_object_type BIGINT[],"
                 " p__keywords BIGINT[])")
+    # pid:x carries 'pottery' in BOTH label and concept.label (multi-field);
+    # pid:t1/pid:t2 are identical twins (deterministic tie case). Codex
+    # round-3: the topk sidecar must rank per-PID SUMMED scores, one row per
+    # (token, pid), ties broken by pid ascending.
     con.execute("INSERT INTO wide VALUES (0, 'pid:x', 'MaterialSampleRecord',"
-                " 'pottery pottery pottery', NULL, NULL, NULL, NULL, NULL)")
+                " 'pottery pottery pottery', NULL, [100], NULL, NULL, NULL)")
     con.execute("INSERT INTO wide VALUES (1, 'pid:y', 'MaterialSampleRecord',"
                 " 'pottery basalt', NULL, NULL, NULL, NULL, NULL)")
+    con.execute("INSERT INTO wide VALUES (2, 'pid:t1', 'MaterialSampleRecord',"
+                " 'twin stone', NULL, NULL, NULL, NULL, NULL)")
+    con.execute("INSERT INTO wide VALUES (3, 'pid:t2', 'MaterialSampleRecord',"
+                " 'twin stone', NULL, NULL, NULL, NULL, NULL)")
+    con.execute("INSERT INTO wide VALUES (100, 'test://P', 'IdentifiedConcept',"
+                " NULL, NULL, NULL, NULL, NULL, NULL)")
     con.execute("CREATE TABLE lite (pid VARCHAR, place_name VARCHAR[])")
     con.execute("CREATE TABLE vocab (uri VARCHAR, pref_label VARCHAR, lang VARCHAR)")
+    con.execute("INSERT INTO vocab VALUES ('test://P', 'pottery', 'en')")
     wide_p, lite_p, vocab_p = (str(tmp_path / f"{n}.parquet") for n in ("w", "l", "v"))
     con.execute(f"COPY wide TO '{wide_p}' (FORMAT PARQUET)")
     con.execute(f"COPY lite TO '{lite_p}' (FORMAT PARQUET)")
@@ -227,31 +238,42 @@ def test_hot_token_isolation_on_tiny_cap(tmp_path):
     manifest_full = json.loads((root / "hot_tokens.json").read_text())
     manifest = manifest_full
     assert "pottery" in manifest["tokens"]
+    # two-tier policy fields present; at a ~1-byte cap nothing is fetchable
+    e = manifest["tokens"]["pottery"]
+    assert e["total_bytes"] > 0 and e["fetchable"] is False
     key = manifest["tokens"]["pottery"]["key"]
     assert key == f"{fnv1a32('pottery'):08x}"
     subs = list((root / "hot").glob(f"{key}_p*.parquet"))
     assert len(subs) == manifest["tokens"]["pottery"]["sub_files"] >= 2
     # hot token's rows all present across its sub-files (both pids, no dupes)
     hot_rows = duckdb.sql(
-        f"SELECT pid, tf FROM read_parquet('{root}/hot/{key}_p*.parquet') ORDER BY pid"
+        f"SELECT pid, field, tf FROM read_parquet('{root}/hot/{key}_p*.parquet') ORDER BY pid, field"
     ).fetchall()
-    assert hot_rows == [("pid:x", 3), ("pid:y", 1)]
+    # pid:x matches in TWO fields (label tf=3 + concept.label tf=1)
+    assert hot_rows == [("pid:x", "concept.label", 1), ("pid:x", "sample.label", 3),
+                        ("pid:y", "sample.label", 1)]
     # ...and absent from every base shard
     base = duckdb.sql(
         f"SELECT count(*) FROM read_parquet('{root}/shard_*.parquet') WHERE token='pottery'"
     ).fetchone()[0]
     assert base == 0
-    # hot_topk sidecar: the query-time path for hot tokens (contract §6
-    # common-term rule). Every hot token has ranked rows, rank 1 first,
-    # <= topk_k rows per token, higher tf ranks above lower (same field).
+    # hot_topk sidecar (contract §6 common-term rule; Codex round 3):
+    # ONE row per (token, pid) — per-PID summed field-weighted scores.
     assert manifest_full["topk_k"] == 500
     topk = duckdb.sql(
-        f"SELECT token, pid, tf, rank FROM read_parquet('{root}/hot_topk.parquet') "
+        f"SELECT token, pid, static_score, rank FROM read_parquet('{root}/hot_topk.parquet') "
         "WHERE token='pottery' ORDER BY rank").fetchall()
     assert [r[3] for r in topk] == list(range(1, len(topk) + 1))
-    assert len(topk) <= 500
-    # pid:x has tf=3, pid:y tf=1 (same field sample.label) -> pid:x ranks first
-    assert topk[0][1] == "pid:x" and topk[1][1] == "pid:y"
+    # pid:x appears ONCE despite matching in two fields (label + concept)
+    assert [r[1] for r in topk] == ["pid:x", "pid:y"]
+    # multi-field sum: pid:x (label tf=3 + concept.label) beats pid:y (label tf=1)
+    assert topk[0][2] > topk[1][2]
+    # deterministic tie: identical twins order by pid ascending
+    twins = duckdb.sql(
+        f"SELECT pid, static_score, rank FROM read_parquet('{root}/hot_topk.parquet') "
+        "WHERE token='twin' ORDER BY rank").fetchall()
+    assert [t[0] for t in twins] == ["pid:t1", "pid:t2"]
+    assert twins[0][1] == twins[1][1]
 
 
 def test_hot_key_collision_gets_distinct_files(tmp_path):

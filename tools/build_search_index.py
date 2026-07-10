@@ -384,7 +384,20 @@ def main() -> int:
                 cap_violations.append(f"hot/{key}: {biggest/1e6:.1f} MB after retries")
         shard_max_bytes = max(shard_max_bytes, biggest)
         shard_files += m_count
-        hot_manifest[token] = {"key": key, "sub_files": m_count, "postings": n}
+        total_bytes = sum(
+            (hot_dir / f"{key}_p{m}.parquet").stat().st_size
+            for m in range(m_count))
+        # Two-tier policy (Codex round 3): many hot tokens are hot for
+        # STORAGE reasons (promoted because their shard co-landed with other
+        # big tokens), not semantic commonness — e.g. 'island'/'genetic' at
+        # ~100k postings are genuinely selective and their dedicated files
+        # total only ~2.5 MB. If a token's whole posting set fits the cold
+        # budget, the reader just fetches its sub-files like a normal token;
+        # only tokens whose postings EXCEED the budget get the common-term
+        # drop/topk treatment.
+        hot_manifest[token] = {"key": key, "sub_files": m_count, "postings": n,
+                               "total_bytes": total_bytes,
+                               "fetchable": total_bytes <= cap_bytes}
 
     for token, n in hot:
         write_hot_token(token, n)
@@ -451,21 +464,36 @@ def main() -> int:
     # facet post-filtering while staying a single small file.
     topk_path = out_root / "hot_topk.parquet"
     if hot_manifest:
-        total_docs_for_idf = con.sql(
-            f"SELECT count(*) FROM read_parquet('{rows_glob}')").fetchone()[0]
+        # Corpus statistics per contract §5 / Codex round 3: totalDocs is the
+        # number of (pid, field) DOCUMENTS (rows are unique per
+        # (token,pid,field), so distinct (pid,field) must be counted
+        # explicitly), and doc-length normalization uses the PER-FIELD corpus
+        # average — not a per-token average, which would re-center every hot
+        # token's normalization on its own postings.
+        total_docs_for_idf = con.sql(f"""
+            SELECT count(*) FROM (
+                SELECT pid, field FROM read_parquet('{rows_glob}')
+                GROUP BY pid, field)
+        """).fetchone()[0]
         hot_list_sql = ",".join(
             "'" + t.replace("'", "''") + "'" for t in hot_manifest)
         con.execute(f"""
             COPY (
-                WITH hot_rows AS (
+                WITH field_avg AS (
+                    SELECT field, avg(doc_len) AS avg_dl FROM (
+                        SELECT pid, field, any_value(doc_len) AS doc_len
+                        FROM read_parquet('{rows_glob}')
+                        GROUP BY pid, field)
+                    GROUP BY field
+                ), hot_rows AS (
                     SELECT r.token, r.pid, r.field, r.tf, r.doc_len,
-                           d.df,
-                           avg(r.doc_len) OVER (PARTITION BY r.token) AS avg_dl
+                           d.df, fa.avg_dl
                     FROM read_parquet('{rows_glob}') r
                     JOIN read_parquet('{out_root / "df.parquet"}') d USING (token)
+                    JOIN field_avg fa USING (field)
                     WHERE r.token IN ({hot_list_sql})
-                ), scored AS (
-                    SELECT token, pid, field, tf, doc_len,
+                ), contrib AS (
+                    SELECT token, pid,
                         (CASE field
                             WHEN 'sample.label' THEN 3.0
                             WHEN 'concept.label' THEN 2.5
@@ -473,16 +501,20 @@ def main() -> int:
                             ELSE 1.0 END)
                         * ln((({total_docs_for_idf} - df + 0.5) / (df + 0.5)) + 1)
                         * (tf * 2.2) / (tf + 1.2 * (0.25 + 0.75 * doc_len / avg_dl))
-                        AS static_score
+                        AS c
                     FROM hot_rows
+                ), per_pid AS (
+                    -- §5: rank per PID by the SUM of field-weighted
+                    -- contributions, not per (pid, field) posting.
+                    SELECT token, pid, sum(c) AS static_score
+                    FROM contrib GROUP BY token, pid
                 ), ranked AS (
                     SELECT *, row_number() OVER (
                         PARTITION BY token ORDER BY static_score DESC, pid
                     ) AS rank
-                    FROM scored
+                    FROM per_pid
                 )
-                SELECT token, pid, field, tf, doc_len,
-                       round(static_score, 4) AS static_score, rank
+                SELECT token, pid, round(static_score, 4) AS static_score, rank
                 FROM ranked WHERE rank <= 500
                 ORDER BY token, rank
             ) TO '{topk_path}' (FORMAT PARQUET);
@@ -495,12 +527,15 @@ def main() -> int:
     with open(out_root / "hot_tokens.json", "w") as f:
         json.dump({
             "cap_bytes": cap_bytes,
-            "query_policy": ("hot tokens are COMMON TERMS: drop from AND when the "
-                             "query has >=1 non-hot term (fetch nothing for them); "
-                             "all-hot queries rank via hot_topk.parquet (static "
-                             "single-token BM25 top-500 per token). Readers never "
-                             "fetch hot/<key>_p*.parquet postings at query time; "
-                             "those files exist for offline/#172-oracle use."),
+            "query_policy": ("TWO-TIER (contract §6): tokens with fetchable=true "
+                             "— reader fetches ALL their hot/ sub-files (total fits "
+                             "the cold budget) and they join the AND normally. "
+                             "Tokens with fetchable=false are COMMON TERMS: dropped "
+                             "from AND when >=1 other term survives (UI must "
+                             "disclose); all-common queries rank via "
+                             "hot_topk.parquet (per-pid summed static BM25 "
+                             "top-500). Non-fetchable postings files exist for "
+                             "offline/#172-oracle use only."),
             "sub_shard_hash": ("sub-file membership uses DuckDB hash(pid) — a "
                                "consumer that DOES read hot postings fetches ALL "
                                "sub_files; the split function never needs "
