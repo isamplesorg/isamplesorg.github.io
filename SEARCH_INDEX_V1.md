@@ -150,7 +150,15 @@ Two parquet outputs per data version.
 }
 ```
 
-**Sidecar `df.parquet`** (global per-token document frequency):
+**Shipped shard/hot rows additionally carry `df: UINTEGER`** (round-5
+amendment): df is constant per token and the files are token-sorted, so
+the column RLE-compresses to almost nothing — and the query path then
+needs NO extra fetch for IDF. Corpus constants (`total_documents`,
+per-field `avg_doc_len`) ship in `build_stats.json` (KB-sized).
+
+**Sidecar `df.parquet`** (global per-token document frequency — an
+OFFLINE artifact for builds/analysis/#172 oracle; ~8 MB at corpus scale,
+over-cap, never fetched by the query path):
 
 ```
 {
@@ -256,7 +264,11 @@ budget row above is therefore defined over the §9 canonical benchmark
 (realistic 1–3 term queries) at P50, which is what the #172 gate
 mechanically evaluates; per-query expected transfer is computable
 up-front from `shard_sizes.json` + the manifest, and the benchmark
-records actual bytes per query. Row-group pruning under HTTP range
+records actual bytes per query. The query path's ONLY fetches are:
+token shard/hot sub-files (each ≤ cap, df embedded), optionally
+`hot_topk.parquet` (≤ cap), and the KB-scale `build_stats.json` +
+`hot_tokens.json` + `shard_sizes.json` loaded once at boot —
+`df.parquet` is offline-only. Row-group pruning under HTTP range
 requests (when #190's fallback doesn't fire) reduces real transfer
 below file sizes; budgets do NOT assume it.
 

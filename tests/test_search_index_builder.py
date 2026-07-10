@@ -174,6 +174,19 @@ def test_shard_assignment_matches_fnv1a(built_index):
                 assert got == 0, f"{token} leaked into {f.name}"
 
 
+def test_df_embedded_in_shards(built_index):
+    """Round-5: the query path never fetches df.parquet — df ships as a
+    column in every shard row and must equal the sidecar's value."""
+    root, rows = built_index
+    assert "df" in rows.columns
+    sidecar = duckdb.sql(f"SELECT * FROM read_parquet('{root}/df.parquet')").df()
+    merged = rows.merge(sidecar, on="token", suffixes=("_row", "_sidecar"))
+    assert (merged.df_row == merged.df_sidecar).all()
+    # BM25 constants ship in build_stats.json
+    stats = json.loads((root / "build_stats.json").read_text())
+    assert stats["total_documents"] == len(rows.groupby(["pid", "field"]))
+
+
 def test_df_sidecar(built_index):
     root, rows = built_index
     df = duckdb.sql(f"SELECT * FROM read_parquet('{root}/df.parquet')").df()

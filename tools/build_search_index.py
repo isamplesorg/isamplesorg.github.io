@@ -287,14 +287,19 @@ def main() -> int:
 
     rows_glob = os.path.join(tmp_dir, "rows_*.parquet")
 
-    # Sidecar df.parquet: documents are (pid, field) pairs; rows are already
-    # unique per (token, pid, field), so DF is a plain count.
+    # df.parquet: documents are (pid, field) pairs; rows are already unique
+    # per (token, pid, field), so DF is a plain count. NOTE (round 5): this
+    # sidecar is an OFFLINE artifact (8 MB at corpus scale, over-cap) — the
+    # query path never fetches it, because df is EMBEDDED as a column in
+    # every shipped shard/hot row below (sorted-by-token runs RLE-compress
+    # to ~nothing) and corpus constants ride in build_stats.json.
+    df_path = out_root / "df.parquet"
     con.execute(f"""
         COPY (
             SELECT token, count(*)::UINTEGER AS df
             FROM read_parquet('{rows_glob}')
             GROUP BY token ORDER BY token
-        ) TO '{out_root / "df.parquet"}' (FORMAT PARQUET);
+        ) TO '{df_path}' (FORMAT PARQUET);
     """)
 
     # Hot-token isolation + per-shard ordered writes (§6).
@@ -362,11 +367,12 @@ def main() -> int:
                 path = hot_dir / f"{key}_p{m}.parquet"
                 con.execute(f"""
                     COPY (
-                        SELECT token, pid, field, tf, doc_len
-                        FROM read_parquet('{rows_glob}')
-                        WHERE token = '{tok_sql}'
-                          AND (CAST(hash(pid) AS UBIGINT) % {m_count}) = {m}
-                        ORDER BY pid, field
+                        SELECT r.token, r.pid, r.field, r.tf, r.doc_len, d.df
+                        FROM read_parquet('{rows_glob}') r
+                        JOIN read_parquet('{df_path}') d USING (token)
+                        WHERE r.token = '{tok_sql}'
+                          AND (CAST(hash(r.pid) AS UBIGINT) % {m_count}) = {m}
+                        ORDER BY r.pid, r.field
                     ) TO '{path}' (FORMAT PARQUET);
                 """)
                 paths.append(path)
@@ -411,11 +417,12 @@ def main() -> int:
         for _attempt in range(12):
             con.execute(f"""
                 COPY (
-                    SELECT token, pid, field, tf, doc_len
-                    FROM read_parquet('{rows_glob}')
-                    WHERE shard = {shard}
-                      AND token NOT IN (SELECT token FROM hot_tokens)
-                    ORDER BY token, pid, field
+                    SELECT r.token, r.pid, r.field, r.tf, r.doc_len, d.df
+                    FROM read_parquet('{rows_glob}') r
+                    JOIN read_parquet('{df_path}') d USING (token)
+                    WHERE r.shard = {shard}
+                      AND r.token NOT IN (SELECT token FROM hot_tokens)
+                    ORDER BY r.token, r.pid, r.field
                 ) TO '{shard_path}' (FORMAT PARQUET);
             """)
             size = shard_path.stat().st_size
@@ -441,11 +448,12 @@ def main() -> int:
             # if it still doesn't fit.
             con.execute(f"""
                 COPY (
-                    SELECT token, pid, field, tf, doc_len
-                    FROM read_parquet('{rows_glob}')
-                    WHERE shard = {shard}
-                      AND token NOT IN (SELECT token FROM hot_tokens)
-                    ORDER BY token, pid, field
+                    SELECT r.token, r.pid, r.field, r.tf, r.doc_len, d.df
+                    FROM read_parquet('{rows_glob}') r
+                    JOIN read_parquet('{df_path}') d USING (token)
+                    WHERE r.shard = {shard}
+                      AND r.token NOT IN (SELECT token FROM hot_tokens)
+                    ORDER BY r.token, r.pid, r.field
                 ) TO '{shard_path}' (FORMAT PARQUET);
             """)
             size = shard_path.stat().st_size
@@ -462,19 +470,20 @@ def main() -> int:
     # terms DROP the hot terms from AND matching (common-term rule); pure-
     # hot queries rank via this sidecar. K=500 keeps headroom for source/
     # facet post-filtering while staying a single small file.
+    # Corpus statistics per contract §5 / Codex round 3: totalDocs is the
+    # number of (pid, field) DOCUMENTS (rows are unique per (token,pid,field),
+    # so distinct (pid,field) must be counted explicitly), and doc-length
+    # normalization uses the PER-FIELD corpus average. Computed
+    # unconditionally: the browser reader needs both as BM25 constants (they
+    # ship in build_stats.json — round-5: the query path must not depend on
+    # the over-cap df.parquet sidecar).
+    total_docs_for_idf = con.sql(f"""
+        SELECT count(*) FROM (
+            SELECT pid, field FROM read_parquet('{rows_glob}')
+            GROUP BY pid, field)
+    """).fetchone()[0]
     topk_path = out_root / "hot_topk.parquet"
     if hot_manifest:
-        # Corpus statistics per contract §5 / Codex round 3: totalDocs is the
-        # number of (pid, field) DOCUMENTS (rows are unique per
-        # (token,pid,field), so distinct (pid,field) must be counted
-        # explicitly), and doc-length normalization uses the PER-FIELD corpus
-        # average — not a per-token average, which would re-center every hot
-        # token's normalization on its own postings.
-        total_docs_for_idf = con.sql(f"""
-            SELECT count(*) FROM (
-                SELECT pid, field FROM read_parquet('{rows_glob}')
-                GROUP BY pid, field)
-        """).fetchone()[0]
         hot_list_sql = ",".join(
             "'" + t.replace("'", "''") + "'" for t in hot_manifest)
         con.execute(f"""
@@ -569,6 +578,7 @@ def main() -> int:
         "data_version": args.tag,
         "built_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "total_samples": total_samples,
+        "total_documents": total_docs_for_idf,
         "fields": {
             f: {
                 "samples_with_field": field_stats[f]["samples_with_field"],

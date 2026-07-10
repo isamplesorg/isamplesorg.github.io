@@ -1,7 +1,8 @@
 {
  "data_version": "isamples_202608",
- "built_at_utc": "2026-07-10T22:41:08Z",
+ "built_at_utc": "2026-07-10T22:58:34Z",
  "total_samples": 6726892,
+ "total_documents": 17366831,
  "fields": {
   "sample.label": {
    "samples_with_field": 6723722,
@@ -42,13 +43,13 @@
   "max_tf_observed": 19
  },
  "shard_count": 256,
- "shard_files": 902,
- "hot_tokens": 137,
+ "shard_files": 847,
+ "hot_tokens": 129,
  "shard_cap_violations": 0,
  "shard_hash": "fnv1a32(utf8(token)) % shards",
  "shard_max_size_mb": 4.93,
  "total_bytes_uncompressed": 7245750192,
- "build_seconds": 567.8,
+ "build_seconds": 516.4,
  "top_df_tokens": [
   [
    "sample",
