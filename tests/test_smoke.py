@@ -122,10 +122,20 @@ def test_explorer_smoke(browser):
                 const t = (el && el.textContent || '').trim();
                 return t && !/Searching/i.test(t) && /result/i.test(t);
             }""",
-            # Aligned with the perf test's 90s search budget — a cold
-            # DuckDB-WASM query + remote parquet fetch on a slow CI
-            # runner can exceed 60s without the build being broken.
-            timeout=90_000,
+            # Liveness budget, not a latency SLA. A cold DuckDB-WASM query
+            # must download the FULL facets parquet on CI (the #190
+            # range-request fallback), then ILIKE-scan it; on a slow shared
+            # runner 90s was already marginal for broad terms like
+            # "pottery", and the #326 place-name rebuild grew the file
+            # 62.5→69.4 MB (real place strings), which pushed borderline
+            # runners over: the same commit passed this gate at 06:20 and
+            # failed it twice ~07:15 on 2026-07-10. 150s keeps the gate
+            # meaningful (dead search wiring still fails fast via the
+            # pageerror/fatal-console asserts below) without flaking on
+            # runner variance. Search *latency* is tracked separately
+            # (#167 perf instrumentation, #190 fallback, #169–#172 FTS as
+            # the real fix).
+            timeout=150_000,
         )
         results_text = page.locator("#searchResults").inner_text().strip()
 
