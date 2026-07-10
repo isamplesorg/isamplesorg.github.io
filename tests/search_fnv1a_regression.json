@@ -1,0 +1,82 @@
+[
+ {
+  "input": "pottery",
+  "fnv1a32": 3121265474
+ },
+ {
+  "input": "cyprus",
+  "fnv1a32": 1194896787
+ },
+ {
+  "input": "basalt",
+  "fnv1a32": 3758865220
+ },
+ {
+  "input": "catalhoyuk",
+  "fnv1a32": 1680059526
+ },
+ {
+  "input": "material",
+  "fnv1a32": 3538210912
+ },
+ {
+  "input": "a",
+  "fnv1a32": 3826002220
+ },
+ {
+  "input": "z",
+  "fnv1a32": 4278997933
+ },
+ {
+  "input": "igsn",
+  "fnv1a32": 877601424
+ },
+ {
+  "input": "hrv000abc",
+  "fnv1a32": 4165183063
+ },
+ {
+  "input": "1965",
+  "fnv1a32": 676065338
+ },
+ {
+  "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "fnv1a32": 3516603077
+ },
+ {
+  "input": "陶器",
+  "fnv1a32": 1823698683
+ },
+ {
+  "input": "сосуд",
+  "fnv1a32": 3730779371
+ },
+ {
+  "input": "κεραμικος",
+  "fnv1a32": 2429063684
+ },
+ {
+  "input": "unknownstuff",
+  "fnv1a32": 1666634825
+ },
+ {
+  "input": "volcanic",
+  "fnv1a32": 1893227256
+ },
+ {
+  "input": "rock",
+  "fnv1a32": 974867124
+ },
+ {
+  "input": "seamount",
+  "fnv1a32": 2199515177
+ },
+ {
+  "input": "0",
+  "fnv1a32": 890022063
+ },
+ {
+  "input": "9999999",
+  "fnv1a32": 202886326
+ }
+]
