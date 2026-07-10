@@ -1,0 +1,310 @@
+[
+ {
+  "input": "Çatalhöyük",
+  "expected_tokens": [
+   "catalhoyuk"
+  ]
+ },
+ {
+  "input": "Köln",
+  "expected_tokens": [
+   "koln"
+  ]
+ },
+ {
+  "input": "São Paulo",
+  "expected_tokens": [
+   "sao",
+   "paulo"
+  ]
+ },
+ {
+  "input": "ÇATALHÖYÜK EXCAVATION",
+  "expected_tokens": [
+   "catalhoyuk",
+   "excavation"
+  ]
+ },
+ {
+  "input": "MaterialSampleRecord",
+  "expected_tokens": [
+   "materialsamplerecord"
+  ]
+ },
+ {
+  "input": "iSamples",
+  "expected_tokens": [
+   "isamples"
+  ]
+ },
+ {
+  "input": "Iron-Age",
+  "expected_tokens": [
+   "iron",
+   "age"
+  ]
+ },
+ {
+  "input": "co-located",
+  "expected_tokens": [
+   "co",
+   "located"
+  ]
+ },
+ {
+  "input": "Poggio Civitate (Murlo)",
+  "expected_tokens": [
+   "poggio",
+   "civitate",
+   "murlo"
+  ]
+ },
+ {
+  "input": "Axial Seamount, North Pacific Ocean",
+  "expected_tokens": [
+   "axial",
+   "seamount",
+   "north",
+   "pacific",
+   "ocean"
+  ]
+ },
+ {
+  "input": "Tell es-Sultan/Jericho",
+  "expected_tokens": [
+   "tell",
+   "es",
+   "sultan",
+   "jericho"
+  ]
+ },
+ {
+  "input": "Petra — the Treasury",
+  "expected_tokens": [
+   "petra",
+   "the",
+   "treasury"
+  ]
+ },
+ {
+  "input": "IGSN:HRV000ABC",
+  "expected_tokens": [
+   "igsn",
+   "hrv000abc"
+  ]
+ },
+ {
+  "input": "IGSN:321000001",
+  "expected_tokens": [
+   "igsn",
+   "321000001"
+  ]
+ },
+ {
+  "input": "ark:/28722/r2p24/vdm_19600211",
+  "expected_tokens": [
+   "ark",
+   "28722",
+   "r2p24",
+   "vdm",
+   "19600211"
+  ]
+ },
+ {
+  "input": "1965",
+  "expected_tokens": [
+   "1965"
+  ]
+ },
+ {
+  "input": "2.5kg",
+  "expected_tokens": [
+   "2",
+   "5kg"
+  ]
+ },
+ {
+  "input": "40.7128, -74.0060",
+  "expected_tokens": [
+   "40",
+   "7128",
+   "74",
+   "0060"
+  ]
+ },
+ {
+  "input": "40°N 74°W",
+  "expected_tokens": [
+   "40",
+   "n",
+   "74",
+   "w"
+  ]
+ },
+ {
+  "input": "",
+  "expected_tokens": []
+ },
+ {
+  "input": "   ",
+  "expected_tokens": []
+ },
+ {
+  "input": "\t\n",
+  "expected_tokens": []
+ },
+ {
+  "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "expected_tokens": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ]
+ },
+ {
+  "input": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "expected_tokens": []
+ },
+ {
+  "input": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc short",
+  "expected_tokens": [
+   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+   "short"
+  ]
+ },
+ {
+  "input": "pottery",
+  "expected_tokens": [
+   "pottery"
+  ]
+ },
+ {
+  "input": "ceramic",
+  "expected_tokens": [
+   "ceramic"
+  ]
+ },
+ {
+  "input": "bone",
+  "expected_tokens": [
+   "bone"
+  ]
+ },
+ {
+  "input": "mammal",
+  "expected_tokens": [
+   "mammal"
+  ]
+ },
+ {
+  "input": "marine",
+  "expected_tokens": [
+   "marine"
+  ]
+ },
+ {
+  "input": "basalt",
+  "expected_tokens": [
+   "basalt"
+  ]
+ },
+ {
+  "input": "ＦＵＬＬＷＩＤＴＨ ｔｅｘｔ",
+  "expected_tokens": [
+   "fullwidth",
+   "text"
+  ]
+ },
+ {
+  "input": "ﬁne ﬂoral",
+  "expected_tokens": [
+   "fine",
+   "floral"
+  ]
+ },
+ {
+  "input": "½ liter",
+  "expected_tokens": [
+   "1",
+   "2",
+   "liter"
+  ]
+ },
+ {
+  "input": "the site's 'best' find",
+  "expected_tokens": [
+   "the",
+   "site",
+   "s",
+   "best",
+   "find"
+  ]
+ },
+ {
+  "input": "O'Brien",
+  "expected_tokens": [
+   "o",
+   "brien"
+  ]
+ },
+ {
+  "input": "陶器 сосуд κεραμικός",
+  "expected_tokens": [
+   "陶器",
+   "сосуд",
+   "κεραμικος"
+  ]
+ },
+ {
+  "input": "sample_id=ABC&type=rock",
+  "expected_tokens": [
+   "sample",
+   "id",
+   "abc",
+   "type",
+   "rock"
+  ]
+ },
+ {
+  "input": "http://w3id.org/isample/material/1.0/pottery",
+  "expected_tokens": [
+   "http",
+   "w3id",
+   "org",
+   "isample",
+   "material",
+   "1",
+   "0",
+   "pottery"
+  ]
+ },
+ {
+  "input": "𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀",
+  "expected_tokens": [
+   "𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨"
+  ]
+ },
+ {
+  "input": "𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀",
+  "expected_tokens": []
+ },
+ {
+  "input": "𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀",
+  "expected_tokens": [
+   "𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨𐐨"
+  ]
+ },
+ {
+  "input": "Deseret 𐐐𐐲𐑌𐐼𐑉𐐲𐐼 text",
+  "expected_tokens": [
+   "deseret",
+   "𐐸𐐲𐑌𐐼𐑉𐐲𐐼",
+   "text"
+  ]
+ },
+ {
+  "input": "𝔉𝔞𝔨𝔢 𝔟𝔬𝔩𝔡",
+  "expected_tokens": [
+   "fake",
+   "bold"
+  ]
+ }
+]
