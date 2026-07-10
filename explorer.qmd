@@ -822,7 +822,7 @@ lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`
 // pinning the version here keeps staging and prod each self-consistent.
 wide_url = `${R2_BASE}/isamples_202608_wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
-facets_url = `${R2_BASE}/isamples_202608_sample_facets_v3.parquet`
+facets_url = `${R2_BASE}/isamples_202608_sample_facets_v4.parquet`
 facet_summaries_url = `${R2_BASE}/isamples_202608_facet_summaries.parquet`
 // Pre-aggregated single-filter cache for fast cross-filtered facet counts.
 cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
