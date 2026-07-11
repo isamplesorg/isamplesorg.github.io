@@ -1,19 +1,21 @@
 // Browser-side query engine for the v1 search substrate (#171, SEARCH_INDEX_V1.md).
 //
 // PURE functions only — no DuckDB, no fetch, no DOM. The explorer's flag
-// path (Phase B) feeds this module rows it fetched via db.query; that split
-// keeps every piece of query logic unit-testable in Node
+// path feeds this module data it fetched via db.query; the split keeps every
+// piece of query logic unit-testable in Node
 // (tests/unit/search-substrate.test.mjs) and the explorer wiring thin.
 //
-// Pipeline (contract §3, §5):
-//   tokenize (search_tokenizer.js) → drop query-time stopwords → locate each
-//   token's shard file(s) → BM25 per (pid, field) posting → field-weighted
-//   sum per pid → AND across tokens → top-K.
+// Pipeline (contract §3, §5, §6 two-tier rule):
+//   tokenize (search_tokenizer.js) → drop query-time stopwords → dedupe →
+//   two-tier hot policy (fetchable hot joins the AND; non-fetchable common
+//   terms are dropped-with-disclosure, or an all-common query serves from
+//   the hot_topk sidecar) → resolve substrate files → BM25 per posting →
+//   field-weighted per-pid sums → AND across tokens → top-K.
 
 import { tokenize } from './search_tokenizer.js';
 
 // FNV-1a 32-bit over UTF-8 bytes. MUST match tools/build_search_index.py's
-// fnv1a32 exactly — parity is pinned by tests/search_fnv1a_regression.json
+// fnv1a32 exactly — parity pinned by tests/search_fnv1a_regression.json
 // (values generated from the Python implementation).
 export function fnv1a32(str) {
     let h = 0x811c9dc5;
@@ -21,7 +23,6 @@ export function fnv1a32(str) {
     for (const b of bytes) {
         h ^= b;
         // 32-bit multiply by the FNV prime 0x01000193 without BigInt:
-        // h * 16777619 = h*2^24 + h*2^9 + h*2^8 + h*2^7 + h*2^4 + h*2 + h
         h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
     }
     return h >>> 0;
@@ -45,61 +46,106 @@ export const BM25_K1 = 1.2;
 export const BM25_B = 0.75;
 export const TOP_K = 50;
 
+const shardFile = (token, shardCount) =>
+    `shard_${String(fnv1a32(token) % shardCount).padStart(3, '0')}.parquet`;
+
 /**
- * Plan a query: tokenize, apply stopword policy, dedupe, and resolve the
- * substrate file path(s) for each surviving token.
+ * Plan a query under the §6 two-tier hot rule.
  *
- * @param term        raw user input
- * @param manifest    { shardCount, hotTokens } — shardCount from
- *                    build_stats.json; hotTokens = the `tokens` object of
- *                    hot_tokens.json ({token: {key, sub_files}}).
+ * @param term       raw user input
+ * @param manifest   { shardCount, hotTokens } — shardCount from
+ *                   build_stats.json; hotTokens = hot_tokens.json's `tokens`
+ *                   ({token: {key, sub_files, postings, total_bytes,
+ *                   fetchable}}).
+ * @param shardSizes optional shard_sizes.json object ({file: bytes}); when
+ *                   given, the plan carries expectedBytes so callers can
+ *                   report transfer up-front (§7).
  * @returns {{
- *   tokens: string[],          // surviving, deduped, order-preserved
- *   allStopwords: boolean,     // input had tokens but none survived (§3
- *                              //   controlled-empty state, NOT a search)
- *   empty: boolean,            // input produced no tokens at all
+ *   mode: 'empty'|'allStopwords'|'normal'|'topk',
+ *   tokens: string[],          // tokens participating in the AND
+ *   ignoredCommon: string[],   // non-fetchable hot terms dropped (§3 —
+ *                              //   the UI MUST disclose these)
  *   files: string[],           // deduped relative substrate paths to fetch
  *   filesByToken: Map<string, string[]>,
+ *   expectedBytes: number|null,
  * }}
  */
-export function planQuery(term, manifest) {
+export function planQuery(term, manifest, shardSizes = null) {
     const raw = tokenize(term);
     const survivors = [];
     for (const t of raw) {
         if (QUERY_STOPWORDS.has(t)) continue;
         if (!survivors.includes(t)) survivors.push(t);  // duplicate-term dedup
     }
+    const base = { ignoredCommon: [], files: [], filesByToken: new Map(), expectedBytes: null };
+    if (raw.length === 0) return { ...base, mode: 'empty', tokens: [] };
+    if (survivors.length === 0) return { ...base, mode: 'allStopwords', tokens: [] };
+
+    const hot = manifest.hotTokens || {};
+    const participating = [];
+    const common = [];
+    for (const t of survivors) {
+        const h = hot[t];
+        if (h && !h.fetchable) common.push(t);
+        else participating.push(t);
+    }
+
+    if (participating.length === 0) {
+        // Every surviving term is a common term: rank via the sidecar.
+        return {
+            mode: 'topk', tokens: common, ignoredCommon: [],
+            files: ['hot_topk.parquet'],
+            filesByToken: new Map(common.map(t => [t, ['hot_topk.parquet']])),
+            expectedBytes: null,
+        };
+    }
+
     const filesByToken = new Map();
     const files = [];
-    for (const t of survivors) {
-        const hot = manifest.hotTokens && manifest.hotTokens[t];
-        const tokenFiles = hot
-            ? Array.from({ length: hot.sub_files },
-                         (_, m) => `hot/${hot.key}_p${m}.parquet`)
-            : [`shard_${String(fnv1a32(t) % manifest.shardCount).padStart(3, '0')}.parquet`];
+    for (const t of participating) {
+        const h = hot[t];
+        const tokenFiles = (h && h.fetchable)
+            ? Array.from({ length: h.sub_files },
+                         (_, m) => `hot/${h.key}_p${m}.parquet`)
+            : [shardFile(t, manifest.shardCount)];
         filesByToken.set(t, tokenFiles);
         for (const f of tokenFiles) if (!files.includes(f)) files.push(f);
     }
+    let expectedBytes = null;
+    if (shardSizes) {
+        expectedBytes = 0;
+        const counted = new Set();
+        for (const t of participating) {
+            const h = hot[t];
+            if (h && h.fetchable) {
+                if (!counted.has(h.key)) { expectedBytes += h.total_bytes; counted.add(h.key); }
+            } else {
+                const f = shardFile(t, manifest.shardCount);
+                if (!counted.has(f)) { expectedBytes += shardSizes[f] ?? 0; counted.add(f); }
+            }
+        }
+    }
     return {
-        tokens: survivors,
-        allStopwords: raw.length > 0 && survivors.length === 0,
-        empty: raw.length === 0,
-        files,
-        filesByToken,
+        mode: 'normal', tokens: participating, ignoredCommon: common,
+        files, filesByToken, expectedBytes,
     };
 }
 
 /**
  * BM25 contribution of one posting row (contract §5).
- * @param row     { field, tf, doc_len, df }
- * @param stats   { totalDocs, avgDocLen } — corpus-level; #171 Phase B reads
- *                totalDocs as the df.parquet row-domain (COUNT of (pid,field)
- *                docs) and avgDocLen over the fetched postings' universe.
+ * @param row     { field, tf, doc_len, df } — df is EMBEDDED in shipped rows
+ *                (round-5 amendment; df.parquet is offline-only).
+ * @param stats   { totalDocs, avgDocLenByField } — from build_stats.json:
+ *                totalDocs = total_documents (distinct (pid, field) docs);
+ *                avgDocLenByField[field] = fields[field].avg_doc_len
+ *                (PER-FIELD corpus averages, matching the builder's
+ *                hot_topk scoring).
  */
 export function bm25Contribution(row, stats) {
     const idf = Math.log((stats.totalDocs - row.df + 0.5) / (row.df + 0.5) + 1);
+    const avgDl = stats.avgDocLenByField[row.field];
     const norm = row.tf * (BM25_K1 + 1)
-        / (row.tf + BM25_K1 * (1 - BM25_B + BM25_B * row.doc_len / stats.avgDocLen));
+        / (row.tf + BM25_K1 * (1 - BM25_B + BM25_B * row.doc_len / avgDl));
     const weight = FIELD_WEIGHTS[row.field] ?? 1.0;
     return weight * idf * norm;
 }
@@ -108,7 +154,7 @@ export function bm25Contribution(row, stats) {
  * Combine postings into the final AND-ranked top-K.
  *
  * @param postingsByToken  Map<token, Array<{pid, field, tf, doc_len, df}>>
- * @param stats            { totalDocs, avgDocLen }
+ * @param stats            { totalDocs, avgDocLenByField }
  * @param k                top-K cap (default contract TOP_K = 50)
  * @returns Array<{pid, score}> sorted score desc, pid asc for stable ties.
  */
