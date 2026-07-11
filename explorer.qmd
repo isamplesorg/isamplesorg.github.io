@@ -415,6 +415,17 @@ format:
         right: auto;
         z-index: 1100;
     }
+    /* #324: in this vertical toolbar the sceneModePicker's EXPANDED
+       2D/Columbus buttons drop DOWN into the baseLayerPicker button's
+       space; without a stacking context the later sibling paints on top
+       and silently eats the clicks (Andrea: "clicked the globe button,
+       nothing happened" — elementFromPoint at the 2D button's center
+       returned .cesium-baseLayerPicker-selected). Same fix family as the
+       dropdown rule above. */
+    .cesium-sceneModePicker-wrapper {
+        position: relative;
+        z-index: 1100;
+    }
     .search-bar { display: flex; gap: 6px; }
     .search-bar input {
         flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
