@@ -29,6 +29,11 @@ async function bootAndSearch(page, term) {
 }
 
 test.describe('substrate search (?fts=v1)', () => {
+  // Cold-CDN e2e: the first substrate search pays boot + lazy module import
+  // + three sidecar fetches + per-token shards. 22s was observed passing;
+  // a cold edge tips past the 30s config default, so the suite gets an
+  // honest budget (still far under the interim path's cold cost).
+  test.describe.configure({ timeout: 120_000 });
   test.beforeEach(async ({ page }) => {
     await page.goto(URL, { timeout: 90_000 });
     await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
