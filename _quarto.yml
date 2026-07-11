@@ -5,6 +5,13 @@ project:
     - assets/js/source-palette.js
     - assets/js/sql-builders.js
     - assets/js/explorer-utils.js
+    # #171: the substrate search engine + tokenizer are ES modules imported
+    # by explorer.qmd at page runtime — without these resource entries the
+    # import 404s and the OJS dependency cascade silently kills the entire
+    # search cell (boot fine, search dead: exactly what the smoke's 150s
+    # search timeout looks like).
+    - assets/js/search_substrate.js
+    - assets/js/search_tokenizer.js
     # #295: quarto.js unconditionally fetches /listings.json on every page
     # whose frontmatter declares `categories:` (explorer.qmd and others do,
     # for the tag chips under the title). Quarto only ever GENERATES that
