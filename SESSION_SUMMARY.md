@@ -1,6 +1,63 @@
 # Session Summary
 
-## Session: 2026-07-03 — Eric/Andrea Explorer fixes shipped to prod; #311 place/date; John K showcase
+## Session: 2026-07-10 (afternoon/evening) — FTS "really fixed": #170 shipped, #171 flag path ready
+**Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
+**Trust Level**: high-risk (merged PR #329 to main; uploaded 852-object index to R2/data.isamples.org; posted rbotyee comments; closed #170)
+
+### What Happened
+RY: "let's really fix the FTS problem. Worth the use of monster SOTA models: Fable and GPT 5.6." Sequencing question (refactor-first vs dive-in) resolved by events — dove in, empirical loop won.
+
+- **#170 COMPLETE** ([PR #329](https://github.com/isamplesorg/isamplesorg.github.io/pull/329) merged, issue closed): tokenizer twins w/ CI parity gate; builder → 256 FNV-1a base shards + two-tier hot isolation (82 fetchable / 55 common terms) + hot_topk sidecar + df EMBEDDED in rows + shard_sizes.json. **Index LIVE**: `data.isamples.org/isamples_202608_search_index_v1/` (852 objects, every query-path file ≤5 MiB). **9 full-corpus builds, 6 Codex review rounds** — ledger on the PR (real FNV collision, astral parity, budget contradictions, per-pid scoring, df accounting — all found by review, all verified before fixing). Contract SEARCH_INDEX_V1.md amended ×3 (keywords pulled from v2 — else 'pottery Cyprus'=0; two-tier hot; honest §7 budgets).
+- **#171 READY** ([PR #330](https://github.com/isamplesorg/isamplesorg.github.io/pull/330), CC+Codex+LGTM): pure-JS query engine (FNV/BM25/two-tier planning, 15 unit tests) + `?fts=v1` explorer wiring (same search_pids singleton → all surfaces shared; lazy import; disclosure UI; controlled empties) + 6/6 live e2e spec. **Measured: axial 284 @ 3.2s (vs 9.3s interim), pottery Cyprus 1,305 @ 3.8MB, zero console errors.** Known: all-common topk intersection can be empty ('material sample' → 0) — documented, #172 will benchmark; union-rank = candidate fix. [MERGED 2026-07-11 AM per RY.]
+- Remaining FTS: benchmark harness (the #172 metrics JSON), then #172 gate. Early signal: GO-shaped.
+
+### Gotchas (new)
+- **Quarto resources allowlist**: page-runtime ES-module imports MUST be listed in `_quarto.yml` resources or the import 404s and the OJS cascade kills every dependent cell (boot green, search dead — the smoke gate caught it).
+- **codex exec + capacity**: gpt-5.6-sol shed non-interactive load much of the day; processes STARTED in a trough wedge permanently (1.5h silent). Protocol: probe with `timeout 240 codex exec 'Reply OK'` before firing; kill anything silent >20min; interactive TUI sessions survive what exec doesn't. Raymond's tip: iTerm Python API to peek at his panes; rollout files (~/.codex/sessions/) reveal a live session's model/activity.
+- Playwright config's 30s default test timeout vs cold-CDN e2e: suite-scope a realistic budget; the interim path is the slow one (69MB) — the asymmetry is the feature.
+- **git reset --hard destroyed this file's uncommitted state (2026-07-11)** — recovered from the popped-stash dangling commit (2b27a93). Rule: commit session summaries IMMEDIATELY; never reset --hard with a dirty tree (the auto-classifier warned exactly this on 7/10 and was right).
+
+### Open Threads
+- [x] RY merged PR #330 (2026-07-11 AM)
+- [ ] Benchmark harness → `tests/search_substrate_benchmark_*.json` (#171 §3 metrics contract → #172 consumes) — RY: "yes to 172, get the numbers"
+- [ ] #324 scene-mode picker overlay fix (root-caused: expanded 2D/Columbus buttons covered by baseLayerPicker in the vertical toolbar; CSS stacking fix; Codex optional per RY)
+- [ ] #172 GO/NO-GO once benchmark lands; all-common empty-rate + union-rank question; RY hand-labels the benchmark answer key (~30 min)
+- [ ] Codex's release-manifest coherence work; coherence meta-issue still to file
+- [ ] SERIALIZATIONS.md: add search-index artifact set (+ unpushed `docs/serializations-drift-2026-07` branch)
+- [ ] Andrea threads: #326 reply (fts=v1 live), #325 design answers, viewport-decoupling; Zenodo parked (Andrea controls)
+
+---
+
+## PREVIOUS Session: 2026-07-10 (morning) — Andrea's 4 issues worked; #321 merged; Codex 5.6 coherence review
+**Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
+**Trust Level**: high-risk (merged #321 to prod; uploaded facets_v4 to R2; posted 6 GitHub comments signed "rbotyee"; opened PRs #327/#328)
+
+### What Happened
+- **#321 MERGED + live-verified** (fresh context, 0 errors) after John K's general approval; closure comment on #142.
+- **#326 root-caused**: deployed `sample_facets_v3` predates the #311 fix → `place_name` NULL ×6,026,242 while the table displays Place from lite_v3. Rebuilt from prod wide (zero non-place diffs; 37.6% place coverage; 284 exact-phrase matches consistent with lite), uploaded **`isamples_202608_sample_facets_v4.parquet`** to R2, one-line repoint → **PR #327** (CC+Codex+LGTM label). "Hang" half measured: ~9s cold/~24s follow-up on fast broadband; 69MB cold full-read (#190) = minutes on slow links; evidence for FTS #169–#172.
+- **#323 implemented** → **PR #328** (CC+Codex+LGTM): PID column (ellipsized) + Source URL column (n2t.net, row-specific aria-label) in table + CSV (`source_url` appended LAST); `activateRow` ignores clicks inside `<a>`. Smoke-tested per Codex's condition (link-vs-row click, keyboard, narrow viewport).
+- **#324 answered**: Cesium's scene-mode picker (2D/Columbus) is ALREADY on prod — never disabled; work = testing/hardening + discoverability, not building. **#325 answered**: Macrostrat XYZ tiles verified live; UrlTemplateImageryProvider + alpha ≈ a day.
+- **#313 guidance posted** (bandwidth/browser recommendations).
+- **Codex 5.6 coherence review** (Raymond's ask): approves both PRs; P0 risk = facets↔lite↔wide with no runtime handshake (= today's bug); proposes a release manifest (pin ONE release id, derive all parquet URLs; validate at boot; 3–4 days). Sharp correction adopted: contract is a *validated release set*, not same-build provenance. Also caught hard-coded preload URLs bypassing R2_BASE. Prompt: `~/C/src/iSamples/CODEX_PROMPT_2026-07-10.md`.
+- **CI regression caught during Raymond's preview-first merge gate**: smoke "pottery" search blew its 90s budget twice (facets +11% → cold download longer); same commit passed at 06:20. Bumped budget to 150s (`04806dc`, liveness-not-latency rationale) — itself an example of pipeline↔CI coupling for the coherence file.
+
+### Gotchas (new)
+- **Smoke budgets encode artifact sizes**: a data-only rebuild can flip CI red with zero code change. Note for the release-manifest design.
+- Local `main` is stale/diverged (June #293 dupes) — auto-classifier blocks reset; work from branches off `upstream/main` (backup at `.claude/worktrees`; fix later).
+- `op run --env-file=<(...)` fails in backgrounded shells; use `export VAR=$(op read ...)`.
+- Zenodo deposit API rejects `conformsTo` relation.
+
+### Open Threads
+- [ ] Merge #327 (Raymond approved; awaiting green preview with 150s budget) → prod verify
+- [ ] Merge #328 (Raymond approved; preview proof-of-life then merge) → prod verify
+- [ ] File coherence meta-issue after 9am meeting (from Codex review + smoke-budget addendum)
+- [ ] Zenodo: ON HOLD per Raymond (new files may come); draft 21288719 parked; creator-list still open; grant ends 7/31
+- [ ] SERIALIZATIONS.md refresh on local branch `docs/serializations-drift-2026-07` — needs push+PR (also update it for facets_v4 once #327 merges)
+- [ ] #320 fresher export — raise at meeting
+
+---
+
+## PREVIOUS Session: 2026-07-03 — Eric/Andrea Explorer fixes shipped to prod; #311 place/date; John K showcase
 **Directory**: /Users/raymondyee/C/src/iSamples/isamplesorg.github.io
 **Trust Level**: high-risk (used R2 credentials via 1Password service-account token → uploaded to production `isamples-ry` bucket; merged 2 PRs to production isamples.org; posted public GitHub comments; browser automation against live sites)
 
