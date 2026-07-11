@@ -75,6 +75,11 @@ test.describe('substrate search (?fts=v1)', () => {
       && window.__searchFilter.active === false, null, { timeout: 60_000 });
     const note = await page.evaluate(() => window.__searchFilter.note || '');
     expect(note).toMatch(/common words/i);
+    // The copy must be USER-VISIBLE (Codex review), not just internal state.
+    await page.waitForFunction(() =>
+      /common words/i.test(document.getElementById('searchResults')?.textContent || '')
+      || /common words/i.test(document.getElementById('samplesSection')?.textContent || ''),
+      null, { timeout: 60_000 });
   });
 
   test('default path untouched: no fts param → interim search', async ({ page }) => {

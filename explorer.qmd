@@ -924,10 +924,6 @@ looksLikePid = _sqlBuilders.looksLikePid
 pidSearchWhere = _sqlBuilders.pidSearchWhere
 
 _explorerUtils = await import(new URL('assets/js/explorer-utils.js', document.baseURI).href)
-// #171: substrate query engine (feature-flagged ?fts=v1 — see
-// buildSearchFilterSubstrate). Pure planning/scoring logic lives in the
-// module (Node-unit-tested); the explorer only wires it to DuckDB.
-_searchSubstrate = await import(new URL('assets/js/search_substrate.js', document.baseURI).href)
 escapeHtml = _explorerUtils.escapeHtml
 facetCountsDisplayState = _explorerUtils.facetCountsDisplayState
 searchTerms = _explorerUtils.searchTerms
@@ -5782,10 +5778,20 @@ zoomWatcher = {
         return _substrateMeta;
     }
 
+    let _substrateModPromise = null;
+
     async function buildSearchFilterSubstrate(term) {
         const token = ++_searchFilterToken;
         window.a1dbg?.('substrate-search-start', { term, token });
+        // Lazy module import (Codex review): flag-off visitors must not
+        // download/evaluate the substrate modules, and a module-load failure
+        // must not be able to kill the default search cell — so the import
+        // happens HERE, on first flagged search, not as an OJS dependency.
+        _substrateModPromise ??= import(new URL('assets/js/search_substrate.js', document.baseURI).href);
+        const _searchSubstrate = await _substrateModPromise;
+        if (token !== _searchFilterToken) return false;   // superseded during import
         const meta = await loadSubstrateMeta();
+        if (token !== _searchFilterToken) return false;   // superseded during meta fetch
         const plan = _searchSubstrate.planQuery(term, meta.manifest, meta.shardSizes);
         if (plan.mode === 'empty' || plan.mode === 'allStopwords') {
             // Controlled empty per contract §3 — never a corpus dump.
@@ -6035,7 +6041,10 @@ zoomWatcher = {
         } catch (e) {
             console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
             searchFilterBuildFailed = true;
-            await clearSearchFilter();
+            // Guard the clear (Codex review of #171): an error inside a
+            // SUPERSEDED search's build must not blow away the newer
+            // search's freshly-built filter. Applies to both paths.
+            if (searchId === _searchSeq) await clearSearchFilter();
         }
         // Superseded by a newer search while building? Bail before mutating UI.
         // Otherwise push the freshly-built filter through every surface: table,
@@ -6192,17 +6201,22 @@ zoomWatcher = {
             resultsCount = results.length;
             if (results.length === 0) {
                 // A build failure also empties search_pids → 0 rows here, so
-                // distinguish a genuine error from a true empty result set.
+                // distinguish a genuine error from a true empty result set —
+                // and (#171, Codex review) a substrate controlled-empty state
+                // (all-stopword query) must show ITS copy, not a generic
+                // "No results": the message tells the user what to do.
+                const substrateNote = (window.__searchFilter?.substrate && window.__searchFilter?.note)
+                    ? window.__searchFilter.note : null;
                 searchResults.textContent = searchFilterBuildFailed
                     ? `Search error: couldn't build the filter for "${term}". Please try again.`
-                    : `No results for "${term}"`;
+                    : (substrateNote || `No results for "${term}"`);
                 // Honesty fix (#247): the table meta points "→ panel", so the
                 // panel must reflect THIS (empty) search rather than whatever
                 // it showed before. Without this, a zero-result search left
                 // stale prior content under a pointer claiming otherwise.
                 const sampEl0 = document.getElementById('samplesSection');
                 if (sampEl0) sampEl0.innerHTML = searchHeadingHTML(searchFilterBuildFailed ? '' : ' (0)')
-                    + `<div class="empty-state" style="padding: 8px;">${searchFilterBuildFailed ? 'Search failed to build — please try again.' : 'No samples matched this search.'}</div>`;
+                    + `<div class="empty-state" style="padding: 8px;">${searchFilterBuildFailed ? 'Search failed to build — please try again.' : escapeHtml(substrateNote || 'No samples matched this search.')}</div>`;
                 return;
             }
 
