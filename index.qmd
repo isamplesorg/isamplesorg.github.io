@@ -31,7 +31,7 @@ page-layout: full
 
 :::
 
-*Each image links to its record at the source repository. Two of these are also in the iSamples collection and open directly in our globe — the [fossil coral](/explorer.html#pid=IGSN:IEGIL000C&v=1) and the [askoi](/explorer.html#pid=ark:/28722/r2p24/vdm_19600211&v=1) — with the coral flying to the Cayman Islands and the askoi to Murlo, Italy.*
+*Each image links to its record at the source repository. Two of these are also in the iSamples collection and open directly in our globe — the [fossil coral](/explorer.html#pid=IGSN:IEGIL000C&v=1) and the [askoi](/explorer.html#pid=ark:/28722/r2p24/vdm_19600211&v=1) — with the coral flying to the Cayman Islands and the askoi to Murlo, Italy. The diamond and the fish live at their home repositories for now; they'll join the iSamples collection in a future data update.*
 
 ::: {.callout-tip collapse="true"}
 ## What is iSamples?
