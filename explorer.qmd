@@ -6189,6 +6189,16 @@ zoomWatcher = {
 
             async function runWorldQuery() {
                 return db.query(`
+                    ${
+                        // Codex review (lite-join deferral, round 2): the
+                        // join-everything-then-filter shape is ONLY needed
+                        // when substrate rows (NULL s.source) must satisfy an
+                        // ACTIVE source filter that reads l.source. In every
+                        // other case — the interim producer, or no source
+                        // filter — keep the original cheap shape: filter +
+                        // LIMIT 50 first, join lite for just those 50.
+                        (window.__searchFilter?.substrate && sourceSQL !== '')
+                        ? `
                     SELECT s.pid,
                            COALESCE(s.label, l.label) AS label,
                            COALESCE(s.source, l.source) AS source,
@@ -6201,7 +6211,28 @@ zoomWatcher = {
                     ${sourceSQL}
                     ${facetSQL}
                     ORDER BY s.relevance_score DESC, COALESCE(s.label, l.label)
-                    LIMIT 50
+                    LIMIT 50`
+                        : `
+                    WITH matches AS (
+                        SELECT s.pid, s.label, s.source, s.place_name,
+                               s.relevance_score
+                        FROM search_pids s
+                        WHERE 1=1
+                        ${facetSQL}
+                        ${window.__searchFilter?.substrate ? '' : sourceSQL.replaceAll('COALESCE(s.source, l.source)', 's.source')}
+                        ORDER BY s.relevance_score DESC
+                        LIMIT 50
+                    )
+                    SELECT m.pid,
+                           COALESCE(m.label, l.label) AS label,
+                           COALESCE(m.source, l.source) AS source,
+                           l.latitude, l.longitude,
+                           COALESCE(m.place_name, CAST(l.place_name AS VARCHAR)) AS place_name,
+                           m.relevance_score
+                    FROM matches m
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    ORDER BY m.relevance_score DESC, COALESCE(m.label, l.label)`
+                    }
                 `);
             }
 
