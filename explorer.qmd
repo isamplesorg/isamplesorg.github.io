@@ -924,6 +924,10 @@ looksLikePid = _sqlBuilders.looksLikePid
 pidSearchWhere = _sqlBuilders.pidSearchWhere
 
 _explorerUtils = await import(new URL('assets/js/explorer-utils.js', document.baseURI).href)
+// #171: substrate query engine (feature-flagged ?fts=v1 — see
+// buildSearchFilterSubstrate). Pure planning/scoring logic lives in the
+// module (Node-unit-tested); the explorer only wires it to DuckDB.
+_searchSubstrate = await import(new URL('assets/js/search_substrate.js', document.baseURI).href)
 escapeHtml = _explorerUtils.escapeHtml
 facetCountsDisplayState = _explorerUtils.facetCountsDisplayState
 searchTerms = _explorerUtils.searchTerms
@@ -5740,6 +5744,148 @@ zoomWatcher = {
         }
     }
 
+    // ===== #171: substrate search path (feature flag ?fts=v1) =====
+    // Replaces buildSearchFilter's 69 MB facets ILIKE scan with the
+    // sharded inverted index at data.isamples.org/isamples_202608_search_index_v1/
+    // (built by tools/build_search_index.py, contract SEARCH_INDEX_V1.md).
+    // Everything downstream is UNCHANGED: this produces the same singleton
+    // `search_pids` table (pid, label, source, place_name, relevance_score),
+    // so the table/points/facet-count semi-joins and the side panel work
+    // exactly as with the interim path. Opt-in only until the #172 gate.
+    const SUBSTRATE_BASE = `${R2_BASE}/isamples_202608_search_index_v1`;
+    let _substrateMeta = null;
+
+    function substrateEnabled() {
+        try {
+            return new URLSearchParams(location.search).get('fts') === 'v1';
+        } catch (e) { return false; }
+    }
+
+    async function loadSubstrateMeta() {
+        // Three KB-scale sidecars, fetched once per session on FIRST substrate
+        // search (deliberately NOT at boot — flag-off visitors pay nothing).
+        if (_substrateMeta) return _substrateMeta;
+        const [hot, sizes, stats] = await Promise.all([
+            fetch(`${SUBSTRATE_BASE}/hot_tokens.json`).then(r => r.json()),
+            fetch(`${SUBSTRATE_BASE}/shard_sizes.json`).then(r => r.json()),
+            fetch(`${SUBSTRATE_BASE}/build_stats.json`).then(r => r.json()),
+        ]);
+        _substrateMeta = {
+            manifest: { shardCount: stats.shard_count, hotTokens: hot.tokens },
+            shardSizes: sizes,
+            stats: {
+                totalDocs: stats.total_documents,
+                avgDocLenByField: Object.fromEntries(
+                    Object.entries(stats.fields).map(([f, v]) => [f, v.avg_doc_len])),
+            },
+        };
+        return _substrateMeta;
+    }
+
+    async function buildSearchFilterSubstrate(term) {
+        const token = ++_searchFilterToken;
+        window.a1dbg?.('substrate-search-start', { term, token });
+        const meta = await loadSubstrateMeta();
+        const plan = _searchSubstrate.planQuery(term, meta.manifest, meta.shardSizes);
+        if (plan.mode === 'empty' || plan.mode === 'allStopwords') {
+            // Controlled empty per contract §3 — never a corpus dump.
+            await clearSearchFilter();
+            window.__searchFilter = {
+                active: false, term: null, token: _searchFilterToken, total: 0,
+                kind: 'text', substrate: true,
+                note: plan.mode === 'allStopwords'
+                    ? 'All terms in your query are common words. Add a more specific term to search.'
+                    : null,
+            };
+            return false;
+        }
+        // Tokens are lowercase alphanumeric BY TOKENIZER CONSTRUCTION (see
+        // search_tokenizer §4: every non-\p{L}\p{N} char became a separator),
+        // so interpolating them into SQL string literals cannot break out.
+        const tokList = plan.tokens.map(t => `'${t}'`).join(',');
+        const stats = meta.stats;
+        const staging = `search_pids_next_${token}`;
+        try {
+            if (plan.mode === 'topk') {
+                // All surviving terms are common: intersect the precomputed
+                // per-token top-500 lists, sum static scores (§6 —
+                // documented approximation, benchmarked at #172).
+                await db.query(`
+                    CREATE OR REPLACE TABLE ${staging} AS
+                    WITH agg AS (
+                        SELECT pid, sum(static_score) AS relevance_score,
+                               count(DISTINCT token) AS m
+                        FROM read_parquet('${SUBSTRATE_BASE}/hot_topk.parquet')
+                        WHERE token IN (${tokList})
+                        GROUP BY pid
+                    )
+                    SELECT a.pid, l.label, l.source,
+                           CAST(l.place_name AS VARCHAR) AS place_name,
+                           a.relevance_score
+                    FROM agg a
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    WHERE a.m = ${plan.tokens.length}
+                `);
+            } else {
+                const urls = plan.files.map(f => `'${SUBSTRATE_BASE}/${f}'`).join(',');
+                const avgCase = Object.entries(stats.avgDocLenByField)
+                    .map(([f, v]) => `WHEN '${f}' THEN ${Number(v)}`).join(' ');
+                // BM25 per contract §5 — identical constants/shape to the
+                // builder's hot_topk scoring and the JS module's
+                // bm25Contribution (which unit-tests pin). df is EMBEDDED in
+                // the shard rows (round-5 amendment) — no df.parquet fetch.
+                await db.query(`
+                    CREATE OR REPLACE TABLE ${staging} AS
+                    WITH hits AS (
+                        SELECT token, pid, field, tf, doc_len, df
+                        FROM read_parquet([${urls}])
+                        WHERE token IN (${tokList})
+                    ), contrib AS (
+                        SELECT token, pid,
+                            (CASE field
+                                WHEN 'sample.label' THEN 3.0
+                                WHEN 'concept.label' THEN 2.5
+                                WHEN 'sample.place_name' THEN 2.0
+                                ELSE 1.0 END)
+                            * ln(((${stats.totalDocs} - df + 0.5) / (df + 0.5)) + 1)
+                            * (tf * 2.2) / (tf + 1.2 * (0.25 + 0.75 * doc_len /
+                                (CASE field ${avgCase} ELSE 10.0 END))) AS c
+                        FROM hits
+                    ), agg AS (
+                        SELECT pid, sum(c) AS relevance_score,
+                               count(DISTINCT token) AS m
+                        FROM contrib GROUP BY pid
+                    )
+                    SELECT a.pid, l.label, l.source,
+                           CAST(l.place_name AS VARCHAR) AS place_name,
+                           a.relevance_score
+                    FROM agg a
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    WHERE a.m = ${plan.tokens.length}
+                `);
+            }
+            if (token !== _searchFilterToken) return false;   // superseded
+            await db.query(`CREATE OR REPLACE TABLE search_pids AS
+                SELECT pid, label, source, place_name, relevance_score FROM ${staging}`);
+            if (token !== _searchFilterToken) return false;
+            const cnt = Array.from(await db.query(`SELECT COUNT(*) AS n FROM search_pids`));
+            const total = cnt.length ? Number(cnt[0].n) : 0;
+            if (token !== _searchFilterToken) return false;
+            window.__searchFilter = {
+                active: true, term, token, total, kind: 'text', substrate: true,
+                substrateMode: plan.mode,
+                ignoredCommon: plan.ignoredCommon,
+                expectedBytes: plan.expectedBytes,
+            };
+            window.a1dbg?.('substrate-search-end',
+                { term, token, total, mode: plan.mode, ignored: plan.ignoredCommon });
+            return true;
+        } finally {
+            try { await db.query(`DROP TABLE IF EXISTS ${staging}`); } catch (e) { /* best effort */ }
+        }
+    }
+    // ===== end #171 substrate path =====
+
     async function clearSearchFilter() {
         _searchFilterToken++;
         window.__searchFilter = { active: false, term: null, token: _searchFilterToken, total: 0 };
@@ -5836,8 +5982,17 @@ zoomWatcher = {
         // reflects the committed search the table meta points at ("…shown in
         // the panel →"). z-index keeps it above scrolled rows. term is the
         // user's own input, rendered as-is to match the prior heading.
-        const searchHeadingHTML = (suffix) =>
-            `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #e3f2fd; color: #1565c0; border-radius: 4px;">Search results: "${term}"${suffix}</h4>`;
+        const searchHeadingHTML = (suffix) => {
+            // #171 disclosure (contract §3/§6): when the substrate path
+            // dropped common terms from the AND, the user must see exactly
+            // which words were ignored — silent semantic change is the one
+            // thing the policy forbids.
+            const sf = (typeof window !== 'undefined') ? window.__searchFilter : null;
+            const ignored = (sf && sf.substrate && sf.ignoredCommon && sf.ignoredCommon.length)
+                ? `<div style="font-size: 11px; font-weight: normal; margin-top: 2px;">Very common word${sf.ignoredCommon.length > 1 ? 's' : ''} ignored: ${sf.ignoredCommon.map(escapeHtml).join(', ')}</div>`
+                : '';
+            return `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #e3f2fd; color: #1565c0; border-radius: 4px;">Search results: "${term}"${suffix}${ignored}</h4>`;
+        };
         searchResults.textContent = effectiveScope === 'area'
             ? 'Searching selected areas...'
             : 'Searching entire world...';
@@ -5869,7 +6024,14 @@ zoomWatcher = {
         // empty-results branch say "Search error" rather than "No results".
         let searchFilterBuildFailed = false;
         try {
-            await buildSearchFilter(terms, term);
+            // #171: ?fts=v1 routes to the sharded-substrate path; both
+            // producers emit the identical `search_pids` singleton, so
+            // everything downstream is shared.
+            if (substrateEnabled()) {
+                await buildSearchFilterSubstrate(term);
+            } else {
+                await buildSearchFilter(terms, term);
+            }
         } catch (e) {
             console.warn('A1 search-filter build failed; surfaces stay unfiltered:', e);
             searchFilterBuildFailed = true;
