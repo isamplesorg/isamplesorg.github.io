@@ -5836,11 +5836,11 @@ zoomWatcher = {
                         WHERE token IN (${tokList})
                         GROUP BY pid
                     )
-                    SELECT a.pid, l.label, l.source,
-                           CAST(l.place_name AS VARCHAR) AS place_name,
+                    SELECT a.pid,
+                           NULL::VARCHAR AS label, NULL::VARCHAR AS source,
+                           NULL::VARCHAR AS place_name,
                            a.relevance_score
                     FROM agg a
-                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
                     WHERE a.m = ${plan.tokens.length}
                 `);
             } else {
@@ -5873,11 +5873,11 @@ zoomWatcher = {
                                count(DISTINCT token) AS m
                         FROM contrib GROUP BY pid
                     )
-                    SELECT a.pid, l.label, l.source,
-                           CAST(l.place_name AS VARCHAR) AS place_name,
+                    SELECT a.pid,
+                           NULL::VARCHAR AS label, NULL::VARCHAR AS source,
+                           NULL::VARCHAR AS place_name,
                            a.relevance_score
                     FROM agg a
-                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
                     WHERE a.m = ${plan.tokens.length}
                 `);
             }
@@ -6112,7 +6112,15 @@ zoomWatcher = {
             // of PR #236 round 1). The string is captured here, before any
             // `db.query` await, and re-used by both the SELECT and the
             // COUNT below.
-            const sourceSQL = sourceFilterSQL('s.source');
+            // #171 perf fix: the substrate builder no longer joins lite at
+            // filter-build time (the 42k-row remote join made big-result
+            // queries SLOWER than baseline — benchmark 2026-07-11, Codex-
+            // verified). search_pids now carries NULL display columns for
+            // substrate searches, so every consumer below joins lite and
+            // filters on the COALESCEd value (interim rows still carry
+            // their own values; NULL-vs-value never changes interim
+            // semantics because COALESCE prefers s.*).
+            const sourceSQL = sourceFilterSQL("COALESCE(s.source, l.source)");
             const facetSQL = facetFilterSQL();
             // Telemetry-equivalent of the SQL snapshots above (`hadSourceFilter`
             // / `hadFacetFilter`) is declared OUTSIDE this try block so it
@@ -6157,15 +6165,19 @@ zoomWatcher = {
                     results = await runWorldQuery();
                 } else {
                     results = await db.query(`
-                        SELECT s.pid, s.label, s.source, l.latitude, l.longitude,
-                               s.place_name, s.relevance_score
+                        SELECT s.pid,
+                               COALESCE(s.label, l.label) AS label,
+                               COALESCE(s.source, l.source) AS source,
+                               l.latitude, l.longitude,
+                               COALESCE(s.place_name, CAST(l.place_name AS VARCHAR)) AS place_name,
+                               s.relevance_score
                         FROM search_pids s
                         INNER JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE 1=1
                           ${bboxSQL}
                         ${sourceSQL}
                         ${facetSQL}
-                        ORDER BY s.relevance_score DESC, s.label
+                        ORDER BY s.relevance_score DESC, COALESCE(s.label, l.label)
                         LIMIT 50
                     `);
                     effectiveQueryShape = 'area';
@@ -6177,21 +6189,50 @@ zoomWatcher = {
 
             async function runWorldQuery() {
                 return db.query(`
+                    ${
+                        // Codex review (lite-join deferral, round 2): the
+                        // join-everything-then-filter shape is ONLY needed
+                        // when substrate rows (NULL s.source) must satisfy an
+                        // ACTIVE source filter that reads l.source. In every
+                        // other case — the interim producer, or no source
+                        // filter — keep the original cheap shape: filter +
+                        // LIMIT 50 first, join lite for just those 50.
+                        (window.__searchFilter?.substrate && sourceSQL !== '')
+                        ? `
+                    SELECT s.pid,
+                           COALESCE(s.label, l.label) AS label,
+                           COALESCE(s.source, l.source) AS source,
+                           l.latitude, l.longitude,
+                           COALESCE(s.place_name, CAST(l.place_name AS VARCHAR)) AS place_name,
+                           s.relevance_score
+                    FROM search_pids s
+                    LEFT JOIN read_parquet('${lite_url}') l USING (pid)
+                    WHERE 1=1
+                    ${sourceSQL}
+                    ${facetSQL}
+                    ORDER BY s.relevance_score DESC, COALESCE(s.label, l.label)
+                    LIMIT 50`
+                        : `
                     WITH matches AS (
                         SELECT s.pid, s.label, s.source, s.place_name,
                                s.relevance_score
                         FROM search_pids s
                         WHERE 1=1
-                        ${sourceSQL}
                         ${facetSQL}
+                        ${window.__searchFilter?.substrate ? '' : sourceSQL.replaceAll('COALESCE(s.source, l.source)', 's.source')}
                         ORDER BY s.relevance_score DESC
                         LIMIT 50
                     )
-                    SELECT m.pid, m.label, m.source, l.latitude, l.longitude,
-                           m.place_name, m.relevance_score
+                    SELECT m.pid,
+                           COALESCE(m.label, l.label) AS label,
+                           COALESCE(m.source, l.source) AS source,
+                           l.latitude, l.longitude,
+                           COALESCE(m.place_name, CAST(l.place_name AS VARCHAR)) AS place_name,
+                           m.relevance_score
                     FROM matches m
                     LEFT JOIN read_parquet('${lite_url}') l USING (pid)
-                    ORDER BY m.relevance_score DESC, m.label
+                    ORDER BY m.relevance_score DESC, COALESCE(m.label, l.label)`
+                    }
                 `);
             }
 
@@ -6379,6 +6420,7 @@ zoomWatcher = {
                     : `
                         SELECT COUNT(*) AS n
                         FROM search_pids s
+                        LEFT JOIN read_parquet('${lite_url}') l USING (pid)
                         WHERE 1=1
                         ${sourceSQL}
                         ${facetSQL}
