@@ -190,38 +190,50 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     expect((await pins(page)).length).toBe(0);
   });
 
-  test('new search replaces the PIN set AND tears down the old rows at submit', async ({ page }) => {
+  test('new search tears down old rows+pins at submit, then renders the new set', async ({ page }) => {
     await submitSearch(page, 'pottery Cyprus');
     await waitPinsAtLeast(page, 1);
     const firstPinPids = (await pins(page)).map((p) => p.pid);
-    const firstRowPids = await page.$$eval('#samplesSection .sample-row', (els) => els.map((e) => e.dataset.pid));
+    const firstRowCount = await displayedRowCount(page);
     expect(firstPinPids.length).toBeGreaterThan(0);
     expect(firstPinPids.length).toBeLessThanOrEqual(50);
-    expect(firstRowPids.length).toBeGreaterThan(0);
+    expect(firstRowCount).toBeGreaterThan(0);
 
-    await submitSearch(page, 'basalt');
-    // Entry-clear (Codex round-5 P1.2): a new submit tears the OLD rows down —
-    // the prior search's rows must not persist under the new (or building) state.
-    // 'basalt' is disjoint from 'pottery Cyprus', so its first row pid must
-    // disappear (becomes true at the synchronous entry-clear and stays true).
-    await page.waitForFunction((pid) => {
-      const pids = Array.from(document.querySelectorAll('#samplesSection .sample-row')).map((e) => e.dataset.pid);
-      return !pids.includes(pid);
-    }, firstRowPids[0], { timeout: 120_000 });
+    // Entry teardown (Codex round-5/6): the submit's click handler is a plain
+    // `() => doSearch(...)`, and doSearch runs SYNCHRONOUSLY up to its first await
+    // — the _panelGen bump, pin removeAll, and row innerHTML='' all execute before
+    // any await. So drive the submit AND observe in ONE page.evaluate: the old rows
+    // and pins are already gone the instant the click dispatch returns, BEFORE the
+    // new results render. Deterministic — no timing race, and it CANNOT pass via
+    // the later re-render (we read before yielding to the event loop).
+    const observed = await page.evaluate(() => {
+      const input = document.getElementById('sampleSearch');
+      input.value = 'basalt';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('searchSubmitBtn').click();
+      // click -> doSearch entry teardown has run synchronously by now.
+      return {
+        rows: document.querySelectorAll('#samplesSection .sample-row').length,
+        pins: window.__searchPins().length,
+      };
+    });
+    expect(observed.rows).toBe(0);   // old rows torn down at submit, mid-build
+    expect(observed.pins).toBe(0);   // old pins torn down with them
 
-    // Wait for the count line to reflect the NEW term, then for pins to repopulate.
+    // Let the second search complete, then assert the NEW set rendered.
     await page.waitForFunction(() =>
       /results for "basalt"/i.test(document.getElementById('searchResults')?.textContent || ''),
       null, { timeout: 120_000 });
     await waitPinsAtLeast(page, 1);
     const secondPinPids = (await pins(page)).map((p) => p.pid);
-    const secondRowPids = await page.$$eval('#samplesSection .sample-row', (els) => els.map((e) => e.dataset.pid));
+    const secondLocated = await locatedRowPids(page);
 
     expect(secondPinPids.length).toBeGreaterThan(0);
     expect(secondPinPids.length).toBeLessThanOrEqual(50);
-    // Disjoint corpora → both the PIN set AND the rendered row set must change.
+    // Disjoint corpora → the PIN set changed.
     expect(sortJoin(secondPinPids)).not.toBe(sortJoin(firstPinPids));
-    expect(sortJoin(secondRowPids)).not.toBe(sortJoin(firstRowPids));
+    // Exact final identity: the pins are precisely the new search's located rows.
+    expect(sortJoin(secondPinPids)).toBe(sortJoin(secondLocated));
   });
 
   test('committed empty search clears the pins (snapshot lifecycle)', async ({ page }) => {
