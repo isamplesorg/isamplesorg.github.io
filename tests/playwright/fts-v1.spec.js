@@ -14,6 +14,12 @@ const { test, expect } = require('@playwright/test');
 const BASE = process.env.BASE_URL || 'https://rdhyee.github.io/isamplesorg.github.io';
 const URL = `${BASE}/explorer.html?fts=v1`;
 
+// This file's worst-case budget is ~20m30s per attempt; the config's CI
+// default of 2 retries would put the envelope (3 attempts, 1 worker) far past
+// the dispatch job cap. One retry keeps flake protection while fitting the
+// 55-minute cap (Codex P2 x2, PR #335).
+test.describe.configure({ retries: process.env.CI ? 1 : 0 });
+
 async function bootAndSearch(page, term) {
   await page.fill('#sampleSearch', term);
   await page.locator('#searchSubmitBtn').first().click();

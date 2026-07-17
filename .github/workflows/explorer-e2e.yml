@@ -67,11 +67,12 @@ env:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    # 35: the auto smoke set fits well under 20, but workflow_dispatch runs of
+    # 55: the auto smoke set fits well under 20, but workflow_dispatch runs of
     # the long data-dependent specs (fts-v1: 5x120s substrate + 150s + 2x240s
-    # interim-path routing = 20m30s worst-case per attempt, before install and
-    # render) were killable at 20 (Codex P2, PR #335).
-    timeout-minutes: 35
+    # interim-path routing = 20m30s worst-case per attempt; that spec caps
+    # itself to 1 CI retry -> 41m envelope) need room for 2 attempts plus
+    # install/render before the cap kills artifact upload (Codex P2, PR #335).
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 

@@ -5559,10 +5559,12 @@ zoomWatcher = {
     // === A1: search-as-global-filter pid-set (#234 Step 4) ===
     //
     // Strategy B: materialize the set of pids matching the committed search
-    // term ONCE (one ILIKE scan over facets_url), then let every count
-    // surface (table, points, facet legend, stats) constrain itself with a
-    // cheap `pid IN (SELECT pid FROM search_pids)` semi-join — instead of
-    // re-running the expensive ILIKE per surface per camera move.
+    // term ONCE (substrate index probe by default since the #172 flip; one
+    // ILIKE scan over facets_url on the ?fts=off / PID-query interim path),
+    // then let every count surface (table, points, facet legend, stats)
+    // constrain itself with a cheap `pid IN (SELECT pid FROM search_pids)`
+    // semi-join — instead of re-running the expensive scan per surface per
+    // camera move.
     //
     // `search_pids` is a NON-TEMP table: Observable's DuckDBClient opens a
     // fresh connection per db.query(), so a connection-local TEMP table would
@@ -6041,10 +6043,10 @@ zoomWatcher = {
         // A1 (#234 Step 4): materialize the search pid-set ONCE, then refresh
         // the table (and, in later increments, points / facet counts / stats)
         // so every count surface constrains to this search via a cheap
-        // semi-join. One ILIKE scan here warms the text columns in the DuckDB
-        // buffer, so the LIMIT-50 side-panel query below reads them warm.
-        // (Follow-up: derive the side-panel list from search_pids to drop the
-        // second scan entirely.) Failure leaves surfaces unfiltered, not broken.
+        // semi-join. On the interim path (?fts=off / PID queries) the ILIKE
+        // scan warms the text columns in the DuckDB buffer; the substrate
+        // default probes the sharded index instead and touches no facets
+        // columns. Failure leaves surfaces unfiltered, not broken.
         const buildingMsg = effectiveScope === 'area'
             ? 'Building search filter for selected areas…'
             : 'Building search filter…';
