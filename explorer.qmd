@@ -2197,6 +2197,21 @@ viewer = {
         return out;
     };
 
+    // Test hook (#172, Codex round-3 P2): faithfully replay a result-pin CLICK
+    // by index — the SAME ceremony the on-globe LEFT_CLICK handler runs (shared
+    // selection helper + pid hash push), so specs can exercise pin selection and
+    // Back-navigation without Cesium canvas picking (not feasible in Playwright).
+    // Returns false if there is no pin at that index.
+    if (typeof window !== 'undefined') window.__clickSearchPin = (i = 0) => {
+        const col = v.searchResultPoints;
+        if (!col || i < 0 || i >= col.length) return false;
+        const meta = col.get(i).id;
+        const isStale = freshSelectionToken(v);
+        if (v.selectSearchResult) v.selectSearchResult(meta, { fly: true, isStale });
+        writeGlobeHash(v, { replace: false, force: true });
+        return true;
+    };
+
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
         label: {
@@ -2360,6 +2375,11 @@ viewer = {
                 `;
                 const samples = await db.query(nearbyQuery);
                 if (isStale()) return;
+                // #172 Inc 1 (Codex round-3 P1): write the list + pins as ONE
+                // owned operation. Re-clear here (post-await, ownership just
+                // confirmed by isStale) so a search that populated pins DURING
+                // this await can't leave them orphaned over these nearby rows.
+                if (v.searchResultPoints) v.searchResultPoints.removeAll();
                 updateSamples(samples);
             } catch(err) {
                 if (isStale()) return;
@@ -5347,6 +5367,11 @@ zoomWatcher = {
                 LIMIT 30
             `);
             if (isStale && isStale()) return;
+            // #172 Inc 1 (Codex round-3 P1): list + pins as ONE owned operation.
+            // Re-clear post-await (ownership just confirmed) so a search that
+            // populated pins during this await can't orphan them over the
+            // nearby rows we're about to render.
+            if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
             updateSamples(samples);
         } catch(err) {
             if (isStale && isStale()) return;
@@ -6016,10 +6041,16 @@ zoomWatcher = {
     async function clearActiveSearchFilter() {
         // Same clear path as an empty search submit, without entering doSearch().
         _searchSeq++;
+        // #172 Inc 1 (Codex round-3 P1): take panel ownership so an in-flight
+        // selection hydration can't repopulate the list after this clear.
+        freshSelectionToken(viewer);
         // #172 pin-overlay Inc 1 (option C): this is the committed clear used by
         // the concept-chip clear button (its only caller today) — it tears down
-        // the results list, so drop the result-pin overlay snapshot too.
+        // the results list, so clear the LIST and the result-pin overlay snapshot
+        // TOGETHER.
         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        const sampElClear = document.getElementById('samplesSection');
+        if (sampElClear) sampElClear.innerHTML = '';
         if (searchInput) searchInput.value = '';
         if (searchResults) searchResults.textContent = '';
         await clearSearchFilter();
@@ -6134,6 +6165,19 @@ zoomWatcher = {
         // submission — valid or not — supersedes prior in-flight work.
         const searchId = ++_searchSeq;
 
+        // #172 Inc 1 (Codex round-3 P1): take PANEL OWNERSHIP. A committed search
+        // is a new panel owner, so bump the selection freshness token to
+        // invalidate any in-flight selection hydration (cluster nearby-samples,
+        // sample/pid detail). Those producers re-check isStale() after their
+        // await and bail before overwriting this search's list/pins, so the two
+        // can't diverge. We deliberately DON'T capture the token here: doSearch's
+        // own post-await renders are (and stay) guarded by searchId/_searchSeq —
+        // the two token systems guard different things (search build vs selection
+        // panel) and both must hold. The reverse race (a cluster click AFTER this
+        // submit) is handled by the owned post-await clears in the cluster-click /
+        // hydrateClusterUI paths.
+        freshSelectionToken(viewer);
+
         // #172 pin-overlay Inc 1 (option C): clear the previous result-pin
         // overlay on every committed submit (before repopulating). This covers
         // both the new-search path (repopulated below on success) and the
@@ -6144,6 +6188,11 @@ zoomWatcher = {
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
+            // #172 Inc 1 (Codex round-3 P1): clear the results LIST here too so
+            // list and pins clear TOGETHER — otherwise stale search rows would
+            // survive under an empty overlay, breaking the snapshot invariant.
+            const sampElClear = document.getElementById('samplesSection');
+            if (sampElClear) sampElClear.innerHTML = '';
             // A1 (#234 Step 4): an empty / too-short submit means no committed
             // search — drop the pid-set filter and refresh every surface
             // (table, points, facet counts) plus revert the globe mode so the
@@ -6798,6 +6847,13 @@ zoomWatcher = {
         // Share doSearch's freshness counter so a text search and a concept
         // filter can't clobber each other's side-panel render mid-flight.
         const searchId = ++_searchSeq;
+
+        // #172 Inc 1 (Codex round-3 P1): take PANEL OWNERSHIP — same as doSearch.
+        // A committed concept filter is a new panel owner; bump the selection
+        // freshness token so any in-flight selection hydration bails at its
+        // post-await isStale() check rather than overwriting this render. The
+        // concept render itself stays guarded by searchId/_searchSeq.
+        freshSelectionToken(viewer);
 
         // #172 pin-overlay Inc 1 (option C): committing a concept filter removes
         // `search=` and owns the panel, so drop any lingering text-search
