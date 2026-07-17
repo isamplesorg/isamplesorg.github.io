@@ -2174,6 +2174,17 @@ viewer = {
     v.scene.primitives.add(v.samplePoints);
     v.samplePoints.show = false; // hidden until point mode
 
+    // #172 pin-overlay Inc 1 (option C): search-result pin overlay. Added to
+    // scene.primitives AFTER h3Points and samplePoints so it renders ABOVE both
+    // (z-order rule). Always shown — the overlay is independent of the
+    // cluster/point mode toggle.
+    v.searchResultPoints = new Cesium.PointPrimitiveCollection();
+    v.scene.primitives.add(v.searchResultPoints);
+
+    // Test hook (#172): lets Playwright assert the live pin count without
+    // reaching into Cesium internals.
+    if (typeof window !== 'undefined') window.__searchPins = () => v.searchResultPoints.length;
+
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
         label: {
@@ -2191,7 +2202,8 @@ viewer = {
             v.pointLabel.position = picked.primitive.position;
             v.pointLabel.label.show = true;
             const meta = picked.id;
-            if (typeof meta === 'object' && meta.type === 'sample') {
+            if (typeof meta === 'object' && (meta.type === 'sample' || meta.type === 'searchResult')) {
+                // #172 pin-overlay Inc 1: result pins hover like sample points.
                 v.pointLabel.label.text = `${meta.label || meta.pid}`;
             } else if (typeof meta === 'object' && meta.count) {
                 v.pointLabel.label.text = `${meta.source}: ${meta.count.toLocaleString()} samples`;
@@ -2216,7 +2228,19 @@ viewer = {
         const meta = picked.id;
         const isStale = freshSelectionToken(v);
 
-        if (typeof meta === 'object' && meta.type === 'sample') {
+        if (typeof meta === 'object' && meta.type === 'searchResult') {
+            // --- Search-result pin click (#172 pin-overlay Inc 1, option C) ---
+            // Runs the same selection ceremony as a sample click (card,
+            // selection state, flight, lazy detail) via the shared helper, but
+            // PRESERVES the #samplesSection search-results list the user is
+            // browsing. Like the sample branch it also opens the floating in-map
+            // card at the click pixel and writes the pid selection hash.
+            if (v.selectSearchResult) {
+                v.selectSearchResult(meta, { fly: true, inMapCardAt: { x: e.position.x, y: e.position.y } });
+            }
+            writeGlobeHash(v, { replace: false, force: true });
+
+        } else if (typeof meta === 'object' && meta.type === 'sample') {
             // --- Individual sample click ---
             updateSampleCard(meta);
             // In-map floating card (issue #226). `e.position` is the
@@ -5941,6 +5965,9 @@ zoomWatcher = {
     async function clearActiveSearchFilter() {
         // Same clear path as an empty search submit, without entering doSearch().
         _searchSeq++;
+        // #172 pin-overlay Inc 1 (option C): committed clear (concept-chip clear
+        // / programmatic ?search= removal) drops the result-pin overlay too.
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
         if (searchInput) searchInput.value = '';
         if (searchResults) searchResults.textContent = '';
         await clearSearchFilter();
@@ -5977,6 +6004,55 @@ zoomWatcher = {
         if (clusterEl) clusterEl.hidden = searchIsActive();
     }
 
+    // #172 pin-overlay Inc 1 (option C): shared selection ceremony for a search
+    // result, invoked by BOTH the side-panel row click (in doSearch) and the
+    // on-globe result-pin click (viewer cell, via viewer.selectSearchResult).
+    // Mirrors the on-globe sample-click ceremony — freshness token, card
+    // hydration, selection state, flight, lazy detail — but deliberately does
+    // NOT repaint #samplesSection (it holds the search-results list the user is
+    // browsing). `sample` is a normalized meta ({ pid, label, source, lat, lng,
+    // place_name, result_time }); coord-less rows are ignored. `inMapCardAt`
+    // (pin click only) additionally opens the floating in-map card at the click
+    // pixel, parity with the sample-click branch.
+    async function selectSearchResult(sample, { fly = true, inMapCardAt = null } = {}) {
+        if (!sample || sample.lat == null || sample.lng == null) return;
+
+        // Bump the freshness token BEFORE any async work so a prior
+        // cluster/sample detail load can't repaint the panel after we navigate.
+        const isStale = freshSelectionToken(viewer);
+
+        viewer._globeState.selectedPid = sample.pid;
+        viewer._globeState.selectedH3 = null;
+        updateSampleCard(sample);
+        if (inMapCardAt) showInMapCard(sample, inMapCardAt);
+        if (fly) {
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(sample.lng, sample.lat, 50000),
+                duration: 1.5
+            });
+        }
+
+        // Lazy-load full description (mirrors the globe click handler). Don't
+        // clear samplesSection — it holds the results the user is browsing.
+        try {
+            const detail = await db.query(`
+                SELECT description
+                FROM read_parquet('${wide_url}')
+                WHERE pid = '${sample.pid.replace(/'/g, "''")}'
+                LIMIT 1
+            `);
+            if (isStale()) return;
+            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+            else updateSampleDetail({ description: '' });
+        } catch(err) {
+            if (isStale()) return;
+            console.error("Search-result detail query failed:", err);
+            updateSampleDetail(null);
+        }
+    }
+    // Expose for the viewer cell's globe click handler (result-pin click).
+    viewer.selectSearchResult = selectSearchResult;
+
     async function doSearch(scope) {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
@@ -5991,6 +6067,13 @@ zoomWatcher = {
         // message with `Search error: ...`. Bumping first ensures any
         // submission — valid or not — supersedes prior in-flight work.
         const searchId = ++_searchSeq;
+
+        // #172 pin-overlay Inc 1 (option C): clear the previous result-pin
+        // overlay on every committed submit (before repopulating). This covers
+        // both the new-search path (repopulated below on success) and the
+        // empty/too-short committed-clear path. Draft input edits never reach
+        // doSearch, so typing/backspace does not clear pins.
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
 
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
@@ -6306,9 +6389,18 @@ zoomWatcher = {
             // bare result-row count visible while the precise total
             // resolves. See issue #232.
             const capReached = results.length === 50;
-            searchResults.textContent = capReached
+            // #172 pin-overlay Inc 1 (option C): one pin per LOCATED displayed
+            // result (world scope legitimately returns coord-less matches). When
+            // fewer results are located than displayed, the count line discloses
+            // how many landed on the globe. Cap is inherited from LIMIT 50, so
+            // located ≤ displayed ≤ 50.
+            const locatedCount = results.filter(r => r.latitude != null && r.longitude != null).length;
+            const pinnedNote = locatedCount < results.length
+                ? ` (${locatedCount} located, pinned on globe)`
+                : '';
+            searchResults.textContent = (capReached
                 ? `${results.length}+ results for "${term}"`
-                : `${results.length} results for "${term}"`;
+                : `${results.length} results for "${term}"`) + pinnedNote;
 
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
@@ -6336,55 +6428,61 @@ zoomWatcher = {
                 // click ceremony at line ~944. Without the full ceremony
                 // a slow prior selection load could repaint the panel
                 // after the click, leaving UI inconsistent with URL.
+                // #172 pin-overlay Inc 1 (option C): that ceremony now lives in
+                // the shared selectSearchResult() helper, used by BOTH this row
+                // click and the on-globe result-pin click. Row click keeps its
+                // prior behavior (no in-map card, no selection-hash write).
                 const resultsByPid = new Map(results.map(s => [s.pid, s]));
                 sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
-                    row.addEventListener('click', async (e) => {
+                    row.addEventListener('click', (e) => {
                         if (e.target.tagName === 'A') return; // let links work
                         const pid = row.dataset.pid;
-                        const sample = pid ? resultsByPid.get(pid) : null;
-                        if (!sample || sample.latitude == null || sample.longitude == null) return;
-
-                        // Bump the freshness token BEFORE any async work so
-                        // a prior cluster/sample detail load can't repaint
-                        // the panel after we navigate.
-                        const isStale = freshSelectionToken(viewer);
-
-                        viewer._globeState.selectedPid = pid;
-                        viewer._globeState.selectedH3 = null;
-                        updateSampleCard({
-                            pid: sample.pid,
-                            label: sample.label,
-                            source: sample.source,
-                            lat: sample.latitude,
-                            lng: sample.longitude,
-                            place_name: sample.place_name,
-                            result_time: sample.result_time
-                        });
-                        viewer.camera.flyTo({
-                            destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
-                            duration: 1.5
-                        });
-
-                        // Lazy-load full description (mirrors the globe
-                        // click handler). Don't clear samplesSection here —
-                        // it currently holds the search results the user
-                        // is browsing.
-                        try {
-                            const detail = await db.query(`
-                                SELECT description
-                                FROM read_parquet('${wide_url}')
-                                WHERE pid = '${pid.replace(/'/g, "''")}'
-                                LIMIT 1
-                            `);
-                            if (isStale()) return;
-                            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
-                            else updateSampleDetail({ description: '' });
-                        } catch(err) {
-                            if (isStale()) return;
-                            console.error("Search-row detail query failed:", err);
-                            updateSampleDetail(null);
-                        }
+                        const s = pid ? resultsByPid.get(pid) : null;
+                        if (!s) return;
+                        selectSearchResult({
+                            pid: s.pid,
+                            label: s.label,
+                            source: s.source,
+                            lat: s.latitude,
+                            lng: s.longitude,
+                            place_name: s.place_name,
+                            result_time: s.result_time
+                        }, { fly: true });
                     });
+                });
+            }
+
+            // #172 pin-overlay Inc 1 (option C): render the LOCATED displayed
+            // results as a pin overlay on the globe. One hollow-ring pin per
+            // located row — skip null lat/lng (world scope legitimately returns
+            // coordinate-less matches; NEVER coerce to (0,0)). Old pins were
+            // cleared at the top of doSearch (committed-clear path); the cap is
+            // inherited from LIMIT 50, so pins ≤ 50 ≤ displayed results.
+            const pinScalar = new Cesium.NearFarScalar(1e2, 8, 2e5, 3);  // mirror samplePoints
+            for (const s of results) {
+                if (s.latitude == null || s.longitude == null) continue;
+                const c = SOURCE_COLORS[s.source] || '#666';
+                viewer.searchResultPoints.add({
+                    id: {
+                        type: 'searchResult',
+                        pid: s.pid,
+                        label: s.label,
+                        source: s.source,
+                        lat: s.latitude,
+                        lng: s.longitude,
+                        place_name: s.place_name,
+                        result_time: s.result_time
+                    },
+                    position: Cesium.Cartesian3.fromDegrees(s.longitude, s.latitude, 0),
+                    pixelSize: 8,
+                    // Hollow ring: faint fill + bright source-colored outline so
+                    // the overlay reads as distinct from the filled cluster and
+                    // sample dots while still signalling which source matched.
+                    color: Cesium.Color.fromCssColorString(c).withAlpha(0.15),
+                    outlineColor: Cesium.Color.fromCssColorString(c),
+                    outlineWidth: 2,
+                    scaleByDistance: pinScalar,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
                 });
             }
 
@@ -6467,9 +6565,11 @@ zoomWatcher = {
                     // When `total === results.length`, the cap happened to
                     // catch exactly the full set — drop the "of N" to
                     // avoid a redundant "50 of 50 results" reading.
-                    searchResults.textContent = total > results.length
+                    // #172: preserve the located/pinned disclosure across the
+                    // real-count follow-up (pinnedNote is captured above).
+                    searchResults.textContent = (total > results.length
                         ? `${results.length} of ${total.toLocaleString()} results for "${term}"`
-                        : `${results.length} results for "${term}"`;
+                        : `${results.length} results for "${term}"`) + pinnedNote;
                 } catch(err) {
                     countMs = performance.now() - countStart;
                     if (searchId !== _searchSeq) {
@@ -6608,6 +6708,11 @@ zoomWatcher = {
         // Share doSearch's freshness counter so a text search and a concept
         // filter can't clobber each other's side-panel render mid-flight.
         const searchId = ++_searchSeq;
+
+        // #172 pin-overlay Inc 1 (option C): committing a concept filter removes
+        // `search=` and owns the panel, so drop any lingering text-search
+        // result pins (a committed clear path for the text overlay).
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
 
         // Mutual exclusivity: a committed concept filter OWNS search_pids, so
         // clear the free-text box (and its sidebar mirror) before building.
