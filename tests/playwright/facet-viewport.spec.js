@@ -107,8 +107,24 @@ async function readFacetCounts(page, facet) {
  *  populates at boot. */
 async function readSourceCounts(page) { return readFacetCounts(page, 'source'); }
 
-/** flyTo a destination, then wait for the post-moveEnd debounce + bbox query
- *  to settle. Uses a zero-duration flight to make the test deterministic. */
+/** flyTo a destination, then wait for the facet counts to actually reflect
+ *  the new viewport — not merely for `.recomputing` to clear.
+ *
+ *  Hardened 2026-05-28: the old wait (`waitForTimeout(50)` + one
+ *  `.recomputing`-clear check) could observe a transient "no-recomputing"
+ *  instant *before* the new viewport's counts applied, or capture a stale
+ *  prior-viewport result. It was already intermittently flaky on baseline;
+ *  the #234 padding fix (facet counts now scan the 30%-padded bbox, ~1.69×
+ *  the rows → slower query) widened the race and made it fail reliably.
+ *
+ *  Robust synchronization keys on the recompute CYCLE (not a value change,
+ *  which would hang for moves that leave the counts unchanged): wait for
+ *  `.recomputing` to (a) APPEAR — so we can't sample the pre-query
+ *  transient — then (b) CLEAR (query applied), then (c) hold steady across
+ *  two consecutive reads, so a late-landing query can't shift the values
+ *  after we return. If a real product stale-overwrite race exists, the
+ *  steady state will be the wrong value and the caller's assertion will
+ *  (correctly) fail rather than flake. */
 async function flyToAndSettle(page, lat, lng, alt) {
     await page.evaluate(async ({ lat, lng, alt }) => {
         const v = await window._ojs?.ojsConnector?.mainModule?.value('viewer');
@@ -118,10 +134,30 @@ async function flyToAndSettle(page, lat, lng, alt) {
             duration: 0,
         });
     }, { lat, lng, alt });
-    // Give the debounce + query a chance to land. waitForFacetCountsStable
-    // is the real synchronization point; this just kicks the event loop.
-    await page.waitForTimeout(50);
+    // Synchronize on the recompute CYCLE, not on a value change — so this
+    // helper is correct even for moves that leave the counts unchanged
+    // (Codex review 2026-05-28). `moveStart` sets `.recomputing`
+    // synchronously and the 250 ms debounce keeps it observable; wait for
+    // it to APPEAR so we can't sample the pre-query transient, then for it
+    // to CLEAR (query applied). The `.catch` tolerates the rare case where
+    // the cycle is missed/instant — we still fall through to the stability
+    // gate below rather than hang.
+    await page.waitForFunction(
+        () => document.querySelector('.facet-count.recomputing') !== null,
+        null, { timeout: 10000 }
+    ).catch(() => {});
     await waitForFacetCountsStable(page);
+    // Stability gate: two consecutive equal source-count reads, so a
+    // late-landing query can't shift the values after we return. If a real
+    // product stale-overwrite race existed, the steady state would be the
+    // wrong value and the caller's assertion would (correctly) fail.
+    let prev = null;
+    await expect.poll(async () => {
+        const cur = JSON.stringify(await readSourceCounts(page));
+        const settled = cur === prev;
+        prev = cur;
+        return settled;
+    }, { timeout: 30000, intervals: [400, 600, 800] }).toBe(true);
 }
 
 function totalOf(counts) {
