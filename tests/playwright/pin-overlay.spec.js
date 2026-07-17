@@ -10,11 +10,26 @@
 // the worktree, not production, per Codex round-1 P1.4f):
 //   TEST_URL=https://<branch-pages-url> npx playwright test tests/playwright/pin-overlay.spec.js
 //
-// Test hook: window.__searchPins() → [{ pid, lat, lng }] read-only snapshot of
-// the live pin collection. Ground truths reuse the FTS suite's 202608 index
-// facts: 'pottery Cyprus' → 1,305 matches; 'basalt' → 785 — both exceed the
-// LIMIT 50 display cap, so the displayed (and pinned) set is capped at 50.
-// 'ark:/28722/k2000hz7r' is the FTS suite's known-present single pid.
+// Test hooks (both set in the viewer cell):
+//   window.__searchPins()      → [{ pid, lat, lng }] read-only snapshot.
+//   window.__clickSearchPin(i) → replays the on-globe result-pin click ceremony
+//                                (shared helper + pid hash push) by index, since
+//                                Cesium canvas picking isn't feasible in Playwright.
+// Ground truths reuse the FTS suite's 202608 index facts: 'pottery Cyprus' →
+// 1,305 matches; 'basalt' → 785 — both exceed the LIMIT 50 display cap, so the
+// displayed (and pinned) set is capped at 50. 'ark:/28722/k2000hz7r' is the FTS
+// suite's known-present single pid.
+//
+// ASYNC INTERLEAVING (Codex round-3): the "a hydration must not overwrite a
+// newer search's list/pins" invariant is guaranteed by the freshness-token
+// OWNERSHIP audit, not by a timing-dependent e2e test. doSearch()/doDescribedBy()
+// bump the selection token at entry (new panel owner), and every post-await
+// list-mutation site (direct cluster-click nearby path, hydrateClusterUI) checks
+// isStale() and re-clears pins as one owned operation before writing the list. A
+// true interleaving race test would be flaky (it depends on two concurrent DuckDB
+// queries resolving in a specific order), so per the review guidance we do not
+// ship one; the Back-after-pin-click test below exercises the deterministic
+// half of the lifecycle.
 
 const { test, expect } = require('@playwright/test');
 
@@ -143,6 +158,11 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     // Documented total (785) exceeds the LIMIT 50 cap, so it must bind exactly.
     expect(await displayedRowCount(page)).toBe(50);
 
+    // Exact identity: pins are precisely the located displayed rows (same
+    // assertion the local-many case makes — the plan requires it for "all four").
+    const located = await locatedRowPids(page);
+    expect(sortJoin(pinList.map((p) => p.pid))).toBe(sortJoin(located));
+
     const lats = pinList.map((p) => p.lat);
     const lngs = pinList.map((p) => p.lng);
     const latExtent = Math.max(...lats) - Math.min(...lats);
@@ -189,12 +209,46 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     await waitPinsAtLeast(page, 1);
     expect((await pins(page)).length).toBeGreaterThan(0);
 
-    // Empty submit is a committed clear path — doSearch clears the overlay
-    // before the too-short early return.
+    // Empty submit is a committed clear path — doSearch clears the overlay AND
+    // the results list before the too-short early return, so they clear TOGETHER
+    // (Codex round-3: assert the list too, not just the pins).
     await submitSearch(page, '');
-    await page.waitForFunction(() => (window.__searchPins ? window.__searchPins().length : -1) === 0,
+    await page.waitForFunction(() =>
+      (window.__searchPins ? window.__searchPins().length : -1) === 0
+      && document.querySelectorAll('#samplesSection .sample-row').length === 0,
       null, { timeout: 60_000 });
     expect((await pins(page)).length).toBe(0);
+    expect(await displayedRowCount(page)).toBe(0);
+  });
+
+  test('Back after a pin click clears BOTH the list and the pins', async ({ page }) => {
+    await submitSearch(page, 'pottery Cyprus');
+    await waitPinsAtLeast(page, 1);
+    const beforePins = (await pins(page)).map((p) => p.pid);
+    const displayedBefore = await displayedRowCount(page);
+    expect(beforePins.length).toBeGreaterThan(0);
+    expect(displayedBefore).toBeGreaterThan(0);
+
+    // A result-pin click selects the sample and pushes a pid hash, while
+    // PRESERVING the list and pins (verified here).
+    const clicked = await page.evaluate(() => window.__clickSearchPin(0));
+    expect(clicked).toBe(true);
+    await page.waitForFunction(() => {
+      const cs = document.getElementById('clusterSection');
+      return cs && /<h4>\s*Sample\s*<\/h4>/i.test(cs.innerHTML);
+    }, null, { timeout: 60_000 });
+    expect((await pins(page)).length).toBe(beforePins.length);
+    expect(await displayedRowCount(page)).toBe(displayedBefore);
+
+    // Back → the no-selection hash → the hashchange handler clears BOTH the
+    // preserved list and the pin overlay (the round-2 sync fix; regression guard).
+    await page.goBack();
+    await page.waitForFunction(() =>
+      (window.__searchPins ? window.__searchPins().length : -1) === 0
+      && document.querySelectorAll('#samplesSection .sample-row').length === 0,
+      null, { timeout: 60_000 });
+    expect((await pins(page)).length).toBe(0);
+    expect(await displayedRowCount(page)).toBe(0);
   });
 
   test('selecting a located result row selects it AND preserves the list + pins', async ({ page }) => {
