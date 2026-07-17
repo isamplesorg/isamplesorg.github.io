@@ -38,6 +38,7 @@ h3_res4_url = `${R2_BASE}/isamples_202608_h3_summary_res4.parquet`       // pre-
 | `..._facet_summaries.parquet`, `..._facet_cross_filter.parquet`, `..._facet_tree_*.parquet` | Pre-computed facet-checkbox counts at various levels of "how many filters are active" — the whole point of these is to avoid a live COUNT over millions of rows | KB–tens of MB |
 | `..._sample_facet_masks.parquet`, `..._sample_facet_index.parquet` | Bitmask tricks so 2+ facet filters at once are still fast (see `SERIALIZATIONS.md` §4.12 if you want the gory detail) | ~10 MB each |
 | `vocab_labels_*.parquet` | URI → human-readable label lookup (e.g. `.../material/1.0/rock` → "Rock") | ~60 KB |
+| `..._search_index_v1/` (852 files) | Pre-built search index (like a book's back-of-book index, sharded): token shards + tiny sidecars (`hot_tokens.json`, `df.parquet`, `build_stats.json`). The default search path since 2026-07-17 | few KB–few MB per shard |
 
 *Full list with exact schemas: `SERIALIZATIONS.md`. This table is the subset
 that matters for "what happens when I click around the Explorer."*
@@ -81,19 +82,40 @@ of filters" doesn't pre-aggregate cleanly.
 
 ### ...search for text
 
-Search runs `ILIKE`-style matching against `sample_facets_v3.parquet`'s
-description column (which has vocabulary-concept labels appended at build
-time, so a search for "pottery" also matches samples only tagged with a
-pottery *concept*, not just the word):
+*(Updated 2026-07-17 — the default search backend changed:
+[PR #335](https://github.com/isamplesorg/isamplesorg.github.io/pull/335).)*
+
+**Default path (since 2026-07-17): a pre-built search index.** Your query is
+split into tokens, and each token maps (by hash) to a small parquet shard of
+a pre-built inverted index (`isamples_202608_search_index_v1/`, 852 files —
+think "the index at the back of a book, one file per drawer"). The browser
+fetches only the few KB-to-MB shards for *your* tokens, intersects the
+matching sample ids, and ranks them by relevance (BM25 — the standard
+"rarer words in shorter descriptions score higher" formula). Concept labels
+were folded into the index at build time, so "pottery" still matches samples
+tagged only with a pottery *concept*. A typical first search moves a few MB,
+not tens of MB. *(`buildSearchFilterSubstrate()` + `assets/js/search_substrate.js`;
+index contract in `SEARCH_INDEX_V1.md`.)*
+
+**Fallback path (`?fts=off`, and automatically for identifier queries):** the
+original `ILIKE`-style scan against `sample_facets_v3.parquet`'s description
+column:
 
 ```sql
 SELECT pid, label, source, place_name FROM read_parquet('sample_facets_v3.parquet')
 WHERE description ILIKE '%pottery%'
 ```
-*(`buildSearchFilter()`, `explorer.qmd` ~line 5370-5415.)* Matching pids are
-staged into a table (`search_pids`) that every other query — map, table,
-facet counts — then filters against, so search composes with facets instead
-of being a separate mode.
+*(`buildSearchFilter()` in `explorer.qmd`.)* This path downloads much more
+data on first search (the scan touches most of the ~60 MB file) but handles
+one thing the index cannot: **pasted identifiers** (ARK / IGSN / DOI — e.g.
+`ark:/28722/k2000hz7r`), which get exact-matched against the `pid` column.
+Identifier-looking queries are routed here automatically; you never need the
+flag for that.
+
+**Either way, the result is the same:** matching pids are staged into a table
+(`search_pids`) that every other query — map, table, facet counts — then
+filters against, so search composes with facets instead of being a separate
+mode.
 
 ### ...view the Samples table
 
@@ -144,7 +166,9 @@ FROM read_parquet('https://data.isamples.org/isamples_202608_wide.parquet')
 WHERE otype = 'MaterialSampleRecord'
 GROUP BY n ORDER BY 2 DESC;
 
--- same "pottery" search the Explorer runs
+-- the "pottery" search the Explorer's FALLBACK path (?fts=off) runs;
+-- the default path since 2026-07-17 probes the sharded search index instead
+-- (JS, not a single SQL statement — see SEARCH_INDEX_V1.md)
 SELECT pid, label, source
 FROM read_parquet('https://data.isamples.org/isamples_202608_sample_facets_v3.parquet')
 WHERE description ILIKE '%pottery%'
