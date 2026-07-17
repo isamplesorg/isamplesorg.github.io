@@ -190,25 +190,38 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     expect((await pins(page)).length).toBe(0);
   });
 
-  test('new search replaces the PIN set', async ({ page }) => {
+  test('new search replaces the PIN set AND tears down the old rows at submit', async ({ page }) => {
     await submitSearch(page, 'pottery Cyprus');
     await waitPinsAtLeast(page, 1);
     const firstPinPids = (await pins(page)).map((p) => p.pid);
+    const firstRowPids = await page.$$eval('#samplesSection .sample-row', (els) => els.map((e) => e.dataset.pid));
     expect(firstPinPids.length).toBeGreaterThan(0);
     expect(firstPinPids.length).toBeLessThanOrEqual(50);
+    expect(firstRowPids.length).toBeGreaterThan(0);
 
     await submitSearch(page, 'basalt');
+    // Entry-clear (Codex round-5 P1.2): a new submit tears the OLD rows down —
+    // the prior search's rows must not persist under the new (or building) state.
+    // 'basalt' is disjoint from 'pottery Cyprus', so its first row pid must
+    // disappear (becomes true at the synchronous entry-clear and stays true).
+    await page.waitForFunction((pid) => {
+      const pids = Array.from(document.querySelectorAll('#samplesSection .sample-row')).map((e) => e.dataset.pid);
+      return !pids.includes(pid);
+    }, firstRowPids[0], { timeout: 120_000 });
+
     // Wait for the count line to reflect the NEW term, then for pins to repopulate.
     await page.waitForFunction(() =>
       /results for "basalt"/i.test(document.getElementById('searchResults')?.textContent || ''),
       null, { timeout: 120_000 });
     await waitPinsAtLeast(page, 1);
     const secondPinPids = (await pins(page)).map((p) => p.pid);
+    const secondRowPids = await page.$$eval('#samplesSection .sample-row', (els) => els.map((e) => e.dataset.pid));
 
     expect(secondPinPids.length).toBeGreaterThan(0);
     expect(secondPinPids.length).toBeLessThanOrEqual(50);
-    // Disjoint corpora → the PIN set (not just the side panel) must change.
+    // Disjoint corpora → both the PIN set AND the rendered row set must change.
     expect(sortJoin(secondPinPids)).not.toBe(sortJoin(firstPinPids));
+    expect(sortJoin(secondRowPids)).not.toBe(sortJoin(firstRowPids));
   });
 
   test('committed empty search clears the pins (snapshot lifecycle)', async ({ page }) => {
