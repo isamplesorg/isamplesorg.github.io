@@ -5755,10 +5755,10 @@ zoomWatcher = {
     // Replaces buildSearchFilter's 69 MB facets ILIKE scan with the
     // sharded inverted index at data.isamples.org/isamples_202608_search_index_v1/
     // (built by tools/build_search_index.py, contract SEARCH_INDEX_V1.md).
-    // Everything downstream is UNCHANGED: this produces the same singleton
-    // `search_pids` table (pid, label, source, place_name, relevance_score),
-    // so the table/points/facet-count semi-joins and the side panel work
-    // exactly as with the interim path.
+    // Downstream shares one contract: both producers emit the singleton
+    // `search_pids` table (pid, label, source, place_name, relevance_score);
+    // the semi-join surfaces are common, with substrate-specific branches
+    // where display columns arrive null (backfilled from the wide parquet).
     // DEFAULT ON as of 2026-07-17 (#172 ship decision): the substrate wins
     // every benchmark row vs the interim path (e.g. no-hit 62.7s → 5.5s),
     // all hard-fail invariants pass, and a hand review of the benchmark
@@ -5772,7 +5772,9 @@ zoomWatcher = {
 
     function substrateEnabled() {
         try {
-            return new URLSearchParams(location.search).get('fts') !== 'off';
+            // getAll: `off` dominates even with duplicate params
+            // (?fts=v1&fts=off) — a rollback switch must win ties.
+            return !new URLSearchParams(location.search).getAll('fts').includes('off');
         } catch (e) { return true; }
     }
 
@@ -5802,11 +5804,15 @@ zoomWatcher = {
     async function buildSearchFilterSubstrate(term) {
         const token = ++_searchFilterToken;
         window.a1dbg?.('substrate-search-start', { term, token });
-        // Lazy module import (Codex review): flag-off visitors must not
+        // Lazy module import (Codex review): ?fts=off visitors must not
         // download/evaluate the substrate modules, and a module-load failure
-        // must not be able to kill the default search cell — so the import
-        // happens HERE, on first flagged search, not as an OJS dependency.
-        _substrateModPromise ??= import(new URL('assets/js/search_substrate.js', document.baseURI).href);
+        // must not be able to kill the search cell — so the import happens
+        // HERE, on first substrate search, not as an OJS dependency. A
+        // REJECTED import resets the cache so the next search retries
+        // instead of failing forever on one transient network hiccup
+        // (Codex P2 on PR #335 — matters now that substrate is the default).
+        _substrateModPromise ??= import(new URL('assets/js/search_substrate.js', document.baseURI).href)
+            .catch(e => { _substrateModPromise = null; throw e; });
         const _searchSubstrate = await _substrateModPromise;
         if (token !== _searchFilterToken) return false;   // superseded during import
         const meta = await loadSubstrateMeta();
@@ -6052,7 +6058,14 @@ zoomWatcher = {
             // #171/#172: the sharded-substrate path is the default; ?fts=off
             // reverts to the interim scan. Both producers emit the identical
             // `search_pids` singleton, so everything downstream is shared.
-            if (substrateEnabled()) {
+            // PID-looking queries (ARK / IGSN / DOI / resolver URL / pid:)
+            // always take the interim builder: the substrate index carries
+            // only text fields (SEARCH_INDEX_V1 §2 — label/description/place/
+            // concept labels), so tokenizing a pasted identifier would return
+            // zero or unrelated matches. The interim path has the exact-PID
+            // arm (#278/#26). Rare query class — paying its cold cost beats
+            // silently wrong results. (Codex P1 on PR #335.)
+            if (substrateEnabled() && !terms.some(t => looksLikePid(t))) {
                 await buildSearchFilterSubstrate(term);
             } else {
                 await buildSearchFilter(terms, term);
