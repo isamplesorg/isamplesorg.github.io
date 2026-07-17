@@ -20,22 +20,29 @@
 // displayed (and pinned) set is capped at 50. 'ark:/28722/k2000hz7r' is the FTS
 // suite's known-present single pid.
 //
-// ASYNC INTERLEAVING (Codex round-3): the "a hydration must not overwrite a
-// newer search's list/pins" invariant is guaranteed by the freshness-token
-// OWNERSHIP audit, not by a timing-dependent e2e test. doSearch()/doDescribedBy()
-// bump the selection token at entry (new panel owner), and every post-await
-// list-mutation site (direct cluster-click nearby path, hydrateClusterUI) checks
-// isStale() and re-clears pins as one owned operation before writing the list. A
-// true interleaving race test would be flaky (it depends on two concurrent DuckDB
-// queries resolving in a specific order), so per the review guidance we do not
-// ship one; the Back-after-pin-click test below exercises the deterministic
-// half of the lifecycle.
+// ASYNC INTERLEAVING (Codex round-3/4): the "list and pins never diverge across a
+// search-vs-cluster race, in EITHER order" invariant is guaranteed by the
+// dedicated panel-generation counter (viewer._panelGen). Every list producer
+// (doSearch, doDescribedBy, the cluster-click nearby path, hydrateClusterUI)
+// captures ++viewer._panelGen at start and only writes list+pins while it still
+// holds the latest generation — so whichever producer STARTED LAST wins, and an
+// earlier producer that resolves later bails. The pure check is unit-tested as
+// panelWriteAllowed() in tests/unit/explorer-utils.test.mjs. A live interleaving
+// e2e would be flaky (two concurrent DuckDB queries resolving in a specific order),
+// so per review guidance we do not ship one; the Back-after-pin-click test below
+// exercises the deterministic half of the lifecycle.
 
 const { test, expect } = require('@playwright/test');
 
-const BASE = process.env.TEST_URL || process.env.BASE_URL
-  || 'https://rdhyee.github.io/isamplesorg.github.io';
-const URL = `${BASE}/explorer.html`;
+// URL precedence (Codex round-4 P2): honor an explicit env override, else fall
+// back to Playwright's configured baseURL via a RELATIVE goto (playwright.config.js
+// resolves TEST_URL || http://localhost:5860). NO hard-coded production fallback,
+// so a branch dispatch verifies the rendered worktree, not deployed production.
+// NOTE (divergence): tests/playwright/fts-v1.spec.js still hard-codes a production
+// BASE_URL fallback; that spec is out of scope for this branch and left unchanged.
+const BASE = process.env.TEST_URL || process.env.BASE_URL || '';
+const explorerUrl = (query = '') =>
+  BASE ? `${BASE}/explorer.html${query}` : `/explorer.html${query}`;
 
 // Generous flake protection matching the FTS suite: a cold CDN edge pays boot
 // + lazy module import + sidecar/shard fetches before the first search lands.
@@ -98,7 +105,7 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
   test.describe.configure({ timeout: 120_000 });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(URL, { timeout: 90_000 });
+    await page.goto(explorerUrl(), { timeout: 90_000 });
     await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
     // Pin overlay starts empty before any search.
     expect((await pins(page)).length).toBe(0);
@@ -222,8 +229,22 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
   });
 
   test('Back after a pin click clears BOTH the list and the pins', async ({ page }) => {
+    // These predicates run in the BROWSER (passed directly to waitForFunction),
+    // so they must be self-contained — only browser globals, no Node closure.
+    const hasHashPid = () => new URLSearchParams((location.hash || '').slice(1)).has('pid');
+    const noHashPid = () => !new URLSearchParams((location.hash || '').slice(1)).has('pid');
+    const settledNoPidHash = () => {
+      const p = new URLSearchParams((location.hash || '').slice(1));
+      return p.has('v') && !p.has('pid');
+    };
+
     await submitSearch(page, 'pottery Cyprus');
     await waitPinsAtLeast(page, 1);
+    // Wait for the auto-fly to SETTLE into a globe hash that has no pid, so Back
+    // has a deterministic no-selection entry to return to (Codex round-4 P2 —
+    // otherwise the previous history entry can be hashless / flight-cancelled).
+    await page.waitForFunction(settledNoPidHash, null, { timeout: 90_000 });
+
     const beforePins = (await pins(page)).map((p) => p.pid);
     const displayedBefore = await displayedRowCount(page);
     expect(beforePins.length).toBeGreaterThan(0);
@@ -233,6 +254,7 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     // PRESERVING the list and pins (verified here).
     const clicked = await page.evaluate(() => window.__clickSearchPin(0));
     expect(clicked).toBe(true);
+    await page.waitForFunction(hasHashPid, null, { timeout: 60_000 });
     await page.waitForFunction(() => {
       const cs = document.getElementById('clusterSection');
       return cs && /<h4>\s*Sample\s*<\/h4>/i.test(cs.innerHTML);
@@ -240,9 +262,10 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     expect((await pins(page)).length).toBe(beforePins.length);
     expect(await displayedRowCount(page)).toBe(displayedBefore);
 
-    // Back → the no-selection hash → the hashchange handler clears BOTH the
-    // preserved list and the pin overlay (the round-2 sync fix; regression guard).
+    // Back → the no-pid hash → the hashchange handler clears BOTH the preserved
+    // list and the pin overlay (the round-2 sync fix; regression guard).
     await page.goBack();
+    await page.waitForFunction(noHashPid, null, { timeout: 60_000 });
     await page.waitForFunction(() =>
       (window.__searchPins ? window.__searchPins().length : -1) === 0
       && document.querySelectorAll('#samplesSection .sample-row').length === 0,
