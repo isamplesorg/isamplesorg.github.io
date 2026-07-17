@@ -2181,9 +2181,21 @@ viewer = {
     v.searchResultPoints = new Cesium.PointPrimitiveCollection();
     v.scene.primitives.add(v.searchResultPoints);
 
-    // Test hook (#172): lets Playwright assert the live pin count without
-    // reaching into Cesium internals.
-    if (typeof window !== 'undefined') window.__searchPins = () => v.searchResultPoints.length;
+    // Test hook (#172, Codex round-1 P1.4 / P2): read-only snapshot of the pin
+    // overlay — [{ pid, lat, lng }] — so specs can assert identity/position and
+    // exact set equality, not just a count. Re-reads the collection on every
+    // call via the current `v`; returns [] if the collection is missing so a
+    // recreated viewer never leaves a stale closure raising.
+    if (typeof window !== 'undefined') window.__searchPins = () => {
+        const col = v.searchResultPoints;
+        if (!col) return [];
+        const out = [];
+        for (let i = 0; i < col.length; i++) {
+            const id = col.get(i).id || {};
+            out.push({ pid: id.pid, lat: id.lat, lng: id.lng });
+        }
+        return out;
+    };
 
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
@@ -2195,6 +2207,9 @@ viewer = {
             disableDepthTestDistance: Number.POSITIVE_INFINITY, text: "",
         }
     });
+    // Cesium's documented default label background; restored for hovers that
+    // carry no source (#172 P2 source-colored hover, below).
+    const LABEL_BG_DEFAULT = new Cesium.Color(0.165, 0.165, 0.165, 0.8);
 
     new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction((movement) => {
         const picked = v.scene.pick(movement.endPosition);
@@ -2202,14 +2217,21 @@ viewer = {
             v.pointLabel.position = picked.primitive.position;
             v.pointLabel.label.show = true;
             const meta = picked.id;
+            // #172 P2 (Codex round-1): source-colored hover background for both
+            // sample points AND search-result pins, per the option (C) contract
+            // ("source badge color"). Cluster/plain hovers keep the default.
+            let hoverSource = null;
             if (typeof meta === 'object' && (meta.type === 'sample' || meta.type === 'searchResult')) {
-                // #172 pin-overlay Inc 1: result pins hover like sample points.
                 v.pointLabel.label.text = `${meta.label || meta.pid}`;
+                hoverSource = meta.source;
             } else if (typeof meta === 'object' && meta.count) {
                 v.pointLabel.label.text = `${meta.source}: ${meta.count.toLocaleString()} samples`;
             } else {
                 v.pointLabel.label.text = String(meta);
             }
+            v.pointLabel.label.backgroundColor = (hoverSource && SOURCE_COLORS[hoverSource])
+                ? Cesium.Color.fromCssColorString(SOURCE_COLORS[hoverSource]).withAlpha(0.85)
+                : LABEL_BG_DEFAULT;
         } else {
             v.pointLabel.label.show = false;
         }
@@ -2231,12 +2253,12 @@ viewer = {
         if (typeof meta === 'object' && meta.type === 'searchResult') {
             // --- Search-result pin click (#172 pin-overlay Inc 1, option C) ---
             // Runs the same selection ceremony as a sample click (card,
-            // selection state, flight, lazy detail) via the shared helper, but
-            // PRESERVES the #samplesSection search-results list the user is
-            // browsing. Like the sample branch it also opens the floating in-map
-            // card at the click pixel and writes the pid selection hash.
+            // selection state, flight, full in-map detail) via the shared
+            // helper, but PRESERVES the #samplesSection search-results list the
+            // user is browsing. Reuse the freshness token already bumped above
+            // (isStale) so the helper does not double-bump (Codex round-1 P1.3).
             if (v.selectSearchResult) {
-                v.selectSearchResult(meta, { fly: true, inMapCardAt: { x: e.position.x, y: e.position.y } });
+                v.selectSearchResult(meta, { fly: true, inMapCardAt: { x: e.position.x, y: e.position.y }, isStale });
             }
             writeGlobeHash(v, { replace: false, force: true });
 
@@ -2254,6 +2276,10 @@ viewer = {
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
+            // #172 Inc 1 (Codex round-1 P1.2, snapshot semantics): this click
+            // tears down the rendered results list, so the result-pin overlay
+            // (its snapshot) goes with it.
+            if (v.searchResultPoints) v.searchResultPoints.removeAll();
 
             // Stage 2: lazy-load extended fields from wide parquet.
             // Extended beyond the original description-only query to
@@ -2314,6 +2340,10 @@ viewer = {
 
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+            // #172 Inc 1 (Codex round-1 P1.2, snapshot semantics): a cluster
+            // click replaces the results list with nearby samples, so the
+            // result-pin overlay (its snapshot) is cleared too.
+            if (v.searchResultPoints) v.searchResultPoints.removeAll();
 
             const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
             try {
@@ -5335,9 +5365,13 @@ zoomWatcher = {
     // anchors at canvas centre rather than flying. Adding a "camera far from
     // sample → flyTo" branch would fight the hashchange flyTo above and the
     // boot setView; it's a tracked follow-up, not folded in here.
-    async function openInMapCardForSample(meta, isStale) {
+    // `screenPos` (added #172 Inc 1): anchor the card at an explicit pixel —
+    // used by the result-pin click, which frames the card at the click point
+    // like the on-globe sample click. Omitted by the deep-link/hashchange
+    // callers, which keep the canvas-centre anchor described above.
+    async function openInMapCardForSample(meta, isStale, screenPos) {
         const canvas = viewer.scene.canvas;
-        showInMapCard(meta, { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 });
+        showInMapCard(meta, screenPos || { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 });
         try {
             const pidEsc = meta.pid.replace(/'/g, "''");
             const detail = await db.query(`
@@ -5965,8 +5999,9 @@ zoomWatcher = {
     async function clearActiveSearchFilter() {
         // Same clear path as an empty search submit, without entering doSearch().
         _searchSeq++;
-        // #172 pin-overlay Inc 1 (option C): committed clear (concept-chip clear
-        // / programmatic ?search= removal) drops the result-pin overlay too.
+        // #172 pin-overlay Inc 1 (option C): this is the committed clear used by
+        // the concept-chip clear button (its only caller today) — it tears down
+        // the results list, so drop the result-pin overlay snapshot too.
         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
         if (searchInput) searchInput.value = '';
         if (searchResults) searchResults.textContent = '';
@@ -6011,20 +6046,26 @@ zoomWatcher = {
     // hydration, selection state, flight, lazy detail — but deliberately does
     // NOT repaint #samplesSection (it holds the search-results list the user is
     // browsing). `sample` is a normalized meta ({ pid, label, source, lat, lng,
-    // place_name, result_time }); coord-less rows are ignored. `inMapCardAt`
-    // (pin click only) additionally opens the floating in-map card at the click
-    // pixel, parity with the sample-click branch.
-    async function selectSearchResult(sample, { fly = true, inMapCardAt = null } = {}) {
+    // place_name, result_time }); coord-less rows are ignored.
+    //
+    // `inMapCardAt` (pin click only): open the floating in-map card at the click
+    // pixel with the SAME rich detail (material / feature / specimen / thumbnail)
+    // the sample click renders — via the shared openInMapCardForSample(), so the
+    // wide-table fetch is reused, not duplicated (Codex round-1 P1.3).
+    //
+    // `isStale` (Codex round-1 P1.3): callers that already bumped the freshness
+    // token (the globe click handler) pass theirs so we don't double-bump; the
+    // row click passes none and we bump here.
+    async function selectSearchResult(sample, { fly = true, inMapCardAt = null, isStale = null } = {}) {
         if (!sample || sample.lat == null || sample.lng == null) return;
 
         // Bump the freshness token BEFORE any async work so a prior
         // cluster/sample detail load can't repaint the panel after we navigate.
-        const isStale = freshSelectionToken(viewer);
+        if (!isStale) isStale = freshSelectionToken(viewer);
 
         viewer._globeState.selectedPid = sample.pid;
         viewer._globeState.selectedH3 = null;
         updateSampleCard(sample);
-        if (inMapCardAt) showInMapCard(sample, inMapCardAt);
         if (fly) {
             viewer.camera.flyTo({
                 destination: Cesium.Cartesian3.fromDegrees(sample.lng, sample.lat, 50000),
@@ -6032,8 +6073,16 @@ zoomWatcher = {
             });
         }
 
-        // Lazy-load full description (mirrors the globe click handler). Don't
-        // clear samplesSection — it holds the results the user is browsing.
+        if (inMapCardAt) {
+            // Pin click: full in-map card hydration at the click pixel, reusing
+            // the shared wide-table fetch (updateSampleDetail +
+            // populateInMapCardDetail happen inside).
+            await openInMapCardForSample(sample, isStale, inMapCardAt);
+            return;
+        }
+
+        // Row click: sidebar description only (no in-map card). Don't clear
+        // samplesSection — it holds the results the user is browsing.
         try {
             const detail = await db.query(`
                 SELECT description
@@ -6458,6 +6507,17 @@ zoomWatcher = {
             // coordinate-less matches; NEVER coerce to (0,0)). Old pins were
             // cleared at the top of doSearch (committed-clear path); the cap is
             // inherited from LIMIT 50, so pins ≤ 50 ≤ displayed results.
+            //
+            // LIFECYCLE POLICY (snapshot semantics, Codex round-1 P1.2): the
+            // pins are a snapshot of the rendered results list — they reconcile
+            // with the LIST lifecycle, not with filter state. They are cleared
+            // wherever that list is torn down (new/empty submit, described-by
+            // takeover, and the globe sample/cluster clicks that replace the
+            // list). They deliberately PERSIST when the list persists stale —
+            // e.g. a source/facet toggle while a search is active updates the
+            // #300 filtered surfaces but not the (frozen) results list, so the
+            // pins stay too. That staleness is the documented pre-existing
+            // behavior of the list itself, not a new pin bug.
             const pinScalar = new Cesium.NearFarScalar(1e2, 8, 2e5, 3);  // mirror samplePoints
             for (const s of results) {
                 if (s.latitude == null || s.longitude == null) continue;
@@ -6482,11 +6542,15 @@ zoomWatcher = {
                     outlineColor: Cesium.Color.fromCssColorString(c),
                     outlineWidth: 2,
                     scaleByDistance: pinScalar,
-                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                    // #185 (Codex round-1 P1.1): bounded depth-test distance —
+                    // Number.POSITIVE_INFINITY bleeds pins through the far side
+                    // of the globe; POINT_DEPTH_TEST_DISTANCE matches the h3/
+                    // sample layers and prevents that back-hemisphere bleed.
+                    disableDepthTestDistance: POINT_DEPTH_TEST_DISTANCE,
                 });
             }
 
-            // Fly to the first result. Skip for area-scoped searches —
+            // Fly to the first LOCATED result. Skip for area-scoped searches —
             // the user is already at the area they care about; flying
             // would zoom in and disorient.
             //
@@ -6495,12 +6559,21 @@ zoomWatcher = {
             // doesn't carry stale selection state across the flight
             // (issue #207 item 8). User clicks on a specific row to
             // establish a new selection.
-            if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+            //
+            // #172 Inc 1 (Codex round-1 P1.5): scan for the first row with
+            // real coordinates using EXPLICIT null checks (0° lat/lng is
+            // valid). results[0] can be coord-less in world scope (LEFT JOIN
+            // to lite), so the old truthiness test on results[0] both skipped
+            // the flight for a coord-less top row and would have mis-treated
+            // 0,0. Fit-to-bounds (the 30°×30° camera rule) remains deferred to
+            // Inc 2 per PLAN_PIN_OVERLAY_2026-07-17.md.
+            const firstLocated = results.find(r => r.latitude != null && r.longitude != null);
+            if (effectiveScope === 'world' && firstLocated) {
                 const cancelFinalFacetRefresh = refreshFacetCountsAfterSearchFlight(searchId);
                 viewer._globeState.selectedPid = null;
                 viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
+                    destination: Cesium.Cartesian3.fromDegrees(firstLocated.longitude, firstLocated.latitude, 200000),
                     duration: 1.5,
                     cancel: cancelFinalFacetRefresh,
                 });
