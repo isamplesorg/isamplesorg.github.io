@@ -943,6 +943,7 @@ csvParamValues = _explorerUtils.csvParamValues
 sourceUrl = _explorerUtils.sourceUrl
 readHash = _explorerUtils.readHash
 formatPlaceName = _explorerUtils.formatPlaceName
+panelWriteAllowed = _explorerUtils.panelWriteAllowed
 
 // === Source Filter: get active sources and build SQL clause ===
 function getActiveSources() {
@@ -2137,6 +2138,13 @@ viewer = {
 
     // URL deep-link state (must be set before globalRect/once block reads it)
     v._globeState = { mode: 'cluster', selectedPid: null, selectedH3: null };
+    // #172 Inc 1 (Codex round-4 P1): panel/list ownership generation. Every
+    // #samplesSection list producer claims ++v._panelGen when it takes the list;
+    // async producers write list+pins only while they still hold the latest
+    // generation (see panelWriteAllowed). Closes the search-vs-cluster race in
+    // BOTH orders. The pid deep-link hydration writes only the card, so it never
+    // bumps this — that's why the boot search+pid list still renders.
+    v._panelGen = 0;
     v._initialHash = readHash();
     v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
     v._suppressTimer = null;
@@ -2197,20 +2205,27 @@ viewer = {
         return out;
     };
 
-    // Test hook (#172, Codex round-3 P2): faithfully replay a result-pin CLICK
-    // by index — the SAME ceremony the on-globe LEFT_CLICK handler runs (shared
-    // selection helper + pid hash push), so specs can exercise pin selection and
-    // Back-navigation without Cesium canvas picking (not feasible in Playwright).
-    // Returns false if there is no pin at that index.
-    if (typeof window !== 'undefined') window.__clickSearchPin = (i = 0) => {
-        const col = v.searchResultPoints;
-        if (!col || i < 0 || i >= col.length) return false;
-        const meta = col.get(i).id;
-        const isStale = freshSelectionToken(v);
-        if (v.selectSearchResult) v.selectSearchResult(meta, { fly: true, isStale });
-        writeGlobeHash(v, { replace: false, force: true });
-        return true;
-    };
+    // Test hook (#172, Codex round-3/4 P2): faithfully replay a result-pin CLICK
+    // by index — the FULL ceremony the on-globe LEFT_CLICK handler runs, INCLUDING
+    // inMapCardAt (canvas centre) so the rich floating-card hydration path runs,
+    // plus the shared selection helper and the pid hash push. Lets specs exercise
+    // pin selection and Back-navigation without Cesium canvas picking (not feasible
+    // in Playwright). Installed ONLY under WebDriver (Playwright sets
+    // navigator.webdriver) so it can't be invoked in a normal session. Returns
+    // false if there is no pin at that index.
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.webdriver === true) {
+        window.__clickSearchPin = (i = 0) => {
+            const col = v.searchResultPoints;
+            if (!col || i < 0 || i >= col.length) return false;
+            const meta = col.get(i).id;
+            const canvas = v.scene.canvas;
+            const inMapCardAt = { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 };
+            const isStale = freshSelectionToken(v);
+            if (v.selectSearchResult) v.selectSearchResult(meta, { fly: true, inMapCardAt, isStale });
+            writeGlobeHash(v, { replace: false, force: true });
+            return true;
+        };
+    }
 
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
@@ -2344,6 +2359,11 @@ viewer = {
 
         } else if (typeof meta === 'object' && meta.count) {
             // --- Cluster click ---
+            // #172 Inc 1 (Codex round-4 P1): claim panel ownership — this cluster
+            // click is a new list producer, so an older in-flight search render
+            // (which checks its own captured gen) bails instead of overwriting
+            // these nearby rows.
+            const myPanelGen = ++v._panelGen;
             updateClusterCard(meta);
             // Cluster click clears any prior sample selection; close
             // the in-map sample card so it doesn't outlive the context
@@ -2375,10 +2395,13 @@ viewer = {
                 `;
                 const samples = await db.query(nearbyQuery);
                 if (isStale()) return;
-                // #172 Inc 1 (Codex round-3 P1): write the list + pins as ONE
-                // owned operation. Re-clear here (post-await, ownership just
-                // confirmed by isStale) so a search that populated pins DURING
-                // this await can't leave them orphaned over these nearby rows.
+                // #172 Inc 1 (Codex round-4 P1): only write if this click still
+                // owns the panel. Closes the reverse race — a search that
+                // STARTED earlier but resolves later has a stale panel gen and
+                // must not overwrite these rows. (round-3 P1): write list + pins
+                // as ONE owned operation — no await between this guard, the
+                // re-clear, and updateSamples, so nothing can interpose.
+                if (!panelWriteAllowed(myPanelGen, v._panelGen)) return;
                 if (v.searchResultPoints) v.searchResultPoints.removeAll();
                 updateSamples(samples);
             } catch(err) {
@@ -5347,6 +5370,9 @@ zoomWatcher = {
     // because click selection is its own latest event.
     async function hydrateClusterUI(meta, isStale) {
         if (!meta) return;
+        // #172 Inc 1 (Codex round-4 P1): claim panel ownership so an older
+        // in-flight search render bails instead of overwriting these rows.
+        const myPanelGen = ++viewer._panelGen;
         updateClusterCard(meta);
         const sampEl = document.getElementById('samplesSection');
         if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
@@ -5367,10 +5393,11 @@ zoomWatcher = {
                 LIMIT 30
             `);
             if (isStale && isStale()) return;
-            // #172 Inc 1 (Codex round-3 P1): list + pins as ONE owned operation.
-            // Re-clear post-await (ownership just confirmed) so a search that
-            // populated pins during this await can't orphan them over the
-            // nearby rows we're about to render.
+            // #172 Inc 1 (Codex round-4 P1): only write if this hydration still
+            // owns the panel — closes the reverse race with a search that
+            // started earlier but resolves later. (round-3 P1): list + pins as
+            // ONE owned operation, no await between guard, re-clear, and write.
+            if (!panelWriteAllowed(myPanelGen, viewer._panelGen)) return;
             if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
             updateSamples(samples);
         } catch(err) {
@@ -6165,18 +6192,19 @@ zoomWatcher = {
         // submission — valid or not — supersedes prior in-flight work.
         const searchId = ++_searchSeq;
 
-        // #172 Inc 1 (Codex round-3 P1): take PANEL OWNERSHIP. A committed search
-        // is a new panel owner, so bump the selection freshness token to
-        // invalidate any in-flight selection hydration (cluster nearby-samples,
-        // sample/pid detail). Those producers re-check isStale() after their
-        // await and bail before overwriting this search's list/pins, so the two
-        // can't diverge. We deliberately DON'T capture the token here: doSearch's
-        // own post-await renders are (and stay) guarded by searchId/_searchSeq —
-        // the two token systems guard different things (search build vs selection
-        // panel) and both must hold. The reverse race (a cluster click AFTER this
-        // submit) is handled by the owned post-await clears in the cluster-click /
-        // hydrateClusterUI paths.
+        // #172 Inc 1: take PANEL OWNERSHIP two ways.
+        // (round-3, _selGen) bump the selection freshness token so in-flight
+        // sample/pid detail + cluster hydrations become stale and bail — this
+        // guards selection/card work.
         freshSelectionToken(viewer);
+        // (round-4, _panelGen) claim a fresh LIST generation and CAPTURE it. Every
+        // post-await list write below re-checks it (in addition to _searchSeq), so
+        // a newer list producer that started AFTER this search — e.g. a cluster
+        // click while the search is still building — makes this render bail
+        // instead of overwriting the cluster's rows. This closes the reverse race
+        // order. It does NOT break boot search+pid: the pid deep-link writes only
+        // the card and never bumps _panelGen, so this render still owns the list.
+        const myPanelGen = ++viewer._panelGen;
 
         // #172 pin-overlay Inc 1 (option C): clear the previous result-pin
         // overlay on every committed submit (before repopulating). This covers
@@ -6474,6 +6502,16 @@ zoomWatcher = {
                 wasSuperseded = true;
                 return;
             }
+            // #172 Inc 1 (Codex round-4 P1): also bail if a newer LIST producer
+            // (e.g. a cluster click while this search was building) took the
+            // panel. Both _searchSeq (search supersession) and _panelGen (list
+            // ownership) must hold before we write the list/pins — there is no
+            // await between here and the row-render + pin-populate below, so this
+            // single check makes that write atomic w.r.t. panel ownership.
+            if (!panelWriteAllowed(myPanelGen, viewer._panelGen)) {
+                wasSuperseded = true;
+                return;
+            }
             resultsCount = results.length;
             if (results.length === 0) {
                 // A build failure also empties search_pids → 0 rows here, so
@@ -6738,9 +6776,14 @@ zoomWatcher = {
                 // Honesty fix (#247): keep the side panel consistent with the
                 // table meta's "→ panel" pointer on failure too, instead of
                 // leaving stale results under a pointer that now lies.
-                const sampElErr = document.getElementById('samplesSection');
-                if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
-                    + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
+                // #172 Inc 1 (Codex round-4 P1): but only if we still own the
+                // panel — a newer list producer must not have its rows replaced
+                // by this (older) search's failure message.
+                if (panelWriteAllowed(myPanelGen, viewer._panelGen)) {
+                    const sampElErr = document.getElementById('samplesSection');
+                    if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
+                        + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
+                }
             }
         } finally {
             performance.mark(markEnd);
@@ -6848,12 +6891,14 @@ zoomWatcher = {
         // filter can't clobber each other's side-panel render mid-flight.
         const searchId = ++_searchSeq;
 
-        // #172 Inc 1 (Codex round-3 P1): take PANEL OWNERSHIP — same as doSearch.
-        // A committed concept filter is a new panel owner; bump the selection
-        // freshness token so any in-flight selection hydration bails at its
-        // post-await isStale() check rather than overwriting this render. The
-        // concept render itself stays guarded by searchId/_searchSeq.
+        // #172 Inc 1: take PANEL OWNERSHIP — same as doSearch. (round-3, _selGen)
+        // bump the selection token so in-flight selection hydrations bail; (round-4,
+        // _panelGen) claim + capture a LIST generation, re-checked before this
+        // render, so a cluster click that starts AFTER this concept commit wins
+        // the list instead of being overwritten. The concept render also stays
+        // guarded by searchId/_searchSeq.
         freshSelectionToken(viewer);
+        const myPanelGen = ++viewer._panelGen;
 
         // #172 pin-overlay Inc 1 (option C): committing a concept filter removes
         // `search=` and owns the panel, so drop any lingering text-search
@@ -6908,8 +6953,13 @@ zoomWatcher = {
         const headingHTML = (suffix) =>
             `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #ede7f6; color: #5e35b1; border-radius: 4px;">Samples described by: ${safeLabel}${suffix}</h4>`;
 
+        // #172 Inc 1 (Codex round-4 P1): a newer list producer (cluster click)
+        // may own the panel now — gate the failed/empty LIST renders on it (the
+        // URL write above stays _searchSeq's concern).
+        const conceptOwnsPanel = () => panelWriteAllowed(myPanelGen, viewer._panelGen);
         if (buildFailed) {
             if (searchResults) searchResults.textContent = `Concept filter failed for "${label}". Please try again.`;
+            if (!conceptOwnsPanel()) return;
             const sElF = document.getElementById('samplesSection');
             if (sElF) sElF.innerHTML = headingHTML('')
                 + '<div class="empty-state" style="padding: 8px;">Filter failed to build — please try again.</div>';
@@ -6917,6 +6967,7 @@ zoomWatcher = {
         }
         if (total === 0) {
             if (searchResults) searchResults.textContent = `No samples described by "${label}"`;
+            if (!conceptOwnsPanel()) return;
             const sEl0 = document.getElementById('samplesSection');
             if (sEl0) sEl0.innerHTML = headingHTML(' (0)')
                 + '<div class="empty-state" style="padding: 8px;">No samples matched this concept.</div>';
@@ -6951,6 +7002,9 @@ zoomWatcher = {
             ? `${shown} of ${total.toLocaleString()} samples described by "${label}"`
             : `${shown} sample${shown === 1 ? '' : 's'} described by "${label}"`;
 
+        // #172 Inc 1 (Codex round-4 P1): bail if a newer list producer took the
+        // panel while this concept query was in flight.
+        if (!conceptOwnsPanel()) return;
         const sampEl = document.getElementById('samplesSection');
         if (sampEl) {
             let h = headingHTML(` (${ofTotal})`);

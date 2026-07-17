@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     escapeHtml, searchTerms, parseNum, csvParamValues, sourceUrl, readHash,
-    facetCountsDisplayState, formatPlaceName,
+    facetCountsDisplayState, formatPlaceName, panelWriteAllowed,
 } from '../../assets/js/explorer-utils.js';
 
 test('escapeHtml escapes the five HTML-significant chars; nullish -> ""', () => {
@@ -114,4 +114,18 @@ test('facetCountsDisplayState: index ready but the count QUERY itself failed -> 
 
 test('facetCountsDisplayState: ready + fallthrough is not a state the caller produces, but resolves safely', () => {
     assert.equal(facetCountsDisplayState('ready', 'fallthrough'), 'unavailable');
+});
+
+test('panelWriteAllowed: a producer may write only while it holds the latest panel generation (#172 Inc 1)', () => {
+    // A captured generation equal to the current one → this producer still owns
+    // the #samplesSection list and may write list + pins.
+    assert.equal(panelWriteAllowed(1, 1), true);
+    assert.equal(panelWriteAllowed(7, 7), true);
+    // A newer producer has since bumped viewer._panelGen → the older producer's
+    // captured generation is stale and it must bail (closes the search-vs-cluster
+    // race in BOTH orders: whoever started last holds the highest generation).
+    assert.equal(panelWriteAllowed(1, 2), false);
+    assert.equal(panelWriteAllowed(2, 1), false);
+    // Strict identity — no coercion surprises.
+    assert.equal(panelWriteAllowed(0, 0), true);
 });
