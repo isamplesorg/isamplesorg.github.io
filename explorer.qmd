@@ -5758,7 +5758,7 @@ zoomWatcher = {
     // Downstream shares one contract: both producers emit the singleton
     // `search_pids` table (pid, label, source, place_name, relevance_score);
     // the semi-join surfaces are common, with substrate-specific branches
-    // where display columns arrive null (backfilled from the wide parquet).
+    // where display columns arrive null (backfilled via samples_map_lite).
     // DEFAULT ON as of 2026-07-17 (#172 ship decision): the substrate wins
     // every benchmark row vs the interim path (e.g. no-hit 62.7s → 5.5s),
     // all hard-fail invariants pass, and a hand review of the benchmark
@@ -6114,7 +6114,10 @@ zoomWatcher = {
             // This is NOT the FTS solution. The proper substrate work in
             // #169-#172 builds a sample-centric document projection with
             // hash-partitioned BM25 indexes that fixes both recall AND
-            // latency. This code path goes away when #171 lands.
+            // latency. #171 HAS landed and is the default (#172 flip,
+            // 2026-07-17): this interim builder now serves ?fts=off rollback
+            // and PID-looking queries (exact-PID arm — the substrate index
+            // has no PID field), so it stays until the substrate grows one.
             //
             // The search-term match + relevance score are already materialized
             // in `search_pids` by buildSearchFilter (aliased `s` below), so the
