@@ -1,4 +1,5 @@
-// #171: substrate search path (?fts=v1) — end-to-end against the published
+// #171/#172: substrate search path (DEFAULT since 2026-07-17; ?fts=off
+// escape hatch, ?fts=v1 still accepted) — end-to-end against the published
 // index at data.isamples.org/isamples_202608_search_index_v1/.
 //
 // Run:  BASE_URL=https://rdhyee.github.io/isamplesorg.github.io \
@@ -12,6 +13,12 @@ const { test, expect } = require('@playwright/test');
 
 const BASE = process.env.BASE_URL || 'https://rdhyee.github.io/isamplesorg.github.io';
 const URL = `${BASE}/explorer.html?fts=v1`;
+
+// This file's worst-case budget is ~20m30s per attempt; the config's CI
+// default of 2 retries would put the envelope (3 attempts, 1 worker) far past
+// the dispatch job cap. One retry keeps flake protection while fitting the
+// 55-minute cap (Codex P2 x2, PR #335).
+test.describe.configure({ retries: process.env.CI ? 1 : 0 });
 
 async function bootAndSearch(page, term) {
   await page.fill('#sampleSearch', term);
@@ -87,12 +94,33 @@ test.describe('substrate search (?fts=v1)', () => {
       null, { timeout: 60_000 });
   });
 
-  test('default path untouched: no fts param → interim search', async ({ page }) => {
-    // The INTERIM path cold-downloads the 69 MB facets parquet — the one
-    // test here that can't fit the 30 s config default. (The five substrate
-    // tests above all do; that asymmetry is the point of #171.)
-    test.setTimeout(240_000);
+});
+
+// #172 default-flip routing: these tests each boot their own URL, so they
+// live OUTSIDE the ?fts=v1 describe — its beforeEach would cold-boot a page
+// they immediately re-navigate away from (Codex P2 on PR #335).
+test.describe('default-flip routing (#172)', () => {
+
+  test('default: no fts param → substrate search', async ({ page }) => {
+    // The flip itself (#172 ship decision): a plain URL now routes to the
+    // substrate path. Mirrors the ?fts=v1 boot flow, minus the param.
+    test.setTimeout(150_000);
     await page.goto(`${BASE}/explorer.html`, { timeout: 90_000 });
+    await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
+    await page.fill('#sampleSearch', 'basalt');
+    await page.locator('#searchSubmitBtn').first().click();
+    await page.waitForFunction(() =>
+      window.__searchFilter && window.__searchFilter.substrate === true,
+      null, { timeout: 120_000 });
+    const total = await page.evaluate(() => window.__searchFilter.total);
+    expect(total).toBe(785);   // == 'basalt' ground truth for the 202608 index
+  });
+
+  test('escape hatch: ?fts=off → interim search', async ({ page }) => {
+    // ?fts=off is the rollback path back to the interim ILIKE scan, which
+    // cold-downloads the 69 MB facets parquet — hence the big budget.
+    test.setTimeout(240_000);
+    await page.goto(`${BASE}/explorer.html?fts=off`, { timeout: 90_000 });
     await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
     await page.fill('#sampleSearch', 'basalt');
     await page.locator('#searchSubmitBtn').first().click();
@@ -100,5 +128,27 @@ test.describe('substrate search (?fts=v1)', () => {
       window.__searchFilter && window.__searchFilter.active, null, { timeout: 150_000 });
     const substrate = await page.evaluate(() => window.__searchFilter.substrate);
     expect(substrate).toBeFalsy();
+  });
+
+  test('PID query routes to interim even under default substrate', async ({ page }) => {
+    // Codex P1 on PR #335: the substrate index has no PID field (SEARCH_INDEX_V1
+    // §2), so a pasted ARK/IGSN/DOI must take the interim builder's exact-PID
+    // arm (#278/#26) — under the DEFAULT (no-flag) URL. Interim cold cost →
+    // big budget.
+    test.setTimeout(240_000);
+    await page.goto(`${BASE}/explorer.html`, { timeout: 90_000 });
+    await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
+    // PID chosen from the interim benchmark's own top-10 (pottery), so it is
+    // guaranteed present in the facets parquet the interim path scans.
+    await page.fill('#sampleSearch', 'ark:/28722/k2000hz7r');
+    await page.locator('#searchSubmitBtn').first().click();
+    await page.waitForFunction(() =>
+      window.__searchFilter && window.__searchFilter.active, null, { timeout: 150_000 });
+    const r = await page.evaluate(() => ({
+      substrate: window.__searchFilter.substrate,
+      total: window.__searchFilter.total,
+    }));
+    expect(r.substrate).toBeFalsy();        // interim path handled it
+    expect(r.total).toBeGreaterThan(0);     // exact-PID arm found the sample
   });
 });

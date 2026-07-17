@@ -5559,10 +5559,12 @@ zoomWatcher = {
     // === A1: search-as-global-filter pid-set (#234 Step 4) ===
     //
     // Strategy B: materialize the set of pids matching the committed search
-    // term ONCE (one ILIKE scan over facets_url), then let every count
-    // surface (table, points, facet legend, stats) constrain itself with a
-    // cheap `pid IN (SELECT pid FROM search_pids)` semi-join — instead of
-    // re-running the expensive ILIKE per surface per camera move.
+    // term ONCE (substrate index probe by default since the #172 flip; one
+    // ILIKE scan over facets_url on the ?fts=off / PID-query interim path),
+    // then let every count surface (table, points, facet legend, stats)
+    // constrain itself with a cheap `pid IN (SELECT pid FROM search_pids)`
+    // semi-join — instead of re-running the expensive scan per surface per
+    // camera move.
     //
     // `search_pids` is a NON-TEMP table: Observable's DuckDBClient opens a
     // fresh connection per db.query(), so a connection-local TEMP table would
@@ -5751,21 +5753,31 @@ zoomWatcher = {
         }
     }
 
-    // ===== #171: substrate search path (feature flag ?fts=v1) =====
+    // ===== #171: substrate search path (default; escape hatch ?fts=off) =====
     // Replaces buildSearchFilter's 69 MB facets ILIKE scan with the
     // sharded inverted index at data.isamples.org/isamples_202608_search_index_v1/
     // (built by tools/build_search_index.py, contract SEARCH_INDEX_V1.md).
-    // Everything downstream is UNCHANGED: this produces the same singleton
-    // `search_pids` table (pid, label, source, place_name, relevance_score),
-    // so the table/points/facet-count semi-joins and the side panel work
-    // exactly as with the interim path. Opt-in only until the #172 gate.
+    // Downstream shares one contract: both producers emit the singleton
+    // `search_pids` table (pid, label, source, place_name, relevance_score);
+    // the semi-join surfaces are common, with substrate-specific branches
+    // where display columns arrive null (backfilled via samples_map_lite).
+    // DEFAULT ON as of 2026-07-17 (#172 ship decision): the substrate wins
+    // every benchmark row vs the interim path (e.g. no-hit 62.7s → 5.5s),
+    // all hard-fail invariants pass, and a hand review of the benchmark
+    // top-10s found no glaring ranking regressions. `?fts=off` reverts to
+    // the interim ILIKE scan — kept intact as the rollback path and for
+    // SME A/B ranking comparison (see #172); `?fts=v1` remains accepted so
+    // pre-flip opt-in links behave identically. §7 end-to-end budgets stay
+    // open in #172 as the pin-overlay / downstream-latency track.
     const SUBSTRATE_BASE = `${R2_BASE}/isamples_202608_search_index_v1`;
     let _substrateMeta = null;
 
     function substrateEnabled() {
         try {
-            return new URLSearchParams(location.search).get('fts') === 'v1';
-        } catch (e) { return false; }
+            // getAll: `off` dominates even with duplicate params
+            // (?fts=v1&fts=off) — a rollback switch must win ties.
+            return !new URLSearchParams(location.search).getAll('fts').includes('off');
+        } catch (e) { return true; }
     }
 
     async function loadSubstrateMeta() {
@@ -5794,11 +5806,15 @@ zoomWatcher = {
     async function buildSearchFilterSubstrate(term) {
         const token = ++_searchFilterToken;
         window.a1dbg?.('substrate-search-start', { term, token });
-        // Lazy module import (Codex review): flag-off visitors must not
+        // Lazy module import (Codex review): ?fts=off visitors must not
         // download/evaluate the substrate modules, and a module-load failure
-        // must not be able to kill the default search cell — so the import
-        // happens HERE, on first flagged search, not as an OJS dependency.
-        _substrateModPromise ??= import(new URL('assets/js/search_substrate.js', document.baseURI).href);
+        // must not be able to kill the search cell — so the import happens
+        // HERE, on first substrate search, not as an OJS dependency. A
+        // REJECTED import resets the cache so the next search retries
+        // instead of failing forever on one transient network hiccup
+        // (Codex P2 on PR #335 — matters now that substrate is the default).
+        _substrateModPromise ??= import(new URL('assets/js/search_substrate.js', document.baseURI).href)
+            .catch(e => { _substrateModPromise = null; throw e; });
         const _searchSubstrate = await _substrateModPromise;
         if (token !== _searchFilterToken) return false;   // superseded during import
         const meta = await loadSubstrateMeta();
@@ -6027,10 +6043,10 @@ zoomWatcher = {
         // A1 (#234 Step 4): materialize the search pid-set ONCE, then refresh
         // the table (and, in later increments, points / facet counts / stats)
         // so every count surface constrains to this search via a cheap
-        // semi-join. One ILIKE scan here warms the text columns in the DuckDB
-        // buffer, so the LIMIT-50 side-panel query below reads them warm.
-        // (Follow-up: derive the side-panel list from search_pids to drop the
-        // second scan entirely.) Failure leaves surfaces unfiltered, not broken.
+        // semi-join. On the interim path (?fts=off / PID queries) the ILIKE
+        // scan warms the text columns in the DuckDB buffer; the substrate
+        // default probes the sharded index instead and touches no facets
+        // columns. Failure leaves surfaces unfiltered, not broken.
         const buildingMsg = effectiveScope === 'area'
             ? 'Building search filter for selected areas…'
             : 'Building search filter…';
@@ -6041,10 +6057,17 @@ zoomWatcher = {
         // empty-results branch say "Search error" rather than "No results".
         let searchFilterBuildFailed = false;
         try {
-            // #171: ?fts=v1 routes to the sharded-substrate path; both
-            // producers emit the identical `search_pids` singleton, so
-            // everything downstream is shared.
-            if (substrateEnabled()) {
+            // #171/#172: the sharded-substrate path is the default; ?fts=off
+            // reverts to the interim scan. Both producers emit the identical
+            // `search_pids` singleton, so everything downstream is shared.
+            // PID-looking queries (ARK / IGSN / DOI / resolver URL / pid:)
+            // always take the interim builder: the substrate index carries
+            // only text fields (SEARCH_INDEX_V1 §2 — label/description/place/
+            // concept labels), so tokenizing a pasted identifier would return
+            // zero or unrelated matches. The interim path has the exact-PID
+            // arm (#278/#26). Rare query class — paying its cold cost beats
+            // silently wrong results. (Codex P1 on PR #335.)
+            if (substrateEnabled() && !terms.some(t => looksLikePid(t))) {
                 await buildSearchFilterSubstrate(term);
             } else {
                 await buildSearchFilter(terms, term);
@@ -6093,7 +6116,10 @@ zoomWatcher = {
             // This is NOT the FTS solution. The proper substrate work in
             // #169-#172 builds a sample-centric document projection with
             // hash-partitioned BM25 indexes that fixes both recall AND
-            // latency. This code path goes away when #171 lands.
+            // latency. #171 HAS landed and is the default (#172 flip,
+            // 2026-07-17): this interim builder now serves ?fts=off rollback
+            // and PID-looking queries (exact-PID arm — the substrate index
+            // has no PID field), so it stays until the substrate grows one.
             //
             // The search-term match + relevance score are already materialized
             // in `search_pids` by buildSearchFilter (aliased `s` below), so the
