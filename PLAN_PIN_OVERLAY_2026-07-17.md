@@ -26,22 +26,42 @@ contract's non-negotiable rules:
   pixel size 8
 - hover label + click → `updateSampleCard()` + pid hash write (dispatch on
   `meta.type === 'searchResult'`)
-- lifecycle: populate on results; clear on input-clear / `?search=` removal / new search
-- camera: fit-to-bounds iff extent < 30°×30°, else fly-to-top-1 @ 200000;
-  auto-fly suppressed in area scope (existing behavior)
+- lifecycle: populate on results; clear per SNAPSHOT SEMANTICS below
+- camera (amended per Codex round-1 P1.5): Inc 1 ships only the cheap half —
+  fly to the first *located* result @ 200000 (explicit null checks so 0° coords
+  are valid), auto-fly suppressed in area scope (existing behavior). **Fit-to-
+  bounds (the 30°×30° extent rule) is DEFERRED to Inc 2** — it is the only
+  camera work not in Inc 1.
 - global refiltering UNCHANGED in Inc 1 — pins are purely additive
-- acceptance: the contract's four shape cases (zero / one / local-many / global-many)
+- acceptance: the contract's four shape cases (zero / one / local-many /
+  global-many). Inc 1 asserts pin *identity/count/replacement/clear* for all
+  four; the **local-many fit-to-bounds ZOOM assertion is deferred to Inc 2**
+  with the fit-to-bounds implementation (Inc 1 flies to the first located
+  result in every non-area case instead)
+- **lifecycle (amended, Codex round-1 P1.2 — SNAPSHOT SEMANTICS):** the pins are
+  a snapshot of the *rendered results list* and reconcile with the LIST
+  lifecycle, not with filter state. Cleared wherever the list is torn down
+  (new/empty submit, described-by takeover, globe sample/cluster click). They
+  deliberately PERSIST when the list persists stale (a source/facet toggle while
+  a search is active updates #300 filtered surfaces but not the frozen list) —
+  that staleness is pre-existing list behavior, documented, not a new pin bug.
+  Known pre-existing incoherence left for a follow-up issue: a draft-input clear
+  followed by a source/facet change makes `writeQueryState()` drop `search=`
+  from the URL while the runtime filter (and thus list + pins) survive.
 - **pin-count semantics (amended per review):** one pin per *located* displayed
   result (world scope legitimately returns coordinate-less rows — never coerce to
   (0,0)); panel reports displayed vs pinned counts when they differ; camera rules
   use the first *located* result
-- **click parity (amended):** extract the sample-click ceremony (freshness token,
-  card, selection/hash, detail hydration) into a shared helper with a
-  preserve-results-list option; pin clicks use it — no shallow duplicate branch
-- **lifecycle (amended):** clearing tied to the *committed* clear paths (empty
-  submit / URL search removal / new search), not draft input edits
-- **styling (amended):** carry `scaleByDistance` + `disableDepthTestDistance`
-  explicitly (global-many visibility)
+- **click parity (amended, Codex round-1 P1.3):** the sample-click ceremony
+  (freshness token, card, selection/hash, detail hydration) is the shared
+  `selectSearchResult()` helper with a preserve-results-list option; pin clicks
+  use it — no shallow duplicate branch. Pin clicks get the FULL in-map card
+  hydration (material / feature / specimen / thumbnail) by reusing
+  `openInMapCardForSample()`, not a description-only fetch; the helper takes the
+  caller's freshness token to avoid a double-bump
+- **styling (amended):** carry `scaleByDistance` explicitly; use the bounded
+  `POINT_DEPTH_TEST_DISTANCE` for `disableDepthTestDistance` (Codex round-1
+  P1.1 — `Infinity` bleeds pins through the far side of the globe)
 
 ### Inc 2 — `?searchui=pin` mode (the latency win) ← behind flag
 **Seam corrected per Codex plan review (P0):** skipping `applySearchFilterChange()`
