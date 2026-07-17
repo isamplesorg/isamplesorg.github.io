@@ -2138,12 +2138,15 @@ viewer = {
 
     // URL deep-link state (must be set before globalRect/once block reads it)
     v._globeState = { mode: 'cluster', selectedPid: null, selectedH3: null };
-    // #172 Inc 1 (Codex round-4 P1): panel/list ownership generation. Every
-    // #samplesSection list producer claims ++v._panelGen when it takes the list;
-    // async producers write list+pins only while they still hold the latest
-    // generation (see panelWriteAllowed). Closes the search-vs-cluster race in
-    // BOTH orders. The pid deep-link hydration writes only the card, so it never
-    // bumps this — that's why the boot search+pid list still renders.
+    // #172 Inc 1 — PANEL/LIST OWNERSHIP GENERATION (unified rule, Codex round-5):
+    // ANY write to the rendered panel list (#samplesSection) — clear or replace,
+    // synchronous or asynchronous — advances _panelGen. Async producers ALSO
+    // capture it at start and may only write list+pins while still current (see
+    // panelWriteAllowed). Synchronous clears just advance it: the bump's job is to
+    // invalidate any in-flight async producer so a slow search/hydration can no
+    // longer resurrect a panel the user has since replaced or cleared. The pid
+    // deep-link is card-only (never writes the list) so it never bumps this —
+    // that's why the boot search+pid list still renders.
     v._panelGen = 0;
     v._initialHash = readHash();
     v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
@@ -2306,10 +2309,13 @@ viewer = {
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
-            // #172 Inc 1 (Codex round-1 P1.2, snapshot semantics): this click
-            // tears down the rendered results list, so the result-pin overlay
-            // (its snapshot) goes with it.
+            // #172 Inc 1 (Codex round-1 P1.2 / round-5 unified rule): this click
+            // tears down the rendered results list, so the pin overlay (its
+            // snapshot) goes with it AND _panelGen advances — a slow in-flight
+            // search that captured an earlier gen now bails instead of
+            // resurrecting the list the user just replaced with this selection.
             if (v.searchResultPoints) v.searchResultPoints.removeAll();
+            v._panelGen++;
 
             // Stage 2: lazy-load extended fields from wide parquet.
             // Extended beyond the original description-only query to
@@ -4854,8 +4860,11 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
-                        // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                        // #172 Inc 1 (Codex round-2/round-5): list teardown → clear
+                        // the pin snapshot too AND advance _panelGen (unified rule)
+                        // so a slow in-flight search can't resurrect this list.
                         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                        viewer._panelGen++;
                         writeGlobeHash(viewer, { force: true });
                     } else {
                         // Cluster's dominant_source still checked, but the
@@ -4879,9 +4888,12 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
-                        // #172 Inc 1 (Codex round-2 P1): source filter invalidated the
-                        // selected search result and cleared the list → clear its pins too.
+                        // #172 Inc 1 (Codex round-2/round-5): source filter
+                        // invalidated the selected search result and cleared the
+                        // list → clear its pins too AND advance _panelGen (unified
+                        // rule) so a slow in-flight search can't resurrect it.
                         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                        viewer._panelGen++;
                         writeGlobeHash(viewer, { force: true });
                     }
                 }
@@ -4974,8 +4986,10 @@ zoomWatcher = {
                     updateClusterCard(null);
                     const sampEl = document.getElementById('samplesSection');
                     if (sampEl) sampEl.innerHTML = '';
-                    // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                    // #172 Inc 1 (Codex round-2/round-5): list teardown → clear the
+                    // pin snapshot too AND advance _panelGen (unified rule).
                     if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                    viewer._panelGen++;
                     writeGlobeHash(viewer, { force: true });
                 } else {
                     await hydrateClusterUI(meta, isStale);
@@ -5591,8 +5605,10 @@ zoomWatcher = {
                 updateClusterCard(null);
                 const sampEl = document.getElementById('samplesSection');
                 if (sampEl) sampEl.innerHTML = '';
-                // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                // #172 Inc 1 (Codex round-2/round-5): list teardown → clear the pin
+                // snapshot too AND advance _panelGen (unified rule).
                 if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                viewer._panelGen++;
             }
         } else {
             viewer._globeState.selectedPid = null;
@@ -5602,9 +5618,12 @@ zoomWatcher = {
             hideInMapCard();
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
-            // #172 Inc 1 (Codex round-2 P1): the Back-after-pin-click no-selection
-            // branch tears down the preserved search list → clear its pins too.
+            // #172 Inc 1 (Codex round-2/round-5): the Back-after-pin-click
+            // no-selection branch tears down the preserved search list → clear its
+            // pins too AND advance _panelGen (unified rule) so a slow in-flight
+            // search can't resurrect the list after the user navigated away.
             if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+            viewer._panelGen++;
         }
     });
 
@@ -6071,11 +6090,12 @@ zoomWatcher = {
         // #172 Inc 1 (Codex round-3 P1): take panel ownership so an in-flight
         // selection hydration can't repopulate the list after this clear.
         freshSelectionToken(viewer);
-        // #172 pin-overlay Inc 1 (option C): this is the committed clear used by
-        // the concept-chip clear button (its only caller today) — it tears down
-        // the results list, so clear the LIST and the result-pin overlay snapshot
-        // TOGETHER.
+        // #172 pin-overlay Inc 1 (option C / round-5 unified rule): the committed
+        // concept-chip clear tears down the results list, so clear the LIST and the
+        // pin overlay TOGETHER and advance _panelGen so an in-flight async producer
+        // (search / hydration) can't resurrect the list after this clear.
         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        viewer._panelGen++;
         const sampElClear = document.getElementById('samplesSection');
         if (sampElClear) sampElClear.innerHTML = '';
         if (searchInput) searchInput.value = '';
@@ -6197,30 +6217,29 @@ zoomWatcher = {
         // sample/pid detail + cluster hydrations become stale and bail — this
         // guards selection/card work.
         freshSelectionToken(viewer);
-        // (round-4, _panelGen) claim a fresh LIST generation and CAPTURE it. Every
-        // post-await list write below re-checks it (in addition to _searchSeq), so
-        // a newer list producer that started AFTER this search — e.g. a cluster
-        // click while the search is still building — makes this render bail
-        // instead of overwriting the cluster's rows. This closes the reverse race
-        // order. It does NOT break boot search+pid: the pid deep-link writes only
-        // the card and never bumps _panelGen, so this render still owns the list.
+        // (round-4/round-5, _panelGen) this submit is a write to the panel list,
+        // so advance _panelGen AND capture it — one bump serves both. As a bump it
+        // invalidates any in-flight async producer (unified rule); as this search's
+        // captured generation it is re-checked (with _searchSeq) before every
+        // render below, so a newer list producer that starts AFTER this submit
+        // (e.g. a cluster click while the search is still building) makes this
+        // render bail instead of overwriting the cluster's rows. Does NOT break
+        // boot search+pid: the pid deep-link is card-only and never bumps.
         const myPanelGen = ++viewer._panelGen;
 
-        // #172 pin-overlay Inc 1 (option C): clear the previous result-pin
-        // overlay on every committed submit (before repopulating). This covers
-        // both the new-search path (repopulated below on success) and the
-        // empty/too-short committed-clear path. Draft input edits never reach
-        // doSearch, so typing/backspace does not clear pins.
+        // #172 Inc 1 (Codex round-5 P1.2): a new submit tears the panel DOWN.
+        // Clear the old rows AND pins together AT ENTRY (under the gen just
+        // captured), so no stale unpinned rows linger during the async build — the
+        // panel shows the building status (searchResults text) until the atomic
+        // replacement lands. This covers BOTH the committed real search below and
+        // the empty/too-short branch (which just leaves the panel cleared).
         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        const sampElEntry = document.getElementById('samplesSection');
+        if (sampElEntry) sampElEntry.innerHTML = '';
 
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
             searchResults.textContent = 'Type at least 2 characters';
-            // #172 Inc 1 (Codex round-3 P1): clear the results LIST here too so
-            // list and pins clear TOGETHER — otherwise stale search rows would
-            // survive under an empty overlay, breaking the snapshot invariant.
-            const sampElClear = document.getElementById('samplesSection');
-            if (sampElClear) sampElClear.innerHTML = '';
             // A1 (#234 Step 4): an empty / too-short submit means no committed
             // search — drop the pid-set filter and refresh every surface
             // (table, points, facet counts) plus revert the globe mode so the
@@ -6510,6 +6529,12 @@ zoomWatcher = {
             // single check makes that write atomic w.r.t. panel ownership.
             if (!panelWriteAllowed(myPanelGen, viewer._panelGen)) {
                 wasSuperseded = true;
+                // #172 Inc 1 (Codex round-5 P2): panel ownership and search-status
+                // completion are separate. A cluster took the panel, so we won't
+                // render — but if no NEWER search owns the status text (our
+                // searchId still current), settle our own "Searching…" to '' so it
+                // can't persist forever. If a newer search owns the text, leave it.
+                if (searchId === _searchSeq) searchResults.textContent = '';
                 return;
             }
             resultsCount = results.length;
@@ -6892,18 +6917,21 @@ zoomWatcher = {
         const searchId = ++_searchSeq;
 
         // #172 Inc 1: take PANEL OWNERSHIP — same as doSearch. (round-3, _selGen)
-        // bump the selection token so in-flight selection hydrations bail; (round-4,
-        // _panelGen) claim + capture a LIST generation, re-checked before this
-        // render, so a cluster click that starts AFTER this concept commit wins
-        // the list instead of being overwritten. The concept render also stays
-        // guarded by searchId/_searchSeq.
+        // bump the selection token so in-flight selection hydrations bail; (round-4/
+        // round-5, _panelGen) advance + capture a LIST generation — as a bump it
+        // invalidates in-flight async producers (unified rule); as this concept's
+        // gen it's re-checked before every render, so a cluster click that starts
+        // AFTER this commit wins the list. The render also stays guarded by
+        // searchId/_searchSeq.
         freshSelectionToken(viewer);
         const myPanelGen = ++viewer._panelGen;
 
-        // #172 pin-overlay Inc 1 (option C): committing a concept filter removes
-        // `search=` and owns the panel, so drop any lingering text-search
-        // result pins (a committed clear path for the text overlay).
+        // #172 Inc 1 (Codex round-5 P1.2): committing a concept tears the panel
+        // DOWN — clear the old rows AND the text-search pins together at entry
+        // (the panel shows "Filtering by concept…" until the concept list lands).
         if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        const sampElEntry = document.getElementById('samplesSection');
+        if (sampElEntry) sampElEntry.innerHTML = '';
 
         // Mutual exclusivity: a committed concept filter OWNS search_pids, so
         // clear the free-text box (and its sidebar mirror) before building.
