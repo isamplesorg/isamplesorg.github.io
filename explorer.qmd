@@ -5751,21 +5751,29 @@ zoomWatcher = {
         }
     }
 
-    // ===== #171: substrate search path (feature flag ?fts=v1) =====
+    // ===== #171: substrate search path (default; escape hatch ?fts=off) =====
     // Replaces buildSearchFilter's 69 MB facets ILIKE scan with the
     // sharded inverted index at data.isamples.org/isamples_202608_search_index_v1/
     // (built by tools/build_search_index.py, contract SEARCH_INDEX_V1.md).
     // Everything downstream is UNCHANGED: this produces the same singleton
     // `search_pids` table (pid, label, source, place_name, relevance_score),
     // so the table/points/facet-count semi-joins and the side panel work
-    // exactly as with the interim path. Opt-in only until the #172 gate.
+    // exactly as with the interim path.
+    // DEFAULT ON as of 2026-07-17 (#172 ship decision): the substrate wins
+    // every benchmark row vs the interim path (e.g. no-hit 62.7s → 5.5s),
+    // all hard-fail invariants pass, and a hand review of the benchmark
+    // top-10s found no glaring ranking regressions. `?fts=off` reverts to
+    // the interim ILIKE scan — kept intact as the rollback path and for
+    // SME A/B ranking comparison (see #172); `?fts=v1` remains accepted so
+    // pre-flip opt-in links behave identically. §7 end-to-end budgets stay
+    // open in #172 as the pin-overlay / downstream-latency track.
     const SUBSTRATE_BASE = `${R2_BASE}/isamples_202608_search_index_v1`;
     let _substrateMeta = null;
 
     function substrateEnabled() {
         try {
-            return new URLSearchParams(location.search).get('fts') === 'v1';
-        } catch (e) { return false; }
+            return new URLSearchParams(location.search).get('fts') !== 'off';
+        } catch (e) { return true; }
     }
 
     async function loadSubstrateMeta() {
@@ -6041,9 +6049,9 @@ zoomWatcher = {
         // empty-results branch say "Search error" rather than "No results".
         let searchFilterBuildFailed = false;
         try {
-            // #171: ?fts=v1 routes to the sharded-substrate path; both
-            // producers emit the identical `search_pids` singleton, so
-            // everything downstream is shared.
+            // #171/#172: the sharded-substrate path is the default; ?fts=off
+            // reverts to the interim scan. Both producers emit the identical
+            // `search_pids` singleton, so everything downstream is shared.
             if (substrateEnabled()) {
                 await buildSearchFilterSubstrate(term);
             } else {

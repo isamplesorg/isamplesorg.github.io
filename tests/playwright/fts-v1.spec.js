@@ -87,12 +87,14 @@ test.describe('substrate search (?fts=v1)', () => {
       null, { timeout: 60_000 });
   });
 
-  test('default path untouched: no fts param → interim search', async ({ page }) => {
-    // The INTERIM path cold-downloads the 69 MB facets parquet — the one
-    // test here that can't fit the 30 s config default. (The five substrate
+  test('escape hatch: ?fts=off → interim search', async ({ page }) => {
+    // Default flipped to substrate 2026-07-17 (#172 ship decision); ?fts=off
+    // is the rollback path back to the interim ILIKE scan, which
+    // cold-downloads the 69 MB facets parquet — the one test here that
+    // can't fit the 30 s config default. (The five substrate
     // tests above all do; that asymmetry is the point of #171.)
     test.setTimeout(240_000);
-    await page.goto(`${BASE}/explorer.html`, { timeout: 90_000 });
+    await page.goto(`${BASE}/explorer.html?fts=off`, { timeout: 90_000 });
     await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
     await page.fill('#sampleSearch', 'basalt');
     await page.locator('#searchSubmitBtn').first().click();
@@ -100,5 +102,19 @@ test.describe('substrate search (?fts=v1)', () => {
       window.__searchFilter && window.__searchFilter.active, null, { timeout: 150_000 });
     const substrate = await page.evaluate(() => window.__searchFilter.substrate);
     expect(substrate).toBeFalsy();
+  });
+
+  test('default: no fts param → substrate search', async ({ page }) => {
+    // The flip itself (#172 ship decision): a plain URL now routes to the
+    // substrate path. Mirrors the ?fts=v1 boot flow, minus the param.
+    await page.goto(`${BASE}/explorer.html`, { timeout: 90_000 });
+    await page.waitForSelector('.samples-table tbody tr[data-pid]', { timeout: 120_000 });
+    await page.fill('#sampleSearch', 'basalt');
+    await page.locator('#searchSubmitBtn').first().click();
+    await page.waitForFunction(() =>
+      window.__searchFilter && window.__searchFilter.substrate === true,
+      null, { timeout: 120_000 });
+    const total = await page.evaluate(() => window.__searchFilter.total);
+    expect(total).toBe(785);   // == 'basalt' ground truth for the 202608 index
   });
 });
