@@ -343,6 +343,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>URI → human-readable label lookup (e.g.&nbsp;<code>.../material/1.0/rock</code> → “Rock”)</td>
 <td>~60 KB</td>
 </tr>
+<tr class="even">
+<td><code>..._search_index_v1/</code> (852 files)</td>
+<td>Pre-built search index (like a book’s back-of-book index, sharded): token shards + tiny sidecars (<code>hot_tokens.json</code>, <code>df.parquet</code>, <code>build_stats.json</code>). The default search path since 2026-07-17</td>
+<td>few KB–few MB per shard</td>
+</tr>
 </tbody>
 </table>
 <p><em>Full list with exact schemas: <code>SERIALIZATIONS.md</code>. This table is the subset that matters for “what happens when I click around the Explorer.”</em></p>
@@ -366,10 +371,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="search-for-text" class="level3" data-number="1.3.4">
 <h3 data-number="1.3.4" data-anchor-id="search-for-text"><span class="header-section-number">1.3.4</span> …search for text</h3>
-<p>Search runs <code>ILIKE</code>-style matching against <code>sample_facets_v3.parquet</code>’s description column (which has vocabulary-concept labels appended at build time, so a search for “pottery” also matches samples only tagged with a pottery <em>concept</em>, not just the word):</p>
+<p><em>(Updated 2026-07-17 — the default search backend changed: <a href="https://github.com/isamplesorg/isamplesorg.github.io/pull/335">PR #335</a>.)</em></p>
+<p><strong>Default path (since 2026-07-17): a pre-built search index.</strong> Your query is split into tokens, and each token maps (by hash) to a small parquet shard of a pre-built inverted index (<code>isamples_202608_search_index_v1/</code>, 852 files — think “the index at the back of a book, one file per drawer”). The browser fetches only the few KB-to-MB shards for <em>your</em> tokens, intersects the matching sample ids, and ranks them by relevance (BM25 — the standard “rarer words in shorter descriptions score higher” formula). Concept labels were folded into the index at build time, so “pottery” still matches samples tagged only with a pottery <em>concept</em>. A typical first search moves a few MB, not tens of MB. <em>(<code>buildSearchFilterSubstrate()</code> + <code>assets/js/search_substrate.js</code>; index contract in <code>SEARCH_INDEX_V1.md</code>.)</em></p>
+<p><strong>Fallback path (<code>?fts=off</code>, and automatically for identifier queries):</strong> the original <code>ILIKE</code>-style scan against <code>sample_facets_v3.parquet</code>’s description column:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, place_name <span class="kw">FROM</span> read_parquet(<span class="st">'sample_facets_v3.parquet'</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>(<code>buildSearchFilter()</code>, <code>explorer.qmd</code> ~line 5370-5415.)</em> Matching pids are staged into a table (<code>search_pids</code>) that every other query — map, table, facet counts — then filters against, so search composes with facets instead of being a separate mode.</p>
+<p><em>(<code>buildSearchFilter()</code> in <code>explorer.qmd</code>.)</em> This path downloads much more data on first search (the scan touches most of the ~60 MB file) but handles one thing the index cannot: <strong>pasted identifiers</strong> (ARK / IGSN / DOI — e.g. <code>ark:/28722/k2000hz7r</code>), which get exact-matched against the <code>pid</code> column. Identifier-looking queries are routed here automatically; you never need the flag for that.</p>
+<p><strong>Either way, the result is the same:</strong> matching pids are staged into a table (<code>search_pids</code>) that every other query — map, table, facet counts — then filters against, so search composes with facets instead of being a separate mode.</p>
 </section>
 <section id="view-the-samples-table" class="level3" data-number="1.3.5">
 <h3 data-number="1.3.5" data-anchor-id="view-the-samples-table"><span class="header-section-number">1.3.5</span> …view the Samples table</h3>
@@ -404,11 +412,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> otype <span class="op">=</span> <span class="st">'MaterialSampleRecord'</span></span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">GROUP</span> <span class="kw">BY</span> n <span class="kw">ORDER</span> <span class="kw">BY</span> <span class="dv">2</span> <span class="kw">DESC</span>;</span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- same "pottery" search the Explorer runs</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_sample_facets_v3.parquet'</span>)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">LIMIT</span> <span class="dv">20</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- the "pottery" search the Explorer's FALLBACK path (?fts=off) runs;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- the default path since 2026-07-17 probes the sharded search index instead</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- (JS, not a single SQL statement — see SEARCH_INDEX_V1.md)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_sample_facets_v3.parquet'</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">LIMIT</span> <span class="dv">20</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>DuckDB only fetches the byte ranges it needs (via HTTP range requests), so this is fast even though the files are hundreds of MB — you’re not downloading the whole thing to run a filtered query.</p>
 </section>
 <section id="where-to-go-deeper" class="level2" data-number="1.5">
