@@ -4811,6 +4811,8 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
+                        // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
                         writeGlobeHash(viewer, { force: true });
                     } else {
                         // Cluster's dominant_source still checked, but the
@@ -4834,6 +4836,9 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
+                        // #172 Inc 1 (Codex round-2 P1): source filter invalidated the
+                        // selected search result and cleared the list → clear its pins too.
+                        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
                         writeGlobeHash(viewer, { force: true });
                     }
                 }
@@ -4926,6 +4931,8 @@ zoomWatcher = {
                     updateClusterCard(null);
                     const sampEl = document.getElementById('samplesSection');
                     if (sampEl) sampEl.innerHTML = '';
+                    // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                    if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
                     writeGlobeHash(viewer, { force: true });
                 } else {
                     await hydrateClusterUI(meta, isStale);
@@ -5323,6 +5330,11 @@ zoomWatcher = {
         updateClusterCard(meta);
         const sampEl = document.getElementById('samplesSection');
         if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+        // #172 Inc 1 (Codex round-2 P1, snapshot semantics): replacing the list
+        // with nearby samples tears down any search-results list, so the
+        // result-pin overlay (its snapshot) goes with it. This choke point
+        // covers source/facet revalidation, hashchange h3 restore, and boot.
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
         const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
         try {
             const samples = await db.query(`
@@ -5527,6 +5539,8 @@ zoomWatcher = {
                 updateClusterCard(null);
                 const sampEl = document.getElementById('samplesSection');
                 if (sampEl) sampEl.innerHTML = '';
+                // #172 Inc 1 (Codex round-2 P1): list teardown → clear the pin snapshot too.
+                if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
             }
         } else {
             viewer._globeState.selectedPid = null;
@@ -5536,6 +5550,9 @@ zoomWatcher = {
             hideInMapCard();
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
+            // #172 Inc 1 (Codex round-2 P1): the Back-after-pin-click no-selection
+            // branch tears down the preserved search list → clear its pins too.
+            if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
         }
     });
 
