@@ -103,6 +103,8 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     expect(pinPids.length).toBeGreaterThan(0);
     expect(pinPids.length).toBeLessThanOrEqual(50);
     expect(pinPids.length).toBeLessThanOrEqual(displayed);
+    // Documented total (1,305) exceeds the LIMIT 50 cap, so it must bind exactly.
+    expect(displayed).toBe(50);
     // Exact set equality: one pin per located displayed row, no more, no fewer.
     expect(sortJoin(pinPids)).toBe(sortJoin(located));
     // Every pin carries real coordinates (never coerced to 0,0 placeholders).
@@ -138,6 +140,8 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     const pinList = await pins(page);
     expect(pinList.length).toBeGreaterThan(0);
     expect(pinList.length).toBeLessThanOrEqual(50);
+    // Documented total (785) exceeds the LIMIT 50 cap, so it must bind exactly.
+    expect(await displayedRowCount(page)).toBe(50);
 
     const lats = pinList.map((p) => p.lat);
     const lngs = pinList.map((p) => p.lng);
@@ -193,21 +197,41 @@ test.describe('search-result pin overlay (#172 Inc 1)', () => {
     expect((await pins(page)).length).toBe(0);
   });
 
-  test('selecting a result row preserves both the results list and the pins', async ({ page }) => {
+  test('selecting a located result row selects it AND preserves the list + pins', async ({ page }) => {
     await submitSearch(page, 'pottery Cyprus');
     await waitPinsAtLeast(page, 1);
     const before = (await pins(page)).map((p) => p.pid);
     const displayedBefore = await displayedRowCount(page);
 
-    // Row click runs the shared selection ceremony but must NOT tear down the
-    // results list (or its pin snapshot).
-    await page.locator('#samplesSection .sample-row[data-lat]').first().click();
-    // Give any async selection work a beat; the list/pins must be unchanged.
-    await page.waitForTimeout(1500);
+    // Pick a DEMONSTRABLY LOCATED row (numeric data-lat/lng, not the string
+    // "null") — a coord-less row's handler returns immediately, so clicking it
+    // would prove nothing (Codex round-2 P2).
+    const located = await page.$$eval('#samplesSection .sample-row', (els) =>
+      els
+        .filter((e) => {
+          const la = e.dataset.lat, ln = e.dataset.lng;
+          return la && la !== 'null' && la !== 'undefined'
+              && ln && ln !== 'null' && ln !== 'undefined';
+        })
+        .map((e) => ({ pid: e.dataset.pid, label: (e.querySelector('.sample-label')?.textContent || '').trim() })));
+    expect(located.length).toBeGreaterThan(0);
+    const target = located[0];
 
+    // Click a NON-LINK child (the source badge) so the row handler runs — its
+    // own handler bails on clicks that land on the <a> label.
+    await page.locator(`#samplesSection .sample-row[data-pid="${target.pid}"] .source-badge`).first().click();
+
+    // Assert the selection ACTUALLY happened (the sample card now shows this
+    // sample) with a condition-based wait BEFORE checking preservation.
+    await page.waitForFunction((label) => {
+      const cs = document.getElementById('clusterSection');
+      if (!cs) return false;
+      return /<h4>\s*Sample\s*<\/h4>/i.test(cs.innerHTML) && cs.textContent.includes(label);
+    }, target.label, { timeout: 60_000 });
+
+    // Row selection must NOT tear down the results list or its pin snapshot.
     const after = (await pins(page)).map((p) => p.pid);
-    const displayedAfter = await displayedRowCount(page);
-    expect(displayedAfter).toBe(displayedBefore);
+    expect(await displayedRowCount(page)).toBe(displayedBefore);
     expect(sortJoin(after)).toBe(sortJoin(before));
   });
 });
