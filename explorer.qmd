@@ -943,6 +943,7 @@ csvParamValues = _explorerUtils.csvParamValues
 sourceUrl = _explorerUtils.sourceUrl
 readHash = _explorerUtils.readHash
 formatPlaceName = _explorerUtils.formatPlaceName
+panelWriteAllowed = _explorerUtils.panelWriteAllowed
 
 // === Source Filter: get active sources and build SQL clause ===
 function getActiveSources() {
@@ -2137,6 +2138,16 @@ viewer = {
 
     // URL deep-link state (must be set before globalRect/once block reads it)
     v._globeState = { mode: 'cluster', selectedPid: null, selectedH3: null };
+    // #172 Inc 1 — PANEL/LIST OWNERSHIP GENERATION (unified rule, Codex round-5):
+    // ANY write to the rendered panel list (#samplesSection) — clear or replace,
+    // synchronous or asynchronous — advances _panelGen. Async producers ALSO
+    // capture it at start and may only write list+pins while still current (see
+    // panelWriteAllowed). Synchronous clears just advance it: the bump's job is to
+    // invalidate any in-flight async producer so a slow search/hydration can no
+    // longer resurrect a panel the user has since replaced or cleared. The pid
+    // deep-link is card-only (never writes the list) so it never bumps this —
+    // that's why the boot search+pid list still renders.
+    v._panelGen = 0;
     v._initialHash = readHash();
     v._suppressHashWrite = true;  // cleared after zoomWatcher initializes
     v._suppressTimer = null;
@@ -2174,6 +2185,51 @@ viewer = {
     v.scene.primitives.add(v.samplePoints);
     v.samplePoints.show = false; // hidden until point mode
 
+    // #172 pin-overlay Inc 1 (option C): search-result pin overlay. Added to
+    // scene.primitives AFTER h3Points and samplePoints so it renders ABOVE both
+    // (z-order rule). Always shown — the overlay is independent of the
+    // cluster/point mode toggle.
+    v.searchResultPoints = new Cesium.PointPrimitiveCollection();
+    v.scene.primitives.add(v.searchResultPoints);
+
+    // Test hook (#172, Codex round-1 P1.4 / P2): read-only snapshot of the pin
+    // overlay — [{ pid, lat, lng }] — so specs can assert identity/position and
+    // exact set equality, not just a count. Re-reads the collection on every
+    // call via the current `v`; returns [] if the collection is missing so a
+    // recreated viewer never leaves a stale closure raising.
+    if (typeof window !== 'undefined') window.__searchPins = () => {
+        const col = v.searchResultPoints;
+        if (!col) return [];
+        const out = [];
+        for (let i = 0; i < col.length; i++) {
+            const id = col.get(i).id || {};
+            out.push({ pid: id.pid, lat: id.lat, lng: id.lng });
+        }
+        return out;
+    };
+
+    // Test hook (#172, Codex round-3/4 P2): faithfully replay a result-pin CLICK
+    // by index — the FULL ceremony the on-globe LEFT_CLICK handler runs, INCLUDING
+    // inMapCardAt (canvas centre) so the rich floating-card hydration path runs,
+    // plus the shared selection helper and the pid hash push. Lets specs exercise
+    // pin selection and Back-navigation without Cesium canvas picking (not feasible
+    // in Playwright). Installed ONLY under WebDriver (Playwright sets
+    // navigator.webdriver) so it can't be invoked in a normal session. Returns
+    // false if there is no pin at that index.
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.webdriver === true) {
+        window.__clickSearchPin = (i = 0) => {
+            const col = v.searchResultPoints;
+            if (!col || i < 0 || i >= col.length) return false;
+            const meta = col.get(i).id;
+            const canvas = v.scene.canvas;
+            const inMapCardAt = { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 };
+            const isStale = freshSelectionToken(v);
+            if (v.selectSearchResult) v.selectSearchResult(meta, { fly: true, inMapCardAt, isStale });
+            writeGlobeHash(v, { replace: false, force: true });
+            return true;
+        };
+    }
+
     // Hover tooltip — works for both clusters and samples
     v.pointLabel = v.entities.add({
         label: {
@@ -2184,6 +2240,9 @@ viewer = {
             disableDepthTestDistance: Number.POSITIVE_INFINITY, text: "",
         }
     });
+    // Cesium's documented default label background; restored for hovers that
+    // carry no source (#172 P2 source-colored hover, below).
+    const LABEL_BG_DEFAULT = new Cesium.Color(0.165, 0.165, 0.165, 0.8);
 
     new Cesium.ScreenSpaceEventHandler(v.scene.canvas).setInputAction((movement) => {
         const picked = v.scene.pick(movement.endPosition);
@@ -2191,13 +2250,21 @@ viewer = {
             v.pointLabel.position = picked.primitive.position;
             v.pointLabel.label.show = true;
             const meta = picked.id;
-            if (typeof meta === 'object' && meta.type === 'sample') {
+            // #172 P2 (Codex round-1): source-colored hover background for both
+            // sample points AND search-result pins, per the option (C) contract
+            // ("source badge color"). Cluster/plain hovers keep the default.
+            let hoverSource = null;
+            if (typeof meta === 'object' && (meta.type === 'sample' || meta.type === 'searchResult')) {
                 v.pointLabel.label.text = `${meta.label || meta.pid}`;
+                hoverSource = meta.source;
             } else if (typeof meta === 'object' && meta.count) {
                 v.pointLabel.label.text = `${meta.source}: ${meta.count.toLocaleString()} samples`;
             } else {
                 v.pointLabel.label.text = String(meta);
             }
+            v.pointLabel.label.backgroundColor = (hoverSource && SOURCE_COLORS[hoverSource])
+                ? Cesium.Color.fromCssColorString(SOURCE_COLORS[hoverSource]).withAlpha(0.85)
+                : LABEL_BG_DEFAULT;
         } else {
             v.pointLabel.label.show = false;
         }
@@ -2216,7 +2283,19 @@ viewer = {
         const meta = picked.id;
         const isStale = freshSelectionToken(v);
 
-        if (typeof meta === 'object' && meta.type === 'sample') {
+        if (typeof meta === 'object' && meta.type === 'searchResult') {
+            // --- Search-result pin click (#172 pin-overlay Inc 1, option C) ---
+            // Runs the same selection ceremony as a sample click (card,
+            // selection state, flight, full in-map detail) via the shared
+            // helper, but PRESERVES the #samplesSection search-results list the
+            // user is browsing. Reuse the freshness token already bumped above
+            // (isStale) so the helper does not double-bump (Codex round-1 P1.3).
+            if (v.selectSearchResult) {
+                v.selectSearchResult(meta, { fly: true, inMapCardAt: { x: e.position.x, y: e.position.y }, isStale });
+            }
+            writeGlobeHash(v, { replace: false, force: true });
+
+        } else if (typeof meta === 'object' && meta.type === 'sample') {
             // --- Individual sample click ---
             updateSampleCard(meta);
             // In-map floating card (issue #226). `e.position` is the
@@ -2230,6 +2309,13 @@ viewer = {
             // Clear nearby list
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
+            // #172 Inc 1 (Codex round-1 P1.2 / round-5 unified rule): this click
+            // tears down the rendered results list, so the pin overlay (its
+            // snapshot) goes with it AND _panelGen advances — a slow in-flight
+            // search that captured an earlier gen now bails instead of
+            // resurrecting the list the user just replaced with this selection.
+            if (v.searchResultPoints) v.searchResultPoints.removeAll();
+            v._panelGen++;
 
             // Stage 2: lazy-load extended fields from wide parquet.
             // Extended beyond the original description-only query to
@@ -2279,6 +2365,11 @@ viewer = {
 
         } else if (typeof meta === 'object' && meta.count) {
             // --- Cluster click ---
+            // #172 Inc 1 (Codex round-4 P1): claim panel ownership — this cluster
+            // click is a new list producer, so an older in-flight search render
+            // (which checks its own captured gen) bails instead of overwriting
+            // these nearby rows.
+            const myPanelGen = ++v._panelGen;
             updateClusterCard(meta);
             // Cluster click clears any prior sample selection; close
             // the in-map sample card so it doesn't outlive the context
@@ -2290,6 +2381,10 @@ viewer = {
 
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+            // #172 Inc 1 (Codex round-1 P1.2, snapshot semantics): a cluster
+            // click replaces the results list with nearby samples, so the
+            // result-pin overlay (its snapshot) is cleared too.
+            if (v.searchResultPoints) v.searchResultPoints.removeAll();
 
             const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
             try {
@@ -2306,6 +2401,14 @@ viewer = {
                 `;
                 const samples = await db.query(nearbyQuery);
                 if (isStale()) return;
+                // #172 Inc 1 (Codex round-4 P1): only write if this click still
+                // owns the panel. Closes the reverse race — a search that
+                // STARTED earlier but resolves later has a stale panel gen and
+                // must not overwrite these rows. (round-3 P1): write list + pins
+                // as ONE owned operation — no await between this guard, the
+                // re-clear, and updateSamples, so nothing can interpose.
+                if (!panelWriteAllowed(myPanelGen, v._panelGen)) return;
+                if (v.searchResultPoints) v.searchResultPoints.removeAll();
                 updateSamples(samples);
             } catch(err) {
                 if (isStale()) return;
@@ -4757,6 +4860,11 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
+                        // #172 Inc 1 (Codex round-2/round-5): list teardown → clear
+                        // the pin snapshot too AND advance _panelGen (unified rule)
+                        // so a slow in-flight search can't resurrect this list.
+                        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                        viewer._panelGen++;
                         writeGlobeHash(viewer, { force: true });
                     } else {
                         // Cluster's dominant_source still checked, but the
@@ -4780,6 +4888,12 @@ zoomWatcher = {
                         updateClusterCard(null);
                         const sampEl = document.getElementById('samplesSection');
                         if (sampEl) sampEl.innerHTML = '';
+                        // #172 Inc 1 (Codex round-2/round-5): source filter
+                        // invalidated the selected search result and cleared the
+                        // list → clear its pins too AND advance _panelGen (unified
+                        // rule) so a slow in-flight search can't resurrect it.
+                        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                        viewer._panelGen++;
                         writeGlobeHash(viewer, { force: true });
                     }
                 }
@@ -4872,6 +4986,10 @@ zoomWatcher = {
                     updateClusterCard(null);
                     const sampEl = document.getElementById('samplesSection');
                     if (sampEl) sampEl.innerHTML = '';
+                    // #172 Inc 1 (Codex round-2/round-5): list teardown → clear the
+                    // pin snapshot too AND advance _panelGen (unified rule).
+                    if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                    viewer._panelGen++;
                     writeGlobeHash(viewer, { force: true });
                 } else {
                     await hydrateClusterUI(meta, isStale);
@@ -5266,9 +5384,17 @@ zoomWatcher = {
     // because click selection is its own latest event.
     async function hydrateClusterUI(meta, isStale) {
         if (!meta) return;
+        // #172 Inc 1 (Codex round-4 P1): claim panel ownership so an older
+        // in-flight search render bails instead of overwriting these rows.
+        const myPanelGen = ++viewer._panelGen;
         updateClusterCard(meta);
         const sampEl = document.getElementById('samplesSection');
         if (sampEl) sampEl.innerHTML = '<div style="text-align: center; color: #999; padding: 12px;">Loading nearby samples...</div>';
+        // #172 Inc 1 (Codex round-2 P1, snapshot semantics): replacing the list
+        // with nearby samples tears down any search-results list, so the
+        // result-pin overlay (its snapshot) goes with it. This choke point
+        // covers source/facet revalidation, hashchange h3 restore, and boot.
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
         const delta = meta.resolution === 4 ? 2.0 : meta.resolution === 6 ? 0.5 : 0.1;
         try {
             const samples = await db.query(`
@@ -5281,6 +5407,12 @@ zoomWatcher = {
                 LIMIT 30
             `);
             if (isStale && isStale()) return;
+            // #172 Inc 1 (Codex round-4 P1): only write if this hydration still
+            // owns the panel — closes the reverse race with a search that
+            // started earlier but resolves later. (round-3 P1): list + pins as
+            // ONE owned operation, no await between guard, re-clear, and write.
+            if (!panelWriteAllowed(myPanelGen, viewer._panelGen)) return;
+            if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
             updateSamples(samples);
         } catch(err) {
             if (isStale && isStale()) return;
@@ -5311,9 +5443,13 @@ zoomWatcher = {
     // anchors at canvas centre rather than flying. Adding a "camera far from
     // sample → flyTo" branch would fight the hashchange flyTo above and the
     // boot setView; it's a tracked follow-up, not folded in here.
-    async function openInMapCardForSample(meta, isStale) {
+    // `screenPos` (added #172 Inc 1): anchor the card at an explicit pixel —
+    // used by the result-pin click, which frames the card at the click point
+    // like the on-globe sample click. Omitted by the deep-link/hashchange
+    // callers, which keep the canvas-centre anchor described above.
+    async function openInMapCardForSample(meta, isStale, screenPos) {
         const canvas = viewer.scene.canvas;
-        showInMapCard(meta, { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 });
+        showInMapCard(meta, screenPos || { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2 });
         try {
             const pidEsc = meta.pid.replace(/'/g, "''");
             const detail = await db.query(`
@@ -5469,6 +5605,10 @@ zoomWatcher = {
                 updateClusterCard(null);
                 const sampEl = document.getElementById('samplesSection');
                 if (sampEl) sampEl.innerHTML = '';
+                // #172 Inc 1 (Codex round-2/round-5): list teardown → clear the pin
+                // snapshot too AND advance _panelGen (unified rule).
+                if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+                viewer._panelGen++;
             }
         } else {
             viewer._globeState.selectedPid = null;
@@ -5478,6 +5618,12 @@ zoomWatcher = {
             hideInMapCard();
             const sampEl = document.getElementById('samplesSection');
             if (sampEl) sampEl.innerHTML = '';
+            // #172 Inc 1 (Codex round-2/round-5): the Back-after-pin-click
+            // no-selection branch tears down the preserved search list → clear its
+            // pins too AND advance _panelGen (unified rule) so a slow in-flight
+            // search can't resurrect the list after the user navigated away.
+            if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+            viewer._panelGen++;
         }
     });
 
@@ -5941,6 +6087,17 @@ zoomWatcher = {
     async function clearActiveSearchFilter() {
         // Same clear path as an empty search submit, without entering doSearch().
         _searchSeq++;
+        // #172 Inc 1 (Codex round-3 P1): take panel ownership so an in-flight
+        // selection hydration can't repopulate the list after this clear.
+        freshSelectionToken(viewer);
+        // #172 pin-overlay Inc 1 (option C / round-5 unified rule): the committed
+        // concept-chip clear tears down the results list, so clear the LIST and the
+        // pin overlay TOGETHER and advance _panelGen so an in-flight async producer
+        // (search / hydration) can't resurrect the list after this clear.
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        viewer._panelGen++;
+        const sampElClear = document.getElementById('samplesSection');
+        if (sampElClear) sampElClear.innerHTML = '';
         if (searchInput) searchInput.value = '';
         if (searchResults) searchResults.textContent = '';
         await clearSearchFilter();
@@ -5977,6 +6134,69 @@ zoomWatcher = {
         if (clusterEl) clusterEl.hidden = searchIsActive();
     }
 
+    // #172 pin-overlay Inc 1 (option C): shared selection ceremony for a search
+    // result, invoked by BOTH the side-panel row click (in doSearch) and the
+    // on-globe result-pin click (viewer cell, via viewer.selectSearchResult).
+    // Mirrors the on-globe sample-click ceremony — freshness token, card
+    // hydration, selection state, flight, lazy detail — but deliberately does
+    // NOT repaint #samplesSection (it holds the search-results list the user is
+    // browsing). `sample` is a normalized meta ({ pid, label, source, lat, lng,
+    // place_name, result_time }); coord-less rows are ignored.
+    //
+    // `inMapCardAt` (pin click only): open the floating in-map card at the click
+    // pixel with the SAME rich detail (material / feature / specimen / thumbnail)
+    // the sample click renders — via the shared openInMapCardForSample(), so the
+    // wide-table fetch is reused, not duplicated (Codex round-1 P1.3).
+    //
+    // `isStale` (Codex round-1 P1.3): callers that already bumped the freshness
+    // token (the globe click handler) pass theirs so we don't double-bump; the
+    // row click passes none and we bump here.
+    async function selectSearchResult(sample, { fly = true, inMapCardAt = null, isStale = null } = {}) {
+        if (!sample || sample.lat == null || sample.lng == null) return;
+
+        // Bump the freshness token BEFORE any async work so a prior
+        // cluster/sample detail load can't repaint the panel after we navigate.
+        if (!isStale) isStale = freshSelectionToken(viewer);
+
+        viewer._globeState.selectedPid = sample.pid;
+        viewer._globeState.selectedH3 = null;
+        updateSampleCard(sample);
+        if (fly) {
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(sample.lng, sample.lat, 50000),
+                duration: 1.5
+            });
+        }
+
+        if (inMapCardAt) {
+            // Pin click: full in-map card hydration at the click pixel, reusing
+            // the shared wide-table fetch (updateSampleDetail +
+            // populateInMapCardDetail happen inside).
+            await openInMapCardForSample(sample, isStale, inMapCardAt);
+            return;
+        }
+
+        // Row click: sidebar description only (no in-map card). Don't clear
+        // samplesSection — it holds the results the user is browsing.
+        try {
+            const detail = await db.query(`
+                SELECT description
+                FROM read_parquet('${wide_url}')
+                WHERE pid = '${sample.pid.replace(/'/g, "''")}'
+                LIMIT 1
+            `);
+            if (isStale()) return;
+            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
+            else updateSampleDetail({ description: '' });
+        } catch(err) {
+            if (isStale()) return;
+            console.error("Search-result detail query failed:", err);
+            updateSampleDetail(null);
+        }
+    }
+    // Expose for the viewer cell's globe click handler (result-pin click).
+    viewer.selectSearchResult = selectSearchResult;
+
     async function doSearch(scope) {
         if (scope === 'area' || scope === 'world') _searchScope = scope;
         const effectiveScope = _searchScope;
@@ -5991,6 +6211,31 @@ zoomWatcher = {
         // message with `Search error: ...`. Bumping first ensures any
         // submission — valid or not — supersedes prior in-flight work.
         const searchId = ++_searchSeq;
+
+        // #172 Inc 1: take PANEL OWNERSHIP two ways.
+        // (round-3, _selGen) bump the selection freshness token so in-flight
+        // sample/pid detail + cluster hydrations become stale and bail — this
+        // guards selection/card work.
+        freshSelectionToken(viewer);
+        // (round-4/round-5, _panelGen) this submit is a write to the panel list,
+        // so advance _panelGen AND capture it — one bump serves both. As a bump it
+        // invalidates any in-flight async producer (unified rule); as this search's
+        // captured generation it is re-checked (with _searchSeq) before every
+        // render below, so a newer list producer that starts AFTER this submit
+        // (e.g. a cluster click while the search is still building) makes this
+        // render bail instead of overwriting the cluster's rows. Does NOT break
+        // boot search+pid: the pid deep-link is card-only and never bumps.
+        const myPanelGen = ++viewer._panelGen;
+
+        // #172 Inc 1 (Codex round-5 P1.2): a new submit tears the panel DOWN.
+        // Clear the old rows AND pins together AT ENTRY (under the gen just
+        // captured), so no stale unpinned rows linger during the async build — the
+        // panel shows the building status (searchResults text) until the atomic
+        // replacement lands. This covers BOTH the committed real search below and
+        // the empty/too-short branch (which just leaves the panel cleared).
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        const sampElEntry = document.getElementById('samplesSection');
+        if (sampElEntry) sampElEntry.innerHTML = '';
 
         const term = searchInput.value.trim();
         if (!term || term.length < 2) {
@@ -6276,6 +6521,22 @@ zoomWatcher = {
                 wasSuperseded = true;
                 return;
             }
+            // #172 Inc 1 (Codex round-4 P1): also bail if a newer LIST producer
+            // (e.g. a cluster click while this search was building) took the
+            // panel. Both _searchSeq (search supersession) and _panelGen (list
+            // ownership) must hold before we write the list/pins — there is no
+            // await between here and the row-render + pin-populate below, so this
+            // single check makes that write atomic w.r.t. panel ownership.
+            if (!panelWriteAllowed(myPanelGen, viewer._panelGen)) {
+                wasSuperseded = true;
+                // #172 Inc 1 (Codex round-5 P2): panel ownership and search-status
+                // completion are separate. A cluster took the panel, so we won't
+                // render — but if no NEWER search owns the status text (our
+                // searchId still current), settle our own "Searching…" to '' so it
+                // can't persist forever. If a newer search owns the text, leave it.
+                if (searchId === _searchSeq) searchResults.textContent = '';
+                return;
+            }
             resultsCount = results.length;
             if (results.length === 0) {
                 // A build failure also empties search_pids → 0 rows here, so
@@ -6306,9 +6567,18 @@ zoomWatcher = {
             // bare result-row count visible while the precise total
             // resolves. See issue #232.
             const capReached = results.length === 50;
-            searchResults.textContent = capReached
+            // #172 pin-overlay Inc 1 (option C): one pin per LOCATED displayed
+            // result (world scope legitimately returns coord-less matches). When
+            // fewer results are located than displayed, the count line discloses
+            // how many landed on the globe. Cap is inherited from LIMIT 50, so
+            // located ≤ displayed ≤ 50.
+            const locatedCount = results.filter(r => r.latitude != null && r.longitude != null).length;
+            const pinnedNote = locatedCount < results.length
+                ? ` (${locatedCount} located, pinned on globe)`
+                : '';
+            searchResults.textContent = (capReached
                 ? `${results.length}+ results for "${term}"`
-                : `${results.length} results for "${term}"`;
+                : `${results.length} results for "${term}"`) + pinnedNote;
 
             // Show results in the samples panel
             const sampEl = document.getElementById('samplesSection');
@@ -6336,59 +6606,80 @@ zoomWatcher = {
                 // click ceremony at line ~944. Without the full ceremony
                 // a slow prior selection load could repaint the panel
                 // after the click, leaving UI inconsistent with URL.
+                // #172 pin-overlay Inc 1 (option C): that ceremony now lives in
+                // the shared selectSearchResult() helper, used by BOTH this row
+                // click and the on-globe result-pin click. Row click keeps its
+                // prior behavior (no in-map card, no selection-hash write).
                 const resultsByPid = new Map(results.map(s => [s.pid, s]));
                 sampEl.querySelectorAll('.sample-row[data-lat]').forEach(row => {
-                    row.addEventListener('click', async (e) => {
+                    row.addEventListener('click', (e) => {
                         if (e.target.tagName === 'A') return; // let links work
                         const pid = row.dataset.pid;
-                        const sample = pid ? resultsByPid.get(pid) : null;
-                        if (!sample || sample.latitude == null || sample.longitude == null) return;
-
-                        // Bump the freshness token BEFORE any async work so
-                        // a prior cluster/sample detail load can't repaint
-                        // the panel after we navigate.
-                        const isStale = freshSelectionToken(viewer);
-
-                        viewer._globeState.selectedPid = pid;
-                        viewer._globeState.selectedH3 = null;
-                        updateSampleCard({
-                            pid: sample.pid,
-                            label: sample.label,
-                            source: sample.source,
-                            lat: sample.latitude,
-                            lng: sample.longitude,
-                            place_name: sample.place_name,
-                            result_time: sample.result_time
-                        });
-                        viewer.camera.flyTo({
-                            destination: Cesium.Cartesian3.fromDegrees(sample.longitude, sample.latitude, 50000),
-                            duration: 1.5
-                        });
-
-                        // Lazy-load full description (mirrors the globe
-                        // click handler). Don't clear samplesSection here —
-                        // it currently holds the search results the user
-                        // is browsing.
-                        try {
-                            const detail = await db.query(`
-                                SELECT description
-                                FROM read_parquet('${wide_url}')
-                                WHERE pid = '${pid.replace(/'/g, "''")}'
-                                LIMIT 1
-                            `);
-                            if (isStale()) return;
-                            if (detail && detail.length > 0) updateSampleDetail(detail[0]);
-                            else updateSampleDetail({ description: '' });
-                        } catch(err) {
-                            if (isStale()) return;
-                            console.error("Search-row detail query failed:", err);
-                            updateSampleDetail(null);
-                        }
+                        const s = pid ? resultsByPid.get(pid) : null;
+                        if (!s) return;
+                        selectSearchResult({
+                            pid: s.pid,
+                            label: s.label,
+                            source: s.source,
+                            lat: s.latitude,
+                            lng: s.longitude,
+                            place_name: s.place_name,
+                            result_time: s.result_time
+                        }, { fly: true });
                     });
                 });
             }
 
-            // Fly to the first result. Skip for area-scoped searches —
+            // #172 pin-overlay Inc 1 (option C): render the LOCATED displayed
+            // results as a pin overlay on the globe. One hollow-ring pin per
+            // located row — skip null lat/lng (world scope legitimately returns
+            // coordinate-less matches; NEVER coerce to (0,0)). Old pins were
+            // cleared at the top of doSearch (committed-clear path); the cap is
+            // inherited from LIMIT 50, so pins ≤ 50 ≤ displayed results.
+            //
+            // LIFECYCLE POLICY (snapshot semantics, Codex round-1 P1.2): the
+            // pins are a snapshot of the rendered results list — they reconcile
+            // with the LIST lifecycle, not with filter state. They are cleared
+            // wherever that list is torn down (new/empty submit, described-by
+            // takeover, and the globe sample/cluster clicks that replace the
+            // list). They deliberately PERSIST when the list persists stale —
+            // e.g. a source/facet toggle while a search is active updates the
+            // #300 filtered surfaces but not the (frozen) results list, so the
+            // pins stay too. That staleness is the documented pre-existing
+            // behavior of the list itself, not a new pin bug.
+            const pinScalar = new Cesium.NearFarScalar(1e2, 8, 2e5, 3);  // mirror samplePoints
+            for (const s of results) {
+                if (s.latitude == null || s.longitude == null) continue;
+                const c = SOURCE_COLORS[s.source] || '#666';
+                viewer.searchResultPoints.add({
+                    id: {
+                        type: 'searchResult',
+                        pid: s.pid,
+                        label: s.label,
+                        source: s.source,
+                        lat: s.latitude,
+                        lng: s.longitude,
+                        place_name: s.place_name,
+                        result_time: s.result_time
+                    },
+                    position: Cesium.Cartesian3.fromDegrees(s.longitude, s.latitude, 0),
+                    pixelSize: 8,
+                    // Hollow ring: faint fill + bright source-colored outline so
+                    // the overlay reads as distinct from the filled cluster and
+                    // sample dots while still signalling which source matched.
+                    color: Cesium.Color.fromCssColorString(c).withAlpha(0.15),
+                    outlineColor: Cesium.Color.fromCssColorString(c),
+                    outlineWidth: 2,
+                    scaleByDistance: pinScalar,
+                    // #185 (Codex round-1 P1.1): bounded depth-test distance —
+                    // Number.POSITIVE_INFINITY bleeds pins through the far side
+                    // of the globe; POINT_DEPTH_TEST_DISTANCE matches the h3/
+                    // sample layers and prevents that back-hemisphere bleed.
+                    disableDepthTestDistance: POINT_DEPTH_TEST_DISTANCE,
+                });
+            }
+
+            // Fly to the first LOCATED result. Skip for area-scoped searches —
             // the user is already at the area they care about; flying
             // would zoom in and disorient.
             //
@@ -6397,12 +6688,21 @@ zoomWatcher = {
             // doesn't carry stale selection state across the flight
             // (issue #207 item 8). User clicks on a specific row to
             // establish a new selection.
-            if (effectiveScope === 'world' && results[0].latitude && results[0].longitude) {
+            //
+            // #172 Inc 1 (Codex round-1 P1.5): scan for the first row with
+            // real coordinates using EXPLICIT null checks (0° lat/lng is
+            // valid). results[0] can be coord-less in world scope (LEFT JOIN
+            // to lite), so the old truthiness test on results[0] both skipped
+            // the flight for a coord-less top row and would have mis-treated
+            // 0,0. Fit-to-bounds (the 30°×30° camera rule) remains deferred to
+            // Inc 2 per PLAN_PIN_OVERLAY_2026-07-17.md.
+            const firstLocated = results.find(r => r.latitude != null && r.longitude != null);
+            if (effectiveScope === 'world' && firstLocated) {
                 const cancelFinalFacetRefresh = refreshFacetCountsAfterSearchFlight(searchId);
                 viewer._globeState.selectedPid = null;
                 viewer._globeState.selectedH3 = null;
                 viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(results[0].longitude, results[0].latitude, 200000),
+                    destination: Cesium.Cartesian3.fromDegrees(firstLocated.longitude, firstLocated.latitude, 200000),
                     duration: 1.5,
                     cancel: cancelFinalFacetRefresh,
                 });
@@ -6467,9 +6767,11 @@ zoomWatcher = {
                     // When `total === results.length`, the cap happened to
                     // catch exactly the full set — drop the "of N" to
                     // avoid a redundant "50 of 50 results" reading.
-                    searchResults.textContent = total > results.length
+                    // #172: preserve the located/pinned disclosure across the
+                    // real-count follow-up (pinnedNote is captured above).
+                    searchResults.textContent = (total > results.length
                         ? `${results.length} of ${total.toLocaleString()} results for "${term}"`
-                        : `${results.length} results for "${term}"`;
+                        : `${results.length} results for "${term}"`) + pinnedNote;
                 } catch(err) {
                     countMs = performance.now() - countStart;
                     if (searchId !== _searchSeq) {
@@ -6499,9 +6801,14 @@ zoomWatcher = {
                 // Honesty fix (#247): keep the side panel consistent with the
                 // table meta's "→ panel" pointer on failure too, instead of
                 // leaving stale results under a pointer that now lies.
-                const sampElErr = document.getElementById('samplesSection');
-                if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
-                    + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
+                // #172 Inc 1 (Codex round-4 P1): but only if we still own the
+                // panel — a newer list producer must not have its rows replaced
+                // by this (older) search's failure message.
+                if (panelWriteAllowed(myPanelGen, viewer._panelGen)) {
+                    const sampElErr = document.getElementById('samplesSection');
+                    if (sampElErr) sampElErr.innerHTML = searchHeadingHTML('')
+                        + '<div class="empty-state" style="padding: 8px;">Search failed — please try again.</div>';
+                }
             }
         } finally {
             performance.mark(markEnd);
@@ -6609,6 +6916,23 @@ zoomWatcher = {
         // filter can't clobber each other's side-panel render mid-flight.
         const searchId = ++_searchSeq;
 
+        // #172 Inc 1: take PANEL OWNERSHIP — same as doSearch. (round-3, _selGen)
+        // bump the selection token so in-flight selection hydrations bail; (round-4/
+        // round-5, _panelGen) advance + capture a LIST generation — as a bump it
+        // invalidates in-flight async producers (unified rule); as this concept's
+        // gen it's re-checked before every render, so a cluster click that starts
+        // AFTER this commit wins the list. The render also stays guarded by
+        // searchId/_searchSeq.
+        freshSelectionToken(viewer);
+        const myPanelGen = ++viewer._panelGen;
+
+        // #172 Inc 1 (Codex round-5 P1.2): committing a concept tears the panel
+        // DOWN — clear the old rows AND the text-search pins together at entry
+        // (the panel shows "Filtering by concept…" until the concept list lands).
+        if (viewer.searchResultPoints) viewer.searchResultPoints.removeAll();
+        const sampElEntry = document.getElementById('samplesSection');
+        if (sampElEntry) sampElEntry.innerHTML = '';
+
         // Mutual exclusivity: a committed concept filter OWNS search_pids, so
         // clear the free-text box (and its sidebar mirror) before building.
         if (searchInput) searchInput.value = '';
@@ -6657,8 +6981,13 @@ zoomWatcher = {
         const headingHTML = (suffix) =>
             `<h4 class="search-results-heading" style="position: sticky; top: 0; z-index: 1; margin: 0 0 6px; padding: 6px 8px; background: #ede7f6; color: #5e35b1; border-radius: 4px;">Samples described by: ${safeLabel}${suffix}</h4>`;
 
+        // #172 Inc 1 (Codex round-4 P1): a newer list producer (cluster click)
+        // may own the panel now — gate the failed/empty LIST renders on it (the
+        // URL write above stays _searchSeq's concern).
+        const conceptOwnsPanel = () => panelWriteAllowed(myPanelGen, viewer._panelGen);
         if (buildFailed) {
             if (searchResults) searchResults.textContent = `Concept filter failed for "${label}". Please try again.`;
+            if (!conceptOwnsPanel()) return;
             const sElF = document.getElementById('samplesSection');
             if (sElF) sElF.innerHTML = headingHTML('')
                 + '<div class="empty-state" style="padding: 8px;">Filter failed to build — please try again.</div>';
@@ -6666,6 +6995,7 @@ zoomWatcher = {
         }
         if (total === 0) {
             if (searchResults) searchResults.textContent = `No samples described by "${label}"`;
+            if (!conceptOwnsPanel()) return;
             const sEl0 = document.getElementById('samplesSection');
             if (sEl0) sEl0.innerHTML = headingHTML(' (0)')
                 + '<div class="empty-state" style="padding: 8px;">No samples matched this concept.</div>';
@@ -6700,6 +7030,9 @@ zoomWatcher = {
             ? `${shown} of ${total.toLocaleString()} samples described by "${label}"`
             : `${shown} sample${shown === 1 ? '' : 's'} described by "${label}"`;
 
+        // #172 Inc 1 (Codex round-4 P1): bail if a newer list producer took the
+        // panel while this concept query was in flight.
+        if (!conceptOwnsPanel()) return;
         const sampEl = document.getElementById('samplesSection');
         if (sampEl) {
             let h = headingHTML(` (${ofTotal})`);

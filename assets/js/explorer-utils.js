@@ -12,6 +12,16 @@ export function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+// Panel/list ownership check (#172 Inc 1, Codex round-4 P1). Every producer that
+// writes the #samplesSection list (search / concept renders, cluster
+// nearby-samples, selection-invalidation clears) captures a generation via
+// `++viewer._panelGen` when it takes the list; an async producer may only write
+// list + pins while it still holds the latest generation. Pure so the ownership
+// invariant is unit-testable independently of the OJS runtime.
+export function panelWriteAllowed(captured, current) {
+    return captured === current;
+}
+
 // Split a free-text query into whitespace-delimited terms (no empties).
 export function searchTerms(value) {
     return String(value || '').trim().split(/\s+/).filter(Boolean);
