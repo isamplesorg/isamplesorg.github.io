@@ -13,8 +13,8 @@ Usage:
     python3 tools/build_release_manifest.py --out isamples_202608_release_manifest.json
     python3 tools/build_release_manifest.py --base https://data.isamples.org
 
-Fail-closed: any missing file or non-200 HEAD aborts with exit 1 — a manifest
-must never be generated from a broken origin. (Policy learned 2026-07-18.)
+Fail-closed: any missing file or non-strict probe result aborts with exit 1 — a
+manifest must never be generated from a broken origin. (Policy learned 2026-07-18.)
 <!-- cc:2026.07.23 -->
 """
 import argparse
@@ -72,27 +72,28 @@ def head(base, name, permissive=False):
     the very capability the Explorer needs, missing integrity metadata) refuses.
     --permissive relaxes for dev mirrors.
     """
+    import re as _re
     req = urllib.request.Request(f"{base}/{name}", headers={
         "Range": "bytes=0-0", "User-Agent": UA,
     })
     with urllib.request.urlopen(req, timeout=30) as r:
-        body = r.read()
         h = r.headers
         etag = (h.get("ETag") or "").strip('"') or None
         cr = h.get("Content-Range", "")
-        size = None
-        m = cr.split("/")[-1] if "/" in cr else ""
-        if m.isdigit():
-            size = int(m)
+        m = _re.fullmatch(r"bytes 0-0/(\d+)", cr)
+        size = int(m.group(1)) if m else None
         if not permissive:
+            # Validate status + headers BEFORE touching the body, so a
+            # Range-ignoring origin can't make us download a 300 MB object.
             if r.status != 206:
                 raise RuntimeError(f"{name}: expected 206, got {r.status} (Range support broken?)")
-            if not cr.startswith("bytes 0-0/") or size is None:
+            if size is None or size <= 0:
                 raise RuntimeError(f"{name}: bad Content-Range {cr!r}")
-            if len(body) != 1:
-                raise RuntimeError(f"{name}: expected 1 byte, got {len(body)}")
             if not etag:
                 raise RuntimeError(f"{name}: missing ETag (no integrity metadata)")
+            body = r.read(2)   # bounded: expect exactly the 1 requested byte
+            if len(body) != 1:
+                raise RuntimeError(f"{name}: expected 1 byte, got {len(body)}")
         elif size is None:
             cl = h.get("Content-Length")
             size = int(cl) if cl and cl.isdigit() and r.status == 200 else None
@@ -125,20 +126,42 @@ def main():
         except Exception as e:  # noqa: BLE001
             errors.append(f"{name}: {e}")
 
-    # Shard inventory from the index's own shard_sizes.json (Codex P1: the
-    # object count must come from data, not a hard-coded 852).
-    shard_count, shard_bytes = None, None
+    # Shard inventory, cross-validated between the index's own artifacts
+    # (Codex rounds 1-2: counts come from data; shard_sizes.json covers only
+    # the BASE shards — hot-token sub-files are counted in build_stats.json).
+    inv = {"base_shard_count": None, "base_shard_bytes": None,
+           "total_shard_files": None, "hot_shard_files": None}
     try:
         sizes = fetch_json(args.base, "isamples_202608_search_index_v1/shard_sizes.json")
         entries = sizes if isinstance(sizes, dict) else {}
         if not entries:
             errors.append("shard_sizes.json: empty/unexpected shape")
         else:
-            shard_count = len(entries)
-            vals = list(entries.values())
-            shard_bytes = sum(v for v in vals if isinstance(v, int)) or None
+            inv["base_shard_count"] = len(entries)
+            inv["base_shard_bytes"] = sum(v for v in entries.values() if isinstance(v, int)) or None
     except Exception as e:  # noqa: BLE001
         errors.append(f"shard_sizes.json inventory: {e}")
+    try:
+        stats = fetch_json(args.base, "isamples_202608_search_index_v1/build_stats.json")
+        # build_stats: shard_count = LOGICAL shards (256, matches shard_sizes);
+        # shard_files = PHYSICAL files (base + hot-token sub-files). We want files.
+        tot = stats.get("shard_files")
+        if isinstance(tot, int) and tot > 0:
+            inv["total_shard_files"] = tot
+            if inv["base_shard_count"]:
+                inv["hot_shard_files"] = tot - inv["base_shard_count"]
+        else:
+            errors.append("build_stats.json: missing/invalid shard_files")
+        logical = stats.get("shard_count")
+        if isinstance(logical, int) and inv["base_shard_count"] and logical != inv["base_shard_count"]:
+            errors.append(f"inventory contradiction: build_stats logical shards {logical} "
+                          f"!= shard_sizes entries {inv['base_shard_count']}")
+        if (inv["base_shard_count"] and isinstance(tot, int)
+                and tot < inv["base_shard_count"]):
+            errors.append(f"inventory contradiction: build_stats shard_count {tot} "
+                          f"< base shards {inv['base_shard_count']}")
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"build_stats.json inventory: {e}")
 
     if errors:
         print("REFUSING to emit manifest — origin problems:", file=sys.stderr)
@@ -155,12 +178,12 @@ def main():
         "files": files,
         "search_index": {
             "path": "isamples_202608_search_index_v1/",
-            "shard_count": shard_count,
-            "shard_bytes_total": shard_bytes,
+            **inv,
             "runtime_sidecars": ["build_stats.json", "hot_tokens.json",
                                   "shard_sizes.json", "hot_topk.parquet"],
             "offline_only": ["df.parquet"],
-            "note": "shard inventory derived from shard_sizes.json at generation time",
+            "note": "base shards inventoried by shard_sizes.json; hot-token "
+                     "sub-files counted via build_stats.json shard_count",
         },
         "docs": "CANONICAL.md (human twin); #334 v0-detect",
     }

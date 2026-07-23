@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "release_id": "isamples_202608",
- "generated_at_utc": "2026-07-23T17:29:53+00:00",
+ "generated_at_utc": "2026-07-23T17:43:12+00:00",
  "base": "https://data.isamples.org",
  "files": {
   "isamples_202608_wide.parquet": {
@@ -112,8 +112,10 @@
  },
  "search_index": {
   "path": "isamples_202608_search_index_v1/",
-  "shard_count": 256,
-  "shard_bytes_total": 551211162,
+  "base_shard_count": 256,
+  "base_shard_bytes": 551211162,
+  "total_shard_files": 847,
+  "hot_shard_files": 591,
   "runtime_sidecars": [
    "build_stats.json",
    "hot_tokens.json",
@@ -123,7 +125,7 @@
   "offline_only": [
    "df.parquet"
   ],
-  "note": "shard inventory derived from shard_sizes.json at generation time"
+  "note": "base shards inventoried by shard_sizes.json; hot-token sub-files counted via build_stats.json shard_count"
  },
  "docs": "CANONICAL.md (human twin); #334 v0-detect"
 }

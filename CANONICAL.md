@@ -32,7 +32,7 @@ Exactly what production `explorer.qmd` loads, all under `https://data.isamples.o
 | `isamples_202608_sample_facet_index.parquet` | Per-sample facet index (multi-filter fast path) |
 | `isamples_202608_sample_facet_index_meta.parquet` | ~1 KB trusted manifest for the above (#313/#317 boot-race fix) |
 | `vocab_labels_202608.parquet` | URI → human label (539 entries; verified complete 2026-07-22) |
-| `isamples_202608_search_index_v1/` | Sharded FTS index — the default search since 2026-07-17. Runtime loads: `build_stats.json`, `hot_tokens.json`, `shard_sizes.json`, `hot_topk.parquet`, + 256 token shards (inventory in `shard_sizes.json`); `df.parquet` is offline-only |
+| `isamples_202608_search_index_v1/` | Sharded FTS index — the default search since 2026-07-17. Runtime loads: `build_stats.json`, `hot_tokens.json`, `shard_sizes.json`, `hot_topk.parquet`, + 256 base token shards and ~591 hot-token sub-files (852 objects total incl. sidecars; base inventory in `shard_sizes.json`, totals in `build_stats.json`); `df.parquet` is offline-only |
 
 The ~9-file facet family looks baroque but is load-bearing: it is the price of
 fast multi-filter counts with no server. See `EXPLORER_QUERIES.md` for how each
@@ -74,7 +74,7 @@ boot; this table makes them legible to humans.)
 
 ## 5. Post-grant simplification options (deliberately NOT done in-grant)
 
-1. Move §2 + §3-orphan objects to an `/attic/` prefix on R2 (don't delete — old
+1. Move §2's superseded versions and the 202606 pipeline intermediate to an `/attic/` prefix on R2 (don't delete — old
    notebooks/links may reference them). Needs R2 write credentials.
 2. Collapse the facet family only alongside a real pipeline rework — the current
    9 files trade storage (cheap) for browser CPU (scarce); collapsing them is an
