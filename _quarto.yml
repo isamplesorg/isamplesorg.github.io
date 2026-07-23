@@ -2,6 +2,7 @@ project:
   type: website
   output-dir: docs
   resources:
+    - isamples_202608_release_manifest.json
     - assets/js/source-palette.js
     - assets/js/sql-builders.js
     - assets/js/explorer-utils.js

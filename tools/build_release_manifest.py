@@ -52,59 +52,93 @@ SEARCH_INDEX_SIDECARS = [
     "isamples_202608_search_index_v1/build_stats.json",
     "isamples_202608_search_index_v1/hot_tokens.json",
     "isamples_202608_search_index_v1/shard_sizes.json",
+    "isamples_202608_search_index_v1/hot_topk.parquet",   # loaded by the topk query path
+    # df.parquet is OFFLINE-ONLY per SEARCH_INDEX_V1.md — archived, not runtime;
+    # it is probed for existence but excluded from the Explorer's runtime check.
     "isamples_202608_search_index_v1/df.parquet",
 ]
 
 
-def head(base, name):
-    """Probe a file without downloading it.
+UA = "isamples-release-manifest-builder/1.0 (+https://github.com/isamplesorg/isamplesorg.github.io)"
 
-    The data.isamples.org Worker 403s HEAD, so use a 1-byte ranged GET (the
-    same primitive DuckDB-WASM relies on) and read the total from
-    Content-Range: "bytes 0-0/TOTAL".
+
+def head(base, name, permissive=False):
+    """Probe a file without downloading it (1-byte ranged GET).
+
+    The data.isamples.org Worker 403s HEAD and the default Python UA, so we use
+    a ranged GET with an honest UA — the same primitive DuckDB-WASM relies on.
+    STRICT by default (Codex P1): require 206 + exact Content-Range + one byte
+    + an ETag. Anything else (200-with-HTML proxy page, broken Range support —
+    the very capability the Explorer needs, missing integrity metadata) refuses.
+    --permissive relaxes for dev mirrors.
     """
-    # data.isamples.org 403s the default Python-urllib User-Agent (UA-based bot
-    # filtering); identify honestly instead.
     req = urllib.request.Request(f"{base}/{name}", headers={
-        "Range": "bytes=0-0",
-        "User-Agent": "isamples-release-manifest-builder/1.0 (+https://github.com/isamplesorg/isamplesorg.github.io)",
+        "Range": "bytes=0-0", "User-Agent": UA,
     })
     with urllib.request.urlopen(req, timeout=30) as r:
-        if r.status not in (200, 206):
-            raise RuntimeError(f"HTTP {r.status} for {name}")
+        body = r.read()
         h = r.headers
-        size = None
+        etag = (h.get("ETag") or "").strip('"') or None
         cr = h.get("Content-Range", "")
-        if "/" in cr:
-            tail = cr.rsplit("/", 1)[-1]
-            if tail.isdigit():
-                size = int(tail)
-        if size is None:  # origin ignored Range and returned the whole body header
+        size = None
+        m = cr.split("/")[-1] if "/" in cr else ""
+        if m.isdigit():
+            size = int(m)
+        if not permissive:
+            if r.status != 206:
+                raise RuntimeError(f"{name}: expected 206, got {r.status} (Range support broken?)")
+            if not cr.startswith("bytes 0-0/") or size is None:
+                raise RuntimeError(f"{name}: bad Content-Range {cr!r}")
+            if len(body) != 1:
+                raise RuntimeError(f"{name}: expected 1 byte, got {len(body)}")
+            if not etag:
+                raise RuntimeError(f"{name}: missing ETag (no integrity metadata)")
+        elif size is None:
             cl = h.get("Content-Length")
-            if cl and cl.isdigit() and r.status == 200:
-                size = int(cl)
-        return {
-            "size_bytes": size,
-            "etag": (h.get("ETag") or "").strip('"') or None,
-            "last_modified": h.get("Last-Modified"),
-        }
+            size = int(cl) if cl and cl.isdigit() and r.status == 200 else None
+        return {"size_bytes": size, "etag": etag, "last_modified": h.get("Last-Modified")}
+
+
+def fetch_json(base, name):
+    req = urllib.request.Request(f"{base}/{name}", headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        if r.status != 200:
+            raise RuntimeError(f"HTTP {r.status} for {name}")
+        return json.loads(r.read().decode())
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--base", default="https://data.isamples.org")
     ap.add_argument("--out", metavar="FILE")
+    ap.add_argument("--permissive", action="store_true",
+                    help="relax probe strictness for dev mirrors")
     args = ap.parse_args()
 
     files, errors = {}, []
     for name in CANONICAL_FILES + SEARCH_INDEX_SIDECARS:
         try:
-            meta = head(args.base, name)
+            meta = head(args.base, name, permissive=args.permissive)
             if meta["size_bytes"] in (None, 0):
-                errors.append(f"{name}: missing/zero Content-Length")
+                errors.append(f"{name}: missing/zero size")
             files[name] = meta
         except Exception as e:  # noqa: BLE001
             errors.append(f"{name}: {e}")
+
+    # Shard inventory from the index's own shard_sizes.json (Codex P1: the
+    # object count must come from data, not a hard-coded 852).
+    shard_count, shard_bytes = None, None
+    try:
+        sizes = fetch_json(args.base, "isamples_202608_search_index_v1/shard_sizes.json")
+        entries = sizes if isinstance(sizes, dict) else {}
+        if not entries:
+            errors.append("shard_sizes.json: empty/unexpected shape")
+        else:
+            shard_count = len(entries)
+            vals = list(entries.values())
+            shard_bytes = sum(v for v in vals if isinstance(v, int)) or None
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"shard_sizes.json inventory: {e}")
 
     if errors:
         print("REFUSING to emit manifest — origin problems:", file=sys.stderr)
@@ -121,8 +155,12 @@ def main():
         "files": files,
         "search_index": {
             "path": "isamples_202608_search_index_v1/",
-            "object_count_expected": 852,
-            "note": "sidecars pinned above; shards validate via build_stats.json",
+            "shard_count": shard_count,
+            "shard_bytes_total": shard_bytes,
+            "runtime_sidecars": ["build_stats.json", "hot_tokens.json",
+                                  "shard_sizes.json", "hot_topk.parquet"],
+            "offline_only": ["df.parquet"],
+            "note": "shard inventory derived from shard_sizes.json at generation time",
         },
         "docs": "CANONICAL.md (human twin); #334 v0-detect",
     }

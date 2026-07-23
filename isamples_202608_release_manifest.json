@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "release_id": "isamples_202608",
- "generated_at_utc": "2026-07-23T17:04:01+00:00",
+ "generated_at_utc": "2026-07-23T17:29:53+00:00",
  "base": "https://data.isamples.org",
  "files": {
   "isamples_202608_wide.parquet": {
@@ -99,6 +99,11 @@
    "etag": "488bb3c2797b81d036e8d6431ee23cf0",
    "last_modified": null
   },
+  "isamples_202608_search_index_v1/hot_topk.parquet": {
+   "size_bytes": 690750,
+   "etag": "a88d1228baa0b4c2ce7bcb9c1dede7bb",
+   "last_modified": null
+  },
   "isamples_202608_search_index_v1/df.parquet": {
    "size_bytes": 7990281,
    "etag": "a42de35cafeeb8bfae58c91ef09023e9",
@@ -107,8 +112,18 @@
  },
  "search_index": {
   "path": "isamples_202608_search_index_v1/",
-  "object_count_expected": 852,
-  "note": "sidecars pinned above; shards validate via build_stats.json"
+  "shard_count": 256,
+  "shard_bytes_total": 551211162,
+  "runtime_sidecars": [
+   "build_stats.json",
+   "hot_tokens.json",
+   "shard_sizes.json",
+   "hot_topk.parquet"
+  ],
+  "offline_only": [
+   "df.parquet"
+  ],
+  "note": "shard inventory derived from shard_sizes.json at generation time"
  },
  "docs": "CANONICAL.md (human twin); #334 v0-detect"
 }

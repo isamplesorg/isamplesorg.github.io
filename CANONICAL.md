@@ -32,7 +32,7 @@ Exactly what production `explorer.qmd` loads, all under `https://data.isamples.o
 | `isamples_202608_sample_facet_index.parquet` | Per-sample facet index (multi-filter fast path) |
 | `isamples_202608_sample_facet_index_meta.parquet` | ~1 KB trusted manifest for the above (#313/#317 boot-race fix) |
 | `vocab_labels_202608.parquet` | URI → human label (539 entries; verified complete 2026-07-22) |
-| `isamples_202608_search_index_v1/` (852 objects) | Sharded FTS index — the default search since 2026-07-17 (+ sidecars `hot_tokens.json`, `shard_sizes.json`, `df.parquet`, `build_stats.json`) |
+| `isamples_202608_search_index_v1/` | Sharded FTS index — the default search since 2026-07-17. Runtime loads: `build_stats.json`, `hot_tokens.json`, `shard_sizes.json`, `hot_topk.parquet`, + 256 token shards (inventory in `shard_sizes.json`); `df.parquet` is offline-only |
 
 The ~9-file facet family looks baroque but is load-bearing: it is the price of
 fast multi-filter counts with no server. See `EXPLORER_QUERIES.md` for how each
@@ -46,23 +46,23 @@ nothing marks the old ones dead. That marking is this table.
 
 | Superseded file | Replaced by | Why (the bump's fix) |
 |---|---|---|
-| `isamples_202608_sample_facets.parquet` | `_v3` → `_v4` | v3: concept labels folded into search text (#277); v4: place_name folded in (#326) |
-| `isamples_202608_sample_facets_v3.parquet` | `_v4` | place_name search (#326) — **the file whose staleness caused the #326 bug** |
-| `isamples_202608_samples_map_lite.parquet` | `_v2` → `_v3` | v2: h3_res4/res6 columns for filtered clusters (#300); v3: corrected place_name (#311) |
-| `isamples_202608_samples_map_lite_v2.parquet` | `_v3` | corrected place_name (#311) |
+| `isamples_202608_sample_facets_v2.parquet` | `_v3` | concept labels folded into search text (#277; v2 introduced in `10fd415`, bumped in `8a6ebf5`) |
+| `isamples_202608_sample_facets_v3.parquet` | `_v4` | place_name folded into search text (#326, `7e900a0`) — **the file whose staleness caused the #326 bug** |
+| `isamples_202608_samples_map_lite.parquet` | `_v2` | h3_res4/res6 columns for filtered clusters (#300, `1715142`) |
+| `isamples_202608_samples_map_lite_v2.parquet` | `_v3` | corrected place_name + Array.isArray fix (#311, `3f2f20a`) |
 
 **Policy going forward:** a suffix bump MUST add a row here and regenerate the
 release manifest in the same change. (The manifest makes violations visible at
 boot; this table makes them legible to humans.)
 
-## 3. Orphan snapshot generations (serve no one)
+## 3. Snapshot generations (who serves whom)
 
 | Generation | Status |
 |---|---|
 | `isamples_202512_*` | Narrow only — **archival** (in the Zenodo deposit; there is no 202601 narrow — known label mismatch, documented in the deposit README) |
 | `isamples_202601_*` | **Archival** — the coherent snapshot in Zenodo draft 21288719 |
-| `isamples_202604_*` | Orphan work-in-progress cut. Nothing references it. Post-grant: move to `/attic/` |
-| `isamples_202606_*` | Orphan work-in-progress cut. Same disposition |
+| `isamples_202604_*` | **NOT orphan — backs the stable `/current/wide.parquet` alias** used by data.qmd and multiple tutorials (see SERIALIZATIONS.md). Must NOT be moved until the alias is repointed and consumers audited |
+| `isamples_202606_*` | Pipeline intermediate (the #272 OC-concept-enriched wide that fed 202608 — see DATA_PROVENANCE.md step 3b). Not loaded by anything at runtime; safe to attic post-grant, lineage documented |
 | `isamples_202608_*` | **Live** (production Explorer) |
 
 ## 4. Conveniences (not load-bearing; fine to keep, labeled)
@@ -70,7 +70,6 @@ boot; this table makes them legible to humans.)
 | File | Note |
 |---|---|
 | `isamples_202601_wide_h3.parquet` | Analyst convenience (wide + precomputed H3 cells). In the Zenodo deposit; NOT loaded by the Explorer |
-| `isamples_202601_oc_sidecar.parquet` | OpenContext supplemental fields experiment (#140 lineage) |
 | `*.csv` twins of lite/H3 (~640 MB) | Convenience exports; parquet is authoritative; excluded from Zenodo by design |
 
 ## 5. Post-grant simplification options (deliberately NOT done in-grant)
