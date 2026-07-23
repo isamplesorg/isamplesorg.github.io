@@ -3,7 +3,7 @@
 
 The manifest is the machine-readable twin of CANONICAL.md: it enumerates exactly
 the data files the Explorer is entitled to load for a release, with per-file
-size/etag/last-modified gathered from HTTP HEAD against the live origin (no
+size/etag/last-modified gathered via strict ranged GETs against the live origin (no
 downloads). The Explorer fetches this at boot and cross-checks its pinned URLs
 (v0 = DETECT divergence loudly; deriving URLs from the manifest is v1, post-grant
 — see #334).
@@ -144,24 +144,46 @@ def main():
     try:
         stats = fetch_json(args.base, "isamples_202608_search_index_v1/build_stats.json")
         # build_stats: shard_count = LOGICAL shards (256, matches shard_sizes);
-        # shard_files = PHYSICAL files (base + hot-token sub-files). We want files.
+        # shard_files = PHYSICAL files (base + hot-token sub-files).
         tot = stats.get("shard_files")
-        if isinstance(tot, int) and tot > 0:
-            inv["total_shard_files"] = tot
-            if inv["base_shard_count"]:
-                inv["hot_shard_files"] = tot - inv["base_shard_count"]
-        else:
-            errors.append("build_stats.json: missing/invalid shard_files")
         logical = stats.get("shard_count")
-        if isinstance(logical, int) and inv["base_shard_count"] and logical != inv["base_shard_count"]:
+        if not (isinstance(tot, int) and tot > 0):
+            errors.append("build_stats.json: missing/invalid shard_files")
+            tot = None
+        if not (isinstance(logical, int) and logical > 0):
+            # Hard requirement (Codex round 3): absence must fail, not slide by.
+            errors.append("build_stats.json: missing/invalid shard_count (logical)")
+        elif inv["base_shard_count"] and logical != inv["base_shard_count"]:
             errors.append(f"inventory contradiction: build_stats logical shards {logical} "
                           f"!= shard_sizes entries {inv['base_shard_count']}")
-        if (inv["base_shard_count"] and isinstance(tot, int)
-                and tot < inv["base_shard_count"]):
-            errors.append(f"inventory contradiction: build_stats shard_count {tot} "
-                          f"< base shards {inv['base_shard_count']}")
+        inv["total_shard_files"] = tot
     except Exception as e:  # noqa: BLE001
         errors.append(f"build_stats.json inventory: {e}")
+    try:
+        # Hot sub-files enumerated from their authoritative source: each
+        # hot_tokens.json entry declares its physical sub_files count.
+        ht = fetch_json(args.base, "isamples_202608_search_index_v1/hot_tokens.json")
+        toks = ht.get("tokens")
+        if not isinstance(toks, dict) or not toks:
+            errors.append("hot_tokens.json: missing/empty tokens map")
+        else:
+            bad = [t for t, v in toks.items()
+                   if not isinstance(v, dict) or not isinstance(v.get("sub_files"), int)
+                   or v["sub_files"] < 1]
+            if bad:
+                errors.append(f"hot_tokens.json: malformed entries: {bad[:5]}")
+            else:
+                inv["hot_shard_files"] = sum(v["sub_files"] for v in toks.values())
+                inv["hot_token_count"] = len(toks)
+        # Three-way cross-check: base (shard_sizes) + hot (hot_tokens) must
+        # equal physical shard_files (build_stats). Any disagreement refuses.
+        if (inv["base_shard_count"] and inv.get("hot_shard_files") is not None
+                and inv["total_shard_files"] is not None
+                and inv["base_shard_count"] + inv["hot_shard_files"] != inv["total_shard_files"]):
+            errors.append(f"inventory contradiction: base {inv['base_shard_count']} + "
+                          f"hot {inv['hot_shard_files']} != shard_files {inv['total_shard_files']}")
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"hot_tokens.json inventory: {e}")
 
     if errors:
         print("REFUSING to emit manifest — origin problems:", file=sys.stderr)
@@ -182,8 +204,8 @@ def main():
             "runtime_sidecars": ["build_stats.json", "hot_tokens.json",
                                   "shard_sizes.json", "hot_topk.parquet"],
             "offline_only": ["df.parquet"],
-            "note": "base shards inventoried by shard_sizes.json; hot-token "
-                     "sub-files counted via build_stats.json shard_count",
+            "note": "base shards from shard_sizes.json; hot sub-files enumerated "
+                     "from hot_tokens.json; totals cross-checked vs build_stats shard_files",
         },
         "docs": "CANONICAL.md (human twin); #334 v0-detect",
     }
