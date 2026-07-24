@@ -57,7 +57,7 @@ class TestSidebarHowToUse:
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Overview", exact=True).count() > 0
 
-    def test_how_to_use_has_deep_dive(self, page):
+    def test_how_to_use_has_guided_tour(self, page):
         page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Guided Tour").count() > 0

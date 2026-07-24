@@ -14,9 +14,10 @@ format:
     theme: cosmo
 ---
 
-The [Interactive Explorer](https://isamples.org/explorer.html) puts ~6.7 million
-physical samples — rock cores, potsherds, tissue vouchers, museum specimens —
-on one globe, running entirely in your browser with no server behind it. This
+The [Interactive Explorer](https://isamples.org/explorer.html) covers ~6.7
+million physical samples — rock cores, potsherds, tissue vouchers, museum
+specimens — about 6 million of them on one globe, running entirely in your
+browser with no server behind it. This
 tour walks through seven views of it, each answering a question about the data.
 Most stops are **live links** — click one and the Explorer opens at the position,
 search, and zoom being described (the URL carries that state; a couple of stops
@@ -110,10 +111,10 @@ Plot.plot({
 ```
 
 One honest wrinkle the globe can't show: these bars total **~6.03 million** —
-the *located* samples. Roughly 700,000 more samples exist in the collection
-with no usable coordinates (they appear in search and the table, but never on
-the map). Counting only what's visible would overstate the map and understate
-the archive.
+the *located* samples. Roughly 700,000 more records exist in the collection
+with no usable coordinates: they never appear on the globe or in the viewport
+table, but a world-scope search still finds them. Counting only what's visible
+would overstate the map and understate the archive.
 
 ## Stop 2 — Search that knows concepts
 
@@ -138,8 +139,9 @@ not the whole dataset. The classic full-scan search still exists — add
 
 **[Fly to central Anatolia →](https://isamples.org/explorer.html#v=1&lat=37.6619&lng=32.8334&alt=150000&mode=point)**
 
-![The densest sample concentration on Earth (in this collection): the
-Çatalhöyük region, central Anatolia.](images/tour/tour_anatolia.png)
+![The densest region-scale (res4) cell in the collection, centered on the
+Çatalhöyük region of central Anatolia — shown here in cluster
+view.](images/tour/tour_anatolia.png)
 
 The densest region-scale cell in the whole collection is not over a volcano or
 a reef — it centers on the countryside around Çatalhöyük, a Neolithic settlement

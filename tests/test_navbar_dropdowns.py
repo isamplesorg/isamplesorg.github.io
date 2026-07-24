@@ -29,7 +29,7 @@ class TestHowToUseDropdown:
         menu = _open_dropdown(page, "How to Use")
         assert menu.get_by_text("Overview").count() > 0
 
-    def test_how_to_use_dropdown_has_deep_dive(self, page):
+    def test_how_to_use_dropdown_has_guided_tour(self, page):
         """And I see Guided Tour."""
         page.goto(SITE_URL, wait_until="domcontentloaded")
         menu = _open_dropdown(page, "How to Use")

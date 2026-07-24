@@ -118,11 +118,11 @@ browsers use the parquet versions.
 | | Interactive Explorer | Search Explorer | Guided Tour |
 |---|:-:|:-:|:-:|
 | `wide.parquet` | | ● | |
-| `wide_h3.parquet` | | | ● |
 | `facet_summaries.parquet` | ● | ● | ● |
 | `facet_cross_filter.parquet` | | ● | |
 | `sample_facets_v2.parquet` | ● | ● | |
-| `h3_summary_res4/6/8.parquet` | ● | | |
+| `vocab_labels.parquet` | ● | | ● |
+| `h3_summary_res4/6/8.parquet` | ● | | ● (res4) |
 | `samples_map_lite.parquet` | ● | | |
 | `vocab_labels.parquet` | ● | ● | |
 
