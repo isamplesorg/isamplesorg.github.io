@@ -1,0 +1,132 @@
+{
+ "schema_version": 1,
+ "release_id": "isamples_202608",
+ "generated_at_utc": "2026-07-23T17:51:11+00:00",
+ "base": "https://data.isamples.org",
+ "files": {
+  "isamples_202608_wide.parquet": {
+   "size_bytes": 300303095,
+   "etag": "1ef84eef3618a9f9d7f140adc42d543c",
+   "last_modified": null
+  },
+  "isamples_202608_samples_map_lite_v3.parquet": {
+   "size_bytes": 62924115,
+   "etag": "36849864596413e56688378dc83582dc-2",
+   "last_modified": null
+  },
+  "isamples_202608_sample_facets_v4.parquet": {
+   "size_bytes": 69384530,
+   "etag": "29b7fcff8683ac3a937db9550bdc8d37-9",
+   "last_modified": null
+  },
+  "isamples_202608_h3_summary_res4.parquet": {
+   "size_bytes": 505651,
+   "etag": "e2364e810bc5fda6b613bdc8f3fb947f",
+   "last_modified": null
+  },
+  "isamples_202608_h3_summary_res6.parquet": {
+   "size_bytes": 1322875,
+   "etag": "65200a3ce894d7e3ea16560784c5c9f6",
+   "last_modified": null
+  },
+  "isamples_202608_h3_summary_res8.parquet": {
+   "size_bytes": 2009510,
+   "etag": "f6410fa139a75a48fc6db1d6f24d76a6",
+   "last_modified": null
+  },
+  "isamples_202608_facet_summaries.parquet": {
+   "size_bytes": 1689,
+   "etag": "6498e8f60113f973a9519fe647860d54",
+   "last_modified": null
+  },
+  "isamples_202608_facet_cross_filter.parquet": {
+   "size_bytes": 5862,
+   "etag": "da81a1eaaf97c109cef279128e1bbbd5",
+   "last_modified": null
+  },
+  "isamples_202608_facet_tree_summaries.parquet": {
+   "size_bytes": 2773,
+   "etag": "8631b499654eb19b356f30bd1cbc10f7",
+   "last_modified": null
+  },
+  "isamples_202608_facet_tree_cross_filter.parquet": {
+   "size_bytes": 7102,
+   "etag": "fe9155ec83548e873c29657ae569ae7e",
+   "last_modified": null
+  },
+  "isamples_202608_sample_facet_membership.parquet": {
+   "size_bytes": 30908543,
+   "etag": "24d5021eda3c1b75060e265c18da36bd-4",
+   "last_modified": null
+  },
+  "isamples_202608_sample_facet_masks.parquet": {
+   "size_bytes": 10138648,
+   "etag": "953b19a368d21660c9bca7219811cf3d",
+   "last_modified": null
+  },
+  "isamples_202608_facet_node_bits.parquet": {
+   "size_bytes": 1839,
+   "etag": "687e2ee9e72184c1affb293aec861850",
+   "last_modified": null
+  },
+  "isamples_202608_sample_facet_index.parquet": {
+   "size_bytes": 10152968,
+   "etag": "818b43b4c5ee5bbb06ffe1050a3bbcd7",
+   "last_modified": null
+  },
+  "isamples_202608_sample_facet_index_meta.parquet": {
+   "size_bytes": 1154,
+   "etag": "2e7686fd6f008666cbde31dc047f344c",
+   "last_modified": null
+  },
+  "vocab_labels_202608.parquet": {
+   "size_bytes": 58783,
+   "etag": "4db27051fc74301140795b66ff39ab08",
+   "last_modified": null
+  },
+  "isamples_202608_search_index_v1/build_stats.json": {
+   "size_bytes": 1980,
+   "etag": "a44862c90b538fec751fd03d372e2e1d",
+   "last_modified": null
+  },
+  "isamples_202608_search_index_v1/hot_tokens.json": {
+   "size_bytes": 17747,
+   "etag": "66c8fb0ea713915085dc12036d7e6110",
+   "last_modified": null
+  },
+  "isamples_202608_search_index_v1/shard_sizes.json": {
+   "size_bytes": 7933,
+   "etag": "488bb3c2797b81d036e8d6431ee23cf0",
+   "last_modified": null
+  },
+  "isamples_202608_search_index_v1/hot_topk.parquet": {
+   "size_bytes": 690750,
+   "etag": "a88d1228baa0b4c2ce7bcb9c1dede7bb",
+   "last_modified": null
+  },
+  "isamples_202608_search_index_v1/df.parquet": {
+   "size_bytes": 7990281,
+   "etag": "a42de35cafeeb8bfae58c91ef09023e9",
+   "last_modified": null
+  }
+ },
+ "search_index": {
+  "path": "isamples_202608_search_index_v1/",
+  "base_shard_count": 256,
+  "base_shard_bytes": 551211162,
+  "total_shard_files": 847,
+  "hot_shard_files": 591,
+  "hot_token_count": 129,
+  "runtime_sidecars": [
+   "build_stats.json",
+   "hot_tokens.json",
+   "shard_sizes.json",
+   "hot_topk.parquet"
+  ],
+  "offline_only": [
+   "df.parquet"
+  ],
+  "note": "base shards from shard_sizes.json; hot sub-files enumerated from hot_tokens.json; totals cross-checked vs build_stats shard_files"
+ },
+ "docs": "CANONICAL.md (human twin); #334 v0-detect"
+}
