@@ -37,8 +37,8 @@ website:
         menu:
           - text: Overview
             href: how-to-use.qmd
-          - text: Deep-Dive Analysis
-            href: tutorials/zenodo_isamples_analysis.qmd
+          - text: Guided Tour
+            href: tutorials/explorer_guided_tour.qmd
       - text: About
         menu:
           - text: Objectives
@@ -84,8 +84,8 @@ website:
       contents:
         - href: how-to-use.qmd
           text: Overview
-        - text: "Deep-Dive Analysis"
-          href: tutorials/zenodo_isamples_analysis.qmd
+        - text: "Guided Tour"
+          href: tutorials/explorer_guided_tour.qmd
     - id: about
       title: "About"
       style: "docked"

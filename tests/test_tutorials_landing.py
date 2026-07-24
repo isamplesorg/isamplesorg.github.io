@@ -16,9 +16,9 @@ class TestHowToUseLanding:
     """Scenario: Landing page lists all tutorial pathways."""
 
     def test_has_deep_dive_link(self, page):
-        """Given I am on the How to Use page, Then I see a link to Deep-Dive Analysis."""
+        """Given I am on the How to Use page, Then I see a link to the Guided Tour."""
         page.goto(HOW_TO_USE_URL, wait_until="domcontentloaded")
-        link = page.locator("a:has-text('Deep-Dive')")
+        link = page.locator("a:has-text('Guided Tour')")
         assert link.count() > 0
 
     def test_has_globe_viz_link(self, page):
@@ -38,11 +38,11 @@ class TestTutorialPageLoads:
     """Scenario: Each tutorial page loads without JavaScript errors."""
 
     def test_deep_dive_loads(self, page):
-        """Given I navigate to the Deep-Dive tutorial, Then no JS errors appear."""
+        """Given I navigate to the Guided Tour tutorial, Then no JS errors appear."""
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(
-            f"{SITE_URL}/tutorials/zenodo_isamples_analysis.html",
+            f"{SITE_URL}/tutorials/explorer_guided_tour.html",
             wait_until="domcontentloaded",
         )
         assert page.title() != ""

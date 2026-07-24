@@ -24,7 +24,7 @@ class TestPerSectionSidebars:
         sidebar = page.locator(".sidebar-navigation")
         assert sidebar.get_by_text("Objectives", exact=True).count() > 0
         # Should NOT show items from other sections
-        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
+        assert sidebar.get_by_text("Guided Tour").count() == 0
         assert sidebar.get_by_text("Vocabularies", exact=True).count() == 0
 
     def test_architecture_sidebar_only_shows_own_items(self, page):
@@ -33,7 +33,7 @@ class TestPerSectionSidebars:
         assert sidebar.get_by_text("Vocabularies", exact=True).count() > 0
         # Should NOT show items from other sections
         assert sidebar.get_by_text("Objectives", exact=True).count() == 0
-        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
+        assert sidebar.get_by_text("Guided Tour").count() == 0
 
     def test_research_sidebar_only_shows_own_items(self, page):
         page.goto(f"{SITE_URL}/pubs.html", wait_until="domcontentloaded")
@@ -41,7 +41,7 @@ class TestPerSectionSidebars:
         assert sidebar.get_by_text("Publications & Conferences").count() > 0
         # Should NOT show items from other sections
         assert sidebar.get_by_text("Objectives", exact=True).count() == 0
-        assert sidebar.get_by_text("Deep-Dive Analysis").count() == 0
+        assert sidebar.get_by_text("Guided Tour").count() == 0
 
     def test_sidebar_does_not_show_old_information_architecture(self, page):
         page.goto(f"{SITE_URL}/design/index.html", wait_until="domcontentloaded")
@@ -60,7 +60,7 @@ class TestSidebarHowToUse:
     def test_how_to_use_has_deep_dive(self, page):
         page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")
         sidebar = page.locator(".sidebar-navigation")
-        assert sidebar.get_by_text("Deep-Dive Analysis").count() > 0
+        assert sidebar.get_by_text("Guided Tour").count() > 0
 
     def test_how_to_use_has_globe_viz(self, page):
         page.goto(f"{SITE_URL}/how-to-use.html", wait_until="domcontentloaded")

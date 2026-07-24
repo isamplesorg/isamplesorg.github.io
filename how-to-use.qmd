@@ -36,7 +36,7 @@ Works in Chrome, Firefox, Edge, Safari, and Brave. No plugins, no downloads, no 
 
 All code is visible and foldable on tutorial pages. Want to build your own analysis?
 
-- **[Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html)** — statistical exploration with Observable Plot
+- **[Guided Tour](/tutorials/explorer_guided_tour.html)** — seven views of the Explorer and the queries behind them
 - **[Tutorials index](/tutorials/)** — step-by-step guides from basic exploration to advanced analysis
 - **[GitHub](https://github.com/isamplesorg/)** — all source code and data pipelines
 - **[Zenodo](https://zenodo.org/communities/isamples)** — archived datasets for reproducible research
@@ -115,7 +115,7 @@ browsers use the parquet versions.
 
 ### Which tutorial uses which file {.unnumbered}
 
-| | Interactive Explorer | Search Explorer | Deep-Dive Analysis |
+| | Interactive Explorer | Search Explorer | Guided Tour |
 |---|:-:|:-:|:-:|
 | `wide.parquet` | | ● | |
 | `wide_h3.parquet` | | | ● |

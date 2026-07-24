@@ -7391,5 +7391,5 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 
 ## See Also
 
-- [Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html) — DuckDB-WASM SQL tutorial
+- [Guided Tour](/tutorials/explorer_guided_tour.html) — seven views of the Explorer, with the queries behind them
 - [Tutorials](/tutorials/) — index of all interactive tutorials

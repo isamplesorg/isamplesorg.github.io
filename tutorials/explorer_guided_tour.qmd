@@ -18,8 +18,9 @@ The [Interactive Explorer](https://isamples.org/explorer.html) puts ~6.7 million
 physical samples — rock cores, potsherds, tissue vouchers, museum specimens —
 on one globe, running entirely in your browser with no server behind it. This
 tour walks through seven views of it, each answering a question about the data.
-Every stop is a **live link**: click it and you are standing in the view being
-described, because the Explorer's URL captures its complete state.
+Most stops are **live links** — click one and the Explorer opens at the position,
+search, and zoom being described (the URL carries that state; a couple of stops
+ask you to click one control yourself, where the URL doesn't reach).
 
 A few stops also include a small **"the number behind the view"** code cell that
 computes what you're seeing, live, from the same public data files the Explorer
@@ -100,7 +101,9 @@ Plot.plot({
   x: {label: "located samples", tickFormat: "s"},
   y: {label: null},
   marks: [
-    Plot.barX(sources, {y: "source", x: "count", fill: "source"}),
+    Plot.barX(sources, {y: "source", x: "count",
+      fill: d => ({SESAR: "#3366CC", OPENCONTEXT: "#DC3912",
+                   GEOME: "#109618", SMITHSONIAN: "#FF9900"}[d.source] || "#666")}),
     Plot.text(sources, {y: "source", x: "count", text: d => d.count.toLocaleString(), dx: 4, textAnchor: "start"})
   ]
 })
@@ -123,8 +126,8 @@ Type *pottery Cyprus* and 1,305 samples answer, with the top matches pinned on
 the island. Two things make this more than word-matching. First, the search
 index folds in **vocabulary concepts**: a sample tagged with the *concept*
 "pottery" matches even if its free text never contains the word. Second, it
-folds in **place names**, so "Cyprus" finds samples whose coordinates sit on
-the island even when their descriptions don't mention it. (Both were real user
+folds in **place names**, so "Cyprus" finds samples whose sampling-site place
+metadata says Cyprus even when their free-text descriptions never mention it. (Both were real user
 bug reports once — the fixes became the index's design.)
 
 Search runs on a pre-built sharded index: your query fetches a few small files,
@@ -133,13 +136,15 @@ not the whole dataset. The classic full-scan search still exists — add
 
 ## Stop 3 — Two sites, two sciences
 
-**[Fly to central Anatolia →](https://isamples.org/explorer.html#v=1&lat=37.6619&lng=32.8334&alt=300000&mode=point)**
+**[Fly to central Anatolia →](https://isamples.org/explorer.html#v=1&lat=37.6619&lng=32.8334&alt=150000&mode=point)**
 
 ![The densest sample concentration on Earth (in this collection): the
 Çatalhöyük region, central Anatolia.](images/tour/tour_anatolia.png)
 
-The single densest spot in the whole collection is not a volcano or a reef —
-it's a Neolithic settlement mound in Turkey excavated for decades. Compare
+The densest region-scale cell in the whole collection is not over a volcano or
+a reef — it centers on the countryside around Çatalhöyük, a Neolithic settlement
+mound in Turkey excavated for decades (the cell aggregates ~150,000 samples from
+the surrounding region's digs). Compare
 **[Axial Seamount](https://isamples.org/explorer.html?search=axial+seamount+summit+caldera)**,
 an undersea volcano off Oregon: basalt collected by submersible. A potsherd
 from a dig and a basalt from the seafloor carry the same metadata shape —
@@ -157,7 +162,7 @@ dense = sql(`
 ```{ojs}
 html`<p><b>The five densest cells on the globe</b> (click to fly there):</p>
 <ol>${(await dense).map(d => html`<li>
-  <a href="https://isamples.org/explorer.html#v=1&lat=${d.center_lat.toFixed(4)}&lng=${d.center_lng.toFixed(4)}&alt=300000&mode=point" target="_blank">
+  <a href="https://isamples.org/explorer.html#v=1&lat=${d.center_lat.toFixed(4)}&lng=${d.center_lng.toFixed(4)}&alt=150000&mode=point" target="_blank">
   ${d.sample_count.toLocaleString()} samples</a> — ${d.dominant_source.toLowerCase()},
   near (${d.center_lat.toFixed(2)}, ${d.center_lng.toFixed(2)})</li>`)}
 </ol>`
@@ -177,7 +182,7 @@ file maps classification URIs to names:
 materials = sql(`
   SELECT COALESCE(vl.pref_label, fs.facet_value) AS material, fs.count
   FROM read_parquet('${FACET_SUMMARIES}') fs
-  LEFT JOIN read_parquet('${VOCAB_LABELS}') vl ON fs.facet_value = vl.uri
+  LEFT JOIN read_parquet('${VOCAB_LABELS}') vl ON fs.facet_value = vl.uri AND vl.lang = 'en'
   WHERE fs.facet_type = 'material'
   ORDER BY fs.count DESC
   LIMIT 10`)
@@ -213,7 +218,7 @@ patterns, points for identity, and never trust a color's *intensity* as a count
 
 Any view's sample table (below the globe) shows PID, place, date, and a
 **Source URL** linking each sample back to its home collection's record.
-**Download CSV** exports exactly what you've filtered to. And because the URL
+**Download CSV** exports up to 50,000 samples matching your current viewport and filters (broader views export the first 50,000). And because the URL
 carries the whole view state, **Copy Link to Current View** gives you a
 citation-grade pointer to *this exact slice* — paste it in a paper, a class
 assignment, or an issue report.
