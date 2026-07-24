@@ -1070,4 +1070,4 @@ The wide format eliminates ~9M edge rows (60% file size reduction). The H3 varia
 
 - [Interactive Explorer](/explorer.html) - Browse samples on a 3D globe
 - [Search Explorer](isamples_explorer.qmd) - Faceted search and filter across all samples
-- [Deep-Dive Analysis](zenodo_isamples_analysis.qmd) - Comprehensive DuckDB-WASM tutorial
+- [Guided Tour](explorer_guided_tour.qmd) - Seven views of the Explorer, with live queries

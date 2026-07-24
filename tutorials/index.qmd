@@ -9,7 +9,7 @@ number-sections: false
 | Tutorial | What You'll Learn |
 |----------|-------------------|
 | [**Interactive Explorer**](/explorer.html) | Browse, search, and filter 6.7M samples on a 3D globe or in a paginated table |
-| [**Deep-Dive Analysis**](zenodo_isamples_analysis.qmd) | Comprehensive DuckDB-WASM analysis with Observable JS — charts, maps, statistics |
+| [**Guided Tour**](explorer_guided_tour.qmd) | Seven views of the Interactive Explorer — what each answers, with live deep links and the queries behind the numbers |
 | [**Technical: Narrow vs Wide**](narrow_vs_wide_performance.qmd) | Schema comparison and performance benchmarks for the PQG data formats |
 
 ## What's in the Data? {.unnumbered}

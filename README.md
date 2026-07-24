@@ -18,7 +18,7 @@ Visit the [Quarto site](https://quarto.org/docs/guide/) for documentation on usi
 The `tutorials/` directory contains interactive data analysis tutorials:
 
 - **`isamples_explorer.qmd`** - Interactive search and exploration of 6.7M samples
-- **`zenodo_isamples_analysis.qmd`** - Deep-dive DuckDB-WASM analysis tutorial
+- **`explorer_guided_tour.qmd`** - Guided tour of the Interactive Explorer (replaced the migration-era Zenodo deep-dive, 2026-07)
 - **`parquet_cesium_isamples_wide.qmd`** - Cesium-based 3D globe visualization
 - **`narrow_vs_wide_performance.qmd`** - Technical schema comparison
 

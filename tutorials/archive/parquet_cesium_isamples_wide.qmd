@@ -1079,4 +1079,4 @@ html`${
 
 - [Interactive Explorer](/tutorials/isamples_explorer.html) - Search and filter samples
 - [Narrow vs Wide Performance](/tutorials/narrow_vs_wide_performance.html) - Benchmark comparison
-- [Deep-Dive Analysis](/tutorials/zenodo_isamples_analysis.html) - Comprehensive DuckDB-WASM tutorial
+- [Guided Tour](/tutorials/explorer_guided_tour.html) - Seven views of the Explorer, with live queries

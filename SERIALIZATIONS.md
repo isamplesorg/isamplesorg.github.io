@@ -104,7 +104,7 @@ builder — a fresh build is NOT bit-for-bit identical to them (see
 
 | File | Role | Size | Rows | Upstream | Consumers | Spec |
 |---|---|---:|---:|---|---|---|
-| `isamples_202601_wide_h3.parquet` | Wide with `h3_res{4,6,8}` BIGINT columns pre-joined | 292 MB | 20.7 M | wide | Deep-Dive Analysis tutorial (H3 filtering without join) | QUERY_SPEC §2.4 |
+| `isamples_202601_wide_h3.parquet` | Wide with `h3_res{4,6,8}` BIGINT columns pre-joined | 292 MB | 20.7 M | wide | archival/analyst convenience (former Deep-Dive tutorial, replaced 2026-07 by the Guided Tour which uses summary files) | QUERY_SPEC §2.4 |
 | `isamples_202601_h3_summary_res4.parquet` | Continental tier: `(h3_cell, sample_count, center_lat, center_lng, dominant_source, source_count, resolution)` | 580 KB | 38 K | wide_h3 | Interactive Explorer globe (zoomed out), Python Explorer H3 tier mode | QUERY_SPEC §2.4 |
 | `isamples_202601_h3_summary_res6.parquet` | Regional tier | 1.6 MB | 112 K | wide_h3 | Interactive Explorer globe (mid zoom) | QUERY_SPEC §2.4 |
 | `isamples_202601_h3_summary_res8.parquet` | Neighborhood tier | 2.4 MB | 176 K | wide_h3 | Interactive Explorer globe (close zoom) | QUERY_SPEC §2.4 |
