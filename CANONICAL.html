@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>data_provenance – iSamples</title>
+<title>canonical – iSamples</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -22,41 +22,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -255,17 +220,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#isamples-explorer-data-provenance" id="toc-isamples-explorer-data-provenance" class="nav-link active" data-scroll-target="#isamples-explorer-data-provenance"><span class="header-section-number">1</span> iSamples Explorer — Data Provenance</a>
+  <li><a href="#canonical.md-which-data-files-are-real-and-which-are-accidental-history" id="toc-canonical.md-which-data-files-are-real-and-which-are-accidental-history" class="nav-link active" data-scroll-target="#canonical.md-which-data-files-are-real-and-which-are-accidental-history"><span class="header-section-number">1</span> CANONICAL.md — which data files are real, and which are accidental history</a>
   <ul>
-  <li><a href="#pipeline-dag" id="toc-pipeline-dag" class="nav-link" data-scroll-target="#pipeline-dag"><span class="header-section-number">1.1</span> Pipeline DAG</a></li>
-  <li><a href="#stages-script-command-per-step" id="toc-stages-script-command-per-step" class="nav-link" data-scroll-target="#stages-script-command-per-step"><span class="header-section-number">1.2</span> Stages (script / command per step)</a></li>
-  <li><a href="#the-sidecarenrichment-pattern-how-new-data-gets-in" id="toc-the-sidecarenrichment-pattern-how-new-data-gets-in" class="nav-link" data-scroll-target="#the-sidecarenrichment-pattern-how-new-data-gets-in"><span class="header-section-number">1.3</span> The sidecar/enrichment pattern (how new data gets in)</a></li>
-  <li><a href="#stage-4-builder-contract-scriptsbuild_frontend_derived.py" id="toc-stage-4-builder-contract-scriptsbuild_frontend_derived.py" class="nav-link" data-scroll-target="#stage-4-builder-contract-scriptsbuild_frontend_derived.py"><span class="header-section-number">1.4</span> Stage 4 builder contract (<code>scripts/build_frontend_derived.py</code>)</a></li>
-  <li><a href="#documentation-automation-gaps-remaining" id="toc-documentation-automation-gaps-remaining" class="nav-link" data-scroll-target="#documentation-automation-gaps-remaining"><span class="header-section-number">1.5</span> Documentation / automation gaps (remaining)</a></li>
-  <li><a href="#key-files" id="toc-key-files" class="nav-link" data-scroll-target="#key-files"><span class="header-section-number">1.6</span> Key files</a></li>
+  <li><a href="#the-canonical-live-set-202608" id="toc-the-canonical-live-set-202608" class="nav-link" data-scroll-target="#the-canonical-live-set-202608"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202608</a></li>
+  <li><a href="#superseded-versions-still-served-do-not-use" id="toc-superseded-versions-still-served-do-not-use" class="nav-link" data-scroll-target="#superseded-versions-still-served-do-not-use"><span class="header-section-number">1.2</span> 2. Superseded versions (still served; do not use)</a></li>
+  <li><a href="#snapshot-generations-who-serves-whom" id="toc-snapshot-generations-who-serves-whom" class="nav-link" data-scroll-target="#snapshot-generations-who-serves-whom"><span class="header-section-number">1.3</span> 3. Snapshot generations (who serves whom)</a></li>
+  <li><a href="#conveniences-not-load-bearing-fine-to-keep-labeled" id="toc-conveniences-not-load-bearing-fine-to-keep-labeled" class="nav-link" data-scroll-target="#conveniences-not-load-bearing-fine-to-keep-labeled"><span class="header-section-number">1.4</span> 4. Conveniences (not load-bearing; fine to keep, labeled)</a></li>
+  <li><a href="#post-grant-simplification-options-deliberately-not-done-in-grant" id="toc-post-grant-simplification-options-deliberately-not-done-in-grant" class="nav-link" data-scroll-target="#post-grant-simplification-options-deliberately-not-done-in-grant"><span class="header-section-number">1.5</span> 5. Post-grant simplification options (deliberately NOT done in-grant)</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DATA_PROVENANCE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/CANONICAL.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -273,140 +237,199 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="isamples-explorer-data-provenance" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> iSamples Explorer — Data Provenance</h1>
-<p>How every parquet file the explorer uses is generated, from root to publish. <em>Reviewed 2026-06-02 (CC, via codebase audit). Complements <code>SERIALIZATIONS.md</code> (format/schema reference); this file is the end-to-end build chain + the automation gaps.</em></p>
-<blockquote class="blockquote">
-<p><strong>Load-bearing constraint:</strong> the <strong>root export cannot be regenerated.</strong> It was produced from the iSamples Central Solr API (<code>central.isample.xyz</code>), <strong>offline since Aug 2025</strong>. The Zenodo-archived export is a <strong>frozen root</strong>. Any <em>new</em> data (e.g.&nbsp;concept URIs, thumbnails) therefore must come from a <strong>per-source supplementary file merged into the base by <code>pid</code></strong> — the “sidecar” pattern (see Stage 3) — not from re-exporting.</p>
-</blockquote>
-<section id="pipeline-dag" class="level2" data-number="1.1">
-<h2 data-number="1.1" data-anchor-id="pipeline-dag"><span class="header-section-number">1.1</span> Pipeline DAG</h2>
-<pre><code>Source collections (SESAR · OpenContext · GEOME · Smithsonian)
-   │  iSamples Central Solr API  ── OFFLINE since Aug 2025 (cannot re-run) ──┐
-   ▼                                                                         │
-STAGE 0/1  export_client → JSONL → GeoParquet                               │ frozen
-   → isamples_export_*_geo.parquet   (Export format; ~300MB, 6.7M; Zenodo doi:10.5281/zenodo.15278211)
-   ▼
-STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
-   →  narrow (…_narrow.parquet, ~844MB, 106M rows)   and   wide (…_wide.parquet, ~282MB, 20M rows)
-   ▼
-STAGE 3  sidecar/enrichment merges (LEFT JOIN by pid)       ← Eric's independently-maintained OC PQG (GCS)
-   3a scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
-   3b scripts/enrich_wide_with_oc_concepts.py    →  isamples_202606_wide.parquet (#272: OC material/
-      object-type concepts REPLACE the frozen export's for OC pids — OC wins unconditionally;
-      gate: scripts/validate_oc_concept_enrichment.py)
-   ▼
-STAGE 4  wide → frontend derived files  (NOW SCRIPTED: scripts/build_frontend_derived.py)
-   → wide_h3 · h3_summary_res4/6/8 · samples_map_lite · sample_facets_v2 · facet_summaries · facet_cross_filter
-   → vocab_labels  (scripts/build_vocab_labels.py — built separately from SKOS TTLs)
-   → {tag}_manifest.json  (build identity: input+output sha256, argv, git SHA, DuckDB/extension versions)
-   ▼
-STAGE 5  publish to R2 (bucket isamples-ry) + Cloudflare Worker (data.isamples.org, /current/ aliases)
-   ▼
-DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)</code></pre>
-</section>
-<section id="stages-script-command-per-step" class="level2" data-number="1.2">
-<h2 data-number="1.2" data-anchor-id="stages-script-command-per-step"><span class="header-section-number">1.2</span> Stages (script / command per step)</h2>
+<section id="canonical.md-which-data-files-are-real-and-which-are-accidental-history" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> CANONICAL.md — which data files are real, and which are accidental history</h1>
+<p><em>Created 2026-07-23 (grant closing week) to answer: “can we simplify our stable of supplementary parquet files?” Answer: the <strong>live set is already minimal</strong> — the accumulation is superseded versions and orphan snapshots around it. This file names the canonical set and documents every non-canonical survivor so the accident is neutralized even where files remain on the bucket.</em></p>
+<p><strong>Companion:</strong> the machine-readable release manifest (<code>tools/build_release_manifest.py</code> → <code>isamples_202608_release_manifest.json</code>) enumerates the same canonical set with sizes/checksums; the Explorer cross-checks it at boot (#334 v0). A file absent from the manifest is non-canonical <strong>by definition</strong>.</p>
+<section id="the-canonical-live-set-202608" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="the-canonical-live-set-202608"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202608</h2>
+<p>Exactly what production <code>explorer.qmd</code> loads, all under <code>https://data.isamples.org/</code>:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 50%">
+<col style="width: 50%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Stage</th>
-<th>Input → Output</th>
-<th>How (file:line)</th>
-<th>Automated?</th>
+<th>File</th>
+<th>Role (plain English)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>0/1 Export</strong></td>
-<td>Solr API → <code>isamples_export_*_geo.parquet</code></td>
-<td><code>export_client</code> <code>ExportClient.perform_full_download()</code> (<code>export_client.py:423-469</code>) → <code>write_geoparquet_from_json_lines()</code>; schema <code>SOURCE_COLUMNS</code> (<code>duckdb_utilities.py:9-42</code>, incl.&nbsp;<code>keywords: STRUCT(keyword VARCHAR)[]</code> — <strong>text only, no URI</strong>, L17)</td>
-<td>❌ API offline; <strong>frozen</strong></td>
+<td><code>isamples_202608_wide.parquet</code></td>
+<td>Full sample detail, one row per entity — everything derives from this</td>
 </tr>
 <tr class="even">
-<td><strong>2 Base PQG</strong></td>
-<td>export → <code>*_narrow.parquet</code> / <code>*_wide.parquet</code></td>
-<td><code>pqg/pqg/sql_converter.py</code> <code>convert_isamples_sql(input, output, wide=…)</code> (CLI <code>python pqg/sql_converter.py in.parquet out.parquet [--wide]</code>); 7 stages, decomposes nested structs → nodes+edges; site dedupe by rounded lat/lon+label</td>
-<td>✅ scripted (exact prod invocation not recorded — gap)</td>
+<td><code>isamples_202608_samples_map_lite_v3.parquet</code></td>
+<td>Slim map/table columns (coords, label, place, date, h3 cells)</td>
 </tr>
 <tr class="odd">
-<td><strong>3a Sidecar: thumbnails</strong></td>
-<td>base wide + Eric’s OC PQG → <code>isamples_202604_wide.parquet</code></td>
-<td><code>scripts/enrich_wide_with_oc_thumbnails.py</code> — <code>LEFT JOIN</code> OC <code>(pid, thumbnail_url)</code> into wide (<code>COALESCE</code>). Drift check: <code>scripts/check_oc_pqg_drift.py</code> (detects only; no mirror)</td>
-<td>⚠️ merge scripted; OC mirror + R2 upload manual</td>
+<td><code>isamples_202608_sample_facets_v4.parquet</code></td>
+<td>Per-sample facet URIs + search-text blob (the <code>?fts=off</code> scan target)</td>
 </tr>
 <tr class="even">
-<td><strong>3b Sidecar: OC concepts (#272)</strong></td>
-<td>3a wide + Eric’s OC <strong>wide</strong> → <code>isamples_202606_wide.parquet</code></td>
-<td><code>scripts/enrich_wide_with_oc_concepts.py</code> — REPLACES <code>p__has_material_category</code> / <code>p__has_sample_object_type</code> for OC pids with OC’s ordered concept lists (<strong>OC wins unconditionally</strong> — RY decision 2026-06-10, #272); mints <code>IdentifiedConcept</code> rows for URIs the frozen export never had (e.g.&nbsp;<code>otheranthropogenicmaterial</code>, the #260 fix); deterministic; emits <code>.manifest.json</code>. Independent gate: <code>scripts/validate_oc_concept_enrichment.py</code> (re-derives from inputs; non-overlay rows must be byte-identical). Scope: overlay only — ~75K OC records absent from the frozen export are NOT ingested (follow-up); <code>p__has_context_category</code> untouched (follow-up).</td>
-<td>✅ merge + gate scripted (<code>make all-272</code>); R2 upload manual</td>
+<td><code>isamples_202608_h3_summary_res{4,6,8}.parquet</code></td>
+<td>Pre-counted globe clusters at 3 zoom tiers</td>
 </tr>
 <tr class="odd">
-<td><strong>4 Frontend derived</strong></td>
-<td>wide → 7 explorer files</td>
-<td>The 6 map/facet files (<code>wide_h3</code>, <code>h3_summary_res4/6/8</code>, <code>samples_map_lite</code>, <code>sample_facets_v2</code>, <code>facet_summaries</code>, <code>facet_cross_filter</code>) ← <strong><code>scripts/build_frontend_derived.py</code></strong> (deterministic; geometry-agnostic; emits a manifest). <code>vocab_labels.parquet</code> ← <code>scripts/build_vocab_labels.py</code> (SKOS TTLs). Gated by <code>scripts/validate_frontend_derived.py</code> (algebraic + <code>--wide</code> semantic re-derivation) + <code>tests/test_frontend_derived.py</code> (fixtures, CI).</td>
-<td>✅ scripted; facet/map files semantic-tested; wide_h3 column-smoke-tested</td>
+<td><code>isamples_202608_facet_summaries.parquet</code></td>
+<td>Facet checkbox counts, no filters active</td>
 </tr>
 <tr class="even">
-<td><strong>5 Publish</strong></td>
-<td>files → R2 + Worker</td>
-<td>Worker <code>workers/data-isamples-org/src/index.js</code> (<code>wrangler deploy</code>); immutable cache for <code>isamples_\d{6}_*.parquet</code>; <code>/current/&lt;flavor&gt;.parquet</code> → 302 via <code>current/manifest.json</code>. Bucket <code>isamples-ry</code></td>
-<td>⚠️ Worker scripted; <strong>file upload + manifest update are manual</strong></td>
+<td><code>isamples_202608_facet_cross_filter.parquet</code></td>
+<td>Facet counts under single cross-filter</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_facet_tree_summaries.parquet</code></td>
+<td>Hierarchical (tree) facet counts</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202608_facet_tree_cross_filter.parquet</code></td>
+<td>Tree facet counts under cross-filter</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_sample_facet_membership.parquet</code></td>
+<td>Sample↔︎facet-tree membership</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202608_sample_facet_masks.parquet</code></td>
+<td>Bitmask substrate for multi-filter counts</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_facet_node_bits.parquet</code></td>
+<td>Facet-node bit assignments for the masks</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202608_sample_facet_index.parquet</code></td>
+<td>Per-sample facet index (multi-filter fast path)</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_sample_facet_index_meta.parquet</code></td>
+<td>~1 KB trusted manifest for the above (#313/#317 boot-race fix)</td>
+</tr>
+<tr class="even">
+<td><code>vocab_labels_202608.parquet</code></td>
+<td>URI → human label (539 entries; verified complete 2026-07-22)</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_search_index_v1/</code></td>
+<td>Sharded FTS index — the default search since 2026-07-17. Runtime loads: <code>build_stats.json</code>, <code>hot_tokens.json</code>, <code>shard_sizes.json</code>, <code>hot_topk.parquet</code>, + 256 base token shards and ~591 hot-token sub-files (852 objects total incl.&nbsp;sidecars; base inventory in <code>shard_sizes.json</code>, totals in <code>build_stats.json</code>); <code>df.parquet</code> is offline-only</td>
+</tr>
+</tbody>
+</table>
+<p>The ~9-file facet family looks baroque but is load-bearing: it is the price of fast multi-filter counts with no server. See <code>EXPLORER_QUERIES.md</code> for how each is queried and <code>DATA_PROVENANCE.md</code> for how each is built.</p>
+</section>
+<section id="superseded-versions-still-served-do-not-use" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="superseded-versions-still-served-do-not-use"><span class="header-section-number">1.2</span> 2. Superseded versions (still served; do not use)</h2>
+<p>Each suffix bump was a real fix that left its predecessor in place — the #326 incident (“two sibling files silently diverged in vintage”) is what happens when nothing marks the old ones dead. That marking is this table.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Superseded file</th>
+<th>Replaced by</th>
+<th>Why (the bump’s fix)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202608_sample_facets_v2.parquet</code></td>
+<td><code>_v3</code></td>
+<td>concept labels folded into search text (#277; v2 introduced in <code>10fd415</code>, bumped in <code>8a6ebf5</code>)</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202608_sample_facets_v3.parquet</code></td>
+<td><code>_v4</code></td>
+<td>place_name folded into search text (#326, <code>7e900a0</code>) — <strong>the file whose staleness caused the #326 bug</strong></td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_samples_map_lite.parquet</code></td>
+<td><code>_v2</code></td>
+<td>h3_res4/res6 columns for filtered clusters (#300, <code>1715142</code>)</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202608_samples_map_lite_v2.parquet</code></td>
+<td><code>_v3</code></td>
+<td>corrected place_name + Array.isArray fix (#311, <code>3f2f20a</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Policy going forward:</strong> a suffix bump MUST add a row here and regenerate the release manifest in the same change. (The manifest makes violations visible at boot; this table makes them legible to humans.)</p>
+</section>
+<section id="snapshot-generations-who-serves-whom" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="snapshot-generations-who-serves-whom"><span class="header-section-number">1.3</span> 3. Snapshot generations (who serves whom)</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Generation</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202512_*</code></td>
+<td>Narrow only — <strong>archival</strong> (in the Zenodo deposit; there is no 202601 narrow — known label mismatch, documented in the deposit README)</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202601_*</code></td>
+<td><strong>Archival</strong> — the coherent snapshot in Zenodo draft 21288719</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202604_*</code></td>
+<td><strong>NOT orphan — backs the stable <code>/current/wide.parquet</code> alias</strong> used by data.qmd and multiple tutorials (see SERIALIZATIONS.md). Must NOT be moved until the alias is repointed and consumers audited</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202606_*</code></td>
+<td>Pipeline intermediate (the #272 OC-concept-enriched wide that fed 202608 — see DATA_PROVENANCE.md step 3b). Not loaded by anything at runtime; safe to attic post-grant, lineage documented</td>
+</tr>
+<tr class="odd">
+<td><code>isamples_202608_*</code></td>
+<td><strong>Live</strong> (production Explorer)</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="the-sidecarenrichment-pattern-how-new-data-gets-in" class="level2" data-number="1.3">
-<h2 data-number="1.3" data-anchor-id="the-sidecarenrichment-pattern-how-new-data-gets-in"><span class="header-section-number">1.3</span> The sidecar/enrichment pattern (how new data gets in)</h2>
-<p>Because the export is frozen, new per-source data is added by <strong>merging a supplementary parquet keyed by <code>pid</code> into the base wide</strong> — exactly what the thumbnail enrichment does:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- scripts/enrich_wide_with_oc_thumbnails.py (core)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> TEMP <span class="kw">TABLE</span> oc_thumbs <span class="kw">AS</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> <span class="kw">DISTINCT</span> pid, thumbnail_url <span class="kw">FROM</span> read_parquet(<span class="st">'&lt;eric_oc_pqg&gt;'</span>) <span class="kw">WHERE</span> thumbnail_url <span class="kw">IS</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> (<span class="kw">SELECT</span> p.<span class="op">*</span> <span class="kw">REPLACE</span> (<span class="fu">COALESCE</span>(oc.thumbnail_url, p.thumbnail_url) <span class="kw">AS</span> thumbnail_url)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="kw">FROM</span> read_parquet(<span class="st">'&lt;base_wide&gt;'</span>) p <span class="kw">LEFT</span> <span class="kw">JOIN</span> oc_thumbs oc <span class="kw">ON</span> p.pid <span class="op">=</span> oc.pid)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">TO</span> <span class="st">'&lt;out&gt;'</span> (FORMAT PARQUET, COMPRESSION ZSTD);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Eric Kansa maintains OpenContext PQG <strong>independently</strong> on GCS (<code>storage.googleapis.com/opencontext-parquet/oc_isamples_pqg.parquet</code>), so it can carry data the frozen iSamples export lacks. This is the channel for <strong>#263</strong> (external concept URIs): Eric’s OC PQG carries them → merged into wide by pid → flows to the derived files. <em>(Sidecar design endorsed 2026-04-17; the spec <code>project_isamples_sidecar_pattern.md</code> lives in the Obsidian vault, not a repo — gap.)</em></p>
+<section id="conveniences-not-load-bearing-fine-to-keep-labeled" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="conveniences-not-load-bearing-fine-to-keep-labeled"><span class="header-section-number">1.4</span> 4. Conveniences (not load-bearing; fine to keep, labeled)</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>isamples_202601_wide_h3.parquet</code></td>
+<td>Analyst convenience (wide + precomputed H3 cells). In the Zenodo deposit; NOT loaded by the Explorer</td>
+</tr>
+<tr class="even">
+<td><code>*.csv</code> twins of lite/H3 (~640 MB)</td>
+<td>Convenience exports; parquet is authoritative; excluded from Zenodo by design</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="stage-4-builder-contract-scriptsbuild_frontend_derived.py" class="level2" data-number="1.4">
-<h2 data-number="1.4" data-anchor-id="stage-4-builder-contract-scriptsbuild_frontend_derived.py"><span class="header-section-number">1.4</span> Stage 4 builder contract (<code>scripts/build_frontend_derived.py</code>)</h2>
-<ul>
-<li><strong>Geometry-agnostic input.</strong> The <code>geometry</code> column may be <strong>WKB BLOB</strong> (e.g.&nbsp;<code>isamples_202604_wide</code>) or DuckDB <strong>GEOMETRY</strong> (e.g.&nbsp;<code>isamples_202601_wide</code>, the Zenodo wide). The builder detects the type at runtime — earlier ad-hoc SQL assumed BLOB and threw <code>BinderException</code> on GEOMETRY wides.</li>
-<li><strong>Material selection (#265/#271).</strong> <code>material</code> = the <strong>first NON-ROOT</strong> concept in <code>p__has_material_category</code> (the root <code>.../material/1.0/material</code> “Material” can sit at any array position). Samples tagged only at the root get <code>NULL</code> material (excluded from the facet). This is <strong>NOT leaf/most-specific</strong> selection — the arrays are not clean SKOS paths. <code>context</code>/<code>object_type</code> use <code>[1]</code>; their root-dropping is deferred.</li>
-<li><strong>Determinism.</strong> Every COPY has <code>ORDER BY</code>; <code>dominant_source</code> ties break on source name (ASC); center lat/lng rounded to 6 dp.</li>
-<li><strong>Reproducibility &amp; build identity.</strong> Each run writes <code>{tag}_manifest.json</code> (input + per-output sha256, argv, git SHA, DuckDB + extension versions). DuckDB pinned in <code>scripts/requirements.txt</code>.</li>
-<li><strong>Tested.</strong> <code>tests/test_frontend_derived.py</code> (fixtures, CI via <code>.github/workflows/pipeline-tests.yml</code>) + <code>scripts/validate_frontend_derived.py</code> (algebraic: <code>facet_summaries == GROUP BY sample_facets_v2</code>, <code>facet_cross_filter == conditional GROUP BY</code>, <code>facets.pid == map_lite.pid</code>, pid uniqueness, H3 sums). <code>make test</code> / <code>make all</code>.</li>
-<li><strong><code>sample_facet_index_meta</code> (#313 P1) is paired with <code>sample_facet_index</code> and MUST be deployed together.</strong> It’s a tiny per-source-histogram manifest built DIRECTLY from <code>samp_geo</code> (never by reading back <code>sample_facet_index.parquet</code> — that would make the “staleness check” self-referential) so the explorer’s boot-time <code>facetIndexReady</code> preflight can validate the index without a live 6M-row <code>GROUP BY</code> scan. <code>--only sample_facet_index_meta</code> alone builds just the meta file (no forced <code>sample_facet_index</code> rebuild) for re-pairing a meta file with an already-published index of the same <code>build_id</code>; a normal build or <code>--only sample_facet_index,sample_facet_index_meta</code> builds both together. <strong>R2 upload must always publish the two files together with matching <code>build_id</code></strong> — see <code>SERIALIZATIONS.md</code> §4.13. Independently validated by <code>validate_frontend_derived.py --index ... --index-meta ...</code>, which recomputes the histogram/build_id/schema_version/row-count from the actual on-disk index file (not from the meta file’s own claims).</li>
-</ul>
-</section>
-<section id="documentation-automation-gaps-remaining" class="level2" data-number="1.5">
-<h2 data-number="1.5" data-anchor-id="documentation-automation-gaps-remaining"><span class="header-section-number">1.5</span> Documentation / automation gaps (remaining)</h2>
-<ul>
-<li>⚠️ <strong>The deployed <code>202601</code> derived files are NOT reproducible</strong> from any available wide. A rebuild yields <strong>528,983</strong> root-material rows (pre-#271); the deployed <code>sample_facets_v2</code> has <strong>346,768</strong> — so the live files came from a different/unrecorded Stage-4 process, <em>and</em> the data has since rolled (wide is now <code>202604</code>). Treat a fresh <code>build_frontend_derived.py</code> run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.</li>
-<li><strong>Version skew:</strong> the deployed derived files are <code>202601</code> while the wide they should derive from is <code>202604</code> (the popup reads <code>202604</code>). Rebuilding from <code>202604</code> resolves it (tracked in the pipeline epic).</li>
-<li><strong>No R2 upload automation</strong> — file upload to bucket <code>isamples-ry</code> + <code>current/manifest.json</code> update are manual <code>wrangler</code>/dashboard steps.</li>
-<li><strong>No OC mirror script</strong> — <code>check_oc_pqg_drift.py</code> detects GCS↔︎R2 drift but doesn’t perform the mirror.</li>
-<li><strong>Stage-2 prod invocation</strong> that produced <code>zenodo_narrow_2025-12-12</code> / <code>zenodo_wide_2026-01-09</code> from the Zenodo export is still unrecorded (dedupe options unknown).</li>
-<li><strong><code>SERIALIZATIONS.md:80</code></strong> claims every file “can be rebuilt by a script” — now true for the Stage-4 files; still aspirational for Stage-2.</li>
-<li><strong>Sidecar spec</strong> is in Obsidian only, not version-controlled with the code.</li>
-</ul>
-</section>
-<section id="key-files" class="level2" data-number="1.6">
-<h2 data-number="1.6" data-anchor-id="key-files"><span class="header-section-number">1.6</span> Key files</h2>
-<ul>
-<li><code>export_client/isamples_export_client/duckdb_utilities.py</code> — export schema (keywords narrowing @ L17)</li>
-<li><code>pqg/pqg/sql_converter.py</code> — export→PQG engine; <code>pqg/docs/PQG_SPECIFICATION.md</code> — format spec</li>
-<li><code>isamplesorg.github.io/scripts/enrich_wide_with_oc_thumbnails.py</code> — the sidecar-merge precedent</li>
-<li><code>isamplesorg.github.io/scripts/build_vocab_labels.py</code> — the one scripted derived file</li>
-<li><code>isamplesorg.github.io/scripts/check_oc_pqg_drift.py</code> — OC drift check</li>
-<li><code>isamplesorg.github.io/workers/data-isamples-org/{src/index.js,wrangler.toml}</code> — Worker + R2 config</li>
-<li><code>isamplesorg.github.io/SERIALIZATIONS.md</code> — format/schema reference (DAG companion to this file)</li>
-</ul>
+<section id="post-grant-simplification-options-deliberately-not-done-in-grant" class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="post-grant-simplification-options-deliberately-not-done-in-grant"><span class="header-section-number">1.5</span> 5. Post-grant simplification options (deliberately NOT done in-grant)</h2>
+<ol type="1">
+<li>Move §2’s superseded versions and the 202606 pipeline intermediate to an <code>/attic/</code> prefix on R2 (don’t delete — old notebooks/links may reference them). Needs R2 write credentials.</li>
+<li>Collapse the facet family only alongside a real pipeline rework — the current 9 files trade storage (cheap) for browser CPU (scarce); collapsing them is an engineering project, not cleanup.</li>
+<li>If a fresher export ever lands (#320), cut ONE coherent generation and retire 202608 wholesale via the manifest. <!-- cc:2026.07.23 --></li>
+</ol>
 
 
 </section>
@@ -814,7 +837,7 @@ DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)</code></pre>
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/DATA_PROVENANCE.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/CANONICAL.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
 </div>
