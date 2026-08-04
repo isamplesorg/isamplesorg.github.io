@@ -197,7 +197,12 @@ lookup. After Codex review on #165, we committed to a sharper third framing:
 data sources), but the *UI surface* gains a temporary point-overlay
 visualization of the matching samples.
 
-### What "search" does today (`doSearch` at `:1782-1859`)
+### What "search" did as of this document (`doSearch` at `:1782-1859`) — **HISTORICAL**
+
+> ⚠️ **Superseded by #234 and #340.** The paragraph below describes the original option-(B)/(C)
+> behavior and is kept for provenance. It is NO LONGER accurate: search now DOES filter the map
+> and table (#234 made it a global filter), and facet counts are no longer left at their
+> unfiltered values — under an active search they render `(—)` (#340). See §7.
 
 Reads `#sampleSearch.value`. Runs an ILIKE-based DuckDB query against
 `lite_url` over `label` and `place_name`, with `sourceFilterSQL()` and
@@ -620,9 +625,33 @@ The cross-filter rule (codified by Codex in #158, restated here):
 | dimension | counts respect it? | rationale |
 |-----------|--------------------|-----------|
 | other facet selections | **YES** | counts answer "if I add this value, how many samples would match all OTHER active filters plus this one"; that's the drill-out signal users want |
-| viewport (camera bounds) | **NO** | counts are global. Viewport-scoped counts would couple facet UI to camera state, contradict the "facets describe the dataset" reading, and require re-querying on every camera change |
-| `?search=` text query | **NO** | option (C); search renders a side panel + result-pin overlay, but does not alter facet counts |
+| viewport (camera bounds) | **YES** (superseded #158) | counts ARE viewport-scoped when a bbox is active — `updateCrossFilteredCounts` always applies `viewerBboxSQL(...)` outside global view. The original "NO" below was overtaken by #234/#237 |
+| `?search=` text query | **UNAVAILABLE** (superseded #158) | search does not produce cross-filtered counts; while a search is committed every count renders the `(—)` dash. See the #340 note below |
 | ~~view mode (globe vs table)~~ | _moot — mockup-v1 (#200) removed the Globe/Table toggle; both surfaces are permanent_ | — |
+
+> **#340 (2026-08-04, grant closeout) — search makes counts UNAVAILABLE, not baseline.**
+> The viewport and search rows were originally recorded as "NO" (the #158 contract). Both
+> were already false in code by mid-2026: #234/#304/#305 retrofitted viewport- and
+> search-awareness into the count paths without updating this table. The rows above have been
+> corrected; this note records why.
+>
+> Eric Kansa re-reported the visible symptom in #340 — under `?search=pottery+Cyprus`
+> (1,305 hits) every facet count still showed the unfiltered global total.
+>
+> The cause was NOT a missing predicate. The search-aware path exists, but the recompute
+> **never reaches a terminal repaint**: nothing calls `applyFacetCounts` /
+> `markFacetCountsUnavailable` / `markFacetCountsPending`, and `markFacetCountsRecomputing()`
+> only adds a CSS class, so the previously-painted global numbers stay on screen. Instrumented
+> live on prod: all 60 `.facet-count` elements still carried `.recomputing` 15s+ after the
+> search completed cleanly, and a forced camera move did not clear it. The precise stall point
+> was **not** diagnosed — see PLAN_305 Phase 3 for the post-grant probe list.
+>
+> Search-aware cross-filtered counts are **PLAN_305 Phase 3, deferred past the grant**.
+> `refreshFacetCounts()` therefore bails to `markFacetCountsUnavailable()` whenever
+> `searchIsActive()` — which also covers the concept / described-by filters, since they share
+> the `search_pids` mechanism. This is the Honesty rule from PLAN_305 (never show baseline
+> under an active filter) and answers Eric's own ask in #304: *"make sure the user interface
+> does NOT show inaccurate numbers."* Clearing the search restores real counts.
 
 Exposed via `applyFacetCounts(facetKey, countsMap)` (`:551-567`):
 
@@ -635,6 +664,13 @@ The "single active dim" fast path (`:1548-1584`) reads from a pre-aggregated
 is selected; the general path (`:1586-1604`) issues four parallel `GROUP BY`
 queries against `facets_url`, one per dimension, each excluding its own
 active values from the WHERE.
+
+> ⚠️ **Line references and the "four parallel queries" description above are stale.**
+> Since #304/#305 the constrained full-tree path runs through the `sample_facet_index`
+> bitmask index (`applyMaskIndexCounts`, a single `UNION ALL` histogram), with the tree
+> cube and the legacy per-dimension queries kept as fast-path/fallback. Read
+> `updateCrossFilteredCounts()` in `explorer.qmd` for the current routing; `PLAN_305_facet_counts.md`
+> is the design record.
 
 ---
 
