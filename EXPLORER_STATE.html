@@ -243,7 +243,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#ojs-cell-graph" id="toc-ojs-cell-graph" class="nav-link" data-scroll-target="#ojs-cell-graph"><span class="header-section-number">1.5</span> 5. OJS cell graph</a></li>
   <li><a href="#search-semantics-decision" id="toc-search-semantics-decision" class="nav-link" data-scroll-target="#search-semantics-decision"><span class="header-section-number">1.6</span> 6. Search-semantics decision</a>
   <ul class="collapse">
-  <li><a href="#what-search-does-today-dosearch-at-1782-1859" id="toc-what-search-does-today-dosearch-at-1782-1859" class="nav-link" data-scroll-target="#what-search-does-today-dosearch-at-1782-1859"><span class="header-section-number">1.6.1</span> What “search” does today (<code>doSearch</code> at <code>:1782-1859</code>)</a></li>
+  <li><a href="#what-search-did-as-of-this-document-dosearch-at-1782-1859-historical" id="toc-what-search-did-as-of-this-document-dosearch-at-1782-1859-historical" class="nav-link" data-scroll-target="#what-search-did-as-of-this-document-dosearch-at-1782-1859-historical"><span class="header-section-number">1.6.1</span> What “search” did as of this document (<code>doSearch</code> at <code>:1782-1859</code>) — <strong>HISTORICAL</strong></a></li>
   <li><a href="#the-three-options" id="toc-the-three-options" class="nav-link" data-scroll-target="#the-three-options"><span class="header-section-number">1.6.2</span> The three options</a></li>
   <li><a href="#decision-c-side-panel-lookup-with-result-pin-overlay" id="toc-decision-c-side-panel-lookup-with-result-pin-overlay" class="nav-link" data-scroll-target="#decision-c-side-panel-lookup-with-result-pin-overlay"><span class="header-section-number">1.6.3</span> Decision: (C) side-panel lookup with result-pin overlay</a></li>
   <li><a href="#implementation-rules-for-option-c" id="toc-implementation-rules-for-option-c" class="nav-link" data-scroll-target="#implementation-rules-for-option-c"><span class="header-section-number">1.6.4</span> Implementation rules for option (C)</a></li>
@@ -852,8 +852,11 @@ viewer             [creates Cesium viewer; reads readHash() once]
 <section id="search-semantics-decision" class="level2" data-number="1.6">
 <h2 data-number="1.6" data-anchor-id="search-semantics-decision"><span class="header-section-number">1.6</span> 6. Search-semantics decision</h2>
 <p>The issue originally presented two options (A) global filter and (B) side-panel lookup. After Codex review on #165, we committed to a sharper third framing: <strong>(C) side-panel lookup with result-pin overlay</strong>, which is a refinement of (B) — the <em>backend</em> is unchanged (search does not alter cluster/sample/facet data sources), but the <em>UI surface</em> gains a temporary point-overlay visualization of the matching samples.</p>
-<section id="what-search-does-today-dosearch-at-1782-1859" class="level3" data-number="1.6.1">
-<h3 data-number="1.6.1" data-anchor-id="what-search-does-today-dosearch-at-1782-1859"><span class="header-section-number">1.6.1</span> What “search” does today (<code>doSearch</code> at <code>:1782-1859</code>)</h3>
+<section id="what-search-did-as-of-this-document-dosearch-at-1782-1859-historical" class="level3" data-number="1.6.1">
+<h3 data-number="1.6.1" data-anchor-id="what-search-did-as-of-this-document-dosearch-at-1782-1859-historical"><span class="header-section-number">1.6.1</span> What “search” did as of this document (<code>doSearch</code> at <code>:1782-1859</code>) — <strong>HISTORICAL</strong></h3>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Superseded by #234 and #340.</strong> The paragraph below describes the original option-(B)/(C) behavior and is kept for provenance. It is NO LONGER accurate: search now DOES filter the map and table (#234 made it a global filter), and facet counts are no longer left at their unfiltered values — under an active search they render <code>(—)</code> (#340). See §7.</p>
+</blockquote>
 <p>Reads <code>#sampleSearch.value</code>. Runs an ILIKE-based DuckDB query against <code>lite_url</code> over <code>label</code> and <code>place_name</code>, with <code>sourceFilterSQL()</code> and <code>facetFilterSQL()</code> AND’d in. Renders up to 50 ranked results into <code>#searchResults</code> (count) and <code>#samplesSection</code> (list). Click a result row to fly the camera. <strong>The map clusters/samples are not filtered by the search text. Facet counts are not filtered by the search text.</strong> The URL <code>search</code> param is written via <code>writeQueryState()</code> (<code>:1786</code>, <code>:1789</code>).</p>
 <p>That is option (B) verbatim, and it matches the facet-count fix Codex landed in <a href="https://github.com/isamplesorg/isamplesorg.github.io/pull/158">#158</a>.</p>
 </section>
@@ -1122,13 +1125,13 @@ viewer             [creates Cesium viewer; reads readHash() once]
 </tr>
 <tr class="even">
 <td>viewport (camera bounds)</td>
-<td><strong>NO</strong></td>
-<td>counts are global. Viewport-scoped counts would couple facet UI to camera state, contradict the “facets describe the dataset” reading, and require re-querying on every camera change</td>
+<td><strong>YES</strong> (superseded #158)</td>
+<td>counts ARE viewport-scoped when a bbox is active — <code>updateCrossFilteredCounts</code> always applies <code>viewerBboxSQL(...)</code> outside global view. The original “NO” below was overtaken by #234/#237</td>
 </tr>
 <tr class="odd">
 <td><code>?search=</code> text query</td>
-<td><strong>NO</strong></td>
-<td>option (C); search renders a side panel + result-pin overlay, but does not alter facet counts</td>
+<td><strong>UNAVAILABLE</strong> (superseded #158)</td>
+<td>search does not produce cross-filtered counts; while a search is committed every count renders the <code>(—)</code> dash. See the #340 note below</td>
 </tr>
 <tr class="even">
 <td><del>view mode (globe vs table)</del></td>
@@ -1137,12 +1140,21 @@ viewer             [creates Cesium viewer; reads readHash() once]
 </tr>
 </tbody>
 </table>
+<blockquote class="blockquote">
+<p><strong>#340 (2026-08-04, grant closeout) — search makes counts UNAVAILABLE, not baseline.</strong> The viewport and search rows were originally recorded as “NO” (the #158 contract). Both were already false in code by mid-2026: #234/#304/#305 retrofitted viewport- and search-awareness into the count paths without updating this table. The rows above have been corrected; this note records why.</p>
+<p>Eric Kansa re-reported the visible symptom in #340 — under <code>?search=pottery+Cyprus</code> (1,305 hits) every facet count still showed the unfiltered global total.</p>
+<p>The cause was NOT a missing predicate. The search-aware path exists, but the recompute <strong>never reaches a terminal repaint</strong>: nothing calls <code>applyFacetCounts</code> / <code>markFacetCountsUnavailable</code> / <code>markFacetCountsPending</code>, and <code>markFacetCountsRecomputing()</code> only adds a CSS class, so the previously-painted global numbers stay on screen. Instrumented live on prod: all 60 <code>.facet-count</code> elements still carried <code>.recomputing</code> 15s+ after the search completed cleanly, and a forced camera move did not clear it. The precise stall point was <strong>not</strong> diagnosed — see PLAN_305 Phase 3 for the post-grant probe list.</p>
+<p>Search-aware cross-filtered counts are <strong>PLAN_305 Phase 3, deferred past the grant</strong>. <code>refreshFacetCounts()</code> therefore bails to <code>markFacetCountsUnavailable()</code> whenever <code>searchIsActive()</code> — which also covers the concept / described-by filters, since they share the <code>search_pids</code> mechanism. This is the Honesty rule from PLAN_305 (never show baseline under an active filter) and answers Eric’s own ask in #304: <em>“make sure the user interface does NOT show inaccurate numbers.”</em> Clearing the search restores real counts.</p>
+</blockquote>
 <p>Exposed via <code>applyFacetCounts(facetKey, countsMap)</code> (<code>:551-567</code>):</p>
 <ul>
 <li><code>countsMap = null</code> ⇒ render the baseline counts from <code>viewer._baselineCounts</code>.</li>
 <li><code>countsMap = Map&lt;value, count&gt;</code> ⇒ render the cross-filtered counts; missing keys render as <code>0</code> (and pick up the <code>.zero</code> class).</li>
 </ul>
 <p>The “single active dim” fast path (<code>:1548-1584</code>) reads from a pre-aggregated <code>cross_filter_url</code> parquet for instant response when exactly one facet value is selected; the general path (<code>:1586-1604</code>) issues four parallel <code>GROUP BY</code> queries against <code>facets_url</code>, one per dimension, each excluding its own active values from the WHERE.</p>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Line references and the “four parallel queries” description above are stale.</strong> Since #304/#305 the constrained full-tree path runs through the <code>sample_facet_index</code> bitmask index (<code>applyMaskIndexCounts</code>, a single <code>UNION ALL</code> histogram), with the tree cube and the legacy per-dimension queries kept as fast-path/fallback. Read <code>updateCrossFilteredCounts()</code> in <code>explorer.qmd</code> for the current routing; <code>PLAN_305_facet_counts.md</code> is the design record.</p>
+</blockquote>
 <hr>
 </section>
 <section id="out-of-scope" class="level2" data-number="1.8">
