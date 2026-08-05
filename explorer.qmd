@@ -1612,7 +1612,19 @@ function markFacetCountsUnavailable(facetKeys = null) {
             el.classList.add('count-unavailable');
             el.title = 'Count unavailable for this filter combination';
         });
+        clearStaleZeroRows(key);
     }
+}
+
+// #340: `.zero` is set by applyFacetCounts from a PREVIOUS, authoritative
+// count. Once a count becomes unknown (unavailable OR still loading), leaving
+// the row greyed-out as "0" asserts a number we just admitted we don't have —
+// the same misleading-number problem in a different costume. A later real
+// count restores the correct state via applyFacetCounts' classList.toggle.
+function clearStaleZeroRows(facetKey) {
+    document.querySelectorAll(`.facet-row[data-facet="${facetKey}"].zero`).forEach(row => {
+        row.classList.remove('zero');
+    });
 }
 
 // #313 P0: the facet index (sample_facet_index) is still loading — distinct
@@ -1631,6 +1643,7 @@ function markFacetCountsPending(facetKeys = null) {
             el.classList.remove('count-unavailable');   // NOT the "—" dash — this is honest "still loading"
             el.removeAttribute('title');
         });
+        clearStaleZeroRows(key);   // #340: same invariant — unknown never implies zero
     }
 }
 
@@ -4426,7 +4439,30 @@ zoomWatcher = {
     function refreshFacetCounts() {
         clearTimeout(facetCountsDebounce);
         const myReq = ++facetCountsReqId;
+        // #340 (grant closeout): under a committed search the count recompute
+        // NEVER settles — verified live on prod 2026-08-04. The search+bbox arm
+        // of applyMaskIndexCounts leaves its promise pending, so nothing ever
+        // calls applyFacetCounts / markFacetCountsUnavailable / -Pending, and
+        // markFacetCountsRecomputing()'s class-only repaint leaves the PREVIOUS
+        // (unfiltered, global) numbers on screen indefinitely. That is exactly
+        // the misleading baseline #304 forbids and Eric asked us to never show.
+        //
+        // Search-aware cross-filtered counts are PLAN_305 Phase 3, which is not
+        // being finished in the grant period. So we stop attempting them and
+        // apply the honesty rule directly: an active search means counts are
+        // unavailable. Bailing BEFORE the debounce also invalidates in-flight
+        // requests via ++facetCountsReqId above, so a late-settling older query
+        // cannot overwrite the dash. Clearing the search takes the normal path
+        // again and restores real counts.
+        if (searchIsActive()) {
+            markFacetCountsUnavailable();
+            return;
+        }
         facetCountsDebounce = setTimeout(() => {
+            // Re-check at FIRE time, not just schedule time: search can go active
+            // during the 250 ms window (the producers call us on activation, but
+            // this keeps the invariant local and true regardless of caller).
+            if (searchIsActive()) { markFacetCountsUnavailable(); return; }
             updateCrossFilteredCounts(myReq);
         }, 250);
     }
@@ -5944,6 +5980,11 @@ zoomWatcher = {
             const total = cnt.length ? Number(cnt[0].n) : 0;
             if (token !== _searchFilterToken) return false;
             window.__searchFilter = { active: true, term, token, total, kind: 'text' };
+            // #340: paint the unavailable dash the instant search goes active, and
+            // invalidate any refresh that was scheduled while it was still inactive
+            // (that one would otherwise fire mid-flight and re-enter the never-
+            // settling search+bbox count path). See refreshFacetCounts().
+            refreshFacetCounts();
             window.a1dbg?.('search-build-end', { term, token, total });
             return true;
         } finally {
@@ -5985,6 +6026,7 @@ zoomWatcher = {
             const total = cnt.length ? Number(cnt[0].n) : 0;
             if (token !== _searchFilterToken) return false;
             window.__searchFilter = { active: true, term: label, token, total, kind: 'concept', uri };
+            refreshFacetCounts();   // #340: see buildSearchFilter / refreshFacetCounts()
             window.a1dbg?.('search-build-end', { term: label, token, total, kind: 'concept' });
             return true;
         } finally {
@@ -6149,6 +6191,7 @@ zoomWatcher = {
                 ignoredCommon: plan.ignoredCommon,
                 expectedBytes: plan.expectedBytes,
             };
+            refreshFacetCounts();   // #340: see buildSearchFilter / refreshFacetCounts()
             window.a1dbg?.('substrate-search-end',
                 { term, token, total, mode: plan.mode, ignored: plan.ignoredCommon });
             return true;

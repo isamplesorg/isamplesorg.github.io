@@ -104,6 +104,33 @@ stale-guard check** (`facetCountsReqId`); never partially repaint dimensions.
   membership count implementation. (Immediate unification would balloon the first fix into
   viewport + search + flat-mode + stale-update refactoring — defer.)
 
+> **STATUS 2026-08-04 (grant closeout) — Phase 3 SEARCH half is NOT done; now explicitly disabled.**
+> Viewport landed. The search half was wired into `applyMaskIndexCounts`, but in the #340
+> reproduction the count recompute **never reaches a terminal repaint** under an active
+> search — nothing calls `applyFacetCounts` / `markFacetCountsUnavailable` /
+> `markFacetCountsPending`, so `markFacetCountsRecomputing()`'s class-only update leaves the
+> previously-painted global baseline on screen (issue #340, reported by Eric Kansa).
+>
+> **What was actually instrumented** (prod, 2026-08-04): 60/60 `.facet-count` elements still
+> carried `.recomputing` 15s+ after the search completed cleanly (1,305 hits, no console
+> error), and a forced camera move — a fresh `refreshFacetCounts()` request — did not clear
+> it. Reproduced on both deep-link and interactively-typed search, with all three facet trees
+> confirmed rendered. **Not** established: the precise hang point. We did not prove the SQL
+> itself never resolves, only that no repaint ever happened.
+>
+> Because the grant period has ended we did not diagnose further. Top Risk #1 in this doc
+> (WASM latency / connection starvation) remains the leading suspect. Instead
+> `refreshFacetCounts()` now short-circuits to `markFacetCountsUnavailable()` whenever
+> `searchIsActive()`, honoring the **Honesty rule** above (never baseline under an active
+> filter). Note `searchIsActive()` also covers the concept / described-by producer, so those
+> filters show the dash too — consistent, since they share the `search_pids` mechanism.
+>
+> **To finish Phase 3 post-grant:** remove that short-circuit, then determine where the
+> search-constrained count path stalls. Suggested first probes: `window.__facetIndexStatus`,
+> in-flight DuckDB query count at the time of the stall, whether the search-constrained form
+> of the `UNION ALL` in `applyMaskIndexCounts` resolves in isolation, and whether serializing
+> it against concurrent search/table/point queries makes it settle.
+
 ### Phase 4 — Verification + cleanup
 - Unit-test predicate generation (exclude-self, zero-source states).
 - Data validator gates from Phase 1, run in CI.
