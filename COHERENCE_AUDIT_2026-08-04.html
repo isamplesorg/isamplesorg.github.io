@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>coherence_audit_2026-08-04 – iSamples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./assets/isamplesfavicon.ico" rel="icon">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-0944b910a2fba5e745fe8cb6da1db39f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo light-content">
+    <img src="./assets/isampleslogopetal.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">iSamples</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./explorer.html"> 
+<span class="menu-text">Interactive Explorer</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-how-to-use" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">How to Use</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-how-to-use">    
+        <li>
+    <a class="dropdown-item" href="./how-to-use.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/explorer_guided_tour.html">
+ <span class="dropdown-text">Guided Tour</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-about" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">About</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-about">    
+        <li>
+    <a class="dropdown-item" href="./about.html">
+ <span class="dropdown-text">Objectives</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#team">
+ <span class="dropdown-text">PIs and Contributors</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#photo-gallery">
+ <span class="dropdown-text">Photo Gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./about.html#background-history">
+ <span class="dropdown-text">Background &amp; History</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-architecture--vocabularies" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Architecture &amp; Vocabularies</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-architecture--vocabularies">    
+        <li>
+    <a class="dropdown-item" href="./design/index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./design/requirements.html">
+ <span class="dropdown-text">Requirements</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://isamples.org/metadata/">
+ <span class="dropdown-text">Metadata Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./models/index.html">
+ <span class="dropdown-text">Vocabularies</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/narrow_vs_wide_performance.html">
+ <span class="dropdown-text">Technical: Narrow vs Wide</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./tutorials/why_h3.html">
+ <span class="dropdown-text">Technical: Why H3?</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-research--resources" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Research &amp; Resources</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-research--resources">    
+        <li>
+    <a class="dropdown-item" href="./pubs.html">
+ <span class="dropdown-text">Publications &amp; Conferences</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#zenodo-community">
+ <span class="dropdown-text">Zenodo Community</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pubs.html#github-repositories">
+ <span class="dropdown-text">Github Repositories</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/isamplesorg"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://isamples.slack.com/"> <i class="bi bi-slack" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#coherence-audit-can-the-explorer-show-a-confidently-wrong-number" id="toc-coherence-audit-can-the-explorer-show-a-confidently-wrong-number" class="nav-link active" data-scroll-target="#coherence-audit-can-the-explorer-show-a-confidently-wrong-number"><span class="header-section-number">1</span> Coherence audit — “can the Explorer show a confidently wrong number?”</a>
+  <ul>
+  <li><a href="#plain-english-what-this-audit-is-about" id="toc-plain-english-what-this-audit-is-about" class="nav-link" data-scroll-target="#plain-english-what-this-audit-is-about"><span class="header-section-number">1.1</span> Plain English: what this audit is about</a></li>
+  <li><a href="#status-what-was-fixed-the-same-day" id="toc-status-what-was-fixed-the-same-day" class="nav-link" data-scroll-target="#status-what-was-fixed-the-same-day"><span class="header-section-number">1.2</span> Status — what was fixed the same day</a>
+  <ul class="collapse">
+  <li><a href="#known-open-deliberately-deferred-grant-closeout" id="toc-known-open-deliberately-deferred-grant-closeout" class="nav-link" data-scroll-target="#known-open-deliberately-deferred-grant-closeout"><span class="header-section-number">1.2.1</span> Known-open, deliberately deferred (grant closeout)</a></li>
+  </ul></li>
+  <li><a href="#findings" id="toc-findings" class="nav-link" data-scroll-target="#findings"><span class="header-section-number">1.3</span> Findings</a></li>
+  <li><a href="#detail" id="toc-detail" class="nav-link" data-scroll-target="#detail"><span class="header-section-number">1.4</span> Detail</a>
+  <ul class="collapse">
+  <li><a href="#f1-facet-counts-under-active-search-fixed-calibration-case" id="toc-f1-facet-counts-under-active-search-fixed-calibration-case" class="nav-link" data-scroll-target="#f1-facet-counts-under-active-search-fixed-calibration-case"><span class="header-section-number">1.4.1</span> F1 — Facet counts under active search — FIXED (calibration case)</a></li>
+  <li><a href="#f2-high-non-search-count-paths-no-in-flight-text-change-no-timeout" id="toc-f2-high-non-search-count-paths-no-in-flight-text-change-no-timeout" class="nav-link" data-scroll-target="#f2-high-non-search-count-paths-no-in-flight-text-change-no-timeout"><span class="header-section-number">1.4.2</span> F2 — HIGH — Non-search count paths: no in-flight text change, no timeout</a></li>
+  <li><a href="#f3-high-legacy-error-path-paints-the-unfiltered-baseline-under-active-filters" id="toc-f3-high-legacy-error-path-paints-the-unfiltered-baseline-under-active-filters" class="nav-link" data-scroll-target="#f3-high-legacy-error-path-paints-the-unfiltered-baseline-under-active-filters"><span class="header-section-number">1.4.3</span> F3 — HIGH — Legacy error path paints the unfiltered baseline under active filters</a></li>
+  <li><a href="#m1-mediumhigh-selected-clustersample-card-and-nearby-samples-n-missed-by-the-draft-found-by-codex" id="toc-m1-mediumhigh-selected-clustersample-card-and-nearby-samples-n-missed-by-the-draft-found-by-codex" class="nav-link" data-scroll-target="#m1-mediumhigh-selected-clustersample-card-and-nearby-samples-n-missed-by-the-draft-found-by-codex"><span class="header-section-number">1.4.4</span> M1 — MEDIUM/HIGH — Selected cluster/sample card and “Nearby Samples (N)” <em>(missed by the draft; found by Codex)</em></a></li>
+  <li><a href="#f5-medium-point-mode-reports-the-render-cap-as-the-true-total" id="toc-f5-medium-point-mode-reports-the-render-cap-as-the-true-total" class="nav-link" data-scroll-target="#f5-medium-point-mode-reports-the-render-cap-as-the-true-total"><span class="header-section-number">1.4.5</span> F5 — MEDIUM — Point mode reports the render cap as the true total</a></li>
+  <li><a href="#f7-medium-mixed-treeflat-mode-shows-baseline-under-an-active-tree-filter" id="toc-f7-medium-mixed-treeflat-mode-shows-baseline-under-an-active-tree-filter" class="nav-link" data-scroll-target="#f7-medium-mixed-treeflat-mode-shows-baseline-under-an-active-tree-filter"><span class="header-section-number">1.4.6</span> F7 — MEDIUM — Mixed tree/flat mode shows baseline under an active tree filter</a></li>
+  <li><a href="#f11-medium-search-results-list-and-heading-are-a-stale-snapshot-with-no-visible-label" id="toc-f11-medium-search-results-list-and-heading-are-a-stale-snapshot-with-no-visible-label" class="nav-link" data-scroll-target="#f11-medium-search-results-list-and-heading-are-a-stale-snapshot-with-no-visible-label"><span class="header-section-number">1.4.7</span> F11 — MEDIUM — Search results list and heading are a stale snapshot with no visible label</a></li>
+  <li><a href="#m2-medium-phasemsg-retains-a-previous-viewports-cluster-count-missed-by-the-draft" id="toc-m2-medium-phasemsg-retains-a-previous-viewports-cluster-count-missed-by-the-draft" class="nav-link" data-scroll-target="#m2-medium-phasemsg-retains-a-previous-viewports-cluster-count-missed-by-the-draft"><span class="header-section-number">1.4.8</span> M2 — MEDIUM — <code>#phaseMsg</code> retains a previous viewport’s cluster count <em>(missed by the draft)</em></a></li>
+  <li><a href="#f4-medium-stats-panel-has-no-not-current-state-at-all" id="toc-f4-medium-stats-panel-has-no-not-current-state-at-all" class="nav-link" data-scroll-target="#f4-medium-stats-panel-has-no-not-current-state-at-all"><span class="header-section-number">1.4.9</span> F4 — MEDIUM — Stats panel has no not-current state at all</a></li>
+  <li><a href="#f8-lowmedium-samples-table-honest-internally-but-not-end-to-end" id="toc-f8-lowmedium-samples-table-honest-internally-but-not-end-to-end" class="nav-link" data-scroll-target="#f8-lowmedium-samples-table-honest-internally-but-not-end-to-end"><span class="header-section-number">1.4.10</span> F8 — LOW→MEDIUM — Samples table: honest internally, but not end-to-end</a></li>
+  <li><a href="#f12-low-not-provided-is-claimed-when-the-lookup-failed" id="toc-f12-low-not-provided-is-claimed-when-the-lookup-failed" class="nav-link" data-scroll-target="#f12-low-not-provided-is-claimed-when-the-lookup-failed"><span class="header-section-number">1.4.11</span> F12 — LOW — “Not Provided” is claimed when the lookup failed</a></li>
+  <li><a href="#f9-f10-low-these-terminate-honestly" id="toc-f9-f10-low-these-terminate-honestly" class="nav-link" data-scroll-target="#f9-f10-low-these-terminate-honestly"><span class="header-section-number">1.4.12</span> F9 / F10 — LOW — These terminate honestly</a></li>
+  <li><a href="#f6-withdrawn-as-a-finding-kept-as-a-robustness-note" id="toc-f6-withdrawn-as-a-finding-kept-as-a-robustness-note" class="nav-link" data-scroll-target="#f6-withdrawn-as-a-finding-kept-as-a-robustness-note"><span class="header-section-number">1.4.13</span> F6 — Withdrawn as a finding (kept as a robustness note)</a></li>
+  </ul></li>
+  <li><a href="#is-the-honesty-rule-an-invariant-no." id="toc-is-the-honesty-rule-an-invariant-no." class="nav-link" data-scroll-target="#is-the-honesty-rule-an-invariant-no."><span class="header-section-number">1.5</span> Is the honesty rule an invariant? No.</a>
+  <ul class="collapse">
+  <li><a href="#recommended-structural-change-describe-only-not-implemented" id="toc-recommended-structural-change-describe-only-not-implemented" class="nav-link" data-scroll-target="#recommended-structural-change-describe-only-not-implemented"><span class="header-section-number">1.5.1</span> Recommended structural change (describe only — NOT implemented)</a></li>
+  </ul></li>
+  <li><a href="#documentation-drift" id="toc-documentation-drift" class="nav-link" data-scroll-target="#documentation-drift"><span class="header-section-number">1.6</span> Documentation drift</a></li>
+  <li><a href="#what-we-did-not-check-limits-of-this-audit" id="toc-what-we-did-not-check-limits-of-this-audit" class="nav-link" data-scroll-target="#what-we-did-not-check-limits-of-this-audit"><span class="header-section-number">1.7</span> What we did NOT check — limits of this audit</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/COHERENCE_AUDIT_2026-08-04.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="coherence-audit-can-the-explorer-show-a-confidently-wrong-number" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Coherence audit — “can the Explorer show a confidently wrong number?”</h1>
+<p><strong>Date:</strong> 2026-08-04 (grant closeout) <strong>Audited:</strong> <code>explorer.qmd</code> (7,531 lines) at branch <code>fix/340-facet-counts-honest-under-search</code>, HEAD <code>2622d48</code>, based on <code>upstream/main</code> <code>9687fbf</code>. Plus <code>assets/js/explorer-utils.js</code> and the governing docs. <strong>Method:</strong> static code reading (Claude), then an adversarial second pass (Codex) instructed to prove each finding wrong or unreachable. Disagreements are recorded below rather than smoothed over. <strong>Status:</strong> READ-ONLY. No code was changed. Nothing here is implemented.</p>
+<hr>
+<section id="plain-english-what-this-audit-is-about" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="plain-english-what-this-audit-is-about"><span class="header-section-number">1.1</span> Plain English: what this audit is about</h2>
+<p>Issue #340 looked like “the search filter isn’t applied to the facet counts.” It wasn’t that.</p>
+<p>The real shape was: <strong>the recalculation started, never finished, and nobody noticed</strong> — because while a recalculation is in flight the numbers only go slightly grey. The <em>text doesn’t change</em>. So the previous, now-wrong numbers sit on screen looking completely normal, indefinitely. No error, no spinner, no blank.</p>
+<p>That is a nasty failure mode: the UI is most convincing exactly when it is most wrong.</p>
+<p>This audit asked one question of <strong>every number the Explorer displays</strong>:</p>
+<blockquote class="blockquote">
+<p><strong>What happens if the thing meant to replace this number never returns?</strong></p>
+</blockquote>
+<p>If the answer is “the old value stays up, unmarked or marked only by a colour change,” that’s a finding.</p>
+<p><strong>Headline result:</strong> the #340 fix is sound, but it removed <em>one trigger</em> rather than the <em>hazard class</em>. The same structural gap exists on other paths, and there is no enforced rule preventing it from recurring. Two further surfaces can display flatly false numbers today.</p>
+<hr>
+</section>
+<section id="status-what-was-fixed-the-same-day" class="level2" data-number="1.2">
+<h2 data-number="1.2" data-anchor-id="status-what-was-fixed-the-same-day"><span class="header-section-number">1.2</span> Status — what was fixed the same day</h2>
+<p>A follow-up closeout patch (<code>fix/coherence-honesty-closeout</code>, Codex-approved after one blocking round) implemented four findings. <strong>Everything else in this document remains open.</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Finding</th>
+<th>Action taken</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>F3</strong></td>
+<td>Legacy per-dim <code>catch</code> now paints <code>markFacetCountsUnavailable([d.key])</code> instead of the unfiltered baseline. Closes PLAN_305 Phase 4’s explicit item for this site.</td>
+</tr>
+<tr class="even">
+<td><strong>F5</strong></td>
+<td>Point mode no longer reports the 5,000 render cap as the true in-view total when the COUNT query fails — stats show <code>—</code>, phase text says the total is unavailable, and the debug/console diagnostics say “unknown” too.</td>
+</tr>
+<tr class="odd">
+<td><strong>M2</strong></td>
+<td><code>reconcileSettledCamera()</code> now repaints the always-visible phase message — <strong>but only behind a freshness guard</strong> (<code>!loading &amp;&amp; computeTargetMode(alt)==='cluster' &amp;&amp; currentRes===targetRes &amp;&amp; _clusterFilterSig===desiredClusterSig()</code>). The guard also now gates the stats repaint, closing the <code>_clusterFilterSig</code> blindness noted in F4.</td>
+</tr>
+<tr class="even">
+<td><strong>Structural (partial)</strong></td>
+<td><code>markFacetCountsRecomputing()</code> now arms a 400 ms timer that swaps unsettled counts to <code>(Loading…)</code>. “In flight” is no longer signalled by opacity alone — the mechanism that made #340 invisible.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>A caution recorded from that patch’s review.</strong> The first M2 attempt had <em>no</em> freshness guard and would have let a stale cluster cache overwrite an honest “Loading H3…” or “Failed to load…” with a green settled count — reintroducing this exact failure class while fixing it. It was caught in adversarial review, not by tests. Treat any “just repaint the number here” change in this file as guilty until proven fresh.</p>
+<section id="known-open-deliberately-deferred-grant-closeout" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" data-anchor-id="known-open-deliberately-deferred-grant-closeout"><span class="header-section-number">1.2.1</span> Known-open, deliberately deferred (grant closeout)</h3>
+<ol type="1">
+<li><strong>Legacy per-dimension atomicity</strong> — successful legacy count queries still repaint independently, so a mixed-generation view is possible for up to the 400 ms window (F3 detail).</li>
+<li><strong>Comprehensive pre-await invalidation</strong> — the source/facet handlers still do awaited globe work <em>before</em> <code>refreshFacetCounts()</code>, and the mask/cube paths still await before any invalidation. A hang <em>before</em> invalidation therefore still strands unmarked numbers (F2’s missed stranding point, F8’s ordering hole). <strong>This is the single most valuable remaining fix</strong>, and it is what would turn the honesty rule into an actual invariant.</li>
+<li><strong>No regression test for the 400 ms timer</strong> — should assert: an animated move produces <code>(Loading…)</code> after the grace period; stale <code>.zero</code> clears; settlement restores numeric text; a superseded request cannot repaint a newer generation. Flagged as the worthwhile first follow-up.</li>
+<li>Everything in the findings table below not listed as fixed above — notably <strong>M1</strong> (selected card / Nearby Samples), <strong>F11</strong> (search-results snapshot), <strong>F4</strong> (stats panel invalidation), <strong>F7</strong>, <strong>F12</strong>, and the static-prose numeric drift.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="findings" class="level2" data-number="1.3">
+<h2 data-number="1.3" data-anchor-id="findings"><span class="header-section-number">1.3</span> Findings</h2>
+<p>Severity: <strong>HIGH</strong> = can show a confidently wrong number indefinitely with no signal. <strong>MEDIUM</strong> = can show stale/false values under specific but real conditions, or signals only subtly. <strong>LOW</strong> = terminates honestly.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 19%">
+<col style="width: 21%">
+<col style="width: 30%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Surface</th>
+<th>Severity</th>
+<th>Reachability</th>
+<th>One-line</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>F2</td>
+<td>Facet counts, non-search triggers</td>
+<td><strong>HIGH</strong></td>
+<td>Medium (needs hung/slow query)</td>
+<td>Mask-index and cube paths await with no in-flight text change and no timeout</td>
+</tr>
+<tr class="even">
+<td>F3</td>
+<td>Facet counts, legacy error path</td>
+<td><strong>HIGH</strong></td>
+<td>Medium (needs a query error)</td>
+<td><code>catch</code> paints the <em>unfiltered global baseline</em> under active filters; plus non-atomic partial repaint</td>
+</tr>
+<tr class="odd">
+<td>M1</td>
+<td>Selected cluster/sample card + “Nearby Samples (N)”</td>
+<td><strong>MED/HIGH</strong></td>
+<td>Medium</td>
+<td>Old card survives filter changes and even terminal lookup failures</td>
+</tr>
+<tr class="even">
+<td>F5</td>
+<td>Point mode “Samples in View”</td>
+<td><strong>MEDIUM</strong></td>
+<td>Low-Med (dense view + failed COUNT)</td>
+<td>Reports the 5,000 cap as if it were the true total</td>
+</tr>
+<tr class="odd">
+<td>F7</td>
+<td>Facet counts, mixed tree/flat mode</td>
+<td><strong>MEDIUM</strong></td>
+<td>Low, but <strong>persistent + deterministic</strong></td>
+<td>One failed tree render ⇒ baseline shown while a tree filter is active</td>
+</tr>
+<tr class="even">
+<td>F11</td>
+<td>Search results list + heading <code>(50)</code></td>
+<td><strong>MEDIUM</strong></td>
+<td>High (any facet toggle during search)</td>
+<td>Snapshot of a previous filter state, with nothing on screen saying so</td>
+</tr>
+<tr class="odd">
+<td>M2</td>
+<td><code>#phaseMsg</code> cluster count</td>
+<td><strong>MEDIUM</strong></td>
+<td>Medium</td>
+<td>After exiting point mode, a pan can leave a previous viewport’s count in permanently visible text</td>
+</tr>
+<tr class="even">
+<td>F4</td>
+<td>Stats panel</td>
+<td><strong>MEDIUM</strong></td>
+<td>Low (collapsed by default)</td>
+<td>No in-flight or unavailable state exists at all</td>
+</tr>
+<tr class="odd">
+<td>F8</td>
+<td>Samples table meta + pager</td>
+<td><strong>LOW→MED</strong></td>
+<td>Low-Med</td>
+<td>Honest <em>once refresh starts</em>; a hang before it starts strands everything unmarked</td>
+</tr>
+<tr class="even">
+<td>F12</td>
+<td>In-map card detail</td>
+<td><strong>LOW</strong></td>
+<td>Medium</td>
+<td>Renders “Not Provided” when the lookup <em>failed</em></td>
+</tr>
+<tr class="odd">
+<td>F9</td>
+<td>Search results status line</td>
+<td><strong>LOW</strong></td>
+<td>—</td>
+<td>Terminates honestly</td>
+</tr>
+<tr class="even">
+<td>F10</td>
+<td>Heatmap status</td>
+<td><strong>LOW</strong></td>
+<td>—</td>
+<td>Terminates honestly; the model to copy</td>
+</tr>
+<tr class="odd">
+<td>F1</td>
+<td>Facet counts under search</td>
+<td><strong>FIXED</strong></td>
+<td>—</td>
+<td>The #340 calibration case; now terminates in real text</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="detail" class="level2" data-number="1.4">
+<h2 data-number="1.4" data-anchor-id="detail"><span class="header-section-number">1.4</span> Detail</h2>
+<section id="f1-facet-counts-under-active-search-fixed-calibration-case" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" data-anchor-id="f1-facet-counts-under-active-search-fixed-calibration-case"><span class="header-section-number">1.4.1</span> F1 — Facet counts under active search — FIXED (calibration case)</h3>
+<p><code>refreshFacetCounts()</code> (<code>explorer.qmd:4439-4467</code>) bails to <code>markFacetCountsUnavailable()</code> whenever <code>searchIsActive()</code>, both before arming the debounce (4457-4460) and re-checked at fire time (4465). The bail happens <em>after</em> <code>++facetCountsReqId</code>, so a late-settling older query cannot overwrite the dash. The three search producers (5982-5987, 6028-6029, 6188-6194) call it the moment <code>__searchFilter.active</code> flips true. All three terminal painters change <strong>text</strong> (1577-1647).</p>
+<p>Both reviewers agree. Note precisely what was achieved: <strong>honesty by disabling search-aware counts, not by making their recomputation reliable.</strong> Residual risk LOW.</p>
+</section>
+<section id="f2-high-non-search-count-paths-no-in-flight-text-change-no-timeout" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" data-anchor-id="f2-high-non-search-count-paths-no-in-flight-text-change-no-timeout"><span class="header-section-number">1.4.2</span> F2 — HIGH — Non-search count paths: no in-flight text change, no timeout</h3>
+<p>The <code>#340</code> hazard class survives for every trigger that isn’t a search.</p>
+<ul>
+<li>The mask-index query awaits <code>db.query()</code> at <strong>4172-4179</strong>, invoked at <strong>4275-4279</strong> — <em>before</em> the only slow-path <code>markFacetCountsRecomputing()</code> call at <strong>4307</strong>.</li>
+<li>A viewport pan is marked only by class styling at <strong>5366-5370</strong> — the exact class-only, text-unchanged marking #340 proved insufficient.</li>
+<li>There is <strong>no timeout</strong> on the await. A hang means no terminal paint ever happens.</li>
+</ul>
+<p><em>Codex corrections adopted:</em> - The global single-filter <strong>cube</strong> path (4248-4252) has the same defect, awaiting at 4037-4041 before any visible invalidation. The draft framed this as specific to the heavy UNION ALL histogram; a first single-filter toggle at global view normally takes the cube instead. - <strong>Earlier stranding point the draft missed:</strong> the source and facet handlers don’t call <code>refreshFacetCounts()</code> until <em>after</em> unrelated globe work (source 4962-4979; facet 5100-5101). If that earlier load hangs, the count replacement <strong>never even begins</strong> and the old text stays completely unmarked. This is worse than the draft’s framing, because no invalidation happens at all.</p>
+<p><em>Honest limit:</em> evidence that the non-search queries actually hang is <strong>circumstantial</strong>. #340 proves a hang is possible in this stack (search-constrained variant), and the viewport variant shares the <code>JOIN samples_map_lite</code> shape — but no non-search hang was observed. HIGH is assigned for the <strong>invariant failure</strong>, not a demonstrated incident.</p>
+</section>
+<section id="f3-high-legacy-error-path-paints-the-unfiltered-baseline-under-active-filters" class="level3" data-number="1.4.3">
+<h3 data-number="1.4.3" data-anchor-id="f3-high-legacy-error-path-paints-the-unfiltered-baseline-under-active-filters"><span class="header-section-number">1.4.3</span> F3 — HIGH — Legacy error path paints the unfiltered baseline under active filters</h3>
+<p><code>explorer.qmd:4429-4434</code>, in the per-dimension legacy path:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">catch</span> (err) { <span class="op">...</span> <span class="fu">applyFacetCounts</span>(d<span class="op">.</span><span class="at">key</span><span class="op">,</span> <span class="kw">null</span>) }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>null</code> means <em>paint <code>viewer._baselineCounts</code></em> — the unfiltered global numbers. Reachable when a viewport request falls through the index path (4275-4293) and a per-dim query throws (e.g.&nbsp;a transient range-request failure). The repaint clears <code>.recomputing</code>, so the wrong number looks settled.</p>
+<p>This directly violates PLAN_305’s non-negotiable Honesty rule, and Phase 4’s item <em>“remove the misleading active-filter baseline fallback everywhere”</em> remains open.</p>
+<p><em>Codex correction adopted:</em> the draft was too absolute. Under exclude-self semantics the <strong>active dimension’s own</strong> baseline can legitimately be correct; it’s the <em>other</em> dimensions, constrained by that filter, that go wrong.</p>
+<p><em>Codex addition adopted — a second violation the draft missed:</em> successful legacy queries repaint <strong>independently</strong> (4357-4428). If three dimensions settle and one hangs, the UI shows a <strong>mixed-generation partial repaint</strong> — numbers from two different filter states side by side — contrary to PLAN_305’s atomicity requirement (lines 70-76).</p>
+</section>
+<section id="m1-mediumhigh-selected-clustersample-card-and-nearby-samples-n-missed-by-the-draft-found-by-codex" class="level3" data-number="1.4.4">
+<h3 data-number="1.4.4" data-anchor-id="m1-mediumhigh-selected-clustersample-card-and-nearby-samples-n-missed-by-the-draft-found-by-codex"><span class="header-section-number">1.4.4</span> M1 — MEDIUM/HIGH — Selected cluster/sample card and “Nearby Samples (N)” <em>(missed by the draft; found by Codex)</em></h3>
+<p>The strongest entirely-missed surface. The side card shows cluster count, H3 resolution and coordinates (1748-1759), sample coordinates (1770-1784), and the list heading <code>Nearby Samples (N)</code> (1939-1947).</p>
+<p>Two ways old numbers get stranded: 1. Source/facet changes revalidate the selected cluster only <em>after</em> globe reconciliation and another async lookup (4962-5004, 5100-5124). A hang leaves the prior filter’s card and list unmarked. 2. Hash navigation waits for a new PID/H3 lookup <strong>without first clearing or loading-marking the old card</strong> (5685-5725). Worse: PID failure only logs (5712-5714), and an empty result only hides the <em>in-map</em> card (5707-5710) — so the old <strong>side</strong> card can survive even a terminal failure.</p>
+<p>I verified these line references against the code and concur.</p>
+</section>
+<section id="f5-medium-point-mode-reports-the-render-cap-as-the-true-total" class="level3" data-number="1.4.5">
+<h3 data-number="1.4.5" data-anchor-id="f5-medium-point-mode-reports-the-render-cap-as-the-true-total"><span class="header-section-number">1.4.5</span> F5 — MEDIUM — Point mode reports the render cap as the true total</h3>
+<p><code>loadViewportSamples</code> (3715-3735): when <code>POINT_BUDGET</code> (5,000) is hit, a follow-up COUNT computes the real total. If that COUNT <strong>throws</strong>, the code proceeds with <code>totalCount = data.length</code> and <code>capReached = false</code>. Lines 3746-3750 then assert 5,000 is the in-view total and that 5,000 “individual samples” were loaded — when the truth could be 10-100× higher.</p>
+<p>Both reviewers confirm. Requires a dense viewport <em>and</em> a failed COUNT, but the resulting statement is unequivocally false and indistinguishable from a genuine 5,000. Same bug shape as the one #206 fixed for the no-failure case.</p>
+</section>
+<section id="f7-medium-mixed-treeflat-mode-shows-baseline-under-an-active-tree-filter" class="level3" data-number="1.4.6">
+<h3 data-number="1.4.6" data-anchor-id="f7-medium-mixed-treeflat-mode-shows-baseline-under-an-active-tree-filter"><span class="header-section-number">1.4.6</span> F7 — MEDIUM — Mixed tree/flat mode shows baseline under an active tree filter</h3>
+<p>If <code>FACET_TREE</code> is on but one tree fails to render (flat fallback), <code>TREE_DIM_KEYS.every(treeActive)</code> is false (1230-1236), so both all-tree gates are skipped (4248-4249, 4275). <code>describeCrossFilters()</code> zeroes tree-dim selections at global view (3944-3964), so the baseline early-return (4302-4304) paints unfiltered numbers while a tree filter is genuinely active.</p>
+<p><em>Codex correction adopted — severity raised.</em> The draft called this “transient.” It isn’t: <code>renderTreeFacet()</code> has <strong>no retry</strong> after its flat fallback (2693-2704), so the mixed state persists for the whole session or until cell re-evaluation. Reachability is low, but <strong>once reached the wrong counts are deterministic</strong>, not a race.</p>
+</section>
+<section id="f11-medium-search-results-list-and-heading-are-a-stale-snapshot-with-no-visible-label" class="level3" data-number="1.4.7">
+<h3 data-number="1.4.7" data-anchor-id="f11-medium-search-results-list-and-heading-are-a-stale-snapshot-with-no-visible-label"><span class="header-section-number">1.4.7</span> F11 — MEDIUM — Search results list and heading are a stale snapshot with no visible label</h3>
+<p><em>Codex correction adopted — the draft rated this LOW and excused it as “by design.”</em></p>
+<p>The search list is computed with the source/facet predicates current at the time (6530-6531) and paints numeric status and heading counts (6711-6724). Later source/facet changes deliberately leave those values untouched (6776-6785). So <code>#searchResults</code> can keep showing “50 of N” and the heading <code>(50)</code> while both describe a <strong>previous</strong> filter combination.</p>
+<p>Codex’s argument, which I accept: <em>a code comment is not user-visible disclosure.</em> By the audit’s own stated rule this is a deterministic finding, not a documentation note. It is also the <strong>most reachable</strong> item in this audit — any facet toggle during an active search triggers it.</p>
+</section>
+<section id="m2-medium-phasemsg-retains-a-previous-viewports-cluster-count-missed-by-the-draft" class="level3" data-number="1.4.8">
+<h3 data-number="1.4.8" data-anchor-id="m2-medium-phasemsg-retains-a-previous-viewports-cluster-count-missed-by-the-draft"><span class="header-section-number">1.4.8</span> M2 — MEDIUM — <code>#phaseMsg</code> retains a previous viewport’s cluster count <em>(missed by the draft)</em></h3>
+<p><code>exitPointMode()</code> paints “N clusters in view” (3854). Later cluster-mode camera moves call <code>reconcileSettledCamera()</code>, which updates the stats panel but <strong>not</strong> <code>#phaseMsg</code> (5220-5234, 5384-5390). So after exiting point mode, the next ordinary pan can leave a stale count in the <em>permanently visible</em> phase message. Verified.</p>
+</section>
+<section id="f4-medium-stats-panel-has-no-not-current-state-at-all" class="level3" data-number="1.4.9">
+<h3 data-number="1.4.9" data-anchor-id="f4-medium-stats-panel-has-no-not-current-state-at-all"><span class="header-section-number">1.4.9</span> F4 — MEDIUM — Stats panel has no not-current state at all</h3>
+<p><code>updateStats()</code> (1721-1728) only ever writes final values; nothing marks the panel in-flight or unavailable. <code>loadRes()</code> and <code>loadViewportSamples()</code> change only <code>#phaseMsg</code> on start/failure (3523-3529, 3599-3605, 3672, 3754-3758). Off-globe early returns (3655-3670) update neither. <code>reconcileSettledCamera()</code> blindly counts the current cache (5220-5229) <strong>without checking <code>_clusterFilterSig</code></strong>, so it can count a facet-blind cache while a filtered reload is in flight.</p>
+<p>Mitigation: the panel is collapsed by default (710-721), which lowers exposure but does not repair the invariant.</p>
+</section>
+<section id="f8-lowmedium-samples-table-honest-internally-but-not-end-to-end" class="level3" data-number="1.4.10">
+<h3 data-number="1.4.10" data-anchor-id="f8-lowmedium-samples-table-honest-internally-but-not-end-to-end"><span class="header-section-number">1.4.10</span> F8 — LOW→MEDIUM — Samples table: honest internally, but not end-to-end</h3>
+<p><em>Codex correction adopted — the draft claimed “honest by construction”; that’s false end-to-end.</em></p>
+<p>Internally the table is exemplary: <code>setMetaLoading</code> changes text + spinner and clears the stale pager (2849-2857); failure sentinels at 2870-2877 and 3220-3228; rows dimmed with <code>aria-busy</code>; <code>Next</code> disabled while <code>totalRows</code> is unknown.</p>
+<p>But search changes <code>await reconcileGlobeForFilters()</code> <strong>before</strong> calling <code>window.refreshSamplesTable?.()</code> (5147-5161). If that reconciliation hangs, the table refresh never starts — old meta, pager totals and rows stay undimmed and unmarked indefinitely. Search clearing has the same ordering. Same root shape as F2’s missed stranding point.</p>
+</section>
+<section id="f12-low-not-provided-is-claimed-when-the-lookup-failed" class="level3" data-number="1.4.11">
+<h3 data-number="1.4.11" data-anchor-id="f12-low-not-provided-is-claimed-when-the-lookup-failed"><span class="header-section-number">1.4.11</span> F12 — LOW — “Not Provided” is claimed when the lookup failed</h3>
+<p><code>populateInMapCardDetail(null)</code> maps missing fields to “Not Provided” (1899-1910); the query catch paths pass <code>null</code> (2465-2469, 3042-3047, 5614-5618). So a <em>failed lookup</em> is reported to the user as <em>data absence</em>.</p>
+<p><em>Codex correction adopted:</em> the draft called this a one-word fix. It isn’t — <code>null</code> currently conflates “no matching detail row,” “field absent,” and “query failed.” A genuine fix needs an explicit error state.</p>
+</section>
+<section id="f9-f10-low-these-terminate-honestly" class="level3" data-number="1.4.12">
+<h3 data-number="1.4.12" data-anchor-id="f9-f10-low-these-terminate-honestly"><span class="header-section-number">1.4.12</span> F9 / F10 — LOW — These terminate honestly</h3>
+<p><strong>F9 (search status line):</strong> all terminal paths guarded by <code>_searchSeq</code>; superseded searches don’t paint because the newer search owns the text (6656-6659, 6891-6918, 6929-6947). A hung build leaves explicit “Building search filter…” text. A failed follow-up COUNT retains “50+” — honest under-disclosure.</p>
+<p><strong>F10 (heatmap):</strong> the model the rest of the file should copy. Status painted <em>before</em> the query (4657-4660); success paints the real count (4776); <strong>failure paints unavailable AND removes the stale imagery</strong> (4777-4802) so status and overlay can’t disagree; tolerance-skip restores the truthful count (4846-4858); <code>moveStart</code> paints a waiting status (5380). A hang leaves explicit loading text.</p>
+</section>
+<section id="f6-withdrawn-as-a-finding-kept-as-a-robustness-note" class="level3" data-number="1.4.13">
+<h3 data-number="1.4.13" data-anchor-id="f6-withdrawn-as-a-finding-kept-as-a-robustness-note"><span class="header-section-number">1.4.13</span> F6 — Withdrawn as a finding (kept as a robustness note)</h3>
+<p>The draft flagged that <code>moveStart</code> invalidates and class-marks (5366-5370) with recovery depending entirely on <code>moveEnd</code> (5384-5396). Codex could not identify any reachable unpaired-<code>moveStart</code> path — all camera movement goes through Cesium, with no manual emission or cancellation path that omits <code>moveEnd</code>. <strong>I accept the downgrade.</strong> Keep as a fragility note only; promote only if runtime evidence ever shows an unpaired event.</p>
+<hr>
+</section>
+</section>
+<section id="is-the-honesty-rule-an-invariant-no." class="level2" data-number="1.5">
+<h2 data-number="1.5" data-anchor-id="is-the-honesty-rule-an-invariant-no."><span class="header-section-number">1.5</span> Is the honesty rule an invariant? No.</h2>
+<p>It is <strong>call-site discipline</strong>, not structure. Facet counts have three terminal painters plus one class-only marker; the table has ad-hoc <code>setMeta</code>/<code>setMetaLoading</code>; the heatmap has <code>setHeatmapStatus</code>; the stats panel has no not-current state whatsoever. Every new code path has to <em>remember</em> to terminate. #340 happened precisely because one didn’t — and F2/F8/M1 show others that still don’t.</p>
+<p>There is even precedent for the fix inside this very file: the <code>explorer-busy</code> watchdog (4905-4936) force-clears a stuck busy cursor after 120s because “a HUNG promise would never reach that finally.” That reasoning was never applied to the <em>numbers</em>.</p>
+<section id="recommended-structural-change-describe-only-not-implemented" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" data-anchor-id="recommended-structural-change-describe-only-not-implemented"><span class="header-section-number">1.5.1</span> Recommended structural change (describe only — NOT implemented)</h3>
+<p>The draft proposed a per-surface <strong>watchdog timer</strong>. <strong>Codex argued this is the wrong mechanism, and I find its argument more convincing.</strong> Recording both, since this is the audit’s main judgement call:</p>
+<ul>
+<li><em>Draft position:</em> arm a timer on <code>beginUpdate(surfaceId)</code>, clear on <code>settle(surfaceId)</code>; if it fires first, force the surface to its not-current state. ~20 lines for facet counts.</li>
+<li><em>Codex position (adopted):</em> a watchdog enforces “loading must eventually end,” which is a <strong>stronger and different</strong> requirement than honesty. Honesty only needs invalid data to <em>stop looking current immediately</em>. A permanently visible “Loading…” is already accepted as honest elsewhere in this audit. Critically, <strong>a watchdog doesn’t help when work hangs before <code>beginUpdate()</code> is ever called</strong> — which is exactly F2’s missed stranding point and F8’s ordering hole. It also doesn’t cancel the underlying DuckDB query, so it can hide the UI symptom while the shared connection stays occupied.</li>
+</ul>
+<p><strong>The invariant belongs at input invalidation, not on a timer attached to selected query paths:</strong></p>
+<ol type="1">
+<li>At every semantic invalidation — filter, search, mode, viewport, selection — <strong>synchronously</strong> replace affected numeric text with a visible loading/unavailable sentinel, <em>before any <code>await</code></em>.</li>
+<li>Commit real values only under the surface’s existing generation guard.</li>
+<li>On rejection, paint unavailable — <strong>never</strong> baseline.</li>
+<li>Add a timeout only if the product separately requires that loading must terminate.</li>
+</ol>
+<p>Minimum coherent change for facet counts specifically: - Make <code>markFacetCountsRecomputing()</code> <strong>replace text</strong> (e.g.&nbsp;<code>(Loading…)</code>) and clear stale <code>.zero</code>, so “in flight” is never conveyed by opacity alone. - Invoke that invalidation at the <strong>start</strong> of source/facet changes, before globe reconciliation. - Invoke it synchronously for every non-search <code>refreshFacetCounts()</code>, covering cube, mask and legacy routing. - Replace the legacy <code>catch</code>’s baseline with unavailable, and buffer legacy results for one <strong>atomic</strong> repaint.</p>
+<hr>
+</section>
+</section>
+<section id="documentation-drift" class="level2" data-number="1.6">
+<h2 data-number="1.6" data-anchor-id="documentation-drift"><span class="header-section-number">1.6</span> Documentation drift</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Doc</th>
+<th>Issue</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>EXPLORER_STATE.md:132</code></td>
+<td>Says <code>window.refreshSamplesTable</code> is “not used by other cells; safe to keep or remove” — <strong>false</strong>: installed at 3387, called at 5161. Following the doc would silently break search→table refresh.</td>
+<td>Confirmed</td>
+</tr>
+<tr class="even">
+<td><code>EXPLORER_STATE.md:98</code></td>
+<td>The <code>.recomputing</code> row is semantically incomplete — omits <code>markFacetCountsUnavailable()</code> clearing it, <code>markFacetCountsPending()</code> adding it, the <code>count-unavailable</code> class, and that terminal states now change text.</td>
+<td>Confirmed</td>
+</tr>
+<tr class="odd">
+<td><code>EXPLORER_STATE.md</code> §3</td>
+<td>Says each degraded dimension “behaves fully flat” — the mixed-mode routing (F7) disproves this at global view.</td>
+<td>Confirmed</td>
+</tr>
+<tr class="even">
+<td><code>EXPLORER_STATE.md</code> §3/§4 stale line refs</td>
+<td>Draft said these lack a staleness warning. <strong>Wrong</strong> — there is a global warning at lines 15-24, and §7 has its own at 668-673. Stale refs are maintenance debt, not undisclosed.</td>
+<td>Draft corrected</td>
+</tr>
+<tr class="odd">
+<td><code>PLAN_305_facet_counts.md</code></td>
+<td>Closeout note (107-132) is accurate. Phase 4 remains <strong>materially open</strong>: F3 is a live baseline fallback, the legacy path repaints non-atomically, and mixed mode retains another baseline route.</td>
+<td>Confirmed</td>
+</tr>
+<tr class="even">
+<td><code>A1_SCOPING.md:41-46</code></td>
+<td>Instructs a search semi-join in both count paths — no longer the contract after #340. Draft overstated it as asserting shipped behavior (it’s plainly a scoping doc), but it still needs a short superseded-note.</td>
+<td>Partly corrected</td>
+</tr>
+<tr class="odd">
+<td>Static Explorer prose (~7526)</td>
+<td>Worse than “unverified” — it’s <strong>wrong</strong>. Manifest gives res4 505,651 B (not 580 KB), res6 1,322,875 B (not 1.6 MB), res8 2,009,510 B (not 2.5 MB). And “4 parquet files” is false: the runtime manifest check enumerates 16 core objects + 4 search-index objects (933-944). Cluster row counts (38K/112K/176K) remain unverified — the manifest doesn’t carry them.</td>
+<td>Escalated</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="what-we-did-not-check-limits-of-this-audit" class="level2" data-number="1.7">
+<h2 data-number="1.7" data-anchor-id="what-we-did-not-check-limits-of-this-audit"><span class="header-section-number">1.7</span> What we did NOT check — limits of this audit</h2>
+<p>Be aware of these before treating the findings table as complete.</p>
+<ul>
+<li><strong>No runtime verification.</strong> Every finding here is from reading code. The only live evidence is inherited from the #340 fix session (60/60 elements stuck in <code>.recomputing</code>). None of F2-F12 or M1/M2 was reproduced in a browser. Reachability ratings are <strong>inferred</strong>, not measured.</li>
+<li><strong>Non-search hangs are unproven.</strong> F2’s severity rests on a structural gap plus one demonstrated hang in the search variant. No non-search hang was observed.</li>
+<li><strong>The #340 stall was never localized.</strong> We did not diagnose <em>where</em> the search-constrained query gets stuck; PLAN_305 defers this deliberately. So we cannot say which other paths inherit the same root cause.</li>
+<li><strong>DuckDB-WASM cancellation/timeout semantics were not investigated.</strong> This matters: any fix that only repaints the UI leaves the shared connection occupied.</li>
+<li><strong>Only <code>explorer.qmd</code> was audited.</strong> Other site pages that display numbers — the guided tour, <code>data.qmd</code>, tutorials — were out of scope.</li>
+<li><strong>No pixel/visual verification.</strong> We checked what the code writes, not what a user actually perceives; a “subtle” marking may be more or less visible in practice than assumed.</li>
+<li><strong>Two reviewers, one codebase.</strong> Claude and Codex both read statically and can share blind spots. M1 and M2 were missed entirely by the first pass and only surfaced under adversarial review — which is itself evidence that a third pass would likely find more.</li>
+</ul>
+<hr>
+<p><em>Audit: Claude (Fable) draft → Codex adversarial review → reconciled by Claude. Disagreements are recorded inline with both positions. Produced during grant closeout as a handoff artifact; nothing here was implemented.</em></p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© Copyright 2020-2026, iSamples Project. Based on work under National Science Foundation (NSF) Grant Numbers <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004839">2004839</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004562">2004562</a>, <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004642">2004642</a>, and <a href="https://nsf.gov/awardsearch/showAward?AWD_ID=2004815">2004815</a>.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/edit/main/COHERENCE_AUDIT_2026-08-04.md" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the <a href="https://nsf.gov/">NSF</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
