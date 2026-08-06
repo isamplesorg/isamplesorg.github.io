@@ -1026,6 +1026,9 @@ viewer             [creates Cesium viewer; reads readHash() once]
 </section>
 <section id="light-path-addendum-two-button-scope-selection-178-2026-05-08" class="level3" data-number="1.6.7">
 <h3 data-number="1.6.7" data-anchor-id="light-path-addendum-two-button-scope-selection-178-2026-05-08"><span class="header-section-number">1.6.7</span> Light-path addendum: two-button scope selection (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/178">#178</a>, 2026-05-08)</h3>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Historical (2026-05-08).</strong> This addendum records the decision as taken and the SQL as it stood then — including the <code>sample_facets_v2</code> / <code>samples_map_lite</code> filenames, which are two generations stale (now <code>_v4</code> / <code>_v3</code>), and the in-browser ILIKE scan, which is no longer the default search (the sharded BM25 substrate shipped as default 2026-07-17; ILIKE survives as <code>?fts=off</code>). The two-button scope <em>decision</em> still holds; treat the filenames and search mechanics here as a record of the time, not as current reference.</p>
+</blockquote>
 <p>Hana’s mockup (<a href="https://www.figma.com/design/Nqkuqh3Z4aqVh0nmwUAgKg/iSamples-Wireframe-1.0?node-id=213-394">Figma 213:394</a>) proposed a two-button search UI: “Search Selected Areas” (viewport-scoped) and “Search Entire World” (full-corpus). Implemented as a Light extension of (C), not a revisit of the A/B/C decision:</p>
 <ul>
 <li>“Search Entire World” runs the existing (C) full-corpus side-panel lookup with result-pin overlay. Behavior unchanged from the contract above. SQL shape: CTE over <code>sample_facets_v2</code> → top-50 → <code>LEFT JOIN</code> to <code>samples_map_lite</code> for display coords (samples without coords still appear; lat/lng are null).</li>

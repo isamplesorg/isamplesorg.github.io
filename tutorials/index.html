@@ -254,6 +254,20 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Snapshot note (2026-08-05)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <strong><code>202601</code></strong> file examples on this page pin a stable, versioned snapshot. Those objects still exist and their byte counts are correct, but they are <strong>not what the Interactive Explorer serves today</strong> — the live app reads the <strong><code>202608</code></strong> family, including <code>sample_facets_v4</code>, <code>samples_map_lite_v3</code>, <code>wide</code>, and the sharded search index. (This page may also reference other generations, such as the <code>current/</code> alias or the <code>202512</code> narrow file.)</p>
+<p>Use <code>202601</code> when you want a stable, citable reference. For “what the Explorer is actually loading right now”, the authoritative inventory is <a href="https://data.isamples.org/isamples_202608_release_manifest.json"><code>isamples_202608_release_manifest.json</code></a> (human twin: <code>CANONICAL.md</code>), which the Explorer cross-checks at boot.</p>
+</div>
+</div>
 <section id="start-here" class="level2 unnumbered">
 <h2 class="unnumbered" data-anchor-id="start-here">Start Here</h2>
 <table class="caption-top table">

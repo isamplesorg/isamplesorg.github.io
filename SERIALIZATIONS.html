@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="iSamples team">
-<meta name="dcterms.date" content="2026-08-05">
+<meta name="dcterms.date" content="2026-08-06">
 
 <title>iSamples Data Serializations – iSamples</title>
 <style>
@@ -323,7 +323,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 5, 2026</p>
+      <p class="date">August 6, 2026</p>
     </div>
   </div>
   
@@ -335,6 +335,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<blockquote class="blockquote">
+<p>⚠️ <strong>Snapshot note (2026-08-05).</strong> The <strong><code>202601</code></strong> file examples below pin a stable, versioned snapshot. Those objects still exist and their byte counts are correct, but they are <strong>not what the Interactive Explorer serves today</strong> — the live app reads the <strong><code>202608</code></strong> family, including <code>sample_facets_v4</code>, <code>samples_map_lite_v3</code>, <code>wide</code>, and the sharded search index. (Other generations may also appear here, such as the <code>current/</code> alias or the <code>202512</code> narrow file.) Use <code>202601</code> for a stable citable snapshot; for what the Explorer actually loads, see <code>isamples_202608_release_manifest.json</code> (human twin: <code>CANONICAL.md</code>).</p>
+</blockquote>
 <section id="purpose-and-scope" class="level2" data-number="1">
 <h2 data-number="1" data-anchor-id="purpose-and-scope"><span class="header-section-number">1</span> 1. Purpose and scope</h2>
 <p>iSamples has roughly a dozen parquet files in circulation at any given moment — each with a specific role, a specific upstream parent, and a specific set of downstream consumers (the web Explorer, the Python reference notebook, the progressive globe, the PQG conformance work). Some are primary archival products; others are derived aggregates or caches; still others are source-specific variants published outside the <code>data.isamples.org</code> namespace.</p>

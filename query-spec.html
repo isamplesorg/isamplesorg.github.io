@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="iSamples team">
-<meta name="dcterms.date" content="2026-08-05">
+<meta name="dcterms.date" content="2026-08-06">
 
 <title>iSamples Query Specification – iSamples</title>
 <style>
@@ -290,7 +290,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 5, 2026</p>
+      <p class="date">August 6, 2026</p>
     </div>
   </div>
   
@@ -302,6 +302,25 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Known drift as of 2026-08-05 — read before relying on the substrate bindings
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This spec has not kept pace with the shipped Explorer. The drift is <strong>not limited to the examples below</strong> — the Explorer-specific substrate bindings, the availability notes and the open-questions section all contain additional historical material. Treat the <strong>substrate-neutral query model</strong> as current intent, and treat anything describing <em>what the Explorer actually does today</em> as a record of the time until this is revised.</p>
+<p>Known instances (illustrative, not exhaustive):</p>
+<ul>
+<li><strong>Filenames are a generation stale.</strong> The bindings below name <code>sample_facets_v2.parquet</code>; the Explorer now reads <code>isamples_202608_sample_facets_v4.parquet</code> (and <code>samples_map_lite_v3</code>). The authoritative inventory is <a href="https://data.isamples.org/isamples_202608_release_manifest.json"><code>isamples_202608_release_manifest.json</code></a>, human twin <code>CANONICAL.md</code>.</li>
+<li><strong>Text search is described as the old full-scan path.</strong> The <code>text MATCHES</code> binding presents the <code>ILIKE</code> scan as what happens “currently” and the substrate-backed index (<a href="https://github.com/isamplesorg/isamplesorg.github.io/issues/169">#169</a>) as future work. In fact the sharded BM25 substrate <strong>shipped as the default on 2026-07-17</strong>; the <code>ILIKE</code> scan survives only as the <code>?fts=off</code> escape hatch.</li>
+<li><strong>Availability notes are stale too.</strong> The spec says <code>objectType</code> is “not currently exposed” — the Explorer ships it as the <strong>Specimen Type</strong> facet. It also describes <code>lite</code> as carrying only H3 res8; <code>samples_map_lite_v3</code> carries res4 and res6 as well.</li>
+</ul>
+</div>
+</div>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">

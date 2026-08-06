@@ -293,9 +293,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="where-the-files-live" class="level2" data-number="1.2">
 <h2 data-number="1.2" data-anchor-id="where-the-files-live"><span class="header-section-number">1.2</span> Where the files live</h2>
 <p>Every file is served from <code>https://data.isamples.org/&lt;filename&gt;.parquet</code> — that’s a Cloudflare Worker in front of a storage bucket, not a database server. You can open any of these URLs directly, or point DuckDB at them (see “Try it yourself” below). The Explorer picks the current filenames in one place, <code>explorer.qmd</code> around <strong>line 800-864</strong>, e.g.:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>lite_url    <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_samples_map_lite_v2.parquet`</span>   <span class="co">// map points + table</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>lite_url    <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_samples_map_lite_v3.parquet`</span>   <span class="co">// map points + table</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>wide_url    <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_wide.parquet`</span>                  <span class="co">// full sample detail</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>facets_url  <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_sample_facets_v3.parquet`</span>      <span class="co">// material/context/object_type + search text</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>facets_url  <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_sample_facets_v4.parquet`</span>      <span class="co">// material/context/object_type + search text</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>h3_res4_url <span class="op">=</span> <span class="vs">`</span><span class="sc">${</span>R2_BASE<span class="sc">}</span><span class="vs">/isamples_202608_h3_summary_res4.parquet`</span>       <span class="co">// pre-counted globe dots (world zoom)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <table class="caption-top table">
 <colgroup>
@@ -314,17 +314,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>..._wide.parquet</code></td>
 <td>Full detail for every sample (one row each) — everything else is derived from this</td>
-<td>~280 MB</td>
+<td>~300 MB</td>
 </tr>
 <tr class="even">
-<td><code>..._samples_map_lite_v2.parquet</code></td>
+<td><code>..._samples_map_lite_v3.parquet</code></td>
 <td>Slim version with just what the map/table need: coords, label, place, date</td>
-<td>~50-60 MB</td>
+<td>~63 MB</td>
 </tr>
 <tr class="odd">
-<td><code>..._sample_facets_v3.parquet</code></td>
+<td><code>..._sample_facets_v4.parquet</code></td>
 <td>One row per sample: material/context(sampled feature)/object_type as plain URIs, plus a search-text blob</td>
-<td>~60 MB</td>
+<td>~69 MB</td>
 </tr>
 <tr class="even">
 <td><code>..._h3_summary_res{4,6,8}.parquet</code></td>
@@ -366,7 +366,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="zoom-in" class="level3" data-number="1.3.2">
 <h3 data-number="1.3.2" data-anchor-id="zoom-in"><span class="header-section-number">1.3.2</span> …zoom in</h3>
-<p>As you zoom past a threshold, the Explorer swaps to res6, then res8 H3 tiles (same idea, finer hexagons), and eventually to individual points from <code>samples_map_lite_v2.parquet</code> once there are few enough in view to draw directly.</p>
+<p>As you zoom past a threshold, the Explorer swaps to res6, then res8 H3 tiles (same idea, finer hexagons), and eventually to individual points from <code>samples_map_lite_v3.parquet</code> once there are few enough in view to draw directly.</p>
 </section>
 <section id="click-a-facet-checkbox-material-sampled-feature-object-type-source" class="level3" data-number="1.3.3">
 <h3 data-number="1.3.3" data-anchor-id="click-a-facet-checkbox-material-sampled-feature-object-type-source"><span class="header-section-number">1.3.3</span> …click a facet checkbox (Material / Sampled Feature / Object Type / Source)</h3>
@@ -376,23 +376,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 data-number="1.3.4" data-anchor-id="search-for-text"><span class="header-section-number">1.3.4</span> …search for text</h3>
 <p><em>(Updated 2026-07-17 — the default search backend changed: <a href="https://github.com/isamplesorg/isamplesorg.github.io/pull/335">PR #335</a>.)</em></p>
 <p><strong>Default path (since 2026-07-17): a pre-built search index.</strong> Your query is split into tokens, and each token maps (by hash) to a small parquet shard of a pre-built inverted index (<code>isamples_202608_search_index_v1/</code>, 852 files — think “the index at the back of a book, one file per drawer”). The browser fetches only the few KB-to-MB shards for <em>your</em> tokens, intersects the matching sample ids, and ranks them by relevance (BM25 — the standard “rarer words in shorter descriptions score higher” formula). Concept labels were folded into the index at build time, so “pottery” still matches samples tagged only with a pottery <em>concept</em>. A typical first search moves a few MB, not tens of MB. <em>(<code>buildSearchFilterSubstrate()</code> + <code>assets/js/search_substrate.js</code>; index contract in <code>SEARCH_INDEX_V1.md</code>.)</em></p>
-<p><strong>Fallback path (<code>?fts=off</code>, and automatically for identifier queries):</strong> the original <code>ILIKE</code>-style scan against <code>sample_facets_v3.parquet</code>’s description column:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, place_name <span class="kw">FROM</span> read_parquet(<span class="st">'sample_facets_v3.parquet'</span>)</span>
+<p><strong>Fallback path (<code>?fts=off</code>, and automatically for identifier queries):</strong> the original <code>ILIKE</code>-style scan against <code>sample_facets_v4.parquet</code>’s description column:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, place_name <span class="kw">FROM</span> read_parquet(<span class="st">'sample_facets_v4.parquet'</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>(<code>buildSearchFilter()</code> in <code>explorer.qmd</code>.)</em> This path downloads much more data on first search (the scan touches most of the ~60 MB file) but handles one thing the index cannot: <strong>pasted identifiers</strong> (ARK / IGSN / DOI — e.g. <code>ark:/28722/k2000hz7r</code>), which get exact-matched against the <code>pid</code> column. Identifier-looking queries are routed here automatically; you never need the flag for that.</p>
+<p><em>(<code>buildSearchFilter()</code> in <code>explorer.qmd</code>.)</em> This path downloads much more data on first search (the scan touches most of the ~69 MB file) but handles one thing the index cannot: <strong>pasted identifiers</strong> (ARK / IGSN / DOI — e.g. <code>ark:/28722/k2000hz7r</code>), which get exact-matched against the <code>pid</code> column. Identifier-looking queries are routed here automatically; you never need the flag for that.</p>
 <p><strong>Either way, the result is the same:</strong> matching pids are staged into a table (<code>search_pids</code>) that every other query — map, table, facet counts — then filters against, so search composes with facets instead of being a separate mode.</p>
 </section>
 <section id="view-the-samples-table" class="level3" data-number="1.3.5">
 <h3 data-number="1.3.5" data-anchor-id="view-the-samples-table"><span class="header-section-number">1.3.5</span> …view the Samples table</h3>
-<p>The table pages through <code>samples_map_lite_v2.parquet</code> (coords/label/place/ date) and, as of #311, joins in <code>sample_facets_v3.parquet</code> for material/object type/sampled feature — one query per page (default page size), not the whole result set:</p>
+<p>The table pages through <code>samples_map_lite_v3.parquet</code> (coords/label/place/ date) and, as of #311, joins in <code>sample_facets_v4.parquet</code> for material/object type/sampled feature — one query per page (default page size), not the whole result set:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WITH</span> page <span class="kw">AS</span> (</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span>, latitude, longitude, place_name, result_time</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> read_parquet(<span class="st">'samples_map_lite_v2.parquet'</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FROM</span> read_parquet(<span class="st">'samples_map_lite_v3.parquet'</span>)</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">WHERE</span> <span class="op">&lt;</span>your active filters<span class="op">&gt;</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ORDER</span> <span class="kw">BY</span> pid <span class="kw">LIMIT</span> <span class="dv">50</span> OFFSET <span class="dv">0</span></span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> page.<span class="op">*</span>, f.material, f.<span class="kw">context</span>, f.object_type</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> page <span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'sample_facets_v3.parquet'</span>) <span class="kw">AS</span> f <span class="kw">ON</span> f.pid <span class="op">=</span> page.pid</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> page <span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'sample_facets_v4.parquet'</span>) <span class="kw">AS</span> f <span class="kw">ON</span> f.pid <span class="op">=</span> page.pid</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><em>(<code>loadPage()</code>, <code>explorer.qmd</code> ~line 2755-2775.)</em> “Download CSV” (#312) runs the same shape without the <code>LIMIT</code>/<code>OFFSET</code> (capped at 50,000 rows so an unfiltered world-zoom export can’t hang the tab).</p>
 </section>
 <section id="click-a-sample-point" class="level3" data-number="1.3.6">
@@ -403,7 +403,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'wide.parquet'</span>) mat <span class="kw">ON</span> mat.row_id <span class="op">=</span> s.p__has_material_category[<span class="dv">1</span>]</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">LEFT</span> <span class="kw">JOIN</span> read_parquet(<span class="st">'vocab_labels.parquet'</span>) mat_lbl <span class="kw">ON</span> mat_lbl.uri <span class="op">=</span> mat.pid</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> s.pid <span class="op">=</span> <span class="st">'&lt;clicked pid&gt;'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This is the one query that reads from <code>wide.parquet</code> on click (everything above deliberately avoids touching the 280 MB wide file until you actually need full detail on one sample).</p>
+<p>This is the one query that reads from <code>wide.parquet</code> on click (everything above deliberately avoids touching the 300 MB wide file until you actually need full detail on one sample).</p>
 </section>
 </section>
 <section id="try-it-yourself" class="level2" data-number="1.4">
@@ -419,7 +419,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- the default path since 2026-07-17 probes the sharded search index instead</span></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- (JS, not a single SQL statement — see SEARCH_INDEX_V1.md)</span></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> pid, <span class="kw">label</span>, <span class="kw">source</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_sample_facets_v3.parquet'</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> read_parquet(<span class="st">'https://data.isamples.org/isamples_202608_sample_facets_v4.parquet'</span>)</span>
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> description ILIKE <span class="st">'%pottery%'</span></span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">LIMIT</span> <span class="dv">20</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>DuckDB only fetches the byte ranges it needs (via HTTP range requests), so this is fast even though the files are hundreds of MB — you’re not downloading the whole thing to run a filtered query.</p>

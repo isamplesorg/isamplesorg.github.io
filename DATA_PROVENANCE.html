@@ -278,7 +278,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="isamples-explorer-data-provenance" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> iSamples Explorer — Data Provenance</h1>
-<p>How every parquet file the explorer uses is generated, from root to publish. <em>Reviewed 2026-06-02 (CC, via codebase audit). Complements <code>SERIALIZATIONS.md</code> (format/schema reference); this file is the end-to-end build chain + the automation gaps.</em></p>
+<p>How the explorer’s derived parquet files are generated, from root to publish. <strong>Not exhaustive as of 2026-08-05 — see the coverage caveat below.</strong> <em>Reviewed 2026-06-02 (CC, via codebase audit). Complements <code>SERIALIZATIONS.md</code> (format/schema reference); this file is the end-to-end build chain + the automation gaps.</em></p>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Coverage caveat (2026-08-05).</strong> The DAG below documents the <strong>seven-file derived substrate as of the 2026-06-02 review</strong>. It does <em>not</em> cover the whole live <code>202608</code> family. Known omissions:</p>
+<ul>
+<li><code>sample_facet_masks</code>, <code>facet_node_bits</code>, <code>sample_facet_index</code>, <code>sample_facet_index_meta</code> (the bitmask count path, #299/#304/#305/#313)</li>
+<li><code>sample_facet_membership</code></li>
+<li><code>facet_tree_summaries</code>, <code>facet_tree_cross_filter</code> (the tree facet path, #290)</li>
+<li>the sharded search index <code>isamples_202608_search_index_v1/</code> (#171)</li>
+</ul>
+<p>The <em>build chain and the automation gaps</em> it describes are still accurate for the files it does cover; treat it as incomplete rather than wrong. Authoritative current inventory: <code>isamples_202608_release_manifest.json</code> / <code>CANONICAL.md</code>.</p>
+</blockquote>
 <blockquote class="blockquote">
 <p><strong>Load-bearing constraint:</strong> the <strong>root export cannot be regenerated.</strong> It was produced from the iSamples Central Solr API (<code>central.isample.xyz</code>), <strong>offline since Aug 2025</strong>. The Zenodo-archived export is a <strong>frozen root</strong>. Any <em>new</em> data (e.g.&nbsp;concept URIs, thumbnails) therefore must come from a <strong>per-source supplementary file merged into the base by <code>pid</code></strong> — the “sidecar” pattern (see Stage 3) — not from re-exporting.</p>
 </blockquote>
@@ -389,6 +399,9 @@ DuckDB-WASM in the browser (explorer.qmd; parquet URLs ~L767-781)</code></pre>
 </section>
 <section id="documentation-automation-gaps-remaining" class="level2" data-number="1.5">
 <h2 data-number="1.5" data-anchor-id="documentation-automation-gaps-remaining"><span class="header-section-number">1.5</span> Documentation / automation gaps (remaining)</h2>
+<blockquote class="blockquote">
+<p>⚠️ <strong>Snapshot note (2026-08-05).</strong> The version-skew bullets below were written when the deployed derived files were <code>202601</code> and the wide was <code>202604</code>. That is no longer the live state: the Explorer now serves the <strong><code>202608</code></strong> family (<code>sample_facets_v4</code>, <code>samples_map_lite_v3</code>, <code>wide</code> at 300,303,095 B). The <em>reproducibility</em> gap the bullets describe is still real and still unresolved — only the version numbers in them are historical. Authoritative current inventory: <a href="https://data.isamples.org/isamples_202608_release_manifest.json"><code>isamples_202608_release_manifest.json</code></a>, human twin <code>CANONICAL.md</code>.</p>
+</blockquote>
 <ul>
 <li>⚠️ <strong>The deployed <code>202601</code> derived files are NOT reproducible</strong> from any available wide. A rebuild yields <strong>528,983</strong> root-material rows (pre-#271); the deployed <code>sample_facets_v2</code> has <strong>346,768</strong> — so the live files came from a different/unrecorded Stage-4 process, <em>and</em> the data has since rolled (wide is now <code>202604</code>). Treat a fresh <code>build_frontend_derived.py</code> run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.</li>
 <li><strong>Version skew:</strong> the deployed derived files are <code>202601</code> while the wide they should derive from is <code>202604</code> (the popup reads <code>202604</code>). Rebuilding from <code>202604</code> resolves it (tracked in the pipeline epic).</li>
