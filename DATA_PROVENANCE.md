@@ -70,6 +70,15 @@ Eric Kansa maintains OpenContext PQG **independently** on GCS (`storage.googleap
 
 ## Documentation / automation gaps (remaining)
 
+> ⚠️ **Snapshot note (2026-08-05).** The version-skew bullets below were written
+> when the deployed derived files were `202601` and the wide was `202604`. That is
+> no longer the live state: the Explorer now serves the **`202608`** family
+> (`sample_facets_v4`, `samples_map_lite_v3`, `wide` at 300,303,095 B). The
+> *reproducibility* gap the bullets describe is still real and still unresolved —
+> only the version numbers in them are historical. Authoritative current inventory:
+> [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+> human twin `CANONICAL.md`.
+
 - ⚠️ **The deployed `202601` derived files are NOT reproducible** from any available wide. A rebuild yields **528,983** root-material rows (pre-#271); the deployed `sample_facets_v2` has **346,768** — so the live files came from a different/unrecorded Stage-4 process, *and* the data has since rolled (wide is now `202604`). Treat a fresh `build_frontend_derived.py` run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.
 - **Version skew:** the deployed derived files are `202601` while the wide they should derive from is `202604` (the popup reads `202604`). Rebuilding from `202604` resolves it (tracked in the pipeline epic).
 - **No R2 upload automation** — file upload to bucket `isamples-ry` + `current/manifest.json` update are manual `wrangler`/dashboard steps.

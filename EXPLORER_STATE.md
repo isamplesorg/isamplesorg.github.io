@@ -328,6 +328,14 @@ compatible with all of them.
 
 ### Light-path addendum: two-button scope selection ([#178](https://github.com/isamplesorg/isamplesorg.github.io/issues/178), 2026-05-08)
 
+> ⚠️ **Historical (2026-05-08).** This addendum records the decision as taken and
+> the SQL as it stood then — including the `sample_facets_v2` / `samples_map_lite`
+> filenames, which are two generations stale (now `_v4` / `_v3`), and the in-browser
+> ILIKE scan, which is no longer the default search (the sharded BM25 substrate
+> shipped as default 2026-07-17; ILIKE survives as `?fts=off`). The two-button scope
+> *decision* still holds; treat the filenames and search mechanics here as a record
+> of the time, not as current reference.
+
 Hana's mockup ([Figma 213:394](https://www.figma.com/design/Nqkuqh3Z4aqVh0nmwUAgKg/iSamples-Wireframe-1.0?node-id=213-394))
 proposed a two-button search UI: "Search Selected Areas" (viewport-scoped)
 and "Search Entire World" (full-corpus). Implemented as a Light extension
