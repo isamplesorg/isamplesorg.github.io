@@ -7,6 +7,14 @@ toc: true
 categories: [data, architecture, parquet]
 ---
 
+> ⚠️ **Snapshot note (2026-08-05).** The file examples below pin the **`202601`**
+> archival snapshot. Those objects still exist and their byte counts are correct,
+> but they are **not what the Interactive Explorer serves today** — the live app
+> reads the **`202608`** family (`sample_facets_v4`, `samples_map_lite_v3`,
+> `wide`, and the sharded search index). Use `202601` for a stable citable
+> snapshot; for what the Explorer actually loads, see
+> `isamples_202608_release_manifest.json` (human twin: `CANONICAL.md`).
+
 ## 1. Purpose and scope
 
 iSamples has roughly a dozen parquet files in circulation at any given

@@ -4,6 +4,20 @@ subtitle: "Get started exploring 6.7 million scientific samples"
 number-sections: false
 ---
 
+::: {.callout-important}
+## Snapshot note (2026-08-05)
+
+The file examples on this page pin the **`202601`** archival snapshot. Those
+objects still exist and the byte counts are correct, but they are **not what the
+Interactive Explorer serves today** — the live app reads the **`202608`** family
+(`sample_facets_v4`, `samples_map_lite_v3`, `wide`, and the sharded search index).
+
+Use `202601` when you want a stable, citable snapshot. For "what the Explorer is
+actually loading right now", the authoritative inventory is
+[`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
+(human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
+:::
+
 ## Quick Start {.unnumbered}
 
 1. **Open the [Interactive Explorer](/explorer.html)** — a 3D globe loads with clustered sample data

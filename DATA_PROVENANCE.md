@@ -3,6 +3,14 @@
 How every parquet file the explorer uses is generated, from root to publish.
 *Reviewed 2026-06-02 (CC, via codebase audit). Complements `SERIALIZATIONS.md` (format/schema reference); this file is the end-to-end build chain + the automation gaps.*
 
+> ⚠️ **Coverage caveat (2026-08-05).** The DAG below documents the **seven-file
+> derived substrate as of the 2026-06-02 review**. It does *not* cover the whole
+> live `202608` family — the facet index/masks/node-bits set (#304/#305) and the
+> sharded search index (#171) were added afterwards and are not represented here.
+> The *build chain and the automation gaps* it describes are still accurate for
+> the files it does cover; treat it as incomplete rather than wrong. Authoritative
+> current inventory: `isamples_202608_release_manifest.json` / `CANONICAL.md`.
+
 > **Load-bearing constraint:** the **root export cannot be regenerated.** It was produced from the iSamples Central Solr API (`central.isample.xyz`), **offline since Aug 2025**. The Zenodo-archived export is a **frozen root**. Any *new* data (e.g. concept URIs, thumbnails) therefore must come from a **per-source supplementary file merged into the base by `pid`** — the "sidecar" pattern (see Stage 3) — not from re-exporting.
 
 ## Pipeline DAG
