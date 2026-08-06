@@ -1,0 +1,39 @@
+# Canary config for testing the #345 HEAD+Range shim.
+#
+# WHY A SEPARATE FILE: the production wrangler.toml binds this Worker to the
+# `data.isamples.org/*` ROUTE. There is no staging data host — a plain
+# `wrangler deploy` therefore goes live for every consumer of that hostname
+# immediately. Rather than ask anyone to comment out the routes block by hand
+# (easy to forget, easy to half-revert, and a mistake is a production incident),
+# the canary gets its own config with a DIFFERENT NAME and NO ROUTES. It is
+# reachable only at its workers.dev URL.
+#
+# Deploy:
+#   npx wrangler deploy -c wrangler.canary.toml
+#
+# Tear down when finished:
+#   npx wrangler delete --name isamples-data-345-canary
+#
+# NOTE: same R2 bucket as production, but this Worker only ever reads.
+
+name = "isamples-data-345-canary"
+main = "src/index.js"
+compatibility_date = "2026-04-01"
+
+# Raymond.yee@gmail.com's account — owner of the isamples.org zone and the
+# isamples-ry R2 bucket.
+account_id = "75e8a095c424e5a4e18fd6f5e6145064"
+
+# DELIBERATELY NO `routes` KEY.
+# Adding one here would put the canary in front of data.isamples.org, which is
+# the exact thing this file exists to prevent.
+
+# Serve on <name>.<your-subdomain>.workers.dev so it is addressable for testing.
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "isamples-ry"
