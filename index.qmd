@@ -51,7 +51,7 @@ iSamples integrates data from four major scientific repositories:
 
 The project uses **geoparquet files + DuckDB-WASM** for efficient, browser-based data access and analysis — no server required.
 
-- **iSamples Full Dataset**: ~280 MB wide format, 6.7M samples
+- **iSamples Full Dataset**: ~300 MB wide format, 6.7M samples
 - **Available via**: Cloudflare R2 with HTTP range requests
 - **Interactive tools**: [Interactive Explorer](/explorer.html) — search, filter, and explore 6.7M samples on a 3D globe or in a paginated table
 

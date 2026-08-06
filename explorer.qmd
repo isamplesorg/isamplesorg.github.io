@@ -651,7 +651,7 @@ format:
 
 1. **Instant** (<1s): Pre-aggregated H3 res4 summary (0.5 MB) → 38K colored circles
 2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
-3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
+3. **Zoom deeper** (<120 km): Individual sample points from 63 MB lite parquet
 4. **Click**: Cluster info or individual sample card with full metadata
 5. **Search**: Find samples by name — results fly to the location on the globe
 
@@ -7642,9 +7642,10 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 *Sizes are decimal MB (10⁶ bytes), matching the manifest's byte counts.*
 
 **Static files, zero backend.** All queries run in your browser via DuckDB-WASM
-with HTTP range requests — only the bytes you need are transferred. The published
-release is 21 objects (18 parquet + 3 small JSON search-index files); any one view
-touches only a few of them. The authoritative inventory is
+with HTTP range requests — only the bytes you need are transferred. The manifest
+directly inventories 21 files and separately summarizes the sharded search index
+(256 base shards plus hot-token sub-files, ~852 objects including sidecars); any
+one view touches only a handful of them. The authoritative inventory is
 [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
 (human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
 
@@ -7654,12 +7655,20 @@ touches only a few of them. The authoritative inventory is
      38,462 / 112,019 / 176,669 (the manifest does not carry row counts).
 
      The previous figures (580 KB / 1.6 MB / 2.5 MB) were not invented — they are
-     correct for the **202601** snapshot, which SERIALIZATIONS.md, how-to-use.qmd,
-     data.qmd and tutorials/why_h3.qmd still legitimately document. This page
-     describes the LIVE app, which serves **202608**, so it had silently drifted a
-     generation behind. Beware: a "wrong number" here may be a right number for a
-     different snapshot — always check which release a doc is describing before
-     correcting it.
+     correct for the **202601** snapshot (verified live: 594,541 / 1,627,502 /
+     2,543,412 B). This page describes the LIVE app, which serves **202608**, so it
+     had silently drifted a generation behind. Beware: a "wrong number" in this repo
+     may be a right number for a different release — always check which snapshot a
+     doc is describing before correcting it.
+
+     Scope of this pass (Codex review): explorer.qmd, EXPLORER_QUERIES.md and
+     index.qmd describe the CURRENT app and were corrected. SERIALIZATIONS.md,
+     how-to-use.qmd, data.qmd and tutorials/why_h3.qmd quote 202601 objects whose
+     BYTES are correct — those were deliberately left alone. They are NOT certified
+     clean, though: their surrounding present-tense prose still describes those
+     202601 files as the ones serving the Interactive Explorer, which is no longer
+     true. Rewording them as historical/archival is open follow-up work, not done
+     here.
 
      Units: decimal MB (10^6 B). The old row mixed conventions (580 KB was KiB
      while 1.6/2.5 MB were decimal), which is how it read as self-consistent.
@@ -7668,8 +7677,11 @@ touches only a few of them. The authoritative inventory is
 ::: {.callout-tip collapse="true"}
 ## Check these numbers against the source
 
-Every figure above comes from the published release manifest, which the Explorer
-also cross-checks at boot. To re-derive them without taking this page's word for it:
+Every **file-size** figure above comes from the published release manifest, which
+the Explorer also cross-checks at boot. (The cluster counts come from the parquet
+row counts — see below — and the timings, the 120 km threshold and the 5K point
+budget are properties of the app, not the data.) To re-derive the sizes without
+taking this page's word for it:
 
 ```bash
 curl -s https://data.isamples.org/isamples_202608_release_manifest.json \
