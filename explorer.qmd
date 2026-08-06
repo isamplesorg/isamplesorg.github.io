@@ -649,7 +649,7 @@ format:
 ::: {.callout-note collapse="true"}
 ## How It Works
 
-1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
+1. **Instant** (<1s): Pre-aggregated H3 res4 summary (494 KB) → 38K colored circles
 2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
 3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
 4. **Click**: Cluster info or individual sample card with full metadata
@@ -7633,13 +7633,57 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 
 | Phase | Data | Size | Points |
 |-------|------|------|--------|
-| **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
-| **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
-| **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
-| **Zoom deep** | Map lite | 60 MB (range req.) | Up to 5K individual samples |
-| **Click sample** | Full dataset | ~280 MB (range req.) | Full metadata for 1 sample |
+| **Instant** | H3 res4 | 0.5 MB | 38K clusters (continental) |
+| **Zoom in** | H3 res6 | 1.3 MB | 112K clusters (city) |
+| **Zoom more** | H3 res8 | 2.0 MB | 176K clusters (neighborhood) |
+| **Zoom deep** | Map lite | 63 MB (range req.) | Up to 5K individual samples |
+| **Click sample** | Full dataset | 300 MB (range req.) | Full metadata for 1 sample |
 
-**4 parquet files, zero backend.** All queries run in your browser via DuckDB-WASM with HTTP range requests — only the bytes you need are transferred.
+*Sizes are decimal MB (10⁶ bytes), matching the manifest's byte counts.*
+
+**Static files, zero backend.** All queries run in your browser via DuckDB-WASM
+with HTTP range requests — only the bytes you need are transferred. The published
+release is 21 objects (18 parquet + 3 small JSON search-index files); any one view
+touches only a few of them. The authoritative inventory is
+[`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
+(human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
+
+<!-- Coherence-audit follow-up (2026-08-05). Sizes are from the release manifest:
+     res4 505,651 B; res6 1,322,875 B; res8 2,009,510 B; map_lite_v3 62,924,115 B;
+     wide 300,303,095 B. Cluster counts verified against parquet row counts:
+     38,462 / 112,019 / 176,669 (the manifest does not carry row counts).
+
+     The previous figures (580 KB / 1.6 MB / 2.5 MB) were not invented — they are
+     correct for the **202601** snapshot, which SERIALIZATIONS.md, how-to-use.qmd,
+     data.qmd and tutorials/why_h3.qmd still legitimately document. This page
+     describes the LIVE app, which serves **202608**, so it had silently drifted a
+     generation behind. Beware: a "wrong number" here may be a right number for a
+     different snapshot — always check which release a doc is describing before
+     correcting it.
+
+     Units: decimal MB (10^6 B). The old row mixed conventions (580 KB was KiB
+     while 1.6/2.5 MB were decimal), which is how it read as self-consistent.
+     If you edit these, re-derive from the manifest — do not round from memory. -->
+
+::: {.callout-tip collapse="true"}
+## Check these numbers against the source
+
+Every figure above comes from the published release manifest, which the Explorer
+also cross-checks at boot. To re-derive them without taking this page's word for it:
+
+```bash
+curl -s https://data.isamples.org/isamples_202608_release_manifest.json \
+  | jq '.files | to_entries[] | select(.key|test("h3_summary|_wide\\.|map_lite"))
+        | {file: .key, bytes: .value.size_bytes}'
+```
+
+Cluster counts come from the parquet row counts, not the manifest:
+
+```sql
+SELECT count(*) FROM read_parquet(
+  'https://data.isamples.org/isamples_202608_h3_summary_res4.parquet');
+```
+:::
 
 ## See Also
 
