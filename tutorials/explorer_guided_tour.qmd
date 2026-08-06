@@ -242,7 +242,7 @@ further:
 
 - **[EXPLORER_QUERIES.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/EXPLORER_QUERIES.md)** — plain-English walkthrough of every query the Explorer runs, with copy-paste DuckDB snippets
 - **[CANONICAL.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/CANONICAL.md)** — which data files are canonical (this page uses only those)
-- **[DATA_PROVENANCE.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/DATA_PROVENANCE.md)** — how every derived file is built from the source export
+- **[DATA_PROVENANCE.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/DATA_PROVENANCE.md)** — how the derived files are built from the source export (covers the pre-#290/#304 substrate; see its coverage caveat)
 - The **[iSamples Zenodo community](https://zenodo.org/communities/isamples)** — the archived, citable snapshot of the data substrate
 
 <!-- cc:2026.07.24 — replaces zenodo_isamples_analysis.qmd (2025-09-05, migration era) -->

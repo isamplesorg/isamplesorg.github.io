@@ -1,12 +1,19 @@
 # iSamples Explorer — Data Provenance
 
-How every parquet file the explorer uses is generated, from root to publish.
+How the explorer's derived parquet files are generated, from root to publish.
+**Not exhaustive as of 2026-08-05 — see the coverage caveat below.**
 *Reviewed 2026-06-02 (CC, via codebase audit). Complements `SERIALIZATIONS.md` (format/schema reference); this file is the end-to-end build chain + the automation gaps.*
 
 > ⚠️ **Coverage caveat (2026-08-05).** The DAG below documents the **seven-file
 > derived substrate as of the 2026-06-02 review**. It does *not* cover the whole
-> live `202608` family — the facet index/masks/node-bits set (#304/#305) and the
-> sharded search index (#171) were added afterwards and are not represented here.
+> live `202608` family. Known omissions:
+>
+> - `sample_facet_masks`, `facet_node_bits`, `sample_facet_index`,
+>   `sample_facet_index_meta` (the bitmask count path, #299/#304/#305/#313)
+> - `sample_facet_membership`
+> - `facet_tree_summaries`, `facet_tree_cross_filter` (the tree facet path, #290)
+> - the sharded search index `isamples_202608_search_index_v1/` (#171)
+>
 > The *build chain and the automation gaps* it describes are still accurate for
 > the files it does cover; treat it as incomplete rather than wrong. Authoritative
 > current inventory: `isamples_202608_release_manifest.json` / `CANONICAL.md`.
