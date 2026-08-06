@@ -4555,10 +4555,15 @@ zoomWatcher = {
     function invalidateFacetCountsNow() {
         clearTimeout(facetCountsDebounce);
         ++facetCountsReqId;
-        // Under an active search the counts are already the honest "(—)" dash
-        // (#340). Re-dimming them would downgrade "we cannot know this" to
-        // "we're about to know it", which is a worse claim, not a better one.
-        if (searchIsActive()) return;
+        // Under an active search the counts are genuinely unavailable (#340), not
+        // pending. Re-dimming them would downgrade "we cannot know this" to
+        // "we're about to know it" — a worse claim, not a better one. Repaint the
+        // dash rather than merely returning, so this is idempotent and does not
+        // depend on an earlier caller having already painted it (Codex review).
+        if (searchIsActive()) {
+            markFacetCountsUnavailable();
+            return;
+        }
         markFacetCountsRecomputing();
     }
 
@@ -5084,6 +5089,14 @@ zoomWatcher = {
             // can run for minutes on a slow link. Without this the facet counts
             // keep asserting the pre-toggle numbers for that whole window.
             invalidateFacetCountsNow();
+            // The inner finally GUARANTEES a successor (Codex review). Invalidating
+            // bumps facetCountsReqId and cancels the pending debounce, so if
+            // anything between here and the end of the globe work throws, nothing
+            // would ever schedule a recompute and the counts would sit at
+            // "(Loading…)" until some unrelated later event. A hung promise
+            // staying "Loading" is honest (#342); a REJECTED one is terminal, so
+            // "Loading" would then be a lie of a different kind.
+            try {
             updateSourceLegendState();
             writeQueryState();
             refreshHeatmap();
@@ -5106,7 +5119,10 @@ zoomWatcher = {
             } else {
                 await loadViewportSamples();
             }
-            refreshFacetCounts();
+            } finally {
+                // Runs on success AND on throw — see invalidateFacetCountsNow() above.
+                refreshFacetCounts();
+            }
 
             // Re-validate selection (only if no newer filter change has fired).
             if (!isStale()) {
@@ -5223,6 +5239,9 @@ zoomWatcher = {
             // below awaits a globe reload; counts must not keep claiming the
             // pre-toggle numbers while it runs.
             invalidateFacetCountsNow();
+            // Inner finally guarantees a successor even if this throws — see the
+            // source handler and invalidateFacetCountsNow() (Codex review).
+            try {
             syncFacetNote();
             writeQueryState();
             refreshHeatmap();
@@ -5233,7 +5252,10 @@ zoomWatcher = {
             // state (and reloads filtered clusters in place when already in
             // cluster mode, since the filter set changed).
             await reconcileGlobeForFilters();
-            refreshFacetCounts();
+            } finally {
+                // Runs on success AND on throw — see invalidateFacetCountsNow().
+                refreshFacetCounts();
+            }
 
             // #300: a selected cluster card may now be stale — the facet change
             // can empty the cell (then drop the selection) or change its filtered

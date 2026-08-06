@@ -87,19 +87,41 @@ with sync_playwright() as pw:
         print(f"  {s['t']:>4}s {s['n']:>3} {s['recomputing']:>6} {s['unavailable']:>8} "
               f"{s['loading_text']:>11} {s['numeric_text']:>11}  {s['sample'][:2]}")
 
+    # Let the handler settle so we can require a successor repaint. Without this
+    # the script would accept a permanently-"(Loading…)" UI as a pass, which is
+    # exactly the stranding bug the inner try/finally exists to prevent.
+    cdp.send("Network.emulateNetworkConditions", {
+        "offline": False, "downloadThroughput": -1, "uploadThroughput": -1, "latency": 0,
+    })
+    settled = None
+    for _ in range(120):
+        time.sleep(1)
+        s = page.evaluate(SNAP)
+        if s["numeric_text"] > 0 and s["recomputing"] == 0:
+            settled = s
+            break
+
     # --- verdict --------------------------------------------------------------
+    # Every clause below is REQUIRED. An earlier version printed `ever_loading`
+    # without asserting it and only checked staleness before t=12s, so a run that
+    # sat dimmed-but-numeric forever could pass (Codex review).
     first = obs[0] if obs else None
-    dimmed_fast = first and first["recomputing"] == first["n"] and first["n"] > 0
+    dimmed_fast = bool(first and first["n"] > 0 and first["recomputing"] == first["n"])
     ever_loading = any(o["loading_text"] > 0 for o in obs)
+    # A count is dishonest if it shows a NUMBER while carrying no marker at all.
+    # Checked across every observation, not an arbitrary early window.
     stale_unmarked = [o for o in obs
                       if o["numeric_text"] > 0 and o["recomputing"] == 0
-                      and o["unavailable"] == 0 and o["t"] < 12]
+                      and o["unavailable"] == 0]
+    repainted = settled is not None
 
     print("\n=== VERDICT ===")
-    print(f"  invalidated within ~0.4s of the toggle : {dimmed_fast}")
-    print(f"  text swapped to (Loading…) during wait : {ever_loading}")
-    print(f"  windows showing stale UNMARKED numbers : {len(stale_unmarked)}")
-    ok = dimmed_fast and not stale_unmarked
+    print(f"  invalidated within ~0.4s of the toggle   : {dimmed_fast}")
+    print(f"  text swapped to (Loading…) during wait   : {ever_loading}")
+    print(f"  windows showing stale UNMARKED numbers   : {len(stale_unmarked)}  (must be 0)")
+    print(f"  successor repainted real numbers after   : {repainted}"
+          f"{'' if repainted else '  <-- STRANDED'}")
+    ok = dimmed_fast and ever_loading and not stale_unmarked and repainted
     print(f"\n  INVARIANT HOLDS: {ok}")
     ctx.close(); b.close()
     sys.exit(0 if ok else 1)
