@@ -2679,7 +2679,7 @@ phase1 = {
 // === Load facet summaries + SKOS prefLabels, populate filter checkboxes ===
 //
 // Checkbox value = full URI (matches the URI strings stored in
-// sample_facets_v2.parquet's material / context / object_type columns).
+// sample_facets_v4.parquet's material / context / object_type columns).
 // Display label = SKOS prefLabel (en) when available, URI tail otherwise.
 // Default state: UNCHECKED — empty = no filter.
 facetFilters = {
@@ -6042,7 +6042,7 @@ zoomWatcher = {
         // Compute the side-panel relevance score in the SAME scan that builds
         // the pid-set, and materialize the columns doSearch's results list
         // needs (label / source / place_name + score). This lets doSearch read
-        // the small search_pids table instead of RE-scanning the 63 MB facets
+        // the small search_pids table instead of RE-scanning the 69 MB facets
         // parquet — the old double-scan that pushed broad terms like "pottery"
         // past CI's 90s smoke budget. search_pids stays pid-keyed (one row per
         // unique pid), so every other surface's `pid IN (SELECT pid FROM
@@ -6621,7 +6621,7 @@ zoomWatcher = {
             // The search-term match + relevance score are already materialized
             // in `search_pids` by buildSearchFilter (aliased `s` below), so the
             // results SELECT and the follow-up COUNT both read that small table
-            // instead of re-scanning the 63 MB facets parquet — the old
+            // instead of re-scanning the 69 MB facets parquet — the old
             // double-scan (one in buildSearchFilter, one here) that pushed
             // broad terms like `pottery` past CI's 90s smoke budget. The single
             // remaining facets scan lives in buildSearchFilter.
@@ -7643,9 +7643,10 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 
 **Static files, zero backend.** All queries run in your browser via DuckDB-WASM
 with HTTP range requests — only the bytes you need are transferred. The manifest
-directly inventories 21 files and separately summarizes the sharded search index
-(256 base shards plus hot-token sub-files, ~852 objects including sidecars); any
-one view touches only a handful of them. The authoritative inventory is
+directly inventories 21 objects — including five search-index sidecars — and
+summarizes the index's 847 shard files (256 base plus 591 hot); the index
+directory holds 852 objects in all. Any one view touches only a handful of them.
+The authoritative inventory is
 [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
 (human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
 
@@ -7668,7 +7669,11 @@ one view touches only a handful of them. The authoritative inventory is
      clean, though: their surrounding present-tense prose still describes those
      202601 files as the ones serving the Interactive Explorer, which is no longer
      true. Rewording them as historical/archival is open follow-up work, not done
-     here.
+     here. query-spec.qmd carries deeper drift still (stale filenames AND a
+     text-search narrative that predates the FTS substrate shipping as default on
+     2026-07-17); it now carries its own "known drift" banner rather than a silent
+     partial correction, because fixing it properly means re-stating semantics, not
+     renaming strings.
 
      Units: decimal MB (10^6 B). The old row mixed conventions (580 KB was KiB
      while 1.6/2.5 MB were decimal), which is how it read as self-consistent.

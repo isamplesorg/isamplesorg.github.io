@@ -151,7 +151,7 @@ LEFT JOIN read_parquet('vocab_labels.parquet') mat_lbl ON mat_lbl.uri = mat.pid
 WHERE s.pid = '<clicked pid>'
 ```
 This is the one query that reads from `wide.parquet` on click (everything
-above deliberately avoids touching the 280 MB wide file until you actually
+above deliberately avoids touching the 300 MB wide file until you actually
 need full detail on one sample).
 
 ## Try it yourself

@@ -8,6 +8,29 @@ sidebar: false
 categories: [spec, architecture, query]
 ---
 
+::: {.callout-important}
+## Known drift as of 2026-08-05 — read before relying on the substrate bindings
+
+This spec has not kept pace with the shipped Explorer in two ways. Both are
+recorded rather than silently corrected, because fixing them properly means
+re-stating semantics, not renaming strings:
+
+- **Filenames are a generation stale.** The bindings below name
+  `sample_facets_v2.parquet`; the Explorer now reads
+  `isamples_202608_sample_facets_v4.parquet` (and `samples_map_lite_v3`). The
+  authoritative inventory is
+  [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+  human twin `CANONICAL.md`.
+- **Text search is described as the old full-scan path.** The `text MATCHES`
+  binding presents the `ILIKE` scan as what happens "currently" and the
+  substrate-backed index ([#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169))
+  as future work. In fact the sharded BM25 substrate **shipped as the default on
+  2026-07-17**; the `ILIKE` scan survives only as the `?fts=off` escape hatch.
+
+Treat the *shape* of the bindings as current and the *filenames and text-search
+narrative* as historical until this is revised.
+:::
+
 ::: {.callout-warning}
 ## Draft — v0.2
 
