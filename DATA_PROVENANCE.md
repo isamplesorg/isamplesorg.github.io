@@ -1,7 +1,22 @@
 # iSamples Explorer — Data Provenance
 
-How every parquet file the explorer uses is generated, from root to publish.
+How the explorer's derived parquet files are generated, from root to publish.
+**Not exhaustive as of 2026-08-05 — see the coverage caveat below.**
 *Reviewed 2026-06-02 (CC, via codebase audit). Complements `SERIALIZATIONS.md` (format/schema reference); this file is the end-to-end build chain + the automation gaps.*
+
+> ⚠️ **Coverage caveat (2026-08-05).** The DAG below documents the **seven-file
+> derived substrate as of the 2026-06-02 review**. It does *not* cover the whole
+> live `202608` family. Known omissions:
+>
+> - `sample_facet_masks`, `facet_node_bits`, `sample_facet_index`,
+>   `sample_facet_index_meta` (the bitmask count path, #299/#304/#305/#313)
+> - `sample_facet_membership`
+> - `facet_tree_summaries`, `facet_tree_cross_filter` (the tree facet path, #290)
+> - the sharded search index `isamples_202608_search_index_v1/` (#171)
+>
+> The *build chain and the automation gaps* it describes are still accurate for
+> the files it does cover; treat it as incomplete rather than wrong. Authoritative
+> current inventory: `isamples_202608_release_manifest.json` / `CANONICAL.md`.
 
 > **Load-bearing constraint:** the **root export cannot be regenerated.** It was produced from the iSamples Central Solr API (`central.isample.xyz`), **offline since Aug 2025**. The Zenodo-archived export is a **frozen root**. Any *new* data (e.g. concept URIs, thumbnails) therefore must come from a **per-source supplementary file merged into the base by `pid`** — the "sidecar" pattern (see Stage 3) — not from re-exporting.
 
@@ -69,6 +84,15 @@ Eric Kansa maintains OpenContext PQG **independently** on GCS (`storage.googleap
 - **`sample_facet_index_meta` (#313 P1) is paired with `sample_facet_index` and MUST be deployed together.** It's a tiny per-source-histogram manifest built DIRECTLY from `samp_geo` (never by reading back `sample_facet_index.parquet` — that would make the "staleness check" self-referential) so the explorer's boot-time `facetIndexReady` preflight can validate the index without a live 6M-row `GROUP BY` scan. `--only sample_facet_index_meta` alone builds just the meta file (no forced `sample_facet_index` rebuild) for re-pairing a meta file with an already-published index of the same `build_id`; a normal build or `--only sample_facet_index,sample_facet_index_meta` builds both together. **R2 upload must always publish the two files together with matching `build_id`** — see `SERIALIZATIONS.md` §4.13. Independently validated by `validate_frontend_derived.py --index ... --index-meta ...`, which recomputes the histogram/build_id/schema_version/row-count from the actual on-disk index file (not from the meta file's own claims).
 
 ## Documentation / automation gaps (remaining)
+
+> ⚠️ **Snapshot note (2026-08-05).** The version-skew bullets below were written
+> when the deployed derived files were `202601` and the wide was `202604`. That is
+> no longer the live state: the Explorer now serves the **`202608`** family
+> (`sample_facets_v4`, `samples_map_lite_v3`, `wide` at 300,303,095 B). The
+> *reproducibility* gap the bullets describe is still real and still unresolved —
+> only the version numbers in them are historical. Authoritative current inventory:
+> [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+> human twin `CANONICAL.md`.
 
 - ⚠️ **The deployed `202601` derived files are NOT reproducible** from any available wide. A rebuild yields **528,983** root-material rows (pre-#271); the deployed `sample_facets_v2` has **346,768** — so the live files came from a different/unrecorded Stage-4 process, *and* the data has since rolled (wide is now `202604`). Treat a fresh `build_frontend_derived.py` run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.
 - **Version skew:** the deployed derived files are `202601` while the wide they should derive from is `202604` (the popup reads `202604`). Rebuilding from `202604` resolves it (tracked in the pipeline epic).

@@ -8,6 +8,35 @@ sidebar: false
 categories: [spec, architecture, query]
 ---
 
+::: {.callout-important}
+## Known drift as of 2026-08-05 — read before relying on the substrate bindings
+
+This spec has not kept pace with the shipped Explorer. The drift is **not
+limited to the examples below** — the Explorer-specific substrate bindings, the
+availability notes and the open-questions section all contain additional
+historical material. Treat the **substrate-neutral query model** as current
+intent, and treat anything describing *what the Explorer actually does today* as
+a record of the time until this is revised.
+
+Known instances (illustrative, not exhaustive):
+
+- **Filenames are a generation stale.** The bindings below name
+  `sample_facets_v2.parquet`; the Explorer now reads
+  `isamples_202608_sample_facets_v4.parquet` (and `samples_map_lite_v3`). The
+  authoritative inventory is
+  [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+  human twin `CANONICAL.md`.
+- **Text search is described as the old full-scan path.** The `text MATCHES`
+  binding presents the `ILIKE` scan as what happens "currently" and the
+  substrate-backed index ([#169](https://github.com/isamplesorg/isamplesorg.github.io/issues/169))
+  as future work. In fact the sharded BM25 substrate **shipped as the default on
+  2026-07-17**; the `ILIKE` scan survives only as the `?fts=off` escape hatch.
+- **Availability notes are stale too.** The spec says `objectType` is "not
+  currently exposed" — the Explorer ships it as the **Specimen Type** facet. It
+  also describes `lite` as carrying only H3 res8; `samples_map_lite_v3` carries
+  res4 and res6 as well.
+:::
+
 ::: {.callout-warning}
 ## Draft — v0.2
 

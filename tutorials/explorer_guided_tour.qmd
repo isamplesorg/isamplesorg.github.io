@@ -12,6 +12,13 @@ format:
     toc: true
     toc-depth: 2
     theme: cosmo
+    # #343: the site sets number-sections: true globally, which prefixed these
+    # headings with an auto-number on top of the "Step N" already in the title —
+    # so they rendered as "2 Step 2 — ...". The steps are numbered by hand
+    # because the numbering is part of the tour's voice ("Step 4" is referred to
+    # as such), so switch OFF the automatic numbering for this page rather than
+    # stripping the manual numbers.
+    number-sections: false
 ---
 
 The [Interactive Explorer](https://isamples.org/explorer.html) covers ~6.7
@@ -19,11 +26,11 @@ million physical samples — rock cores, potsherds, tissue vouchers, museum
 specimens — about 6 million of them on one globe, running entirely in your
 browser with no server behind it. This
 tour walks through seven views of it, each answering a question about the data.
-Most stops are **live links** — click one and the Explorer opens at the position,
-search, and zoom being described (the URL carries that state; a couple of stops
+Most steps are **live links** — click one and the Explorer opens at the position,
+search, and zoom being described (the URL carries that state; a couple of steps
 ask you to click one control yourself, where the URL doesn't reach).
 
-A few stops also include a small **"the number behind the view"** code cell that
+A few steps also include a small **"the number behind the view"** code cell that
 computes what you're seeing, live, from the same public data files the Explorer
 itself reads. Unfold the code to see how — and to take your first step from
 *viewing* the data to *querying* it.
@@ -73,7 +80,7 @@ VOCAB_LABELS = 'https://data.isamples.org/vocab_labels_202608.parquet'
 H3_RES4 = 'https://data.isamples.org/isamples_202608_h3_summary_res4.parquet'
 ```
 
-## Stop 1 — The world at a glance
+## Step 1 — The world at a glance
 
 **[Open the Explorer →](https://isamples.org/explorer.html)**
 
@@ -116,7 +123,7 @@ with no usable coordinates: they never appear on the globe or in the viewport
 table, but a world-scope search still finds them. Counting only what's visible
 would overstate the map and understate the archive.
 
-## Stop 2 — Search that knows concepts
+## Step 2 — Search that knows concepts
 
 **[Search "pottery Cyprus" →](https://isamples.org/explorer.html?search=pottery+Cyprus)**
 
@@ -135,7 +142,7 @@ Search runs on a pre-built sharded index: your query fetches a few small files,
 not the whole dataset. The classic full-scan search still exists — add
 `&fts=off` to the URL to feel the difference.
 
-## Stop 3 — Two sites, two sciences
+## Step 3 — Two sites, two sciences
 
 **[Fly to central Anatolia →](https://isamples.org/explorer.html#v=1&lat=37.6619&lng=32.8334&alt=150000&mode=point)**
 
@@ -170,7 +177,7 @@ html`<p><b>The five densest cells on the globe</b> (click to fly there):</p>
 </ol>`
 ```
 
-## Stop 4 — Slicing by material
+## Step 4 — Slicing by material
 
 **[Open the Explorer and expand the *Material* facet →](https://isamples.org/explorer.html)**
 
@@ -204,7 +211,7 @@ Rock and mineral dominate (SESAR's size shows through), but biogenic and
 anthropogenic materials are each hundreds of thousands strong — this is
 genuinely a cross-domain collection, not a geology database with guests.
 
-## Stop 5 — Density vs identity
+## Step 5 — Density vs identity
 
 **[Toggle the heatmap →](https://isamples.org/explorer.html)** *(checkbox in
 the right panel)*, and try the **2D map** (globe button in the map toolbar →
@@ -216,7 +223,7 @@ mode answers "which samples, exactly." The honest rule of thumb: heatmaps for
 patterns, points for identity, and never trust a color's *intensity* as a count
 — click and read the number instead.
 
-## Stop 6 — From view to data-in-hand
+## Step 6 — From view to data-in-hand
 
 Any view's sample table (below the globe) shows PID, place, date, and a
 **Source URL** linking each sample back to its home collection's record.
@@ -225,7 +232,7 @@ carries the whole view state, **Copy Link to Current View** gives you a
 citation-grade pointer to *this exact slice* — paste it in a paper, a class
 assignment, or an issue report.
 
-## Stop 7 — Under the hood (and doing this yourself)
+## Step 7 — Under the hood (and doing this yourself)
 
 There is no server. The Explorer is a static page querying public
 [Parquet](https://parquet.apache.org/) files over HTTP range requests with
@@ -235,7 +242,7 @@ further:
 
 - **[EXPLORER_QUERIES.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/EXPLORER_QUERIES.md)** — plain-English walkthrough of every query the Explorer runs, with copy-paste DuckDB snippets
 - **[CANONICAL.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/CANONICAL.md)** — which data files are canonical (this page uses only those)
-- **[DATA_PROVENANCE.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/DATA_PROVENANCE.md)** — how every derived file is built from the source export
+- **[DATA_PROVENANCE.md](https://github.com/isamplesorg/isamplesorg.github.io/blob/main/DATA_PROVENANCE.md)** — how the derived files are built from the source export (covers the pre-#290/#304 substrate; see its coverage caveat)
 - The **[iSamples Zenodo community](https://zenodo.org/communities/isamples)** — the archived, citable snapshot of the data substrate
 
 <!-- cc:2026.07.24 — replaces zenodo_isamples_analysis.qmd (2025-09-05, migration era) -->

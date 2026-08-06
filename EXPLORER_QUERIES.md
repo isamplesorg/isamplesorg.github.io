@@ -23,17 +23,17 @@ server. You can open any of these URLs directly, or point DuckDB at them
 one place, `explorer.qmd` around **line 800-864**, e.g.:
 
 ```js
-lite_url    = `${R2_BASE}/isamples_202608_samples_map_lite_v2.parquet`   // map points + table
+lite_url    = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`   // map points + table
 wide_url    = `${R2_BASE}/isamples_202608_wide.parquet`                  // full sample detail
-facets_url  = `${R2_BASE}/isamples_202608_sample_facets_v3.parquet`      // material/context/object_type + search text
+facets_url  = `${R2_BASE}/isamples_202608_sample_facets_v4.parquet`      // material/context/object_type + search text
 h3_res4_url = `${R2_BASE}/isamples_202608_h3_summary_res4.parquet`       // pre-counted globe dots (world zoom)
 ```
 
 | File | Plain-English role | Roughly how big |
 |---|---|---|
-| `..._wide.parquet` | Full detail for every sample (one row each) — everything else is derived from this | ~280 MB |
-| `..._samples_map_lite_v2.parquet` | Slim version with just what the map/table need: coords, label, place, date | ~50-60 MB |
-| `..._sample_facets_v3.parquet` | One row per sample: material/context(sampled feature)/object_type as plain URIs, plus a search-text blob | ~60 MB |
+| `..._wide.parquet` | Full detail for every sample (one row each) — everything else is derived from this | ~300 MB |
+| `..._samples_map_lite_v3.parquet` | Slim version with just what the map/table need: coords, label, place, date | ~63 MB |
+| `..._sample_facets_v4.parquet` | One row per sample: material/context(sampled feature)/object_type as plain URIs, plus a search-text blob | ~69 MB |
 | `..._h3_summary_res{4,6,8}.parquet` | Pre-counted dots for the globe at 3 zoom tiers (continent / region / neighborhood), so zooming out never counts 6M rows live | tiny–few MB |
 | `..._facet_summaries.parquet`, `..._facet_cross_filter.parquet`, `..._facet_tree_*.parquet` | Pre-computed facet-checkbox counts at various levels of "how many filters are active" — the whole point of these is to avoid a live COUNT over millions of rows | KB–tens of MB |
 | `..._sample_facet_masks.parquet`, `..._sample_facet_index.parquet` | Bitmask tricks so 2+ facet filters at once are still fast (see `SERIALIZATIONS.md` §4.12 if you want the gory detail) | ~10 MB each |
@@ -62,7 +62,7 @@ pre-counted hexagon summaries instead.
 
 As you zoom past a threshold, the Explorer swaps to res6, then res8 H3
 tiles (same idea, finer hexagons), and eventually to individual points from
-`samples_map_lite_v2.parquet` once there are few enough in view to draw
+`samples_map_lite_v3.parquet` once there are few enough in view to draw
 directly.
 
 ### ...click a facet checkbox (Material / Sampled Feature / Object Type / Source)
@@ -98,15 +98,15 @@ not tens of MB. *(`buildSearchFilterSubstrate()` + `assets/js/search_substrate.j
 index contract in `SEARCH_INDEX_V1.md`.)*
 
 **Fallback path (`?fts=off`, and automatically for identifier queries):** the
-original `ILIKE`-style scan against `sample_facets_v3.parquet`'s description
+original `ILIKE`-style scan against `sample_facets_v4.parquet`'s description
 column:
 
 ```sql
-SELECT pid, label, source, place_name FROM read_parquet('sample_facets_v3.parquet')
+SELECT pid, label, source, place_name FROM read_parquet('sample_facets_v4.parquet')
 WHERE description ILIKE '%pottery%'
 ```
 *(`buildSearchFilter()` in `explorer.qmd`.)* This path downloads much more
-data on first search (the scan touches most of the ~60 MB file) but handles
+data on first search (the scan touches most of the ~69 MB file) but handles
 one thing the index cannot: **pasted identifiers** (ARK / IGSN / DOI — e.g.
 `ark:/28722/k2000hz7r`), which get exact-matched against the `pid` column.
 Identifier-looking queries are routed here automatically; you never need the
@@ -119,20 +119,20 @@ mode.
 
 ### ...view the Samples table
 
-The table pages through `samples_map_lite_v2.parquet` (coords/label/place/
-date) and, as of #311, joins in `sample_facets_v3.parquet` for
+The table pages through `samples_map_lite_v3.parquet` (coords/label/place/
+date) and, as of #311, joins in `sample_facets_v4.parquet` for
 material/object type/sampled feature — one query per page (default page
 size), not the whole result set:
 
 ```sql
 WITH page AS (
     SELECT pid, label, source, latitude, longitude, place_name, result_time
-    FROM read_parquet('samples_map_lite_v2.parquet')
+    FROM read_parquet('samples_map_lite_v3.parquet')
     WHERE <your active filters>
     ORDER BY pid LIMIT 50 OFFSET 0
 )
 SELECT page.*, f.material, f.context, f.object_type
-FROM page LEFT JOIN read_parquet('sample_facets_v3.parquet') AS f ON f.pid = page.pid
+FROM page LEFT JOIN read_parquet('sample_facets_v4.parquet') AS f ON f.pid = page.pid
 ```
 *(`loadPage()`, `explorer.qmd` ~line 2755-2775.)* "Download CSV" (#312) runs
 the same shape without the `LIMIT`/`OFFSET` (capped at 50,000 rows so an
@@ -151,7 +151,7 @@ LEFT JOIN read_parquet('vocab_labels.parquet') mat_lbl ON mat_lbl.uri = mat.pid
 WHERE s.pid = '<clicked pid>'
 ```
 This is the one query that reads from `wide.parquet` on click (everything
-above deliberately avoids touching the 280 MB wide file until you actually
+above deliberately avoids touching the 300 MB wide file until you actually
 need full detail on one sample).
 
 ## Try it yourself
@@ -170,7 +170,7 @@ GROUP BY n ORDER BY 2 DESC;
 -- the default path since 2026-07-17 probes the sharded search index instead
 -- (JS, not a single SQL statement — see SEARCH_INDEX_V1.md)
 SELECT pid, label, source
-FROM read_parquet('https://data.isamples.org/isamples_202608_sample_facets_v3.parquet')
+FROM read_parquet('https://data.isamples.org/isamples_202608_sample_facets_v4.parquet')
 WHERE description ILIKE '%pottery%'
 LIMIT 20;
 ```

@@ -36,7 +36,8 @@ Exactly what production `explorer.qmd` loads, all under `https://data.isamples.o
 
 The ~9-file facet family looks baroque but is load-bearing: it is the price of
 fast multi-filter counts with no server. See `EXPLORER_QUERIES.md` for how each
-is queried and `DATA_PROVENANCE.md` for how each is built.
+is queried and `DATA_PROVENANCE.md` for how the derived files are built (that
+doc covers the pre-#290/#304 substrate; see its coverage caveat).
 
 ## 2. Superseded versions (still served; do not use)
 

@@ -649,9 +649,9 @@ format:
 ::: {.callout-note collapse="true"}
 ## How It Works
 
-1. **Instant** (<1s): Pre-aggregated H3 res4 summary (580 KB) → 38K colored circles
+1. **Instant** (<1s): Pre-aggregated H3 res4 summary (0.5 MB) → 38K colored circles
 2. **Zoom in**: Automatically switches to res6 (112K) then res8 (176K) clusters
-3. **Zoom deeper** (<120 km): Individual sample points from 60 MB lite parquet
+3. **Zoom deeper** (<120 km): Individual sample points from 63 MB lite parquet
 4. **Click**: Cluster info or individual sample card with full metadata
 5. **Search**: Find samples by name — results fly to the location on the globe
 
@@ -2679,7 +2679,7 @@ phase1 = {
 // === Load facet summaries + SKOS prefLabels, populate filter checkboxes ===
 //
 // Checkbox value = full URI (matches the URI strings stored in
-// sample_facets_v2.parquet's material / context / object_type columns).
+// sample_facets_v4.parquet's material / context / object_type columns).
 // Display label = SKOS prefLabel (en) when available, URI tail otherwise.
 // Default state: UNCHECKED — empty = no filter.
 facetFilters = {
@@ -6042,7 +6042,7 @@ zoomWatcher = {
         // Compute the side-panel relevance score in the SAME scan that builds
         // the pid-set, and materialize the columns doSearch's results list
         // needs (label / source / place_name + score). This lets doSearch read
-        // the small search_pids table instead of RE-scanning the 63 MB facets
+        // the small search_pids table instead of RE-scanning the 69 MB facets
         // parquet — the old double-scan that pushed broad terms like "pottery"
         // past CI's 90s smoke budget. search_pids stays pid-keyed (one row per
         // unique pid), so every other surface's `pid IN (SELECT pid FROM
@@ -6621,7 +6621,7 @@ zoomWatcher = {
             // The search-term match + relevance score are already materialized
             // in `search_pids` by buildSearchFilter (aliased `s` below), so the
             // results SELECT and the follow-up COUNT both read that small table
-            // instead of re-scanning the 63 MB facets parquet — the old
+            // instead of re-scanning the 69 MB facets parquet — the old
             // double-scan (one in buildSearchFilter, one here) that pushed
             // broad terms like `pottery` past CI's 90s smoke budget. The single
             // remaining facets scan lives in buildSearchFilter.
@@ -7633,13 +7633,74 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 
 | Phase | Data | Size | Points |
 |-------|------|------|--------|
-| **Instant** | H3 res4 | 580 KB | 38K clusters (continental) |
-| **Zoom in** | H3 res6 | 1.6 MB | 112K clusters (city) |
-| **Zoom more** | H3 res8 | 2.5 MB | 176K clusters (neighborhood) |
-| **Zoom deep** | Map lite | 60 MB (range req.) | Up to 5K individual samples |
-| **Click sample** | Full dataset | ~280 MB (range req.) | Full metadata for 1 sample |
+| **Instant** | H3 res4 | 0.5 MB | 38K clusters (continental) |
+| **Zoom in** | H3 res6 | 1.3 MB | 112K clusters (city) |
+| **Zoom more** | H3 res8 | 2.0 MB | 176K clusters (neighborhood) |
+| **Zoom deep** | Map lite | 63 MB (range req.) | Up to 5K individual samples |
+| **Click sample** | Full dataset | 300 MB (range req.) | Full metadata for 1 sample |
 
-**4 parquet files, zero backend.** All queries run in your browser via DuckDB-WASM with HTTP range requests — only the bytes you need are transferred.
+*Sizes are decimal MB (10⁶ bytes), matching the manifest's byte counts.*
+
+**Static files, zero backend.** All queries run in your browser via DuckDB-WASM
+with HTTP range requests — only the bytes you need are transferred. The manifest
+directly inventories 21 objects — including five search-index sidecars — and
+summarizes the index's 847 shard files (256 base plus 591 hot); the index
+directory holds 852 objects in all. Any one view touches only a handful of them.
+The authoritative inventory is
+[`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
+(human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
+
+<!-- Coherence-audit follow-up (2026-08-05). Sizes are from the release manifest:
+     res4 505,651 B; res6 1,322,875 B; res8 2,009,510 B; map_lite_v3 62,924,115 B;
+     wide 300,303,095 B. Cluster counts verified against parquet row counts:
+     38,462 / 112,019 / 176,669 (the manifest does not carry row counts).
+
+     The previous figures (580 KB / 1.6 MB / 2.5 MB) were not invented — they are
+     correct for the **202601** snapshot (verified live: 594,541 / 1,627,502 /
+     2,543,412 B). This page describes the LIVE app, which serves **202608**, so it
+     had silently drifted a generation behind. Beware: a "wrong number" in this repo
+     may be a right number for a different release — always check which snapshot a
+     doc is describing before correcting it.
+
+     Scope of this pass (Codex review): explorer.qmd, EXPLORER_QUERIES.md and
+     index.qmd describe the CURRENT app and were corrected. SERIALIZATIONS.md,
+     how-to-use.qmd, data.qmd and tutorials/why_h3.qmd quote 202601 objects whose
+     BYTES are correct — those were deliberately left alone. They are NOT certified
+     clean, though: their surrounding present-tense prose still describes those
+     202601 files as the ones serving the Interactive Explorer, which is no longer
+     true. Rewording them as historical/archival is open follow-up work, not done
+     here. query-spec.qmd carries deeper drift still (stale filenames AND a
+     text-search narrative that predates the FTS substrate shipping as default on
+     2026-07-17); it now carries its own "known drift" banner rather than a silent
+     partial correction, because fixing it properly means re-stating semantics, not
+     renaming strings.
+
+     Units: decimal MB (10^6 B). The old row mixed conventions (580 KB was KiB
+     while 1.6/2.5 MB were decimal), which is how it read as self-consistent.
+     If you edit these, re-derive from the manifest — do not round from memory. -->
+
+::: {.callout-tip collapse="true"}
+## Check these numbers against the source
+
+Every **file-size** figure above comes from the published release manifest, which
+the Explorer also cross-checks at boot. (The cluster counts come from the parquet
+row counts — see below — and the timings, the 120 km threshold and the 5K point
+budget are properties of the app, not the data.) To re-derive the sizes without
+taking this page's word for it:
+
+```bash
+curl -s https://data.isamples.org/isamples_202608_release_manifest.json \
+  | jq '.files | to_entries[] | select(.key|test("h3_summary|_wide\\.|map_lite"))
+        | {file: .key, bytes: .value.size_bytes}'
+```
+
+Cluster counts come from the parquet row counts, not the manifest:
+
+```sql
+SELECT count(*) FROM read_parquet(
+  'https://data.isamples.org/isamples_202608_h3_summary_res4.parquet');
+```
+:::
 
 ## See Also
 
