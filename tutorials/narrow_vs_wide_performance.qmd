@@ -883,7 +883,7 @@ benchmark5 ? (benchmark5.error ? html`
 </tr>
 </thead>
 <tbody>
-<tr><td style="text-align: left;"><strong>Full scan (280MB)</strong></td>
+<tr><td style="text-align: left;"><strong>Full scan (292MB)</strong></td>
 <td>${benchmark5.fullScanCold.toFixed(0)} ms</td>
 <td>${benchmark5.fullScanMedian.toFixed(0)} ms</td>
 <td>${benchmark5.fullScanAll.map(t => t.toFixed(0)).join(', ')} ms</td></tr>

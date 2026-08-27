@@ -87,7 +87,7 @@ immutable; the alias rotates atomically when we rebuild. Use the alias for
 interactive work, the dated URL when you want a pinned, reproducible
 reference. The original
 [`isamples_202601_wide.parquet`](https://data.isamples.org/isamples_202601_wide.parquet)
-(278 MB, no thumbnails) is kept available for historical pinning.
+(292 MB, no thumbnails) is kept available for historical pinning.
 
 All three represent the same underlying data (SESAR + OpenContext + GEOME
 + Smithsonian) with identical semantics — they differ only in serialization
@@ -98,7 +98,7 @@ for a performance comparison.
 ### Pre-aggregated helpers {.unnumbered}
 
 Small lookup tables computed ahead of time so a page can render facets
-and counts instantly, without touching the 278 MB primary file:
+and counts instantly, without touching the 292 MB primary file:
 
 | File | Size | Contents | Use when… |
 |---|---:|---|---|
