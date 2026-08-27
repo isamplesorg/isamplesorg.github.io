@@ -28,4 +28,6 @@ jobs:
       - name: HEAD/Range/CORS/manifest contract against the live origin
         env:
           ISAMPLES_DATA_ORIGIN: https://data.isamples.org
-        run: pytest -q -rxX tests/test_data_origin_contract.py
+        # --runxfail: the #345 probe test is marked xfail until the shim is deployed; without
+        # this flag an xfailed contract still exits 0 and the gate cannot fail (Codex).
+        run: pytest -q --runxfail tests/test_data_origin_contract.py

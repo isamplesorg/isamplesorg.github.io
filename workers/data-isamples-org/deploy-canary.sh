@@ -73,7 +73,7 @@ echo
 echo "==> Waiting for the workers.dev route to propagate"
 ready=0
 for i in $(seq 1 30); do
-  code=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' --max-time 10 "$URL/")
+  code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "$URL/")
   if [ "$code" = "200" ]; then
     echo "  route live after ~$((i*2))s"
     ready=1
