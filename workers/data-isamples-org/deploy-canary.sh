@@ -56,6 +56,32 @@ fi
 echo "==> Canary URL: $URL"
 echo
 
+# --- wait for the workers.dev route to go live ------------------------------
+# A freshly deployed workers.dev hostname is NOT immediately routable: for the
+# first few seconds Cloudflare's edge answers 404 before the route propagates.
+# The first version of this script verified instantly and reported seven
+# confident failures against a Worker that was in fact perfectly healthy —
+# including "the shim has widened", which was simply untrue. Poll for readiness
+# before asserting anything.
+echo "==> Waiting for the workers.dev route to propagate"
+ready=0
+for i in $(seq 1 30); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$URL/")
+  if [ "$code" = "200" ]; then
+    echo "  route live after ~$((i*2))s"
+    ready=1
+    break
+  fi
+  sleep 2
+done
+if [ "$ready" -ne 1 ]; then
+  echo "  !! route still not answering 200 at $URL/ after ~60s."
+  echo "     Not asserting anything — a 404 here means 'not deployed yet',"
+  echo "     not 'the change is broken'. Re-run with --verify shortly."
+  exit 1
+fi
+echo
+
 # --- verify the handshake actually changed ---------------------------------
 fail=0
 ok() { printf "  ok   %s\n" "$1"; }
