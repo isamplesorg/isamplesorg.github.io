@@ -36,7 +36,14 @@ fi
 # --- deploy -----------------------------------------------------------------
 if [ "${1:-}" != "--verify" ]; then
   echo "==> Deploying canary (NO routes, workers.dev only)"
-  npx wrangler deploy -c wrangler.canary.toml | tee /tmp/canary_deploy.log
+  # Abort explicitly on a failed deploy. This script deliberately does not use
+  # `set -e` (several grep pipelines below are allowed to fail), so without this
+  # check a failed upload would fall through and verify an OLDER canary, then
+  # report success — the wrong answer with a confident face.
+  if ! npx wrangler deploy -c wrangler.canary.toml | tee /tmp/canary_deploy.log; then
+    echo "!! wrangler deploy failed — nothing verified, nothing promoted."
+    exit 1
+  fi
   echo
 fi
 
@@ -93,6 +100,10 @@ CR=$(curl -sI -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-range:
 [ "$S" = "206" ] && ok "HEAD+Range 'bytes=0-' -> 206" || no "HEAD+Range -> 206" "got $S"
 [ "$CR" = "bytes 0-$((PROBE_SIZE-1))/$PROBE_SIZE" ] && ok "Content-Range correct" \
   || no "Content-Range" "got '$CR'"
+# DuckDB-WASM accepts the probe on 206 + a usable Content-Length, so assert the
+# length too (a 206 with a wrong/missing length still means whole-file reads).
+CL=$(curl -sI -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-length:' | tr -d '\r' | awk '{print $2}')
+[ "$CL" = "$PROBE_SIZE" ] && ok "Content-Length == $PROBE_SIZE" || no "Content-Length" "got '$CL'"
 
 echo
 echo "==> Verifying the shim did NOT widen (these must stay standards-correct 200)"
