@@ -79,7 +79,7 @@ All tutorials query parquet files hosted on Cloudflare R2:
 // Wide format (recommended) - 280 MB, 20M rows
 const WIDE_URL = "https://data.isamples.org/isamples_202601_wide.parquet";
 
-// Narrow format (advanced) - 850 MB, 106M rows
+// Narrow format (advanced) - 850 MB, 101,387,180 rows
 const NARROW_URL = "https://data.isamples.org/isamples_202512_narrow.parquet";
 ```
 

@@ -18,7 +18,7 @@ The iSamples property graph data can be serialized in three different parquet fo
 
 | Format | Description | File Size | Row Count | Sources |
 |--------|-------------|-----------|-----------|---------|
-| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~850 MB | ~106M rows | All 4 sources |
+| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~850 MB | 101,387,180 rows | All 4 sources |
 | **Wide** | Stores relationships as `p__*` columns on entity rows | ~278 MB | ~20M rows | All 4 sources |
 | **Wide + H3** | Wide format + pre-computed H3 spatial indices (`h3_res4/6/8`) | ~292 MB | ~20M rows | All 4 sources |
 
