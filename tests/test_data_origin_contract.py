@@ -99,14 +99,10 @@ def test_cors_exposes_headers_the_explorer_must_read():
     assert r.headers.get("Access-Control-Allow-Origin") in ("*", PAGE_ORIGIN)
 
 
-@pytest.mark.xfail(
-    reason="#345 shim not deployed yet — remove this marker once the Worker "
-           "change is live on data.isamples.org. Until then the Explorer "
-           "downloads whole files (~74 MB before the facets are usable, instead of ~3.5 MB; "
-           "the full-boot total is a separate matter — see #351).",
-    strict=False,
-)
 def test_duckdb_124_head_range_compatibility():
+    # The #345 shim went live on data.isamples.org on 2026-08-27 (Worker version
+    # 6f8170a7…); this test is now a hard gate. If it fails, DuckDB-WASM is back to
+    # downloading whole files (~74 MB before the facets are usable) — see #345/#351.
     """DuckDB-WASM 1.24.0's range-support probe must be answered with 206.
 
     *** THIS ASSERTS A DELIBERATE STANDARDS DIVERGENCE. ***
