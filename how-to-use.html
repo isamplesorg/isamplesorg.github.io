@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-0944b910a2fba5e745fe8cb6da1db39f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-b441d67de2a47843d9aa327396f88357.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -435,31 +435,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="https://data.isamples.org/current/wide.parquet"><code>current/wide.parquet</code></a> ∗</td>
 <td style="text-align: right;">292 MB</td>
 <td>Wide (one row per entity, nested relationships in <code>p__*</code> array columns)</td>
-<td style="text-align: right;">20 M</td>
+<td style="text-align: right;">20.7 M</td>
 <td>General entity queries, UI filtering, description text</td>
 </tr>
 <tr class="even">
 <td><a href="https://data.isamples.org/isamples_202601_wide_h3.parquet"><code>isamples_202601_wide_h3.parquet</code></a></td>
-<td style="text-align: right;">292 MB</td>
+<td style="text-align: right;">307 MB</td>
 <td>Wide + H3 BIGINT indices (<code>h3_res4</code>, <code>h3_res6</code>, <code>h3_res8</code>)</td>
-<td style="text-align: right;">20 M</td>
+<td style="text-align: right;">20.7 M</td>
 <td>Geospatial queries with H3 clustering at arbitrary zoom</td>
 </tr>
 <tr class="odd">
 <td><a href="https://data.isamples.org/isamples_202512_narrow.parquet"><code>isamples_202512_narrow.parquet</code></a></td>
-<td style="text-align: right;">820 MB</td>
+<td style="text-align: right;">860 MB</td>
 <td>Narrow (graph: nodes + explicit <code>_edge_</code> rows, s/p/o/n fields)</td>
-<td style="text-align: right;">106 M</td>
+<td style="text-align: right;">101,387,180</td>
 <td>Graph traversals, relationship-centric analysis, PQG work</td>
 </tr>
 </tbody>
 </table>
-<p>∗ <code>/current/wide.parquet</code> is a stable alias that HTTP 302-redirects to the latest dated file (currently <a href="https://data.isamples.org/isamples_202604_wide.parquet"><code>isamples_202604_wide.parquet</code></a>, enriched with ~47 K OpenContext thumbnails). The dated filename is immutable; the alias rotates atomically when we rebuild. Use the alias for interactive work, the dated URL when you want a pinned, reproducible reference. The original <a href="https://data.isamples.org/isamples_202601_wide.parquet"><code>isamples_202601_wide.parquet</code></a> (278 MB, no thumbnails) is kept available for historical pinning.</p>
+<p>∗ <code>/current/wide.parquet</code> is a stable alias that HTTP 302-redirects to the latest dated file (currently <a href="https://data.isamples.org/isamples_202604_wide.parquet"><code>isamples_202604_wide.parquet</code></a>, enriched with ~47 K OpenContext thumbnails). The dated filename is immutable; the alias rotates atomically when we rebuild. Use the alias for interactive work, the dated URL when you want a pinned, reproducible reference. The original <a href="https://data.isamples.org/isamples_202601_wide.parquet"><code>isamples_202601_wide.parquet</code></a> (292 MB, no thumbnails) is kept available for historical pinning.</p>
 <p>All three represent the same underlying data (SESAR + OpenContext + GEOME + Smithsonian) with identical semantics — they differ only in serialization strategy. See the <a href="./tutorials/narrow_vs_wide_performance.html">Technical: Narrow vs Wide tutorial</a> for a performance comparison.</p>
 </section>
 <section id="pre-aggregated-helpers" class="level3 unnumbered">
 <h3 class="unnumbered" data-anchor-id="pre-aggregated-helpers">Pre-aggregated helpers</h3>
-<p>Small lookup tables computed ahead of time so a page can render facets and counts instantly, without touching the 278 MB primary file:</p>
+<p>Small lookup tables computed ahead of time so a page can render facets and counts instantly, without touching the 292 MB primary file:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">

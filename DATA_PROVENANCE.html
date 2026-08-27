@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-0944b910a2fba5e745fe8cb6da1db39f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-b441d67de2a47843d9aa327396f88357.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -301,7 +301,7 @@ STAGE 0/1  export_client → JSONL → GeoParquet                               
    → isamples_export_*_geo.parquet   (Export format; ~300MB, 6.7M; Zenodo doi:10.5281/zenodo.15278211)
    ▼
 STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
-   →  narrow (…_narrow.parquet, ~844MB, 106M rows)   and   wide (…_wide.parquet, ~282MB, 20M rows)
+   →  narrow (…_narrow.parquet, ~860MB, 101,387,180 rows)   and   wide (…_wide.parquet, ~292MB, 20.7M rows)
    ▼
 STAGE 3  sidecar/enrichment merges (LEFT JOIN by pid)       ← Eric's independently-maintained OC PQG (GCS)
    3a scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)
