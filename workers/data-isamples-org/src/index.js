@@ -136,7 +136,7 @@ export default {
       // pins) decides whether a server supports partial reads by sending
       // exactly `HEAD` + `Range: bytes=0-` and requiring 206. On a 200 it logs
       // "falling back to full HTTP read" and downloads WHOLE FILES. Measured on
-      // the live Explorer: 74 MB on a cold load instead of ~3 MB, and the facet
+      // the live Explorer: 74 MB before the page is usable instead of ~3.5 MB, and the facet
       // panel taking 7 minutes on 3G instead of 1.5 (never, on slow 3G).
       //
       // Scope is deliberately as tight as it can be:

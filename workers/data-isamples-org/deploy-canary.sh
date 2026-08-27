@@ -137,7 +137,9 @@ echo "  python tests/playwright/bandwidth_matrix.py $STAGING \\"
 echo "      --profiles unthrottled,3g-fast --budget 600 \\"
 echo "      --query \"?data_base=$URL\""
 echo
-echo "Expect: ~3 MB instead of ~74 MB, and 0 'full HTTP read' fallbacks."
+echo "Expect: ~3.5 MB until the facets are usable (instead of ~74 MB) and 0 'full HTTP read'"
+echo "fallbacks. NOTE the harness stops at the milestones: the full boot still streams the 63 MB"
+echo "map file afterwards — twice, via range reads — so the 60 s total is ~130 MB (#351)."
 echo
 echo "Tear down when done:   $0 --teardown"
 echo "───────────────────────────────────────────────────────────────"

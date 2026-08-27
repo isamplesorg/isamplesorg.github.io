@@ -4,7 +4,7 @@
 # Exists because of #345: the Worker answered 200 to a HEAD carrying a Range header,
 # which is the exact probe DuckDB-WASM uses to decide whether a server supports
 # partial reads. Answering 200 made it download whole files — 74 MB on a cold
-# Explorer load instead of ~3 MB.
+# Explorer load before anything is usable, instead of ~3.5 MB (full-boot total: see #351).
 #
 # Setup (once):
 #   curl -H 'User-Agent: isamples-worker-test/1.0' \

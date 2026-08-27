@@ -5,7 +5,8 @@ WHY THIS FILE EXISTS
 --------------------
 The Explorer's whole architecture rests on one assumption: DuckDB-WASM fetches
 only the byte ranges a query touches. In August 2026 we discovered that had been
-silently false — a cold load transferred **~74 MB instead of ~3 MB** because
+silently false — a cold load transferred **~74 MB before anything was usable, instead
+of ~3.5 MB** because
 DuckDB's range-support probe was answered in a way it did not accept, so it fell
 back to downloading whole files (#345).
 
@@ -101,7 +102,8 @@ def test_cors_exposes_headers_the_explorer_must_read():
 @pytest.mark.xfail(
     reason="#345 shim not deployed yet — remove this marker once the Worker "
            "change is live on data.isamples.org. Until then the Explorer "
-           "downloads whole files (~74 MB cold instead of ~3 MB).",
+           "downloads whole files (~74 MB before the facets are usable, instead of ~3.5 MB; "
+           "the full-boot total is a separate matter — see #351).",
     strict=False,
 )
 def test_duckdb_124_head_range_compatibility():
