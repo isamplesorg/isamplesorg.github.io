@@ -76,7 +76,7 @@ Updating dependencies using `pip -U <<package name>>` and regenerate `requiremen
 All tutorials query parquet files hosted on Cloudflare R2:
 
 ```javascript
-// Wide format (recommended) - 292 MB, 20M rows
+// Wide format (recommended) - 292 MB, 20.7M rows
 const WIDE_URL = "https://data.isamples.org/isamples_202601_wide.parquet";
 
 // Narrow format (advanced) - 860 MB, 101,387,180 rows
