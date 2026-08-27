@@ -125,6 +125,40 @@ export default {
 
     if (request.method === 'HEAD') {
       headers.set('Content-Length', String(object.size));
+
+      // === #345 compatibility shim — a KNOWING, NARROW standards divergence ===
+      //
+      // RFC 9110 §14.2: Range is defined only for GET, and a server MUST IGNORE
+      // Range on other methods including HEAD. So plain `200` here is CORRECT,
+      // and everything below is a deliberate exception, not a bug fix.
+      //
+      // Why we make it: DuckDB-WASM 1.24.0 (the version Quarto's OJS runtime
+      // pins) decides whether a server supports partial reads by sending
+      // exactly `HEAD` + `Range: bytes=0-` and requiring 206. On a 200 it logs
+      // "falling back to full HTTP read" and downloads WHOLE FILES. Measured on
+      // the live Explorer: 74 MB before the page is usable instead of ~3.5 MB, and the facet
+      // panel taking 7 minutes on 3G instead of 1.5 (never, on slow 3G).
+      //
+      // Scope is deliberately as tight as it can be:
+      //   - ONLY the exact probe shape `bytes=0-` (open-ended from zero)
+      //   - any other ranged HEAD (bytes=0-99, bytes=100-199, bytes=-100)
+      //     stays standards-correct at 200, so the divergence cannot leak to
+      //     other clients or become an accidental contract
+      //
+      // REMOVAL PATH: delete this block once the Explorer no longer depends on
+      // that probe — i.e. when it stops using Quarto's pinned duckdb-wasm and
+      // does its own init on a version whose capability probe is conformant.
+      // Tracked in isamplesorg/isamplesorg.github.io#345.
+      //
+      // Note: if Workers Caching is ever enabled on this Worker, Cloudflare
+      // strips Range before invoking us and slices its own 206s — this shim
+      // would need re-testing (and may become unnecessary or ineffective).
+      const isDuckDbProbe = rangeHeader && /^bytes=0-$/.test(rangeHeader.trim());
+      if (isDuckDbProbe && typeof object.size === 'number' && object.size > 0) {
+        headers.set('Content-Range', `bytes 0-${object.size - 1}/${object.size}`);
+        return new Response(null, { status: 206, headers });
+      }
+
       return new Response(null, { status: 200, headers });
     }
 
