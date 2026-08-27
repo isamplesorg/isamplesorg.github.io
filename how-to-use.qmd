@@ -76,8 +76,8 @@ The two main files carrying the sample records themselves:
 | File | Size | Shape | Rows | Use when you need… |
 |---|---:|---|---:|---|
 | [`current/wide.parquet`](https://data.isamples.org/current/wide.parquet) ∗ | 292 MB | Wide (one row per entity, nested relationships in `p__*` array columns) | 20 M | General entity queries, UI filtering, description text |
-| [`isamples_202601_wide_h3.parquet`](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 292 MB | Wide + H3 BIGINT indices (`h3_res4`, `h3_res6`, `h3_res8`) | 20 M | Geospatial queries with H3 clustering at arbitrary zoom |
-| [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 820 MB | Narrow (graph: nodes + explicit `_edge_` rows, s/p/o/n fields) | 101,387,180 | Graph traversals, relationship-centric analysis, PQG work |
+| [`isamples_202601_wide_h3.parquet`](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 307 MB | Wide + H3 BIGINT indices (`h3_res4`, `h3_res6`, `h3_res8`) | 20 M | Geospatial queries with H3 clustering at arbitrary zoom |
+| [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 860 MB | Narrow (graph: nodes + explicit `_edge_` rows, s/p/o/n fields) | 101,387,180 | Graph traversals, relationship-centric analysis, PQG work |
 
 ∗ `/current/wide.parquet` is a stable alias that HTTP 302-redirects to the
 latest dated file (currently

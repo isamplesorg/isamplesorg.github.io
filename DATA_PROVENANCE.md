@@ -30,7 +30,7 @@ STAGE 0/1  export_client → JSONL → GeoParquet                               
    → isamples_export_*_geo.parquet   (Export format; ~300MB, 6.7M; Zenodo doi:10.5281/zenodo.15278211)
    ▼
 STAGE 2  pqg/pqg/sql_converter.py  (export → base PQG; 7-stage DuckDB SQL)
-   →  narrow (…_narrow.parquet, ~844MB, 101,387,180 rows)   and   wide (…_wide.parquet, ~282MB, 20M rows)
+   →  narrow (…_narrow.parquet, ~860MB, 101,387,180 rows)   and   wide (…_wide.parquet, ~292MB, 20M rows)
    ▼
 STAGE 3  sidecar/enrichment merges (LEFT JOIN by pid)       ← Eric's independently-maintained OC PQG (GCS)
    3a scripts/enrich_wide_with_oc_thumbnails.py  →  isamples_202604_wide.parquet (+47K thumbnails)

@@ -18,9 +18,9 @@ The iSamples property graph data can be serialized in three different parquet fo
 
 | Format | Description | File Size | Row Count | Sources |
 |--------|-------------|-----------|-----------|---------|
-| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~850 MB | 101,387,180 rows | All 4 sources |
-| **Wide** | Stores relationships as `p__*` columns on entity rows | ~278 MB | ~20M rows | All 4 sources |
-| **Wide + H3** | Wide format + pre-computed H3 spatial indices (`h3_res4/6/8`) | ~292 MB | ~20M rows | All 4 sources |
+| **Narrow** | Stores relationships as separate edge rows (`otype='_edge_'`) | ~860 MB | 101,387,180 rows | All 4 sources |
+| **Wide** | Stores relationships as `p__*` columns on entity rows | ~292 MB | ~20M rows | All 4 sources |
+| **Wide + H3** | Wide format + pre-computed H3 spatial indices (`h3_res4/6/8`) | ~307 MB | ~20M rows | All 4 sources |
 
 All three formats represent the **same underlying data** (SESAR, OpenContext, GEOME, Smithsonian) with identical semantics. The wide format eliminates edge rows; the H3 variant adds pre-computed hexagonal spatial indices for accelerated geospatial queries.
 
@@ -249,7 +249,7 @@ validityCheck ? (validityCheck.error ? html`
 <tr><td><strong>Wide+H3 samples:</strong></td><td>${validityCheck.wideH3Samples.toLocaleString()}</td></tr>
 <tr><td><strong>Sample count match (all 3):</strong></td><td>${validityCheck.sampleMatch ? '✅ Yes' : '❌ No'}</td></tr>
 </table>
-<p><em>The wide schema has ~79% fewer rows because edge rows are eliminated. The H3 variant adds 3 spatial index columns (h3_res4/6/8).</em></p>
+<p><em>The wide schema has ~80% fewer rows because edge rows are eliminated. The H3 variant adds 3 spatial index columns (h3_res4/6/8).</em></p>
 </div>
 `) : html`<p><em>Click "Run All Benchmarks" to check data validity</em></p>`
 ```
@@ -1037,7 +1037,7 @@ ${allResults.facetBenchmark && !allResults.facetBenchmark.error ? html`
 | **Browser caching** | First run is "cold" (metadata not cached), subsequent runs are "warm" |
 | **Network variability** | We run 3 iterations and report the warm-run median (exclude cold run) |
 | **JIT compilation** | First run includes JIT overhead; warm runs are more representative |
-| **Memory limits** | 691 MB narrow file may stress browser memory; wide format is safer |
+| **Memory limits** | 860 MB narrow file may stress browser memory; wide format is safer |
 
 ### Schema Differences
 
@@ -1059,7 +1059,7 @@ ${allResults.facetBenchmark && !allResults.facetBenchmark.error ? html`
 {..., h3_res4: 595536348953485311, h3_res6: 604265133842685951, h3_res8: 613003918731886591}
 ```
 
-The wide format eliminates ~9M edge rows (60% file size reduction). The H3 variant adds ~14MB for spatial index columns that enable cell-based geospatial filtering.
+The wide format eliminates ~81M edge rows (~66% file size reduction: 860 MB → 292 MB). The H3 variant adds ~14MB for spatial index columns that enable cell-based geospatial filtering.
 
 **Facet summaries** (2KB) pre-compute common aggregations:
 ```sql
