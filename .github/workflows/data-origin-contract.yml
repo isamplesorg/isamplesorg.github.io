@@ -1,0 +1,31 @@
+# Cheap HTTP contract check for data.isamples.org — the gate that would have
+# caught #345 (DuckDB-WASM silently downloading whole files). No browser, no
+# DuckDB, a few KB on the wire. Runs on every push to main, on PRs that touch the
+# Worker or the test, and daily — the origin can regress without a commit.
+name: data-origin-contract
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'workers/data-isamples-org/**'
+      - 'tests/test_data_origin_contract.py'
+      - 'isamples_202608_release_manifest.json'
+      - '.github/workflows/data-origin-contract.yml'
+  schedule:
+    - cron: '17 6 * * *'   # daily 06:17 UTC
+  workflow_dispatch:
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --quiet pytest requests
+      - name: HEAD/Range/CORS/manifest contract against the live origin
+        env:
+          ISAMPLES_DATA_ORIGIN: https://data.isamples.org
+        run: pytest -q -rxX tests/test_data_origin_contract.py

@@ -73,7 +73,7 @@ echo
 echo "==> Waiting for the workers.dev route to propagate"
 ready=0
 for i in $(seq 1 30); do
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$URL/")
+  code=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' --max-time 10 "$URL/")
   if [ "$code" = "200" ]; then
     echo "  route live after ~$((i*2))s"
     ready=1
@@ -95,28 +95,28 @@ ok() { printf "  ok   %s\n" "$1"; }
 no() { printf "  FAIL %s (%s)\n" "$1" "$2"; fail=1; }
 
 echo "==> Verifying the DuckDB probe now gets 206"
-S=$(curl -s -o /dev/null -w '%{http_code}' -I -H 'Range: bytes=0-' "$URL/$PROBE_FILE")
-CR=$(curl -sI -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-range:' | tr -d '\r' | cut -d' ' -f2-)
+S=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' -I -H 'Range: bytes=0-' "$URL/$PROBE_FILE")
+CR=$(curl -s --max-time 20 -I -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-range:' | tr -d '\r' | cut -d' ' -f2-)
 [ "$S" = "206" ] && ok "HEAD+Range 'bytes=0-' -> 206" || no "HEAD+Range -> 206" "got $S"
 [ "$CR" = "bytes 0-$((PROBE_SIZE-1))/$PROBE_SIZE" ] && ok "Content-Range correct" \
   || no "Content-Range" "got '$CR'"
 # DuckDB-WASM accepts the probe on 206 + a usable Content-Length, so assert the
 # length too (a 206 with a wrong/missing length still means whole-file reads).
-CL=$(curl -sI -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-length:' | tr -d '\r' | awk '{print $2}')
+CL=$(curl -s --max-time 20 -I -H 'Range: bytes=0-' "$URL/$PROBE_FILE" | grep -i '^content-length:' | tr -d '\r' | awk '{print $2}')
 [ "$CL" = "$PROBE_SIZE" ] && ok "Content-Length == $PROBE_SIZE" || no "Content-Length" "got '$CL'"
 
 echo
 echo "==> Verifying the shim did NOT widen (these must stay standards-correct 200)"
 for R in 'bytes=0-99' 'bytes=100-199' 'bytes=-100'; do
-  S=$(curl -s -o /dev/null -w '%{http_code}' -I -H "Range: $R" "$URL/$PROBE_FILE")
+  S=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' -I -H "Range: $R" "$URL/$PROBE_FILE")
   [ "$S" = "200" ] && ok "HEAD '$R' -> 200" || no "HEAD '$R' -> 200" "got $S"
 done
 
 echo
 echo "==> Verifying GET paths unchanged"
-S=$(curl -s -o /dev/null -w '%{http_code}' -H 'Range: bytes=0-99' "$URL/$PROBE_FILE")
+S=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' -H 'Range: bytes=0-99' "$URL/$PROBE_FILE")
 [ "$S" = "206" ] && ok "ranged GET -> 206" || no "ranged GET -> 206" "got $S"
-S=$(curl -s -o /dev/null -w '%{http_code}' "$URL/$PROBE_FILE")
+S=$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' "$URL/$PROBE_FILE")
 [ "$S" = "200" ] && ok "plain GET -> 200" || no "plain GET -> 200" "got $S"
 
 echo
