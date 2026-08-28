@@ -22,6 +22,9 @@ Output columns:
     alt_labels   list   skos:altLabel values plus prefLabels from any
                         cross-vocab redeclarations of the same URI.
     source_ttl   str    URL of the TTL the canonical row came from.
+    broader      str?   canonical skos:broader parent (lexicographically first
+                        when a concept has several; see broader_count)
+    broader_count int   number of skos:broader parents declared
 
 The dual-form (vocab + data_v1) emission is a workaround for a known
 mismatch: the vocabulary TTLs declare concepts without a version segment,
@@ -40,7 +43,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import platform
 import subprocess
 import sys
@@ -159,20 +161,17 @@ def _prefers(ttl_url: str, concept_uri: str) -> int:
 
 def _pick_definition(g: rdflib.Graph, c: rdflib.term.Node) -> str | None:
     """Return one definition string, preferring English when present."""
-    defs = list(g.objects(c, SKOS.definition))
-    if not defs:
-        return None
-    for d in defs:
-        if getattr(d, "language", None) == PREFERRED_LANG:
-            return str(d)
-    return str(defs[0])
+    # Lexical order within each language tier so the choice is a function of
+    # the TTL content, not of rdflib's traversal order.
+    defs = sorted(g.objects(c, SKOS.definition),
+                  key=lambda d: (getattr(d, "language", None) != PREFERRED_LANG, str(d)))
+    return str(defs[0]) if defs else None
 
 
 def _pick_scheme(g: rdflib.Graph, c: rdflib.term.Node) -> str | None:
     """Return the skos:inScheme URI for a concept, if declared."""
-    for s in g.objects(c, SKOS.inScheme):
-        return str(s)
-    return None
+    schemes = sorted(str(s) for s in g.objects(c, SKOS.inScheme))
+    return schemes[0] if schemes else None
 
 
 def extract_rows(ttl_url: str, local_path: Path | None = None) -> list[dict]:
@@ -181,7 +180,9 @@ def extract_rows(ttl_url: str, local_path: Path | None = None) -> list[dict]:
     file instead of the network (reproducible builds, --ttl-dir)."""
     g = rdflib.Graph()
     if local_path is not None:
-        g.parse(data=local_path.read_bytes(), format="turtle")
+        # publicID keeps the canonical URL as the base IRI, so any relative
+        # IRI in the file resolves exactly as it does when fetched from main.
+        g.parse(data=local_path.read_bytes(), format="turtle", publicID=ttl_url)
     else:
         g.parse(ttl_url, format="turtle")
 
@@ -201,9 +202,11 @@ def extract_rows(ttl_url: str, local_path: Path | None = None) -> list[dict]:
         broader_count = len(broaders)
 
         # One row per language of skos:prefLabel; fall back to rdfs:label.
-        pref_labels = list(g.objects(c, SKOS.prefLabel))
+        # Sorted by (language, text): a concept with two same-language labels
+        # then yields a deterministic winner in _dedupe (see its tiebreak).
+        pref_labels = sorted(g.objects(c, SKOS.prefLabel), key=lambda l: (str(getattr(l, "language", None) or ""), str(l)))
         if not pref_labels:
-            pref_labels = list(g.objects(c, RDFS.label))
+            pref_labels = sorted(g.objects(c, RDFS.label), key=lambda l: (str(getattr(l, "language", None) or ""), str(l)))
 
         if not pref_labels:
             # Concept with no label at all — emit a row with NULL label so
@@ -257,7 +260,7 @@ def _dedupe(rows: list[dict]) -> list[dict]:
         if len(candidates) == 1:
             out.append(candidates[0])
             continue
-        candidates.sort(key=lambda r: (_prefers(r["source_ttl"], r["uri"]), r["source_ttl"]))
+        candidates.sort(key=lambda r: (_prefers(r["source_ttl"], r["uri"]), r["source_ttl"], r["pref_label"] or ""))
         keep = dict(candidates[0])
         extra = []
         for loser in candidates[1:]:
@@ -364,33 +367,58 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("--no-manifest", action="store_true", help="skip writing {output}.manifest.json")
     args = ap.parse_args(argv)
+    effective_args = list(argv) if argv is not None else sys.argv[1:]
 
     t_start = time.time()
-    ttl_inputs: list[dict] = []
+    # A pinned build = every one of the 10 TTLs read from the archive AND verified
+    # against ttl_archive.json (sha256 + commit). Anything less is not "pinned".
+    if (args.ttl_dir is None) != (args.ttl_archive is None):
+        print("ERROR: --ttl-dir and --ttl-archive must be given together", file=sys.stderr)
+        return 2
     archive_index: dict[str, dict] = {}
     if args.ttl_archive:
-        for rec in json.loads(args.ttl_archive.read_text()):
+        recs = json.loads(args.ttl_archive.read_text())
+        for rec in recs:
+            if rec["source_ttl"] in archive_index:
+                print(f"ERROR: duplicate record in {args.ttl_archive}: {rec['source_ttl']}", file=sys.stderr)
+                return 2
             archive_index[rec["source_ttl"]] = rec
+        missing = [u for u in VOCAB_TTLS if u not in archive_index]
+        extra = [u for u in archive_index if u not in VOCAB_TTLS]
+        if missing or extra:
+            print(f"ERROR: {args.ttl_archive} does not describe exactly the {len(VOCAB_TTLS)} expected TTLs "
+                  f"(missing {len(missing)}, unexpected {len(extra)})", file=sys.stderr)
+            for u in missing: print(f"  missing: {u}", file=sys.stderr)
+            for u in extra: print(f"  unexpected: {u}", file=sys.stderr)
+            return 2
 
+    ttl_inputs: list[dict] = []          # only TTLs whose rows are IN the output
     all_rows: list[dict] = []
     failures: list[tuple[str, str]] = []
     for url in VOCAB_TTLS:
+        local = None
+        if args.ttl_dir is not None:
+            # Archive integrity is never "partial": a missing or altered file is fatal.
+            local = _local_ttl_path(args.ttl_dir, url)
+            if not local.exists():
+                print(f"ERROR: archived TTL missing: {local}", file=sys.stderr)
+                return 2
+            digest = _sha256(local)
+            rec = archive_index[url]
+            if rec.get("sha256") != digest:
+                print(f"ERROR: archived TTL sha256 {digest[:12]}… != ttl_archive.json {str(rec.get('sha256'))[:12]}… for {local}",
+                      file=sys.stderr)
+                return 2
         try:
             n_before = len(all_rows)
-            local = None
-            if args.ttl_dir is not None:
-                local = _local_ttl_path(args.ttl_dir, url)
-                if not local.exists():
-                    raise FileNotFoundError(f"archived TTL missing: {local}")
-                digest = _sha256(local)
-                rec = archive_index.get(url)
-                if rec and rec.get("sha256") != digest:
-                    raise ValueError(f"archived TTL sha256 {digest[:12]} != ttl_archive.json {rec['sha256'][:12]} for {local}")
+            rows = extract_rows(url, local)
+            all_rows.extend(rows)
+            if local is not None:
                 ttl_inputs.append({"source_ttl": url, "local_path": str(local), "bytes": local.stat().st_size,
-                                   "sha256": digest, "commit": (rec or {}).get("commit")})
+                                   "sha256": digest, "commit": archive_index[url].get("commit"), "rows": len(rows)})
             else:
-                ttl_inputs.append({"source_ttl": url, "local_path": None, "note": "fetched live from main (NOT pinned)"})
-            all_rows.extend(extract_rows(url, local))
+                ttl_inputs.append({"source_ttl": url, "local_path": None, "rows": len(rows),
+                                   "note": "fetched live from main (NOT pinned)"})
             print(f"  {len(all_rows) - n_before:>4} rows  {url}{'  [archived]' if local else ''}")
         except Exception as e:
             print(f"WARN: failed to parse {url}: {e}", file=sys.stderr)
@@ -439,16 +467,21 @@ def main(argv: list[str] | None = None) -> int:
     all_rows.extend(aliases)
 
     df = pd.DataFrame(all_rows)
-    # Explicit total order (reproducibility): rdflib's traversal order happens to
-    # be stable for identical bytes, but nothing guarantees it across rdflib
-    # versions. Sort rows by (uri_form, uri, lang, source_ttl) and each row's
-    # alt_labels list, so the artifact is a function of the TTL bytes alone.
+    # Explicit total order: rows by (uri_form, uri, lang, source_ttl) — unique
+    # once the duplicate check below passes — and each row's alt_labels sorted.
+    # Together with the deterministic selectors above (definition, scheme,
+    # prefLabel, broader) the rows are a function of the TTL bytes + this
+    # script; the Parquet BYTES are additionally a function of the pandas/
+    # pyarrow writer versions recorded in the manifest.
     df["alt_labels"] = df["alt_labels"].apply(lambda v: sorted(v) if isinstance(v, list) else v)
     df = df.sort_values(["uri_form", "uri", "lang", "source_ttl"], kind="mergesort", na_position="last").reset_index(drop=True)
     # Final sanity check
-    dupes = df.duplicated(subset=["uri", "lang"], keep=False).sum()
+    dupes = int(df.duplicated(subset=["uri", "lang"], keep=False).sum())
     if dupes:
-        print(f"WARN: {dupes} duplicate (uri, lang) rows survived dedupe", file=sys.stderr)
+        # With duplicates the (uri_form, uri, lang, source_ttl) order is no longer
+        # total and the artifact would not be a function of its inputs — refuse.
+        print(f"ERROR: {dupes} duplicate (uri, lang) rows survived dedupe; refusing to emit", file=sys.stderr)
+        return 4
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(args.output, index=False)
@@ -474,16 +507,22 @@ def main(argv: list[str] | None = None) -> int:
         manifest = {
             "script": Path(__file__).name,
             "script_sha256": _sha256(Path(__file__).resolve()),
-            "argv": sys.argv,
+            "args": effective_args,
             "git_sha": _git_sha(),
-            "git_dirty": _git_dirty(),
+            "script_dirty_vs_git_sha": _git_dirty(),
             "environment": {"python": platform.python_version(), "platform": platform.platform(),
                             "rdflib": rdflib.__version__, "pandas": pd.__version__, "pyarrow": pyarrow.__version__},
-            "policy": ("SKOS prefLabels/altLabels/definitions/broader from the 10 vocabulary TTLs; cross-vocab dedupe; "
-                       "/1.0/ data-form aliases; rows sorted by (uri_form, uri, lang, source_ttl), alt_labels sorted. "
-                       "Reproducible when built with --ttl-dir from the archived TTLs (provenance/inputs_202609_frozen.json)."),
-            "pinned": args.ttl_dir is not None,
-            "inputs": {"ttls": ttl_inputs, "manual_overrides": len(MANUAL_LABEL_OVERRIDES)},
+            "policy": ("SKOS prefLabels/altLabels/definitions/broader from the expected vocabulary TTLs; deterministic "
+                       "selectors (lexical tiebreaks); cross-vocab dedupe; /1.0/ data-form aliases; rows sorted by "
+                       "(uri_form, uri, lang, source_ttl), alt_labels sorted; duplicate (uri, lang) is fatal. "
+                       "Rows are a function of the TTL bytes + this script; Parquet bytes additionally of the recorded "
+                       "pandas/pyarrow versions. This manifest itself (args, paths, elapsed) is not byte-reproducible."),
+            "pinned": args.ttl_dir is not None and not failures and len(ttl_inputs) == len(VOCAB_TTLS),
+            "archive_verified": args.ttl_dir is not None,
+            "complete": not failures,
+            "inputs": {"expected_ttls": len(VOCAB_TTLS), "ttls": ttl_inputs,
+                       "failed": [{"source_ttl": u, "error": e} for u, e in failures],
+                       "manual_overrides": len(MANUAL_LABEL_OVERRIDES)},
             "counts": {"rows": int(len(df)), "unique_uris": int(df["uri"].nunique()),
                        "by_uri_form": {k: int(v) for k, v in df["uri_form"].value_counts().to_dict().items()}},
             "output": {"path": str(args.output), "bytes": args.output.stat().st_size, "sha256": _sha256(args.output)},
