@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -172,6 +173,7 @@ def main() -> int:
     # 256 default: the 202608 corpus yields ~570 MB of non-hot base rows;
     # 64 shards made ~9 MB base files against the 5 MB cap. 256 → ~2.2 MB
     # average with headroom for growth (v1.5 event/site fields).
+    ap.add_argument("--force", action="store_true", help="replace a non-empty output index directory")
     ap.add_argument("--shards", type=int, default=256)
     ap.add_argument("--shard-cap-mb", type=float, default=5.0)
     ap.add_argument("--batch-rows", type=int, default=200_000)
@@ -179,6 +181,15 @@ def main() -> int:
 
     t0 = time.time()
     out_root = Path(args.outdir) / f"{args.tag}_search_index_v1"
+    # Reproducibility: the directory's byte inventory must come from THIS build only.
+    # A previous build could leave obsolete hot/ keys, higher _pN sub-files, or
+    # base shards beyond --shards, which no manifest would mention. Refuse a
+    # non-empty target unless --force, which removes it first.
+    if out_root.exists() and any(out_root.iterdir()):
+        if not args.force:
+            print(f'ERROR: {out_root} exists and is not empty; pass --force to replace it', file=sys.stderr)
+            return 2
+        shutil.rmtree(out_root)
     out_root.mkdir(parents=True, exist_ok=True)
 
     con = duckdb.connect()
@@ -574,7 +585,7 @@ def main() -> int:
 
     top_df = con.sql(f"""
         SELECT token, count(*) AS df FROM read_parquet('{rows_glob}')
-        GROUP BY token ORDER BY df DESC LIMIT 20
+        GROUP BY token ORDER BY df DESC, token ASC LIMIT 20
     """).fetchall()
     total_uncompressed = con.sql(f"""
         SELECT sum(len(token) + len(pid) + len(field) + 4)
