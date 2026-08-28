@@ -846,6 +846,8 @@ h3_res8_url = `${R2_BASE}/isamples_202608_h3_summary_res8.parquet`
 // min/max-pid verified identical against the live wide before rebuilding),
 // so this is a pure column-content fix, not a data-vintage change. Same
 // immutable-cache reasoning as _v2: new filename, never overwrite.
+// #351: queries name this URL, but the db cell's query wrapper serves them from
+// an in-memory copy fetched once by the liteFile cell (see both).
 lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`
 // Explicit versioned wide (#272: OC concept-enriched — popups read material/
 // object-type from this file). The stable alias `current/wide.parquet` still
@@ -2062,11 +2064,66 @@ db = {
     // issuing (see whenConnectionIdle / loadRes). _inFlight is read there.
     const origQuery = instance.query.bind(instance);
     let inFlight = 0;
-    instance.query = (...args) => {
+    // #351: samples_map_lite is the one file the explorer always reads END TO
+    // END (the samples table's COUNT + page scans, the #300 filtered-cluster
+    // aggregation, search-result JOINs), and with #345's range requests working
+    // each concurrent scan re-fetches the whole 63 MB through DuckDB-WASM's
+    // per-read ranged GETs (~120-134 MB measured for a 63 MB file). The liteFile
+    // cell below fetches it ONCE and registers the bytes as an in-memory DuckDB
+    // file; this wrapper resolves every `read_parquet('<lite_url>')` to that
+    // in-memory name. Queries that mention the lite URL wait for that fetch to
+    // settle (buffer registered, or fetch failed → keep the URL and range-read
+    // as before). Facet/summary files keep their range reads. The waiting query
+    // counts as in flight, and the #300 load waits for the buffer before its
+    // idle wait (see _liteSettled), so the heavy aggregation still runs after
+    // the boot scans rather than alongside them.
+    //
+    // Liveness (Codex rounds 1-2, 5): the shared liteReady gate is bounded —
+    // a lite query waits at most LITE_WAIT_CAP_MS from the FIRST lite demand
+    // (whether liteFile has not started because facetIndexReady stalled, or
+    // the fetch/registration itself is dragging), then reads the URL while
+    // the background fetch continues; queries issued after the buffer lands
+    // use it.
+    // 120 s keeps a normal slow link (facets settling at ~80 s, then a fetch of
+    // a minute or so) on the single-fetch path; slower than that degrades to
+    // today's ranged reads for the queries issued early. The cap bounds only
+    // this gate — the query's own execution/ranged GETs have no deadline, as
+    // before.
+    let resolveLite;
+    const liteReady = new Promise(r => { resolveLite = r; });   // string name | null
+    let liteSettled = false;
+    instance._resolveLiteSource = (name) => { liteSettled = true; resolveLite(name); };
+    const LITE_WAIT_CAP_MS = 120000;
+    // One shared deadline, armed by the first lite demand: every waiter races
+    // the same timer, so a caller that waits, proceeds, and queries again does
+    // not pay the cap twice (Codex round-5 P2), and after the deadline all
+    // queries read the URL until the buffer lands.
+    let liteDeadline = null;
+    const liteSource = () => {
+        if (liteSettled) return liteReady;
+        if (!liteDeadline) liteDeadline = new Promise(r => setTimeout(() => r(null), LITE_WAIT_CAP_MS));
+        return Promise.race([liteReady, liteDeadline]);
+    };
+    // For callers that want to sequence AFTER the buffer lands (the #300
+    // filtered-cluster load does this before its idle wait, so the heavy
+    // aggregation doesn't burst into DuckDB together with the lite scans that
+    // were released at the same instant — Codex round-4 P1). Same cap.
+    instance._liteSettled = () => liteSource();
+    // Only table reads are redirected: metadata probes such as
+    // parquet_schema('<lite_url>') (the #300 readiness preflight) stay on the
+    // URL — they read the footer only and must not wait for the 63 MB fetch.
+    const liteLiteral = `read_parquet('${lite_url}')`;
+    instance.query = async (...args) => {
         inFlight++;
-        const p = origQuery(...args);
-        p.then(() => {}, () => {}).finally(() => { inFlight--; });
-        return p;
+        try {
+            if (typeof args[0] === 'string' && args[0].includes(liteLiteral)) {
+                const name = await liteSource();
+                if (name) args[0] = args[0].split(liteLiteral).join(`read_parquet('${name}')`);
+            }
+            return await origQuery(...args);
+        } finally {
+            inFlight--;
+        }
     };
     instance._inFlight = () => inFlight;
     return instance;
@@ -2269,6 +2326,88 @@ facetIndexReady = {
 ```{ojs}
 //| echo: false
 //| output: false
+// #351: fetch samples_map_lite ONCE and register it as an in-memory DuckDB
+// file. Sequenced after facetIndexReady so the boot-critical facet chain
+// (#345: ~3.5 MB to a usable sidebar) never competes with this 63 MB fetch;
+// facetIndexReady never rejects (its body is fully try/catch'd), so this cell
+// always runs and the db wrapper's liteReady promise always settles. Measured
+// (tests/playwright/measure_parquet_ranges.py, cold cache, 200 s): the lite
+// file went from 132.8 MB in 65 ranged GETs to one 62.9 MB GET, total parquet
+// traffic 156 MB → 86 MB, and the samples table appeared at 63 s instead of
+// 122 s (two scans from memory beat two scans over ranged reads). The file is
+// served immutable/1-yr, but a warm reload in headless Chromium re-fetched it
+// (likely above the per-entry cache limit), so no caching win is claimed.
+// Memory: steady state is one copy in
+// the DuckDB WASM heap (the footprint the pre-#345 "full HTTP read" fallback
+// had); transiently ~2 copies (~126 MB) while the bytes are assembled and
+// handed to the worker (registerFileBuffer transfers the ArrayBuffer, the
+// worker copies it into the heap). On any failure — HTTP error, short read,
+// or no bytes for STALL_MS (the watchdog below aborts a stalled fetch) —
+// queries keep reading the URL with ranged GETs (pre-#351 behaviour):
+// slower, never wrong. Query consumers always proceed regardless: their
+// shared gate in the db wrapper expires on its own after 120 s.
+liteFile = {
+    const _ = facetIndexReady;
+    const name = 'samples_map_lite_v3.parquet';   // DuckDB virtual filename
+    const STALL_MS = 30000;
+    const ctrl = new AbortController();
+    let watchdog;
+    const arm = () => { clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(new Error(`no bytes for ${STALL_MS} ms`)), STALL_MS); };
+    try {
+        performance.mark('lite-fetch-start');
+        arm();
+        const resp = await fetch(lite_url, { signal: ctrl.signal });
+        if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
+        const total = Number(resp.headers.get('content-length')) || 0;
+        const reader = resp.body.getReader();
+        const chunks = [];
+        let got = 0;
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value); got += value.byteLength; arm();
+        }
+        clearTimeout(watchdog);
+        // The data host serves parquet unencoded, so Content-Length is the byte
+        // count we should have; a mismatch (short read, or an encoded response
+        // whose decoded size differs) is a safe failure, never a corrupt buffer.
+        if (total && got !== total) throw new Error(`short read: ${got} of ${total} bytes`);
+        const bytes = new Uint8Array(got);
+        let off = 0;
+        for (const c of chunks) { bytes.set(c, off); off += c.byteLength; }
+        chunks.length = 0;
+        await db._db.registerFileBuffer(name, bytes);   // transfers bytes.buffer to the worker (detaches it)
+        // Validate before any query is redirected to it: a body that ended
+        // cleanly but early (no Content-Length to catch it) would otherwise be
+        // served as truth. parquet_metadata() decodes the footer (one row per
+        // column chunk), which fails on a body cut before the footer; on
+        // failure the name is dropped so the URL path is the only one left.
+        // (Not a content check — a smaller *valid* parquet under this URL
+        // would pass; that needs an expected size/hash, out of scope.)
+        try {
+            const meta = await db.query(`SELECT COUNT(*) AS n FROM parquet_metadata('${name}')`);
+            if (!(Number(Array.from(meta)[0]?.n) > 0)) throw new Error('empty parquet metadata');
+        } catch (err) {
+            await db._db.dropFile(name).catch(() => {});
+            throw new Error(`in-memory parquet failed validation: ${err && err.message || err}`);
+        }
+        performance.mark('lite-fetch-end');
+        performance.measure('lite_fetch', 'lite-fetch-start', 'lite-fetch-end');
+        db._resolveLiteSource(name);
+        window.__liteFile = { src: name, bytes: got };   // test/diagnostic hook
+    } catch (err) {
+        clearTimeout(watchdog);
+        console.warn('#351: whole-file fetch of samples_map_lite failed; falling back to ranged reads of the URL:', err);
+        db._resolveLiteSource(null);
+        window.__liteFile = { src: lite_url, error: String(err) };
+    }
+    return window.__liteFile;
+}
+```
+
+```{ojs}
+//| echo: false
+//| output: false
 // #300: preflight whether samples_map_lite carries h3_res4/h3_res6. The explorer
 // aggregates FILTERED clusters on the fly off lite (GROUP BY the res-appropriate
 // h3 column + the #293 mask predicate) so a broad facet filter at world zoom
@@ -2283,7 +2422,20 @@ facetIndexReady = {
 filteredClustersReady = {
     window.__filteredClustersReady = false;
     try {
-        await db.query(`SELECT h3_res4, h3_res6 FROM read_parquet('${lite_url}') LIMIT 1`);
+        // #351: a footer-only schema probe (parquet_schema reads the file
+        // metadata, a few hundred KB via ranged GETs) instead of a LIMIT 1 row
+        // read, so readiness flips at ~10 s as before and never waits for the
+        // liteFile whole-file fetch — the db wrapper only redirects
+        // read_parquet('<lite_url>') table reads. For this flat, lowercase
+        // schema it answers the same question as the old probe: both
+        // top-level columns present → true; either missing → false. (The
+        // name match is exact-case, and a data-page fault the old row read
+        // would have hit is not seen here — neither applies to v3.)
+        const cols = await db.query(`
+            SELECT name FROM parquet_schema('${lite_url}')
+            WHERE name IN ('h3_res4', 'h3_res6')`);
+        const found = new Set(Array.from(cols).map(r => r.name));
+        if (!(found.has('h3_res4') && found.has('h3_res6'))) throw new Error(`lite columns present: ${[...found].join(',') || 'none'}`);
         window.__filteredClustersReady = true;
         if (typeof window.__onFilteredClustersReady === 'function') window.__onFilteredClustersReady();
         return true;
@@ -3600,7 +3752,15 @@ zoomWatcher = {
             performance.mark(`r${res}-s`);
             // #300: gate the heavy filtered aggregation on an idle connection
             // (deadlock-avoidance); no-op for the light summary path.
-            if (filtered) await whenConnectionIdle();
+            // #351: first let the in-memory lite buffer land (or the wait cap
+            // expire). The boot-time table scans are released at that same
+            // instant, so an idle wait taken BEFORE it would have expired
+            // (20 s cap) during the fetch and let this aggregation burst in
+            // with them; taken after, it sees them executing and waits.
+            if (filtered) {
+                if (typeof db._liteSettled === 'function') await db._liteSettled();
+                await whenConnectionIdle();
+            }
             // Re-check supersession after the idle wait (a newer load or a filter
             // change may have landed while we waited).
             if (gen !== loadResGen || sig !== desiredClusterSig()) return false;
