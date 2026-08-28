@@ -4,7 +4,8 @@
 Two modes:
 
   hash   Walk a release directory and write a *release hash manifest*: every
-         .parquet/.json file (relative path, bytes, sha256). Always complete —
+         .parquet/.json file except *.manifest.json build sidecars (relative
+         path, bytes, sha256). Always complete —
          there is deliberately no filter, so a manifest can never look
          authoritative while omitting files.
 
@@ -28,6 +29,8 @@ Two modes:
          that redirects to the origin is not a copy). Bodies are requested
          unencoded (Accept-Encoding: identity) and any Content-Encoding fails
          the file. A wrong HEAD size fails fast before the body is fetched.
+         --dir checks refuse a symlink at the file itself; an ancestor
+         directory symlink that still resolves inside --dir is accepted.
 
 This is the reproducibility programme's step 8 (REPRODUCIBLE_PIPELINE_PLAN_2026-08-25.md):
 a build's hashes are recorded once, and any copy — R2, a mirror, a Zenodo deposit
@@ -51,9 +54,31 @@ import urllib.request
 CHUNK = 1 << 20
 EXTS = (".parquet", ".json")
 SCHEMA = "release_hashes/1"
-# Relative paths a manifest may contain: plain segments, '/' separators, no '..',
-# no absolute paths, no backslashes, no URL-significant characters.
-PATH_RE = re.compile(r"^(?!/)(?!.*(^|/)\.\.(/|$))[A-Za-z0-9._\-/]+$")
+# Relative paths a manifest may contain: '/'-separated segments of
+# [A-Za-z0-9._-], no empty/'.'/'..' segments, no leading slash, no trailing
+# slash, nothing URL- or shell-significant.
+SEG_RE = re.compile(r"[A-Za-z0-9._\-]+")
+
+
+def valid_rel_path(rel):
+    if not isinstance(rel, str) or not rel or rel.startswith("/") or rel.endswith("/"):
+        return False
+    segs = rel.split("/")
+    return all(SEG_RE.fullmatch(seg) and seg not in (".", "..") for seg in segs)
+
+
+def resolved_inside(path, root):
+    """True if realpath(path) is root or beneath it."""
+    rp = os.path.realpath(path)
+    return rp == root or rp.startswith(root + os.sep)
+
+
+def parse_base(base):
+    """Validate --base: http(s), a host, no query/fragment; return it normalised."""
+    u = urllib.parse.urlsplit(base)
+    if u.scheme not in ("http", "https") or not u.netloc or u.query or u.fragment:
+        raise ValueError(f"--base must be http(s)://host[/path] without query or fragment: {base!r}")
+    return urllib.parse.urlunsplit((u.scheme, u.netloc, u.path.rstrip("/"), "", ""))
 # data.isamples.org sits behind Cloudflare, which answers urllib's default
 # "Python-urllib" agent with 403; identify ourselves instead.
 UA = "isamples-verify-release/1 (+https://github.com/isamplesorg/isamplesorg.github.io)"
@@ -109,10 +134,28 @@ def fetch_hash(url, expected_bytes, timeout):
 
 def cmd_hash(args):
     root = os.path.realpath(args.dir)
+    if not os.path.isdir(root):
+        print(f"ERROR: not a directory: {args.dir}", file=sys.stderr)
+        return 2
+    if args.out and resolved_inside(os.path.dirname(os.path.realpath(args.out)) or ".", root):
+        print("ERROR: --out must not be inside --dir (it would become an unlisted or self-invalidating file)", file=sys.stderr)
+        return 2
     files = {}
     skipped_links = []
-    for dirpath, dirnames, names in os.walk(root, followlinks=False):
-        dirnames.sort()
+
+    def _walk_error(err):          # an unreadable subtree would silently shrink the manifest
+        raise err
+
+    try:
+        walk = list(os.walk(root, followlinks=False, onerror=_walk_error))
+    except OSError as e:
+        print(f"ERROR: cannot read the whole release dir: {e}", file=sys.stderr)
+        return 2
+    for dirpath, dirnames, names in walk:
+        if os.path.islink(dirpath) or any(os.path.islink(os.path.join(dirpath, d)) for d in dirnames):
+            for d in dirnames:
+                if os.path.islink(os.path.join(dirpath, d)):
+                    skipped_links.append(os.path.relpath(os.path.join(dirpath, d), root) + "/")
         for name in sorted(names):
             if not name.endswith(EXTS) or name.endswith(".manifest.json"):
                 continue
@@ -121,7 +164,7 @@ def cmd_hash(args):
             if os.path.islink(full):
                 skipped_links.append(rel)        # a symlink is not release content
                 continue
-            if not PATH_RE.match(rel):
+            if not valid_rel_path(rel):
                 print(f"ERROR: path not representable in a manifest: {rel}", file=sys.stderr)
                 return 2
             with open(full, "rb") as f:
@@ -129,7 +172,7 @@ def cmd_hash(args):
             files[rel] = {"bytes": n, "sha256": digest}
             print(f"  {digest[:12]}  {n:>12,}  {rel}")
     if skipped_links:
-        print(f"ERROR: {len(skipped_links)} symlinked file(s) in the release dir (not hashed): "
+        print(f"ERROR: {len(skipped_links)} symlinked entr(y/ies) in the release dir (a manifest describes real files only): "
               + ", ".join(skipped_links[:5]), file=sys.stderr)
         return 2
     if not files:
@@ -155,26 +198,35 @@ def cmd_hash(args):
 
 
 def load_manifest(path):
-    with open(path) as fh:
-        doc = json.load(fh)
+    def _int(v):
+        return isinstance(v, int) and not isinstance(v, bool) and v >= 0
+
+    with open(path, "rb") as fh:
+        raw = fh.read()
+    doc = json.loads(raw)
+    if not isinstance(doc, dict):
+        raise ValueError("manifest is not a JSON object")
     if doc.get("schema") != SCHEMA:
         raise ValueError(f"unexpected manifest schema {doc.get('schema')!r} (want {SCHEMA})")
+    if not isinstance(doc.get("release_id"), str) or not doc["release_id"]:
+        raise ValueError("missing release_id")
     files = doc.get("files")
     if not isinstance(files, dict) or not files:
         raise ValueError("manifest has no files")
-    if doc.get("file_count") != len(files):
-        raise ValueError(f"file_count {doc.get('file_count')} != {len(files)} entries")
+    if not _int(doc.get("file_count")) or doc["file_count"] != len(files):
+        raise ValueError(f"file_count {doc.get('file_count')!r} != {len(files)} entries")
     total = 0
     for rel, e in files.items():
-        if not PATH_RE.match(rel):
+        if not valid_rel_path(rel):
             raise ValueError(f"bad path in manifest: {rel!r}")
-        if not (isinstance(e.get("bytes"), int) and e["bytes"] >= 0):
-            raise ValueError(f"bad bytes for {rel}")
+        if not isinstance(e, dict) or not _int(e.get("bytes")):
+            raise ValueError(f"bad entry for {rel}")
         if not (isinstance(e.get("sha256"), str) and re.fullmatch(r"[0-9a-f]{64}", e["sha256"])):
             raise ValueError(f"bad sha256 for {rel}")
         total += e["bytes"]
-    if doc.get("total_bytes") != total:
-        raise ValueError(f"total_bytes {doc.get('total_bytes')} != sum {total}")
+    if not _int(doc.get("total_bytes")) or doc["total_bytes"] != total:
+        raise ValueError(f"total_bytes {doc.get('total_bytes')!r} != sum {total}")
+    doc["_manifest_sha256"] = hashlib.sha256(raw).hexdigest()
     return doc
 
 
@@ -188,9 +240,21 @@ def cmd_check(args):
         print(f"ERROR: manifest rejected: {e}", file=sys.stderr)
         return 2
     files = doc["files"]
-    base = args.base.rstrip("/") if args.base else None
+    try:
+        base = parse_base(args.base) if args.base else None
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     root = os.path.realpath(args.dir) if args.dir else None
-    ok, problems, skipped = 0, [], []
+    if root and not os.path.isdir(root):
+        print(f"ERROR: not a directory: {args.dir}", file=sys.stderr)
+        return 2
+    if args.report:
+        rp = os.path.realpath(args.report)
+        if (root and resolved_inside(rp, root)) or rp == os.path.realpath(args.manifest):
+            print("ERROR: --report must not be inside --dir nor alias the manifest", file=sys.stderr)
+            return 2
+    checked, problems, skipped = [], [], []
     for rel, exp in files.items():
         if (args.only and not fnmatch.fnmatch(rel, args.only)) or (args.skip_prefix and rel.startswith(args.skip_prefix)):
             skipped.append(rel)
@@ -229,9 +293,10 @@ def cmd_check(args):
             problems.append(("SHA256", rel, f"{digest[:12]} != {exp['sha256'][:12]}"))
             print(f"  SHA256    {rel}  {digest[:12]}… != {exp['sha256'][:12]}…")
         else:
-            ok += 1
+            checked.append(rel)
             if args.verbose:
                 print(f"  ok        {rel}")
+    ok = len(checked)
     target = base or root
     if problems or ok == 0:
         verdict, code = "FAILED", 1
@@ -246,8 +311,10 @@ def cmd_check(args):
         with open(args.report, "w") as fh:
             json.dump({"release_id": doc["release_id"], "target": target, "verdict": verdict, "exit_code": code,
                        "checked_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-                       "manifest": os.path.abspath(args.manifest), "only": args.only, "skip_prefix": args.skip_prefix,
-                       "ok": ok, "problems": [{"kind": k, "file": f, "detail": d} for k, f, d in problems],
+                       "manifest": os.path.abspath(args.manifest), "manifest_sha256": doc["_manifest_sha256"],
+                       "only": args.only, "skip_prefix": args.skip_prefix,
+                       "ok": ok, "verified_files": checked,
+                       "problems": [{"kind": k, "file": f, "detail": d} for k, f, d in problems],
                        "skipped": skipped}, fh, indent=1)
     return code
 
