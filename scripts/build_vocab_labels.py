@@ -44,6 +44,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -174,15 +175,16 @@ def _pick_scheme(g: rdflib.Graph, c: rdflib.term.Node) -> str | None:
     return schemes[0] if schemes else None
 
 
-def extract_rows(ttl_url: str, local_path: Path | None = None) -> list[dict]:
+def extract_rows(ttl_url: str, data: bytes | None = None) -> list[dict]:
     """Parse one TTL. `ttl_url` is always the canonical (main) URL recorded as
-    `source_ttl`; when `local_path` is given the bytes come from that archived
-    file instead of the network (reproducible builds, --ttl-dir)."""
+    `source_ttl`; when `data` is given those exact bytes are parsed instead of
+    fetching the network (reproducible builds, --ttl-dir) — the caller hashes
+    the same buffer, so the manifest's sha256 is of what was parsed."""
     g = rdflib.Graph()
-    if local_path is not None:
+    if data is not None:
         # publicID keeps the canonical URL as the base IRI, so any relative
         # IRI in the file resolves exactly as it does when fetched from main.
-        g.parse(data=local_path.read_bytes(), format="turtle", publicID=ttl_url)
+        g.parse(data=data, format="turtle", publicID=ttl_url)
     else:
         g.parse(ttl_url, format="turtle")
 
@@ -370,8 +372,10 @@ def main(argv: list[str] | None = None) -> int:
     effective_args = list(argv) if argv is not None else sys.argv[1:]
 
     t_start = time.time()
-    # A pinned build = every one of the 10 TTLs read from the archive AND verified
-    # against ttl_archive.json (sha256 + commit). Anything less is not "pinned".
+    # ttl_inputs_pinned = every expected TTL was read from the archive, its bytes
+    # verified against ttl_archive.json (sha256) and attributed to a 40-hex git
+    # commit. Rows from MANUAL_LABEL_OVERRIDES come from this script, not from a
+    # TTL, and are reported separately.
     if (args.ttl_dir is None) != (args.ttl_archive is None):
         print("ERROR: --ttl-dir and --ttl-archive must be given together", file=sys.stderr)
         return 2
@@ -381,6 +385,12 @@ def main(argv: list[str] | None = None) -> int:
         for rec in recs:
             if rec["source_ttl"] in archive_index:
                 print(f"ERROR: duplicate record in {args.ttl_archive}: {rec['source_ttl']}", file=sys.stderr)
+                return 2
+            if not re.fullmatch(r"[0-9a-f]{40}", str(rec.get("commit", ""))):
+                print(f"ERROR: {args.ttl_archive}: record for {rec['source_ttl']} lacks a 40-hex commit", file=sys.stderr)
+                return 2
+            if not re.fullmatch(r"[0-9a-f]{64}", str(rec.get("sha256", ""))):
+                print(f"ERROR: {args.ttl_archive}: record for {rec['source_ttl']} lacks a sha256", file=sys.stderr)
                 return 2
             archive_index[rec["source_ttl"]] = rec
         missing = [u for u in VOCAB_TTLS if u not in archive_index]
@@ -397,25 +407,28 @@ def main(argv: list[str] | None = None) -> int:
     failures: list[tuple[str, str]] = []
     for url in VOCAB_TTLS:
         local = None
+        data = None
         if args.ttl_dir is not None:
             # Archive integrity is never "partial": a missing or altered file is fatal.
+            # Read ONCE; hash and parse the same buffer.
             local = _local_ttl_path(args.ttl_dir, url)
             if not local.exists():
                 print(f"ERROR: archived TTL missing: {local}", file=sys.stderr)
                 return 2
-            digest = _sha256(local)
+            data = local.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
             rec = archive_index[url]
-            if rec.get("sha256") != digest:
-                print(f"ERROR: archived TTL sha256 {digest[:12]}… != ttl_archive.json {str(rec.get('sha256'))[:12]}… for {local}",
+            if rec["sha256"] != digest:
+                print(f"ERROR: archived TTL sha256 {digest[:12]}… != ttl_archive.json {rec['sha256'][:12]}… for {local}",
                       file=sys.stderr)
                 return 2
         try:
             n_before = len(all_rows)
-            rows = extract_rows(url, local)
+            rows = extract_rows(url, data)
             all_rows.extend(rows)
-            if local is not None:
-                ttl_inputs.append({"source_ttl": url, "local_path": str(local), "bytes": local.stat().st_size,
-                                   "sha256": digest, "commit": archive_index[url].get("commit"), "rows": len(rows)})
+            if data is not None:
+                ttl_inputs.append({"source_ttl": url, "local_path": str(local), "bytes": len(data),
+                                   "sha256": digest, "commit": archive_index[url]["commit"], "rows": len(rows)})
             else:
                 ttl_inputs.append({"source_ttl": url, "local_path": None, "rows": len(rows),
                                    "note": "fetched live from main (NOT pinned)"})
@@ -471,8 +484,10 @@ def main(argv: list[str] | None = None) -> int:
     # once the duplicate check below passes — and each row's alt_labels sorted.
     # Together with the deterministic selectors above (definition, scheme,
     # prefLabel, broader) the rows are a function of the TTL bytes + this
-    # script; the Parquet BYTES are additionally a function of the pandas/
-    # pyarrow writer versions recorded in the manifest.
+    # script + the RDF parser (rdflib version recorded; blank-node ids would
+    # vary between parses, but these vocabularies use absolute IRIs only);
+    # the Parquet BYTES are additionally a function of the pandas/pyarrow
+    # writer versions recorded in the manifest.
     df["alt_labels"] = df["alt_labels"].apply(lambda v: sorted(v) if isinstance(v, list) else v)
     df = df.sort_values(["uri_form", "uri", "lang", "source_ttl"], kind="mergesort", na_position="last").reset_index(drop=True)
     # Final sanity check
@@ -515,14 +530,16 @@ def main(argv: list[str] | None = None) -> int:
             "policy": ("SKOS prefLabels/altLabels/definitions/broader from the expected vocabulary TTLs; deterministic "
                        "selectors (lexical tiebreaks); cross-vocab dedupe; /1.0/ data-form aliases; rows sorted by "
                        "(uri_form, uri, lang, source_ttl), alt_labels sorted; duplicate (uri, lang) is fatal. "
-                       "Rows are a function of the TTL bytes + this script; Parquet bytes additionally of the recorded "
-                       "pandas/pyarrow versions. This manifest itself (args, paths, elapsed) is not byte-reproducible."),
-            "pinned": args.ttl_dir is not None and not failures and len(ttl_inputs) == len(VOCAB_TTLS),
+                       "Rows are a function of the TTL bytes + this script + the recorded rdflib; Parquet bytes "
+                       "additionally of the recorded pandas/pyarrow. This manifest itself (args, paths, elapsed) is not "
+                       "byte-reproducible."),
+            "ttl_inputs_pinned": args.ttl_dir is not None and not failures and len(ttl_inputs) == len(VOCAB_TTLS),
             "archive_verified": args.ttl_dir is not None,
             "complete": not failures,
             "inputs": {"expected_ttls": len(VOCAB_TTLS), "ttls": ttl_inputs,
                        "failed": [{"source_ttl": u, "error": e} for u, e in failures],
-                       "manual_overrides": len(MANUAL_LABEL_OVERRIDES)},
+                       "script_defined_rows": {"manual_overrides": len(MANUAL_LABEL_OVERRIDES),
+                                               "source_ttl_value": "manual_override"}},
             "counts": {"rows": int(len(df)), "unique_uris": int(df["uri"].nunique()),
                        "by_uri_form": {k: int(v) for k, v in df["uri_form"].value_counts().to_dict().items()}},
             "output": {"path": str(args.output), "bytes": args.output.stat().st_size, "sha256": _sha256(args.output)},
