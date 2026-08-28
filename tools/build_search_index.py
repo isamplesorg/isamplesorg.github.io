@@ -42,6 +42,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import shutil
 import sys
 import tempfile
 import time
@@ -172,13 +174,32 @@ def main() -> int:
     # 256 default: the 202608 corpus yields ~570 MB of non-hot base rows;
     # 64 shards made ~9 MB base files against the 5 MB cap. 256 → ~2.2 MB
     # average with headroom for growth (v1.5 event/site fields).
+    ap.add_argument("--force", action="store_true", help="replace a non-empty output index directory")
     ap.add_argument("--shards", type=int, default=256)
     ap.add_argument("--shard-cap-mb", type=float, default=5.0)
     ap.add_argument("--batch-rows", type=int, default=200_000)
     args = ap.parse_args()
 
     t0 = time.time()
-    out_root = Path(args.outdir) / f"{args.tag}_search_index_v1"
+    # --tag names a directory under --outdir and nothing else: one filename
+    # component, so --force can never remove anything outside --outdir.
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", args.tag) or args.tag in (".", ".."):
+        print(f"ERROR: --tag must be a single filename component, got {args.tag!r}", file=sys.stderr)
+        return 2
+    outdir = Path(args.outdir).resolve()
+    out_root = outdir / f"{args.tag}_search_index_v1"
+    if out_root.is_symlink() or out_root.resolve().parent != outdir:
+        print(f"ERROR: refusing output target {out_root} (symlink or outside --outdir)", file=sys.stderr)
+        return 2
+    # Reproducibility: the directory's byte inventory must come from THIS build only.
+    # A previous build could leave obsolete hot/ keys, higher _pN sub-files, or
+    # base shards beyond --shards, which no manifest would mention. Refuse a
+    # non-empty target unless --force, which removes it first.
+    if out_root.exists() and any(out_root.iterdir()):
+        if not args.force:
+            print(f'ERROR: {out_root} exists and is not empty; pass --force to replace it', file=sys.stderr)
+            return 2
+        shutil.rmtree(out_root)
     out_root.mkdir(parents=True, exist_ok=True)
 
     con = duckdb.connect()
@@ -320,9 +341,13 @@ def main() -> int:
     # Cap is enforced against parquet FILE bytes (what a browser actually
     # transfers), which is stricter than the contract's "uncompressed".
     cap_bytes = int(args.shard_cap_mb * 1024 * 1024)
+    # Reproducibility: the estimate is taken over ALL rows. A `LIMIT 500000`
+    # sample with no ORDER BY picked different rows on every run (parallel
+    # scan order), moving the hot threshold and changing the hot set/sub-shard
+    # layout between otherwise identical builds (found 2026-08-28, two builds
+    # of the same inputs: 915 vs 901 shard files).
     est = con.sql(f"""
-        SELECT avg(len(token) + len(pid) + len(field) + 4) FROM
-        (SELECT * FROM read_parquet('{rows_glob}') LIMIT 500000)
+        SELECT avg(len(token) + len(pid) + len(field) + 4) FROM read_parquet('{rows_glob}')
     """).fetchone()[0] or 30.0
     # Planning ratio is only a first guess (observed file ratios vary by
     # token entropy); every hot token's sub-files are VERIFIED against the
@@ -333,7 +358,8 @@ def main() -> int:
         FROM read_parquet('{rows_glob}')
         GROUP BY token
         HAVING count(*) * {est} * {compress_ratio} > {cap_bytes}
-    """).fetchall()
+        ORDER BY token
+    """).fetchall()   # ORDER BY: hot/ key collision suffixes are assigned in this order
     hot_dir = out_root / "hot"
     hot_manifest: dict[str, dict] = {}
     if hot:
@@ -433,8 +459,8 @@ def main() -> int:
                 FROM read_parquet('{rows_glob}')
                 WHERE shard = {shard}
                   AND token NOT IN (SELECT token FROM hot_tokens)
-                GROUP BY token ORDER BY n DESC LIMIT 1
-            """).fetchone()
+                GROUP BY token ORDER BY n DESC, token ASC LIMIT 1
+            """).fetchone()   # token ASC: a tie on n must promote the same token every run
             if heaviest is None:
                 break
             con.execute("INSERT INTO hot_tokens VALUES (?)", [heaviest[0]])
@@ -502,7 +528,7 @@ def main() -> int:
                     JOIN field_avg fa USING (field)
                     WHERE r.token IN ({hot_list_sql})
                 ), contrib AS (
-                    SELECT token, pid,
+                    SELECT token, pid, field,
                         (CASE field
                             WHEN 'sample.label' THEN 3.0
                             WHEN 'concept.label' THEN 2.5
@@ -515,7 +541,9 @@ def main() -> int:
                 ), per_pid AS (
                     -- §5: rank per PID by the SUM of field-weighted
                     -- contributions, not per (pid, field) posting.
-                    SELECT token, pid, sum(c) AS static_score
+                    -- sum(... ORDER BY field): floating-point addition order
+                    -- must not depend on parallel aggregation order (reproducible bytes).
+                    SELECT token, pid, sum(c ORDER BY field) AS static_score
                     FROM contrib GROUP BY token, pid
                 ), ranked AS (
                     SELECT *, row_number() OVER (
@@ -567,7 +595,7 @@ def main() -> int:
 
     top_df = con.sql(f"""
         SELECT token, count(*) AS df FROM read_parquet('{rows_glob}')
-        GROUP BY token ORDER BY df DESC LIMIT 20
+        GROUP BY token ORDER BY df DESC, token ASC LIMIT 20
     """).fetchall()
     total_uncompressed = con.sql(f"""
         SELECT sum(len(token) + len(pid) + len(field) + 4)
