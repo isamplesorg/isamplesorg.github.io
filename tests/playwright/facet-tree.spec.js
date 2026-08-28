@@ -13,6 +13,7 @@
  * R2 publish; flip the skip / drop ?data_base once the files are remote.
  */
 const { test, expect } = require('@playwright/test');
+const { explorerUrl } = require('./helpers/url');
 
 const LOCAL = !!process.env.FACET_TREE_LOCAL;
 const DATA = LOCAL ? '&data_base=/data' : '';
@@ -31,7 +32,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
   test.describe.configure({ retries: 2 });
 
   test('flag OFF → Material stays a flat list (no tree nodes)', async ({ page }) => {
-    await page.goto(`/explorer.html?facets=flat${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=flat${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#materialFilterBody .facet-row[data-facet="material"]').length > 0,
       null, { timeout: 90000 });
@@ -40,7 +41,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
   });
 
   test('flag ON → tree renders; selecting a parent filters the table to its subtree', async ({ page }) => {
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0,
       null, { timeout: 90000 });
@@ -91,7 +92,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
       const m = (document.getElementById('tablePageInfo')?.textContent || '').match(/of ([\d,]+)\)/);
       return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
     });
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0,
       null, { timeout: 90000 });
@@ -124,7 +125,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     const EARTHMATERIAL = 'https://w3id.org/isample/vocabulary/material/1.0/earthmaterial';
     // Select earthmaterial, then assert the URL carries ONLY that node (minimal — no
     // expanded descendants like /mineral).
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.evaluate(() => {
       const cb = document.querySelector('#materialFilterBody input[value*="/earthmaterial"]');
@@ -163,7 +164,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
   test('live counts: tree node counts shrink to the viewport (not static baseline)', async ({ page }) => {
     test.setTimeout(180000);
     // Global view → baseline (global tree counts).
-    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=0&lng=0&alt=15000000`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}#v=1&lat=0&lng=0&alt=15000000`));
     await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.waitForTimeout(2500);
     const globalEarth = await legendCount(page, '/earthmaterial');
@@ -182,7 +183,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
 
   test('live counts coherence: legend(node) == table when that node is the filter (#245), parent >= child', async ({ page }) => {
     test.setTimeout(180000);
-    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`));
     await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     // Select earthmaterial, then poll until the LEGEND count and the TABLE total
     // converge to the same value. Both are viewport-scoped and settle to the zoomed
@@ -213,7 +214,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
       });
       return s;
     }, container);
-    await page.goto(`/explorer.html?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}#v=1&lat=35&lng=33&alt=500000`));
     await page.waitForFunction(() => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     await page.waitForTimeout(3500);
     const matEarth0 = await legendCount(page, '/earthmaterial');
@@ -248,7 +249,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
 
   test('#291: Sampled Feature + Specimen Type also render as trees and filter', async ({ page }) => {
     test.setTimeout(150000);
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     const shape = await page.evaluate(() => ({
@@ -279,7 +280,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
 
   test('#291: simultaneous selections across all three tree dims register + round-trip to the URL', async ({ page }) => {
     test.setTimeout(150000);
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#objectTypeFilterBody .facet-treenode').length > 0, null, { timeout: 90000 });
     // Check one node in each tree (material, context, object_type). Verify the
@@ -309,7 +310,7 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     // materialTreeActive() is false everywhere → selection/filtering use the flat
     // facets_v3 path (NOT the missing membership file).
     await page.route('**/*facet_tree_summaries*', route => route.fulfill({ status: 404, body: '' }));
-    await page.goto(`/explorer.html?facets=tree${DATA}${WORLD}`);
+    await page.goto(explorerUrl(`?facets=tree${DATA}${WORLD}`));
     await page.waitForFunction(
       () => document.querySelectorAll('#materialFilterBody .facet-row[data-facet="material"]').length > 0,
       null, { timeout: 90000 });
