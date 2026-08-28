@@ -233,12 +233,9 @@ def cmd_hash(args):
         "total_bytes": sum(f["bytes"] for f in files.values()),
         "files": dict(sorted(files.items())),
     }
-    if args.out:
-        os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
-        write_json_atomic(args.out, doc)
-        print(f"wrote {args.out}: {len(files)} files, {doc['total_bytes']/1e6:.1f} MB")
-    else:
-        json.dump(doc, sys.stdout, indent=1)
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
+    write_json_atomic(args.out, doc)
+    print(f"wrote {args.out}: {len(files)} files, {doc['total_bytes']/1e6:.1f} MB")
     return 0
 
 
@@ -377,7 +374,7 @@ def main():
     h = sub.add_parser("hash", help="write a complete release hash manifest from a directory")
     h.add_argument("--dir", required=True)
     h.add_argument("--release-id", required=True)
-    h.add_argument("--out")
+    h.add_argument("--out", required=True, help="manifest path (progress goes to stdout, so the manifest is always a file)")
     h.set_defaults(fn=cmd_hash)
     c = sub.add_parser("check", help="verify a host or directory against a release hash manifest")
     c.add_argument("--manifest", required=True)
