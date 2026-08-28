@@ -320,9 +320,13 @@ def main() -> int:
     # Cap is enforced against parquet FILE bytes (what a browser actually
     # transfers), which is stricter than the contract's "uncompressed".
     cap_bytes = int(args.shard_cap_mb * 1024 * 1024)
+    # Reproducibility: the estimate is taken over ALL rows. A `LIMIT 500000`
+    # sample with no ORDER BY picked different rows on every run (parallel
+    # scan order), moving the hot threshold and changing the hot set/sub-shard
+    # layout between otherwise identical builds (found 2026-08-28, two builds
+    # of the same inputs: 915 vs 901 shard files).
     est = con.sql(f"""
-        SELECT avg(len(token) + len(pid) + len(field) + 4) FROM
-        (SELECT * FROM read_parquet('{rows_glob}') LIMIT 500000)
+        SELECT avg(len(token) + len(pid) + len(field) + 4) FROM read_parquet('{rows_glob}')
     """).fetchone()[0] or 30.0
     # Planning ratio is only a first guess (observed file ratios vary by
     # token entropy); every hot token's sub-files are VERIFIED against the
@@ -333,7 +337,8 @@ def main() -> int:
         FROM read_parquet('{rows_glob}')
         GROUP BY token
         HAVING count(*) * {est} * {compress_ratio} > {cap_bytes}
-    """).fetchall()
+        ORDER BY token
+    """).fetchall()   # ORDER BY: hot/ key collision suffixes are assigned in this order
     hot_dir = out_root / "hot"
     hot_manifest: dict[str, dict] = {}
     if hot:
@@ -433,8 +438,8 @@ def main() -> int:
                 FROM read_parquet('{rows_glob}')
                 WHERE shard = {shard}
                   AND token NOT IN (SELECT token FROM hot_tokens)
-                GROUP BY token ORDER BY n DESC LIMIT 1
-            """).fetchone()
+                GROUP BY token ORDER BY n DESC, token ASC LIMIT 1
+            """).fetchone()   # token ASC: a tie on n must promote the same token every run
             if heaviest is None:
                 break
             con.execute("INSERT INTO hot_tokens VALUES (?)", [heaviest[0]])
@@ -502,7 +507,7 @@ def main() -> int:
                     JOIN field_avg fa USING (field)
                     WHERE r.token IN ({hot_list_sql})
                 ), contrib AS (
-                    SELECT token, pid,
+                    SELECT token, pid, field,
                         (CASE field
                             WHEN 'sample.label' THEN 3.0
                             WHEN 'concept.label' THEN 2.5
@@ -515,7 +520,9 @@ def main() -> int:
                 ), per_pid AS (
                     -- §5: rank per PID by the SUM of field-weighted
                     -- contributions, not per (pid, field) posting.
-                    SELECT token, pid, sum(c) AS static_score
+                    -- sum(... ORDER BY field): floating-point addition order
+                    -- must not depend on parallel aggregation order (reproducible bytes).
+                    SELECT token, pid, sum(c ORDER BY field) AS static_score
                     FROM contrib GROUP BY token, pid
                 ), ranked AS (
                     SELECT *, row_number() OVER (
