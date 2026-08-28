@@ -386,10 +386,10 @@ def main(argv: list[str] | None = None) -> int:
             if rec["source_ttl"] in archive_index:
                 print(f"ERROR: duplicate record in {args.ttl_archive}: {rec['source_ttl']}", file=sys.stderr)
                 return 2
-            if not re.fullmatch(r"[0-9a-f]{40}", str(rec.get("commit", ""))):
+            if not (isinstance(rec.get("commit"), str) and re.fullmatch(r"[0-9a-f]{40}", rec["commit"])):
                 print(f"ERROR: {args.ttl_archive}: record for {rec['source_ttl']} lacks a 40-hex commit", file=sys.stderr)
                 return 2
-            if not re.fullmatch(r"[0-9a-f]{64}", str(rec.get("sha256", ""))):
+            if not (isinstance(rec.get("sha256"), str) and re.fullmatch(r"[0-9a-f]{64}", rec["sha256"])):
                 print(f"ERROR: {args.ttl_archive}: record for {rec['source_ttl']} lacks a sha256", file=sys.stderr)
                 return 2
             archive_index[rec["source_ttl"]] = rec
@@ -530,9 +530,9 @@ def main(argv: list[str] | None = None) -> int:
             "policy": ("SKOS prefLabels/altLabels/definitions/broader from the expected vocabulary TTLs; deterministic "
                        "selectors (lexical tiebreaks); cross-vocab dedupe; /1.0/ data-form aliases; rows sorted by "
                        "(uri_form, uri, lang, source_ttl), alt_labels sorted; duplicate (uri, lang) is fatal. "
-                       "Rows are a function of the TTL bytes + this script + the recorded rdflib; Parquet bytes "
-                       "additionally of the recorded pandas/pyarrow. This manifest itself (args, paths, elapsed) is not "
-                       "byte-reproducible."),
+                       "Rows are a function of the TTL bytes + this script + the recorded rdflib and pandas (final sort); "
+                       "Parquet bytes additionally of the recorded pyarrow writer. This manifest itself (args, paths, "
+                       "elapsed) is not byte-reproducible."),
             "ttl_inputs_pinned": args.ttl_dir is not None and not failures and len(ttl_inputs) == len(VOCAB_TTLS),
             "archive_verified": args.ttl_dir is not None,
             "complete": not failures,
