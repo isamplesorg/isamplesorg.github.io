@@ -5,9 +5,9 @@ Two modes:
 
   hash   Walk a release directory and write a *release hash manifest*: every
          .parquet/.json file except *.manifest.json build sidecars (relative
-         path, bytes, sha256). Always complete —
-         there is deliberately no filter, so a manifest can never look
-         authoritative while omitting files.
+         path, bytes, sha256). Complete for a quiescent directory — there is
+         deliberately no filter, so a manifest can never look authoritative
+         while omitting files.
 
            python3 tools/verify_release.py hash --dir ~/Data/iSample/pqg_refining/202609/publish \
                --release-id isamples_202609 --out provenance/isamples_202609/release_hashes.json
@@ -25,7 +25,11 @@ Two modes:
            PARTIAL  (3)  every *checked* file matches but --only/--skip-prefix left
                          some unchecked; exit 0 only with --allow-partial
            FAILED   (1)  a mismatch, a missing file, or an operational error
-         Files are streamed, never stored. Redirects are refused (a "mirror"
+         "Matches" means: matched when read. Files are checked one after
+         another; a target that changes while the run is in progress (or a
+         directory being written while `hash` walks it) is outside the
+         contract — verify quiescent, versioned copies. Files are streamed,
+         never stored. Redirects are refused (a "mirror"
          that redirects to the origin is not a copy). Bodies are requested
          unencoded (Accept-Encoding: identity) and any Content-Encoding fails
          the file. A wrong HEAD size fails fast before the body is fetched.
@@ -47,6 +51,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -69,14 +74,37 @@ def valid_rel_path(rel):
 
 def resolved_inside(path, root):
     """True if realpath(path) is root or beneath it."""
-    rp = os.path.realpath(path)
-    return rp == root or rp.startswith(root + os.sep)
+    try:
+        return os.path.commonpath([os.path.realpath(path), root]) == root
+    except ValueError:          # different drives (Windows)
+        return False
+
+
+def same_file(a, b):
+    """True if two paths name the same inode (catches hard links, not just symlinks)."""
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
+def write_json_atomic(path, obj):
+    """Write via a temp file in the destination directory, then os.replace()."""
+    d = os.path.dirname(os.path.abspath(path)) or "."
+    fd, tmp = tempfile.mkstemp(prefix=os.path.basename(path) + ".", suffix=".tmp", dir=d)
+    try:
+        with os.fdopen(fd, "w") as fh:
+            json.dump(obj, fh, indent=1)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def parse_base(base):
     """Validate --base: http(s), a host, no query/fragment; return it normalised."""
     u = urllib.parse.urlsplit(base)
-    if u.scheme not in ("http", "https") or not u.netloc or u.query or u.fragment:
+    if u.scheme not in ("http", "https") or not u.netloc or u.query or u.fragment or "?" in base or "#" in base:
         raise ValueError(f"--base must be http(s)://host[/path] without query or fragment: {base!r}")
     return urllib.parse.urlunsplit((u.scheme, u.netloc, u.path.rstrip("/"), "", ""))
 # data.isamples.org sits behind Cloudflare, which answers urllib's default
@@ -137,6 +165,9 @@ def cmd_hash(args):
     if not os.path.isdir(root):
         print(f"ERROR: not a directory: {args.dir}", file=sys.stderr)
         return 2
+    if not args.release_id.strip():
+        print("ERROR: --release-id must be non-empty", file=sys.stderr)
+        return 2
     if args.out and resolved_inside(os.path.dirname(os.path.realpath(args.out)) or ".", root):
         print("ERROR: --out must not be inside --dir (it would become an unlisted or self-invalidating file)", file=sys.stderr)
         return 2
@@ -167,8 +198,15 @@ def cmd_hash(args):
             if not valid_rel_path(rel):
                 print(f"ERROR: path not representable in a manifest: {rel}", file=sys.stderr)
                 return 2
-            with open(full, "rb") as f:
-                n, digest = hash_and_count(f)
+            if args.out and same_file(full, args.out):
+                print(f"ERROR: --out is the same file as release content {rel}", file=sys.stderr)
+                return 2
+            try:
+                with open(full, "rb") as f:
+                    n, digest = hash_and_count(f)
+            except OSError as e:
+                print(f"ERROR: cannot read {rel}: {e}", file=sys.stderr)
+                return 2
             files[rel] = {"bytes": n, "sha256": digest}
             print(f"  {digest[:12]}  {n:>12,}  {rel}")
     if skipped_links:
@@ -189,8 +227,7 @@ def cmd_hash(args):
     }
     if args.out:
         os.makedirs(os.path.dirname(os.path.abspath(args.out)) or ".", exist_ok=True)
-        with open(args.out, "w") as fh:
-            json.dump(doc, fh, indent=1)
+        write_json_atomic(args.out, doc)
         print(f"wrote {args.out}: {len(files)} files, {doc['total_bytes']/1e6:.1f} MB")
     else:
         json.dump(doc, sys.stdout, indent=1)
@@ -251,8 +288,11 @@ def cmd_check(args):
         return 2
     if args.report:
         rp = os.path.realpath(args.report)
-        if (root and resolved_inside(rp, root)) or rp == os.path.realpath(args.manifest):
+        if (root and resolved_inside(rp, root)) or same_file(args.report, args.manifest) or rp == os.path.realpath(args.manifest):
             print("ERROR: --report must not be inside --dir nor alias the manifest", file=sys.stderr)
+            return 2
+        if root and any(same_file(args.report, os.path.join(root, rel)) for rel in files):
+            print("ERROR: --report is the same file (hard link) as a listed release file", file=sys.stderr)
             return 2
     checked, problems, skipped = [], [], []
     for rel, exp in files.items():
@@ -308,14 +348,13 @@ def cmd_check(args):
           f"{len(skipped)} skipped (of {len(files)} listed)"
           + ("" if not skipped else "  [skipped files were NOT checked]"))
     if args.report:
-        with open(args.report, "w") as fh:
-            json.dump({"release_id": doc["release_id"], "target": target, "verdict": verdict, "exit_code": code,
+        write_json_atomic(args.report, {"release_id": doc["release_id"], "target": target, "verdict": verdict, "exit_code": code,
                        "checked_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                        "manifest": os.path.abspath(args.manifest), "manifest_sha256": doc["_manifest_sha256"],
                        "only": args.only, "skip_prefix": args.skip_prefix,
                        "ok": ok, "verified_files": checked,
                        "problems": [{"kind": k, "file": f, "detail": d} for k, f, d in problems],
-                       "skipped": skipped}, fh, indent=1)
+                       "skipped": skipped})
     return code
 
 
