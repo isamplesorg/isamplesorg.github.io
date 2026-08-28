@@ -88,6 +88,14 @@ def same_file(a, b):
         return False
 
 
+def dest_inside(path, root):
+    """True if the destination's PARENT resolves inside root, or the destination
+    itself is a symlink (os.replace would swap the link, creating the file wherever
+    the parent really is) — evaluated without following the final component."""
+    parent = os.path.realpath(os.path.dirname(os.path.abspath(path)) or ".")
+    return resolved_inside(parent, root) or os.path.islink(path)
+
+
 def write_json_atomic(path, obj):
     """Write via a temp file in the destination directory, then os.replace()."""
     d = os.path.dirname(os.path.abspath(path)) or "."
@@ -168,8 +176,8 @@ def cmd_hash(args):
     if not args.release_id.strip():
         print("ERROR: --release-id must be non-empty", file=sys.stderr)
         return 2
-    if args.out and resolved_inside(os.path.dirname(os.path.realpath(args.out)) or ".", root):
-        print("ERROR: --out must not be inside --dir (it would become an unlisted or self-invalidating file)", file=sys.stderr)
+    if args.out and (dest_inside(args.out, root) or os.path.islink(args.out)):
+        print("ERROR: --out must not be inside --dir nor be a symlink (it would become an unlisted or self-invalidating file)", file=sys.stderr)
         return 2
     files = {}
     skipped_links = []
@@ -245,7 +253,7 @@ def load_manifest(path):
         raise ValueError("manifest is not a JSON object")
     if doc.get("schema") != SCHEMA:
         raise ValueError(f"unexpected manifest schema {doc.get('schema')!r} (want {SCHEMA})")
-    if not isinstance(doc.get("release_id"), str) or not doc["release_id"]:
+    if not isinstance(doc.get("release_id"), str) or not doc["release_id"].strip():
         raise ValueError("missing release_id")
     files = doc.get("files")
     if not isinstance(files, dict) or not files:
@@ -288,8 +296,9 @@ def cmd_check(args):
         return 2
     if args.report:
         rp = os.path.realpath(args.report)
-        if (root and resolved_inside(rp, root)) or same_file(args.report, args.manifest) or rp == os.path.realpath(args.manifest):
-            print("ERROR: --report must not be inside --dir nor alias the manifest", file=sys.stderr)
+        if (root and dest_inside(args.report, root)) or os.path.islink(args.report) \
+                or same_file(args.report, args.manifest) or rp == os.path.realpath(args.manifest):
+            print("ERROR: --report must not be inside --dir, be a symlink, nor alias the manifest", file=sys.stderr)
             return 2
         if root and any(same_file(args.report, os.path.join(root, rel)) for rel in files):
             print("ERROR: --report is the same file (hard link) as a listed release file", file=sys.stderr)
@@ -344,17 +353,21 @@ def cmd_check(args):
         verdict, code = "PARTIAL", (0 if args.allow_partial else 3)
     else:
         verdict, code = "VERIFIED", 0
-    print(f"\n{verdict}: {doc['release_id']} on {target} — {ok} ok, {len(problems)} problem(s), "
-          f"{len(skipped)} skipped (of {len(files)} listed)"
-          + ("" if not skipped else "  [skipped files were NOT checked]"))
     if args.report:
-        write_json_atomic(args.report, {"release_id": doc["release_id"], "target": target, "verdict": verdict, "exit_code": code,
+        try:
+            write_json_atomic(args.report, {"release_id": doc["release_id"], "target": target, "verdict": verdict, "exit_code": code,
                        "checked_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                        "manifest": os.path.abspath(args.manifest), "manifest_sha256": doc["_manifest_sha256"],
                        "only": args.only, "skip_prefix": args.skip_prefix,
                        "ok": ok, "verified_files": checked,
                        "problems": [{"kind": k, "file": f, "detail": d} for k, f, d in problems],
                        "skipped": skipped})
+        except OSError as e:
+            print(f"  ERROR     --report {args.report}: {e}")
+            verdict, code = "FAILED", 1     # an operational error is a failed run, whatever the files said
+    print(f"\n{verdict}: {doc['release_id']} on {target} — {ok} ok, {len(problems)} problem(s), "
+          f"{len(skipped)} skipped (of {len(files)} listed)"
+          + ("" if not skipped else "  [skipped files were NOT checked]"))
     return code
 
 
