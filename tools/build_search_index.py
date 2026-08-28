@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -180,7 +181,16 @@ def main() -> int:
     args = ap.parse_args()
 
     t0 = time.time()
-    out_root = Path(args.outdir) / f"{args.tag}_search_index_v1"
+    # --tag names a directory under --outdir and nothing else: one filename
+    # component, so --force can never remove anything outside --outdir.
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", args.tag) or args.tag in (".", ".."):
+        print(f"ERROR: --tag must be a single filename component, got {args.tag!r}", file=sys.stderr)
+        return 2
+    outdir = Path(args.outdir).resolve()
+    out_root = outdir / f"{args.tag}_search_index_v1"
+    if out_root.is_symlink() or out_root.resolve().parent != outdir:
+        print(f"ERROR: refusing output target {out_root} (symlink or outside --outdir)", file=sys.stderr)
+        return 2
     # Reproducibility: the directory's byte inventory must come from THIS build only.
     # A previous build could leave obsolete hot/ keys, higher _pN sub-files, or
     # base shards beyond --shards, which no manifest would mention. Refuse a
