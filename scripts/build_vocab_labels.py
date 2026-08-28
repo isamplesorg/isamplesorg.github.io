@@ -38,7 +38,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import os
+import platform
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -169,9 +175,15 @@ def _pick_scheme(g: rdflib.Graph, c: rdflib.term.Node) -> str | None:
     return None
 
 
-def extract_rows(ttl_url: str) -> list[dict]:
+def extract_rows(ttl_url: str, local_path: Path | None = None) -> list[dict]:
+    """Parse one TTL. `ttl_url` is always the canonical (main) URL recorded as
+    `source_ttl`; when `local_path` is given the bytes come from that archived
+    file instead of the network (reproducible builds, --ttl-dir)."""
     g = rdflib.Graph()
-    g.parse(ttl_url, format="turtle")
+    if local_path is not None:
+        g.parse(data=local_path.read_bytes(), format="turtle")
+    else:
+        g.parse(ttl_url, format="turtle")
 
     rows: list[dict] = []
     for c in g.subjects(RDF.type, SKOS.Concept):
@@ -280,6 +292,38 @@ def _emit_data_form_aliases(rows: list[dict]) -> list[dict]:
     return aliases
 
 
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _git_sha() -> str | None:
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent,
+                                       stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return None
+
+
+def _git_dirty() -> bool | None:
+    try:
+        return bool(subprocess.check_output(["git", "status", "--porcelain", "--", str(Path(__file__).resolve())],
+                                            cwd=Path(__file__).parent, stderr=subprocess.DEVNULL).decode().strip())
+    except Exception:
+        return None
+
+
+def _local_ttl_path(ttl_dir: Path, url: str) -> Path:
+    """Archived layout: <ttl_dir>/<repo-name>/<file>.ttl for
+    https://raw.githubusercontent.com/isamplesorg/<repo-name>/main/vocabulary/<file>.ttl"""
+    parts = url.split("/")
+    repo = parts[4]
+    return ttl_dir / repo / parts[-1]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument(
@@ -302,15 +346,52 @@ def main(argv: list[str] | None = None) -> int:
             "artifact is intended for publishing."
         ),
     )
+    ap.add_argument(
+        "--ttl-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Read the TTLs from this archive directory (layout <dir>/<repo>/<file>.ttl, "
+            "as written by the 202609 provenance freeze) instead of fetching main. "
+            "source_ttl still records the canonical main URL. Required for a reproducible build."
+        ),
+    )
+    ap.add_argument(
+        "--ttl-archive",
+        type=Path,
+        default=None,
+        help="Optional ttl_archive.json (per-file commit + sha256) to copy into the manifest and to VERIFY the archived bytes against.",
+    )
+    ap.add_argument("--no-manifest", action="store_true", help="skip writing {output}.manifest.json")
     args = ap.parse_args(argv)
+
+    t_start = time.time()
+    ttl_inputs: list[dict] = []
+    archive_index: dict[str, dict] = {}
+    if args.ttl_archive:
+        for rec in json.loads(args.ttl_archive.read_text()):
+            archive_index[rec["source_ttl"]] = rec
 
     all_rows: list[dict] = []
     failures: list[tuple[str, str]] = []
     for url in VOCAB_TTLS:
         try:
             n_before = len(all_rows)
-            all_rows.extend(extract_rows(url))
-            print(f"  {len(all_rows) - n_before:>4} rows  {url}")
+            local = None
+            if args.ttl_dir is not None:
+                local = _local_ttl_path(args.ttl_dir, url)
+                if not local.exists():
+                    raise FileNotFoundError(f"archived TTL missing: {local}")
+                digest = _sha256(local)
+                rec = archive_index.get(url)
+                if rec and rec.get("sha256") != digest:
+                    raise ValueError(f"archived TTL sha256 {digest[:12]} != ttl_archive.json {rec['sha256'][:12]} for {local}")
+                ttl_inputs.append({"source_ttl": url, "local_path": str(local), "bytes": local.stat().st_size,
+                                   "sha256": digest, "commit": (rec or {}).get("commit")})
+            else:
+                ttl_inputs.append({"source_ttl": url, "local_path": None, "note": "fetched live from main (NOT pinned)"})
+            all_rows.extend(extract_rows(url, local))
+            print(f"  {len(all_rows) - n_before:>4} rows  {url}{'  [archived]' if local else ''}")
         except Exception as e:
             print(f"WARN: failed to parse {url}: {e}", file=sys.stderr)
             failures.append((url, str(e)))
@@ -358,6 +439,12 @@ def main(argv: list[str] | None = None) -> int:
     all_rows.extend(aliases)
 
     df = pd.DataFrame(all_rows)
+    # Explicit total order (reproducibility): rdflib's traversal order happens to
+    # be stable for identical bytes, but nothing guarantees it across rdflib
+    # versions. Sort rows by (uri_form, uri, lang, source_ttl) and each row's
+    # alt_labels list, so the artifact is a function of the TTL bytes alone.
+    df["alt_labels"] = df["alt_labels"].apply(lambda v: sorted(v) if isinstance(v, list) else v)
+    df = df.sort_values(["uri_form", "uri", "lang", "source_ttl"], kind="mergesort", na_position="last").reset_index(drop=True)
     # Final sanity check
     dupes = df.duplicated(subset=["uri", "lang"], keep=False).sum()
     if dupes:
@@ -381,6 +468,30 @@ def main(argv: list[str] | None = None) -> int:
         csv_path = args.output.with_suffix(".csv")
         df.to_csv(csv_path, index=False)
         print(f"Also wrote {csv_path}")
+
+    if not args.no_manifest:
+        import pyarrow
+        manifest = {
+            "script": Path(__file__).name,
+            "script_sha256": _sha256(Path(__file__).resolve()),
+            "argv": sys.argv,
+            "git_sha": _git_sha(),
+            "git_dirty": _git_dirty(),
+            "environment": {"python": platform.python_version(), "platform": platform.platform(),
+                            "rdflib": rdflib.__version__, "pandas": pd.__version__, "pyarrow": pyarrow.__version__},
+            "policy": ("SKOS prefLabels/altLabels/definitions/broader from the 10 vocabulary TTLs; cross-vocab dedupe; "
+                       "/1.0/ data-form aliases; rows sorted by (uri_form, uri, lang, source_ttl), alt_labels sorted. "
+                       "Reproducible when built with --ttl-dir from the archived TTLs (provenance/inputs_202609_frozen.json)."),
+            "pinned": args.ttl_dir is not None,
+            "inputs": {"ttls": ttl_inputs, "manual_overrides": len(MANUAL_LABEL_OVERRIDES)},
+            "counts": {"rows": int(len(df)), "unique_uris": int(df["uri"].nunique()),
+                       "by_uri_form": {k: int(v) for k, v in df["uri_form"].value_counts().to_dict().items()}},
+            "output": {"path": str(args.output), "bytes": args.output.stat().st_size, "sha256": _sha256(args.output)},
+            "elapsed_s": round(time.time() - t_start, 1),
+        }
+        mpath = Path(str(args.output) + ".manifest.json")
+        mpath.write_text(json.dumps(manifest, indent=2))
+        print(f"manifest -> {mpath}")
 
     return 0
 
