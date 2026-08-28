@@ -106,6 +106,7 @@ def run(page, url, wait, label):
     page.on('console', on_console)
     page.goto(url, wait_until='load')
     table_at = None
+    marks = {}   # first time each boot milestone was observed
     deadline = time.time() + wait
     while time.time() < deadline:
         page.wait_for_timeout(1000)
@@ -116,6 +117,13 @@ def run(page, url, wait, label):
                     table_at = time.time() - t0
             except Exception:
                 pass
+        try:
+            st = page.evaluate("() => ({facet: window.__facetIndexStatus, ready: window.__filteredClustersReady, lite: !!window.__liteFile})")
+            if st.get('facet') in ('ready', 'failed'): marks.setdefault('facetIndex_' + st['facet'], round(time.time() - t0, 1))
+            if st.get('ready') is True: marks.setdefault('filteredClustersReady', round(time.time() - t0, 1))
+            if st.get('lite'): marks.setdefault('liteFile_settled', round(time.time() - t0, 1))
+        except Exception:
+            pass
     page.remove_listener('response', on_resp)
     page.remove_listener('console', on_console)
     perf = page.evaluate("""() => {
@@ -126,6 +134,7 @@ def run(page, url, wait, label):
         return { lite_fetch: lf ? {start_s: +(lf.startTime/1000).toFixed(1), dur_s: +(lf.duration/1000).toFixed(1)} : null,
                  lite_resource_timing: rt, liteFile: window.__liteFile || null, facetIndexStatus: window.__facetIndexStatus || null };
     }""")
+    perf['milestones_s'] = marks
     summarise(label, ranges, whole, whole_hdr, fallbacks[0], sql, perf, table_at)
 
 
