@@ -11,6 +11,7 @@
  * Pass DATA_BASE=http://localhost:8099 (default below).
  */
 const { test, expect } = require('@playwright/test');
+const { explorerUrl } = require('./helpers/url');
 
 const DATA_BASE = process.env.DATA_BASE || 'http://localhost:8099';
 const MATERIAL = 'https://w3id.org/isample/vocabulary/material/1.0/anyanthropogenicmaterial';
@@ -18,7 +19,10 @@ const WORLD_ALT = 18000000;   // world zoom, well above EXIT_POINT_ALT
 
 function url(extraHash = '') {
   const qs = new URLSearchParams({ data_base: DATA_BASE, material: MATERIAL }).toString();
-  return `/explorer.html?${qs}#v=1&lat=10.0000&lng=0.0000&alt=${WORLD_ALT}${extraHash}`;
+  // explorerUrl() keeps TEST_URL's sub-path (fork staging lives under
+  // /isamplesorg.github.io/); a bare '/explorer.html' would replace it and
+  // silently test a 404 page. See helpers/url.js.
+  return explorerUrl(`?${qs}#v=1&lat=10.0000&lng=0.0000&alt=${WORLD_ALT}${extraHash}`);
 }
 
 // Read an OJS cell value (viewer, db, lite_url, facetFilterSQL, ...) the same way
