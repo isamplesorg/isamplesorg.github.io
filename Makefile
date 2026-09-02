@@ -23,8 +23,13 @@
 # header for why the isolated-venv default matters for LOCAL runs.
 
 PY      ?= scripts/.venv/bin/python
+# Only check for a missing file when PY looks like a path (contains "/") —
+# `wildcard` doesn't search $$PATH, so a bare command (PY=python) would
+# otherwise warn falsely even though the shell can find it fine.
+ifneq ($(findstring /,$(PY)),)
 ifeq ($(wildcard $(PY)),)
 $(warning $(PY) not found -- run: bash scripts/setup_pipeline_venv.sh (or pass PY=<interpreter> to use something else, e.g. in CI))
+endif
 endif
 WIDE_URL ?= https://data.isamples.org/isamples_202604_wide.parquet
 OC_WIDE_URL ?= https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg_wide.parquet
