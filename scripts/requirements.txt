@@ -1,11 +1,26 @@
 # Dependencies for one-shot scripts in this directory (NOT the Quarto site
-# build — that uses ../requirements.txt). Install with:
-#   pip install -r scripts/requirements.txt
+# build — that uses ../requirements.txt). Do NOT `pip install` this into a
+# shared/ambient interpreter (e.g. a pyenv env used by other projects) —
+# that's exactly how the pin below drifted silently in the past (see
+# scripts/setup_pipeline_venv.sh). Install into an isolated venv instead:
+#   bash scripts/setup_pipeline_venv.sh
+# which is equivalent to:
+#   uv venv scripts/.venv && uv pip install -p scripts/.venv -r scripts/requirements.txt
+
+# All versions below are exact pins, not floors. Reproducible-build scripts
+# (build_vocab_labels.py, build_frontend_derived.py, enrich_wide_with_oc_*.py,
+# ingest_oc_records.py, tools/build_search_index.py) depend on byte-identical
+# output across runs; an unpinned "latest compatible" install silently
+# changes output bytes (and, for DuckDB major-version bumps, can outright
+# crash a step — see provenance/isamples_202609/step9_clean_rerun_2026-08-31.md
+# in the isamples-suite provenance repo). Versions below are the exact ones
+# the 2026-08-28 isamples_202609 reference build used (recorded in that
+# build's own *.manifest.json "environment" fields).
 
 # build_vocab_labels.py
-rdflib>=6.3
-pandas>=2.0
-pyarrow>=14
+rdflib==6.3.2
+pandas==2.3.3
+pyarrow==21.0.0
 
 # build_frontend_derived.py + validate_frontend_derived.py + tests/
 # DuckDB pinned for reproducible builds; the h3 (community) and spatial
