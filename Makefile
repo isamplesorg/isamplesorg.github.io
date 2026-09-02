@@ -13,10 +13,19 @@
 # Override on the command line, e.g.:
 #   make all-272 TAG=isamples_202606
 #
-# Requirements: python with `pip install -r scripts/requirements.txt`, plus
-# network access on first run (DuckDB pulls the h3 community extension).
+# Requirements: an isolated pipeline venv (bash scripts/setup_pipeline_venv.sh,
+# which installs the exact pins in scripts/requirements.txt — the targets
+# below use it by default), plus network access on first run (DuckDB pulls
+# the h3 community extension). Override with PY=python (or any interpreter)
+# to use something else — e.g. CI installs scripts/requirements.txt into its
+# own ephemeral runner via plain `pip`, so it isn't exposed to ambient
+# ("myenv") drift the way a local run is; see scripts/requirements.txt's
+# header for why the isolated-venv default matters for LOCAL runs.
 
-PY      ?= python
+PY      ?= scripts/.venv/bin/python
+ifeq ($(wildcard $(PY)),)
+$(warning $(PY) not found -- run: bash scripts/setup_pipeline_venv.sh (or pass PY=<interpreter> to use something else, e.g. in CI))
+endif
 WIDE_URL ?= https://data.isamples.org/isamples_202604_wide.parquet
 OC_WIDE_URL ?= https://storage.googleapis.com/opencontext-parquet/oc_isamples_pqg_wide.parquet
 OUTDIR  ?= build/derived

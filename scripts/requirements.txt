@@ -1,21 +1,27 @@
 # Dependencies for one-shot scripts in this directory (NOT the Quarto site
 # build — that uses ../requirements.txt). Do NOT `pip install` this into a
-# shared/ambient interpreter (e.g. a pyenv env used by other projects) —
-# that's exactly how the pin below drifted silently in the past (see
-# scripts/setup_pipeline_venv.sh). Install into an isolated venv instead:
+# shared/ambient interpreter (e.g. a pyenv env used by other projects): this
+# file being pinned does nothing by itself if nothing installs FROM it into
+# an isolated env — that's exactly how the pipeline ran against an
+# ambient-drifted duckdb in the past (see scripts/setup_pipeline_venv.sh and
+# `make` targets, which default to that same isolated venv). Install with:
 #   bash scripts/setup_pipeline_venv.sh
 # which is equivalent to:
 #   uv venv scripts/.venv && uv pip install -p scripts/.venv -r scripts/requirements.txt
 
-# All versions below are exact pins, not floors. Reproducible-build scripts
-# (build_vocab_labels.py, build_frontend_derived.py, enrich_wide_with_oc_*.py,
-# ingest_oc_records.py, tools/build_search_index.py) depend on byte-identical
-# output across runs; an unpinned "latest compatible" install silently
-# changes output bytes (and, for DuckDB major-version bumps, can outright
-# crash a step — see provenance/isamples_202609/step9_clean_rerun_2026-08-31.md
-# in the isamples-suite provenance repo). Versions below are the exact ones
-# the 2026-08-28 isamples_202609 reference build used (recorded in that
-# build's own *.manifest.json "environment" fields).
+# duckdb/pandas/pyarrow/rdflib below are exact pins (the four packages the
+# reproducible-build scripts' OUTPUT BYTES are sensitive to), not floors —
+# an unpinned "latest compatible" install can silently change output bytes,
+# or (for a DuckDB release-line bump, e.g. 1.4->1.5) outright crash a step;
+# see provenance/isamples_202609/step9_clean_rerun_2026-08-31.md in the
+# isamples-suite provenance repo. Versions below are the exact ones the
+# 2026-08-28 isamples_202609 reference build used (recorded in that build's
+# own *.manifest.json "environment" fields). This is NOT a fully hermetic
+# lockfile: transitive dependencies (numpy, python-dateutil, isodate, ...),
+# the Python interpreter version, and `uv` itself are still resolver-chosen
+# and can still drift between clean checkouts. A `uv.lock`-based lockfile
+# (as the pqg repo's step 1 uses) would close that; not done here as it's a
+# bigger change than this pin.
 
 # build_vocab_labels.py
 rdflib==6.3.2
@@ -27,4 +33,6 @@ pyarrow==21.0.0
 # extensions are version-bound to this DuckDB release and installed at runtime
 # (the build manifest records the exact resolved extension hashes).
 duckdb==1.4.4
+
+# test runner only — not part of any script's output, so left floating
 pytest>=8.0
