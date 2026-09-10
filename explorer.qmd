@@ -12,9 +12,33 @@ format:
     include-in-header:
       text: |
         <link rel="preconnect" href="https://data.isamples.org" crossorigin>
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202608_h3_summary_res4.parquet">
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/isamples_202608_facet_summaries.parquet">
-        <link rel="preload" as="fetch" crossorigin="anonymous" href="https://data.isamples.org/vocab_labels_202608.parquet">
+        <script>
+          // Boot-critical preload hints for the DEFAULT data origin. Injected rather
+          // than static <link> tags so a data-origin override (?data_base= or
+          // localStorage ISAMPLES_DATA_BASE, same sources as the R2_BASE cell) does
+          // not fire wasted prefetches that 404 against the default origin — seen
+          // when previewing a release from a staging prefix. Any override skips the
+          // hints entirely: that is a preview path where prefetch speed is moot, and
+          // it avoids duplicating R2_BASE's override validation here. Keep these
+          // filenames in lockstep with the *_url cells; the #334 manifest check
+          // audits whatever preload links end up in the DOM.
+          (function () {
+            var override = null;
+            try {
+              override = new URLSearchParams(location.search).get('data_base')
+                || localStorage.getItem('ISAMPLES_DATA_BASE');
+            } catch (e) { /* storage blocked: treat as no override */ }
+            if (override) return;
+            ['isamples_202609_h3_summary_res4.parquet',
+             'isamples_202609_facet_summaries.parquet',
+             'vocab_labels_202609.parquet'].forEach(function (f) {
+              var l = document.createElement('link');
+              l.rel = 'preload'; l.as = 'fetch'; l.crossOrigin = 'anonymous';
+              l.href = 'https://data.isamples.org/' + f;
+              document.head.appendChild(l);
+            });
+          })();
+        </script>
 ---
 
 ```{=html}
@@ -828,15 +852,16 @@ R2_BASE = (() => {
     // default and absolute overrides (http://localhost:8099/data) pass through.
     return raw.startsWith('/') ? new URL(raw, location.origin).href : raw;
 })()
-h3_res4_url = `${R2_BASE}/isamples_202608_h3_summary_res4.parquet`
-h3_res6_url = `${R2_BASE}/isamples_202608_h3_summary_res6.parquet`
-h3_res8_url = `${R2_BASE}/isamples_202608_h3_summary_res8.parquet`
+h3_res4_url = `${R2_BASE}/isamples_202609_h3_summary_res4.parquet`
+h3_res6_url = `${R2_BASE}/isamples_202609_h3_summary_res6.parquet`
+h3_res8_url = `${R2_BASE}/isamples_202609_h3_summary_res8.parquet`
 // #300: the _v2 lite carries h3_res4/h3_res6 (for in-browser filtered-cluster
 // aggregation). A new filename rather than overwriting the original keeps the
 // immutable-cache contract intact (isamples_YYYYMM_*.parquet is served
 // immutable/1-yr) — every visitor fetches fresh data, no cache purge. The next
 // generation builds res4/res6 into the canonical name natively (build change),
-// so this _v2 suffix is a one-off retrofit for 202608.
+// so this _v2 suffix is a one-off retrofit for 202608. (202609 kept the _v3
+// filename as-is rather than renaming at the generation boundary.)
 //
 // #311: _v3 rebuilds place_name/result_time via the SamplingEvent/
 // SamplingSite graph traversal (the fix in build_frontend_derived.py) — _v2's
@@ -848,20 +873,20 @@ h3_res8_url = `${R2_BASE}/isamples_202608_h3_summary_res8.parquet`
 // immutable-cache reasoning as _v2: new filename, never overwrite.
 // #351: queries name this URL, but the db cell's query wrapper serves them from
 // an in-memory copy fetched once by the liteFile cell (see both).
-lite_url = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`
+lite_url = `${R2_BASE}/isamples_202609_samples_map_lite_v3.parquet`
 // Explicit versioned wide (#272: OC concept-enriched — popups read material/
 // object-type from this file). The stable alias `current/wide.parquet` still
 // points at the previous wide until the production cutover flips the manifest;
 // pinning the version here keeps staging and prod each self-consistent.
-wide_url = `${R2_BASE}/isamples_202608_wide.parquet`
+wide_url = `${R2_BASE}/isamples_202609_wide.parquet`
 // v2 carries object_type alongside material and context (URI-string columns).
-facets_url = `${R2_BASE}/isamples_202608_sample_facets_v4.parquet`
-facet_summaries_url = `${R2_BASE}/isamples_202608_facet_summaries.parquet`
+facets_url = `${R2_BASE}/isamples_202609_sample_facets_v4.parquet`
+facet_summaries_url = `${R2_BASE}/isamples_202609_facet_summaries.parquet`
 // Pre-aggregated single-filter cache for fast cross-filtered facet counts.
-cross_filter_url = `${R2_BASE}/isamples_202608_facet_cross_filter.parquet`
+cross_filter_url = `${R2_BASE}/isamples_202609_facet_cross_filter.parquet`
 // SKOS prefLabels for Material / Sampled Feature / Specimen Type URIs.
 // ~60 KB lookup; falls back to URI tail if a URI isn't covered.
-vocab_labels_url = `${R2_BASE}/vocab_labels_202608.parquet`
+vocab_labels_url = `${R2_BASE}/vocab_labels_202609.parquet`
 
 // #281/#282/#291 facet hierarchy — SHIPPED, default ON. Material, Sampled Feature
 // (context) and Specimen Type (object_type) render as expandable trees backed by the
@@ -880,21 +905,21 @@ FACET_TREE = (() => {
 })()
 // Hierarchical counts (one row per concept node: facet_type, concept_uri,
 // parent_uri, depth, count) and per-sample membership (pid ↔ every ancestor).
-facet_tree_url = `${R2_BASE}/isamples_202608_facet_tree_summaries.parquet`
-membership_url = `${R2_BASE}/isamples_202608_sample_facet_membership.parquet`
+facet_tree_url = `${R2_BASE}/isamples_202609_facet_tree_summaries.parquet`
+membership_url = `${R2_BASE}/isamples_202609_sample_facet_membership.parquet`
 // #290/#293 single-active-filter cross-filter cube over the trees + source.
 // Precomputed COUNT(DISTINCT pid) for each target node given ONE active filter,
 // so global-view cross-filtered tree counts are instant instead of a live
 // membership near-full-scan. ~1k rows; same schema as facet_cross_filter.
-tree_cross_filter_url = `${R2_BASE}/isamples_202608_facet_tree_cross_filter.parquet`
+tree_cross_filter_url = `${R2_BASE}/isamples_202609_facet_tree_cross_filter.parquet`
 // #293 bitmask filter: per-pid tree-membership masks + the concept_uri→bit map.
 // facetFilterSQL filters broad multi-tree selections with a columnar bitwise
 // predicate over sample_facet_masks (~10 MB, one row/pid) instead of the
 // 39M-row membership GROUP BY that stalls DuckDB-WASM. node_bits (~56 rows)
 // maps each selected node to its bit. Best-effort: if either fails to load,
 // facetFilterSQL falls back to the membership scan (no regression).
-masks_url = `${R2_BASE}/isamples_202608_sample_facet_masks.parquet`
-node_bits_url = `${R2_BASE}/isamples_202608_facet_node_bits.parquet`
+masks_url = `${R2_BASE}/isamples_202609_sample_facet_masks.parquet`
+node_bits_url = `${R2_BASE}/isamples_202609_facet_node_bits.parquet`
 // #304/#305 complete per-pid facet index: one row per LOCATED sample (incl. the
 // ~29,917 with no tree membership that sample_facet_masks omits, #306) + source.
 // The multi-filter global-view count path scans this with the node_bits bitmask
@@ -904,7 +929,7 @@ node_bits_url = `${R2_BASE}/isamples_202608_facet_node_bits.parquet`
 // multi-filter path shows "Loading…"/"unavailable" (#313) rather than a
 // misleading baseline (the honesty rule — never baseline under active
 // filters).
-index_url = `${R2_BASE}/isamples_202608_sample_facet_index.parquet`
+index_url = `${R2_BASE}/isamples_202609_sample_facet_index.parquet`
 // #313 P1: tiny trusted manifest (source, count, build_id, schema_version,
 // total_rows) built DIRECTLY from samp_geo at build time — NOT read back from
 // index_url — and independently validated against the real on-disk index by
@@ -912,15 +937,15 @@ index_url = `${R2_BASE}/isamples_202608_sample_facet_index.parquet`
 // of scanning the 9.68 MB index_url on every page load; index_url itself is
 // now touched only lazily, when a user's multi-filter count query actually
 // runs. Always deployed paired with index_url (same build_id).
-index_meta_url = `${R2_BASE}/isamples_202608_sample_facet_index_meta.parquet`
+index_meta_url = `${R2_BASE}/isamples_202609_sample_facet_index_meta.parquet`
 
 // Single source of truth for the search-index location (#334 round-1 review):
 // the runtime substrate path and the manifest check MUST share this cell, so a
 // version bump can't diverge them silently.
-search_index_base = `${R2_BASE}/isamples_202608_search_index_v1`
+search_index_base = `${R2_BASE}/isamples_202609_search_index_v1`
 
 // === #334 v0-detect: release-manifest boot cross-check ===
-// The release manifest (isamples_202608_release_manifest.json, committed in
+// The release manifest (isamples_202609_release_manifest.json, committed in
 // this repo and deployed with the site; generated by
 // tools/build_release_manifest.py; human twin: CANONICAL.md) enumerates the
 // canonical data objects for this release. This cell cross-checks every URL
@@ -957,7 +982,7 @@ manifestCheck = {
   }))];
   const result = { status: 'unchecked', missing: [], extra: [], release_id: null };
   try {
-    const resp = await fetch(new URL('isamples_202608_release_manifest.json', document.baseURI));
+    const resp = await fetch(new URL('isamples_202609_release_manifest.json', document.baseURI));
     if (!resp.ok) {
       console.warn(`#334 manifest check: manifest fetch HTTP ${resp.status} — skipping`);
       result.status = 'manifest-unavailable';
@@ -6312,7 +6337,7 @@ zoomWatcher = {
 
     // ===== #171: substrate search path (default; escape hatch ?fts=off) =====
     // Replaces buildSearchFilter's 69 MB facets ILIKE scan with the
-    // sharded inverted index at data.isamples.org/isamples_202608_search_index_v1/
+    // sharded inverted index at data.isamples.org/isamples_202609_search_index_v1/
     // (built by tools/build_search_index.py, contract SEARCH_INDEX_V1.md).
     // Downstream shares one contract: both producers emit the singleton
     // `search_pids` table (pid, label, source, place_name, relevance_score);
@@ -7797,17 +7822,17 @@ Pre-aggregated H3 hexagonal indices achieve near-instant globe rendering, with s
 | **Zoom in** | H3 res6 | 1.3 MB | 112K clusters (city) |
 | **Zoom more** | H3 res8 | 2.0 MB | 176K clusters (neighborhood) |
 | **Zoom deep** | Map lite | 63 MB (range req.) | Up to 5K individual samples |
-| **Click sample** | Full dataset | 300 MB (range req.) | Full metadata for 1 sample |
+| **Click sample** | Full dataset | 237 MB (range req.) | Full metadata for 1 sample |
 
 *Sizes are decimal MB (10⁶ bytes), matching the manifest's byte counts.*
 
 **Static files, zero backend.** All queries run in your browser via DuckDB-WASM
 with HTTP range requests — only the bytes you need are transferred. The manifest
 directly inventories 21 objects — including five search-index sidecars — and
-summarizes the index's 847 shard files (256 base plus 591 hot); the index
-directory holds 852 objects in all. Any one view touches only a handful of them.
+summarizes the index's 1,025 shard files (256 base plus 769 hot); the index
+directory holds 1,030 objects in all. Any one view touches only a handful of them.
 The authoritative inventory is
-[`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json)
+[`isamples_202609_release_manifest.json`](https://isamples.org/isamples_202609_release_manifest.json)
 (human twin: `CANONICAL.md`), which the Explorer cross-checks at boot.
 
 <!-- Coherence-audit follow-up (2026-08-05). Sizes are from the release manifest:
@@ -7837,7 +7862,18 @@ The authoritative inventory is
 
      Units: decimal MB (10^6 B). The old row mixed conventions (580 KB was KiB
      while 1.6/2.5 MB were decimal), which is how it read as self-consistent.
-     If you edit these, re-derive from the manifest — do not round from memory. -->
+     If you edit these, re-derive from the manifest — do not round from memory.
+
+     Generation flip 202608 -> 202609 (2026-09). Re-derived from the 202609 release
+     manifest: res4 505,630 B; res6 1,322,935 B; res8 2,009,551 B; map_lite_v3
+     62,923,910 B; wide 236,995,193 B. Only the wide row's rounded figure moved
+     (300 -> 237 MB): same 170 row groups and ZSTD codec as 202608, 144 fewer
+     location rows; the size drop itself was not investigated further. Cluster
+     counts unchanged — 38,462 / 112,019 / 176,669 — checked against the parquet
+     row counts of BOTH generations. Search index: 256 base + 769 hot = 1,025
+     shard files, 1,030 objects with the five sidecars (was 847 / 852). The
+     manifest is deployed with the site (_quarto.yml resources), so its link is
+     isamples.org, not data.isamples.org (the old link 404'd). -->
 
 ::: {.callout-tip collapse="true"}
 ## Check these numbers against the source
@@ -7849,7 +7885,7 @@ budget are properties of the app, not the data.) To re-derive the sizes without
 taking this page's word for it:
 
 ```bash
-curl -s https://data.isamples.org/isamples_202608_release_manifest.json \
+curl -s https://isamples.org/isamples_202609_release_manifest.json \
   | jq '.files | to_entries[] | select(.key|test("h3_summary|_wide\\.|map_lite"))
         | {file: .key, bytes: .value.size_bytes}'
 ```
@@ -7858,7 +7894,7 @@ Cluster counts come from the parquet row counts, not the manifest:
 
 ```sql
 SELECT count(*) FROM read_parquet(
-  'https://data.isamples.org/isamples_202608_h3_summary_res4.parquet');
+  'https://data.isamples.org/isamples_202609_h3_summary_res4.parquet');
 ```
 :::
 

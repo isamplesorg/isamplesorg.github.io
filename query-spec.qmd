@@ -22,9 +22,9 @@ Known instances (illustrative, not exhaustive):
 
 - **Filenames are a generation stale.** The bindings below name
   `sample_facets_v2.parquet`; the Explorer now reads
-  `isamples_202608_sample_facets_v4.parquet` (and `samples_map_lite_v3`). The
+  `isamples_202609_sample_facets_v4.parquet` (and `samples_map_lite_v3`). The
   authoritative inventory is
-  [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+  [`isamples_202609_release_manifest.json`](https://isamples.org/isamples_202609_release_manifest.json),
   human twin `CANONICAL.md`.
 - **Text search is described as the old full-scan path.** The `text MATCHES`
   binding presents the `ILIKE` scan as what happens "currently" and the

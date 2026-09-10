@@ -33,7 +33,7 @@ import requests
 
 ORIGIN = os.environ.get("ISAMPLES_DATA_ORIGIN", "https://data.isamples.org")
 PAGE_ORIGIN = "https://isamples.org"
-MANIFEST = pathlib.Path(__file__).resolve().parent.parent / "isamples_202608_release_manifest.json"
+MANIFEST = pathlib.Path(__file__).resolve().parent.parent / "isamples_202609_release_manifest.json"
 
 # The Worker 403s some default user agents; identify honestly.
 UA = {"User-Agent": "isamples-ci-contract/1.0 (+https://isamples.org)"}
@@ -56,8 +56,8 @@ def _boot_critical_large_file():
     """
     files = _manifest_files()
     name = None
-    for candidate in ("isamples_202608_samples_map_lite_v3.parquet",
-                      "isamples_202608_sample_facet_masks.parquet"):
+    for candidate in ("isamples_202609_samples_map_lite_v3.parquet",
+                      "isamples_202609_sample_facet_masks.parquet"):
         if candidate in files:
             name = candidate
             break

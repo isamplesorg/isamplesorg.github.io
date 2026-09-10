@@ -78,7 +78,9 @@ test.describe('Material facet tree (#281/#282 preview)', () => {
     expect(total).toBeGreaterThan(0);
   });
 
-  // Known 202608 subtree/union totals — deterministic for this dataset, so polling
+  // Known subtree/union totals — identical in 202608 and 202609 (tree summaries
+  // compared row-for-row; the mineral ∪ soil union recounted from both
+  // generations' membership files, 2026-09-10) — deterministic, so polling
   // to the exact value also guarantees the filter has applied (no stale-pager read).
   const EARTHMATERIAL_TOTAL = 4091133;        // earthmaterial subtree
   const MINERAL_OR_SOIL_TOTAL = 333253;       // mineral ∪ soil (peers)

@@ -75,9 +75,9 @@ sql = async (q) => {
 
 // The canonical data files — the SAME ones the Explorer loads (see CANONICAL.md).
 // All three used on this page are kilobyte-scale, so these cells load instantly.
-FACET_SUMMARIES = 'https://data.isamples.org/isamples_202608_facet_summaries.parquet'
-VOCAB_LABELS = 'https://data.isamples.org/vocab_labels_202608.parquet'
-H3_RES4 = 'https://data.isamples.org/isamples_202608_h3_summary_res4.parquet'
+FACET_SUMMARIES = 'https://data.isamples.org/isamples_202609_facet_summaries.parquet'
+VOCAB_LABELS = 'https://data.isamples.org/vocab_labels_202609.parquet'
+H3_RES4 = 'https://data.isamples.org/isamples_202609_h3_summary_res4.parquet'
 ```
 
 ## Step 1 — The world at a glance

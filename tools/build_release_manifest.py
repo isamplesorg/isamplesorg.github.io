@@ -10,7 +10,7 @@ downloads). The Explorer fetches this at boot and cross-checks its pinned URLs
 
 Usage:
     python3 tools/build_release_manifest.py                       # print JSON
-    python3 tools/build_release_manifest.py --out isamples_202608_release_manifest.json
+    python3 tools/build_release_manifest.py --out isamples_202609_release_manifest.json
     python3 tools/build_release_manifest.py --base https://data.isamples.org
 
 Fail-closed: any missing file or non-strict probe result aborts with exit 1 — a
@@ -23,39 +23,39 @@ import json
 import sys
 import urllib.request
 
-RELEASE_ID = "isamples_202608"
+RELEASE_ID = "isamples_202609"
 
 # The canonical set. Keep in lockstep with CANONICAL.md §1 — a suffix bump edits
 # BOTH in the same change (policy in CANONICAL.md §2).
 CANONICAL_FILES = [
-    "isamples_202608_wide.parquet",
-    "isamples_202608_samples_map_lite_v3.parquet",
-    "isamples_202608_sample_facets_v4.parquet",
-    "isamples_202608_h3_summary_res4.parquet",
-    "isamples_202608_h3_summary_res6.parquet",
-    "isamples_202608_h3_summary_res8.parquet",
-    "isamples_202608_facet_summaries.parquet",
-    "isamples_202608_facet_cross_filter.parquet",
-    "isamples_202608_facet_tree_summaries.parquet",
-    "isamples_202608_facet_tree_cross_filter.parquet",
-    "isamples_202608_sample_facet_membership.parquet",
-    "isamples_202608_sample_facet_masks.parquet",
-    "isamples_202608_facet_node_bits.parquet",
-    "isamples_202608_sample_facet_index.parquet",
-    "isamples_202608_sample_facet_index_meta.parquet",
-    "vocab_labels_202608.parquet",
+    "isamples_202609_wide.parquet",
+    "isamples_202609_samples_map_lite_v3.parquet",
+    "isamples_202609_sample_facets_v4.parquet",
+    "isamples_202609_h3_summary_res4.parquet",
+    "isamples_202609_h3_summary_res6.parquet",
+    "isamples_202609_h3_summary_res8.parquet",
+    "isamples_202609_facet_summaries.parquet",
+    "isamples_202609_facet_cross_filter.parquet",
+    "isamples_202609_facet_tree_summaries.parquet",
+    "isamples_202609_facet_tree_cross_filter.parquet",
+    "isamples_202609_sample_facet_membership.parquet",
+    "isamples_202609_sample_facet_masks.parquet",
+    "isamples_202609_facet_node_bits.parquet",
+    "isamples_202609_sample_facet_index.parquet",
+    "isamples_202609_sample_facet_index_meta.parquet",
+    "vocab_labels_202609.parquet",
 ]
 
-# The search index is a directory of ~852 objects; the manifest pins its
+# The search index is a directory of ~1,030 objects (202609); the manifest pins its
 # self-describing sidecars (the index validates itself via build_stats).
 SEARCH_INDEX_SIDECARS = [
-    "isamples_202608_search_index_v1/build_stats.json",
-    "isamples_202608_search_index_v1/hot_tokens.json",
-    "isamples_202608_search_index_v1/shard_sizes.json",
-    "isamples_202608_search_index_v1/hot_topk.parquet",   # loaded by the topk query path
+    "isamples_202609_search_index_v1/build_stats.json",
+    "isamples_202609_search_index_v1/hot_tokens.json",
+    "isamples_202609_search_index_v1/shard_sizes.json",
+    "isamples_202609_search_index_v1/hot_topk.parquet",   # loaded by the topk query path
     # df.parquet is OFFLINE-ONLY per SEARCH_INDEX_V1.md — archived, not runtime;
     # it is probed for existence but excluded from the Explorer's runtime check.
-    "isamples_202608_search_index_v1/df.parquet",
+    "isamples_202609_search_index_v1/df.parquet",
 ]
 
 
@@ -132,7 +132,7 @@ def main():
     inv = {"base_shard_count": None, "base_shard_bytes": None,
            "total_shard_files": None, "hot_shard_files": None}
     try:
-        sizes = fetch_json(args.base, "isamples_202608_search_index_v1/shard_sizes.json")
+        sizes = fetch_json(args.base, "isamples_202609_search_index_v1/shard_sizes.json")
         entries = sizes if isinstance(sizes, dict) else {}
         if not entries:
             errors.append("shard_sizes.json: empty/unexpected shape")
@@ -142,7 +142,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         errors.append(f"shard_sizes.json inventory: {e}")
     try:
-        stats = fetch_json(args.base, "isamples_202608_search_index_v1/build_stats.json")
+        stats = fetch_json(args.base, "isamples_202609_search_index_v1/build_stats.json")
         # build_stats: shard_count = LOGICAL shards (256, matches shard_sizes);
         # shard_files = PHYSICAL files (base + hot-token sub-files).
         tot = stats.get("shard_files")
@@ -162,7 +162,7 @@ def main():
     try:
         # Hot sub-files enumerated from their authoritative source: each
         # hot_tokens.json entry declares its physical sub_files count.
-        ht = fetch_json(args.base, "isamples_202608_search_index_v1/hot_tokens.json")
+        ht = fetch_json(args.base, "isamples_202609_search_index_v1/hot_tokens.json")
         toks = ht.get("tokens")
         if not isinstance(toks, dict) or not toks:
             errors.append("hot_tokens.json: missing/empty tokens map")
@@ -199,7 +199,7 @@ def main():
         "base": args.base,
         "files": files,
         "search_index": {
-            "path": "isamples_202608_search_index_v1/",
+            "path": "isamples_202609_search_index_v1/",
             **inv,
             "runtime_sidecars": ["build_stats.json", "hot_tokens.json",
                                   "shard_sizes.json", "hot_topk.parquet"],

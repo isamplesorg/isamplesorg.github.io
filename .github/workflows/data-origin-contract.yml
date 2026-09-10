@@ -10,7 +10,7 @@ on:
     paths:
       - 'workers/data-isamples-org/**'
       - 'tests/test_data_origin_contract.py'
-      - 'isamples_202608_release_manifest.json'
+      - 'isamples_202609_release_manifest.json'
       - '.github/workflows/data-origin-contract.yml'
   schedule:
     - cron: '17 6 * * *'   # daily 06:17 UTC

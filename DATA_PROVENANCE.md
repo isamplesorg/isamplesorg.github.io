@@ -4,19 +4,20 @@ How the explorer's derived parquet files are generated, from root to publish.
 **Not exhaustive as of 2026-08-05 — see the coverage caveat below.**
 *Reviewed 2026-06-02 (CC, via codebase audit). Complements `SERIALIZATIONS.md` (format/schema reference); this file is the end-to-end build chain + the automation gaps.*
 
-> ⚠️ **Coverage caveat (2026-08-05).** The DAG below documents the **seven-file
+> ⚠️ **Coverage caveat (2026-08-05; live generation updated 2026-09).** The DAG below documents the **seven-file
 > derived substrate as of the 2026-06-02 review**. It does *not* cover the whole
-> live `202608` family. Known omissions:
+> live `202609` family. Known omissions:
 >
 > - `sample_facet_masks`, `facet_node_bits`, `sample_facet_index`,
 >   `sample_facet_index_meta` (the bitmask count path, #299/#304/#305/#313)
 > - `sample_facet_membership`
 > - `facet_tree_summaries`, `facet_tree_cross_filter` (the tree facet path, #290)
-> - the sharded search index `isamples_202608_search_index_v1/` (#171)
+> - the sharded search index `isamples_202609_search_index_v1/` (#171)
 >
-> The *build chain and the automation gaps* it describes are still accurate for
-> the files it does cover; treat it as incomplete rather than wrong. Authoritative
-> current inventory: `isamples_202608_release_manifest.json` / `CANONICAL.md`.
+> The *build chain and the automation gaps* it describes were accurate, as of that
+> review, for the files it covers. They have not been re-audited for the 202609
+> re-run, so treat this file as incomplete and dated rather than wrong. Authoritative
+> current inventory: `isamples_202609_release_manifest.json` / `CANONICAL.md`.
 
 > **Load-bearing constraint:** the **root export cannot be regenerated.** It was produced from the iSamples Central Solr API (`central.isample.xyz`), **offline since Aug 2025**. The Zenodo-archived export is a **frozen root**. Any *new* data (e.g. concept URIs, thumbnails) therefore must come from a **per-source supplementary file merged into the base by `pid`** — the "sidecar" pattern (see Stage 3) — not from re-exporting.
 
@@ -87,11 +88,15 @@ Eric Kansa maintains OpenContext PQG **independently** on GCS (`storage.googleap
 
 > ⚠️ **Snapshot note (2026-08-05).** The version-skew bullets below were written
 > when the deployed derived files were `202601` and the wide was `202604`. That is
-> no longer the live state: the Explorer now serves the **`202608`** family
-> (`sample_facets_v4`, `samples_map_lite_v3`, `wide` at 300,303,095 B). The
-> *reproducibility* gap the bullets describe is still real and still unresolved —
-> only the version numbers in them are historical. Authoritative current inventory:
-> [`isamples_202608_release_manifest.json`](https://data.isamples.org/isamples_202608_release_manifest.json),
+> no longer the live state: the Explorer now serves the **`202609`** family
+> (`sample_facets_v4`, `samples_map_lite_v3`, `wide` at 236,995,193 B). The
+> reproducibility and version-skew bullets below describe **those historical builds**
+> (the `202601` derived files and the `202604` wide) and are kept as a record. The
+> 202609 generation came from a full re-run of the chain with per-file hashes recorded
+> (`tools/verify_release.py`; toolchain pin in #358). These bullets have not been
+> re-audited against that re-run, so don't read them as statements about 202609.
+> Authoritative current inventory:
+> [`isamples_202609_release_manifest.json`](https://isamples.org/isamples_202609_release_manifest.json),
 > human twin `CANONICAL.md`.
 
 - ⚠️ **The deployed `202601` derived files are NOT reproducible** from any available wide. A rebuild yields **528,983** root-material rows (pre-#271); the deployed `sample_facets_v2` has **346,768** — so the live files came from a different/unrecorded Stage-4 process, *and* the data has since rolled (wide is now `202604`). Treat a fresh `build_frontend_derived.py` run as the new source of truth, not as a bit-for-bit reproduction of the deployed files.

@@ -23,22 +23,22 @@ server. You can open any of these URLs directly, or point DuckDB at them
 one place, `explorer.qmd` around **line 800-864**, e.g.:
 
 ```js
-lite_url    = `${R2_BASE}/isamples_202608_samples_map_lite_v3.parquet`   // map points + table
-wide_url    = `${R2_BASE}/isamples_202608_wide.parquet`                  // full sample detail
-facets_url  = `${R2_BASE}/isamples_202608_sample_facets_v4.parquet`      // material/context/object_type + search text
-h3_res4_url = `${R2_BASE}/isamples_202608_h3_summary_res4.parquet`       // pre-counted globe dots (world zoom)
+lite_url    = `${R2_BASE}/isamples_202609_samples_map_lite_v3.parquet`   // map points + table
+wide_url    = `${R2_BASE}/isamples_202609_wide.parquet`                  // full sample detail
+facets_url  = `${R2_BASE}/isamples_202609_sample_facets_v4.parquet`      // material/context/object_type + search text
+h3_res4_url = `${R2_BASE}/isamples_202609_h3_summary_res4.parquet`       // pre-counted globe dots (world zoom)
 ```
 
 | File | Plain-English role | Roughly how big |
 |---|---|---|
-| `..._wide.parquet` | Full detail for every sample (one row each) — everything else is derived from this | ~300 MB |
+| `..._wide.parquet` | Full detail for every sample (one row each) — everything else is derived from this | ~237 MB |
 | `..._samples_map_lite_v3.parquet` | Slim version with just what the map/table need: coords, label, place, date | ~63 MB |
 | `..._sample_facets_v4.parquet` | One row per sample: material/context(sampled feature)/object_type as plain URIs, plus a search-text blob | ~69 MB |
 | `..._h3_summary_res{4,6,8}.parquet` | Pre-counted dots for the globe at 3 zoom tiers (continent / region / neighborhood), so zooming out never counts 6M rows live | tiny–few MB |
 | `..._facet_summaries.parquet`, `..._facet_cross_filter.parquet`, `..._facet_tree_*.parquet` | Pre-computed facet-checkbox counts at various levels of "how many filters are active" — the whole point of these is to avoid a live COUNT over millions of rows | KB–tens of MB |
 | `..._sample_facet_masks.parquet`, `..._sample_facet_index.parquet` | Bitmask tricks so 2+ facet filters at once are still fast (see `SERIALIZATIONS.md` §4.12 if you want the gory detail) | ~10 MB each |
 | `vocab_labels_*.parquet` | URI → human-readable label lookup (e.g. `.../material/1.0/rock` → "Rock") | ~60 KB |
-| `..._search_index_v1/` (852 files) | Pre-built search index (like a book's back-of-book index, sharded): token shards + tiny sidecars (`hot_tokens.json`, `df.parquet`, `build_stats.json`). The default search path since 2026-07-17 | few KB–few MB per shard |
+| `..._search_index_v1/` (1,030 files) | Pre-built search index (like a book's back-of-book index, sharded): token shards + tiny sidecars (`hot_tokens.json`, `df.parquet`, `build_stats.json`). The default search path since 2026-07-17 | few KB–few MB per shard |
 
 *Full list with exact schemas: `SERIALIZATIONS.md`. This table is the subset
 that matters for "what happens when I click around the Explorer."*
@@ -87,7 +87,7 @@ of filters" doesn't pre-aggregate cleanly.
 
 **Default path (since 2026-07-17): a pre-built search index.** Your query is
 split into tokens, and each token maps (by hash) to a small parquet shard of
-a pre-built inverted index (`isamples_202608_search_index_v1/`, 852 files —
+a pre-built inverted index (`isamples_202609_search_index_v1/`, 1,030 files —
 think "the index at the back of a book, one file per drawer"). The browser
 fetches only the few KB-to-MB shards for *your* tokens, intersects the
 matching sample ids, and ranks them by relevance (BM25 — the standard
@@ -151,7 +151,7 @@ LEFT JOIN read_parquet('vocab_labels.parquet') mat_lbl ON mat_lbl.uri = mat.pid
 WHERE s.pid = '<clicked pid>'
 ```
 This is the one query that reads from `wide.parquet` on click (everything
-above deliberately avoids touching the 300 MB wide file until you actually
+above deliberately avoids touching the 237 MB wide file until you actually
 need full detail on one sample).
 
 ## Try it yourself
@@ -162,7 +162,7 @@ You don't need the browser — any of this works from the DuckDB CLI or
 ```sql
 -- how many samples per source, right now, live off the public URL
 SELECT n AS source, COUNT(*)
-FROM read_parquet('https://data.isamples.org/isamples_202608_wide.parquet')
+FROM read_parquet('https://data.isamples.org/isamples_202609_wide.parquet')
 WHERE otype = 'MaterialSampleRecord'
 GROUP BY n ORDER BY 2 DESC;
 
@@ -170,7 +170,7 @@ GROUP BY n ORDER BY 2 DESC;
 -- the default path since 2026-07-17 probes the sharded search index instead
 -- (JS, not a single SQL statement — see SEARCH_INDEX_V1.md)
 SELECT pid, label, source
-FROM read_parquet('https://data.isamples.org/isamples_202608_sample_facets_v4.parquet')
+FROM read_parquet('https://data.isamples.org/isamples_202609_sample_facets_v4.parquet')
 WHERE description ILIKE '%pottery%'
 LIMIT 20;
 ```
