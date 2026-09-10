@@ -34,9 +34,9 @@ issue #148 for the full background.
 Issue: https://github.com/isamplesorg/isamplesorg.github.io/issues/148
 
 Usage:
-    pip install -r scripts/requirements.txt
-    python scripts/build_vocab_labels.py              # writes ./vocab_labels.parquet
-    python scripts/build_vocab_labels.py -o /tmp/v.parquet
+    bash scripts/setup_pipeline_venv.sh                # once, isolated env (see scripts/requirements.txt)
+    scripts/.venv/bin/python scripts/build_vocab_labels.py              # writes ./vocab_labels.parquet
+    scripts/.venv/bin/python scripts/build_vocab_labels.py -o /tmp/v.parquet
 """
 from __future__ import annotations
 
