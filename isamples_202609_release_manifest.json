@@ -1,8 +1,8 @@
 {
  "schema_version": 1,
  "release_id": "isamples_202609",
- "generated_at_utc": "2026-09-10T17:53:44+00:00",
- "base": "https://data.isamples.org/staging/isamples_202609",
+ "generated_at_utc": "2026-09-10T19:59:55+00:00",
+ "base": "https://data.isamples.org",
  "files": {
   "isamples_202609_wide.parquet": {
    "size_bytes": 236995193,
