@@ -225,7 +225,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#canonical.md-which-data-files-are-real-and-which-are-accidental-history" id="toc-canonical.md-which-data-files-are-real-and-which-are-accidental-history" class="nav-link active" data-scroll-target="#canonical.md-which-data-files-are-real-and-which-are-accidental-history"><span class="header-section-number">1</span> CANONICAL.md — which data files are real, and which are accidental history</a>
   <ul>
-  <li><a href="#the-canonical-live-set-202608" id="toc-the-canonical-live-set-202608" class="nav-link" data-scroll-target="#the-canonical-live-set-202608"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202608</a></li>
+  <li><a href="#the-canonical-live-set-202609" id="toc-the-canonical-live-set-202609" class="nav-link" data-scroll-target="#the-canonical-live-set-202609"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202609</a></li>
   <li><a href="#superseded-versions-still-served-do-not-use" id="toc-superseded-versions-still-served-do-not-use" class="nav-link" data-scroll-target="#superseded-versions-still-served-do-not-use"><span class="header-section-number">1.2</span> 2. Superseded versions (still served; do not use)</a></li>
   <li><a href="#snapshot-generations-who-serves-whom" id="toc-snapshot-generations-who-serves-whom" class="nav-link" data-scroll-target="#snapshot-generations-who-serves-whom"><span class="header-section-number">1.3</span> 3. Snapshot generations (who serves whom)</a></li>
   <li><a href="#conveniences-not-load-bearing-fine-to-keep-labeled" id="toc-conveniences-not-load-bearing-fine-to-keep-labeled" class="nav-link" data-scroll-target="#conveniences-not-load-bearing-fine-to-keep-labeled"><span class="header-section-number">1.4</span> 4. Conveniences (not load-bearing; fine to keep, labeled)</a></li>
@@ -243,9 +243,10 @@ ul.task-list li input[type="checkbox"] {
 <section id="canonical.md-which-data-files-are-real-and-which-are-accidental-history" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> CANONICAL.md — which data files are real, and which are accidental history</h1>
 <p><em>Created 2026-07-23 (grant closing week) to answer: “can we simplify our stable of supplementary parquet files?” Answer: the <strong>live set is already minimal</strong> — the accumulation is superseded versions and orphan snapshots around it. This file names the canonical set and documents every non-canonical survivor so the accident is neutralized even where files remain on the bucket.</em></p>
-<p><strong>Companion:</strong> the machine-readable release manifest (<code>tools/build_release_manifest.py</code> → <code>isamples_202608_release_manifest.json</code>) enumerates the same canonical set with sizes/checksums; the Explorer cross-checks it at boot (#334 v0). A file absent from the manifest is non-canonical <strong>by definition</strong>.</p>
-<section id="the-canonical-live-set-202608" class="level2" data-number="1.1">
-<h2 data-number="1.1" data-anchor-id="the-canonical-live-set-202608"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202608</h2>
+<p><em>Updated 2026-09 for the 202608 → 202609 generation flip: §1 now names the 202609 set; §2’s rows are unchanged history (all of them are 202608 files); §3 records 202608 as superseded.</em></p>
+<p><strong>Companion:</strong> the machine-readable release manifest (<code>tools/build_release_manifest.py</code> → <code>isamples_202609_release_manifest.json</code>; the superseded <code>isamples_202608_release_manifest.json</code> stays deployed for old links) enumerates the same canonical set with sizes/checksums; the Explorer cross-checks it at boot (#334 v0). A file absent from the manifest is non-canonical <strong>by definition</strong>.</p>
+<section id="the-canonical-live-set-202609" class="level2" data-number="1.1">
+<h2 data-number="1.1" data-anchor-id="the-canonical-live-set-202609"><span class="header-section-number">1.1</span> 1. The canonical (live) set — 202609</h2>
 <p>Exactly what production <code>explorer.qmd</code> loads, all under <code>https://data.isamples.org/</code>:</p>
 <table class="caption-top table">
 <colgroup>
@@ -260,67 +261,68 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>isamples_202608_wide.parquet</code></td>
+<td><code>isamples_202609_wide.parquet</code></td>
 <td>Full sample detail, one row per entity — everything derives from this</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_samples_map_lite_v3.parquet</code></td>
+<td><code>isamples_202609_samples_map_lite_v3.parquet</code></td>
 <td>Slim map/table columns (coords, label, place, date, h3 cells)</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_sample_facets_v4.parquet</code></td>
+<td><code>isamples_202609_sample_facets_v4.parquet</code></td>
 <td>Per-sample facet URIs + search-text blob (the <code>?fts=off</code> scan target)</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_h3_summary_res{4,6,8}.parquet</code></td>
+<td><code>isamples_202609_h3_summary_res{4,6,8}.parquet</code></td>
 <td>Pre-counted globe clusters at 3 zoom tiers</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_facet_summaries.parquet</code></td>
+<td><code>isamples_202609_facet_summaries.parquet</code></td>
 <td>Facet checkbox counts, no filters active</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_facet_cross_filter.parquet</code></td>
+<td><code>isamples_202609_facet_cross_filter.parquet</code></td>
 <td>Facet counts under single cross-filter</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_facet_tree_summaries.parquet</code></td>
+<td><code>isamples_202609_facet_tree_summaries.parquet</code></td>
 <td>Hierarchical (tree) facet counts</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_facet_tree_cross_filter.parquet</code></td>
+<td><code>isamples_202609_facet_tree_cross_filter.parquet</code></td>
 <td>Tree facet counts under cross-filter</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_sample_facet_membership.parquet</code></td>
+<td><code>isamples_202609_sample_facet_membership.parquet</code></td>
 <td>Sample↔︎facet-tree membership</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_sample_facet_masks.parquet</code></td>
+<td><code>isamples_202609_sample_facet_masks.parquet</code></td>
 <td>Bitmask substrate for multi-filter counts</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_facet_node_bits.parquet</code></td>
+<td><code>isamples_202609_facet_node_bits.parquet</code></td>
 <td>Facet-node bit assignments for the masks</td>
 </tr>
 <tr class="even">
-<td><code>isamples_202608_sample_facet_index.parquet</code></td>
+<td><code>isamples_202609_sample_facet_index.parquet</code></td>
 <td>Per-sample facet index (multi-filter fast path)</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_sample_facet_index_meta.parquet</code></td>
+<td><code>isamples_202609_sample_facet_index_meta.parquet</code></td>
 <td>~1 KB trusted manifest for the above (#313/#317 boot-race fix)</td>
 </tr>
 <tr class="even">
-<td><code>vocab_labels_202608.parquet</code></td>
-<td>URI → human label (539 entries; verified complete 2026-07-22)</td>
+<td><code>vocab_labels_202609.parquet</code></td>
+<td>URI → human label (539 entries, same count as 202608)</td>
 </tr>
 <tr class="odd">
-<td><code>isamples_202608_search_index_v1/</code></td>
-<td>Sharded FTS index — the default search since 2026-07-17. Runtime loads: <code>build_stats.json</code>, <code>hot_tokens.json</code>, <code>shard_sizes.json</code>, <code>hot_topk.parquet</code>, + 256 base token shards and ~591 hot-token sub-files (852 objects total incl.&nbsp;sidecars; base inventory in <code>shard_sizes.json</code>, totals in <code>build_stats.json</code>); <code>df.parquet</code> is offline-only</td>
+<td><code>isamples_202609_search_index_v1/</code></td>
+<td>Sharded FTS index — the default search since 2026-07-17. Runtime loads: <code>build_stats.json</code>, <code>hot_tokens.json</code>, <code>shard_sizes.json</code>, <code>hot_topk.parquet</code>, + 256 base token shards and 769 hot-token sub-files (1,030 objects total incl.&nbsp;sidecars; base inventory in <code>shard_sizes.json</code>, totals in <code>build_stats.json</code>); <code>df.parquet</code> is offline-only</td>
 </tr>
 </tbody>
 </table>
+<p>The <code>_v3</code>/<code>_v4</code> suffixes carry over from 202608 so the Explorer’s file names stay recognizable; 202609 was built with those fixes natively and has <strong>no</strong> earlier <code>_v2</code>/<code>_v3</code> siblings on the bucket.</p>
 <p>The ~9-file facet family looks baroque but is load-bearing: it is the price of fast multi-filter counts with no server. See <code>EXPLORER_QUERIES.md</code> for how each is queried and <code>DATA_PROVENANCE.md</code> for how the derived files are built (that doc covers the pre-#290/#304 substrate; see its coverage caveat).</p>
 </section>
 <section id="superseded-versions-still-served-do-not-use" class="level2" data-number="1.2">
@@ -396,7 +398,11 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td><code>isamples_202608_*</code></td>
-<td><strong>Live</strong> (production Explorer)</td>
+<td><strong>Superseded by 202609</strong> (live from the #284 cutover, merged 2026-06-14, until the 202609 flip). Still served, bytes unchanged, so old links and notebooks keep working. Not loaded by the Explorer. Its §2 suffix history stays valid</td>
+</tr>
+<tr class="even">
+<td><code>isamples_202609_*</code></td>
+<td><strong>Live</strong> (production Explorer). A deterministic rebuild with the same sample identities and counts as 202608 — but <strong>not identical content</strong>: (a) 144 fewer OpenContext location rows, because site de-duplication now picks its winner deterministically (pqg#26); (b) the flat single-value <code>material</code> differs for 41,372 SESAR samples, because the flat value is the first non-root entry of <code>p__has_material_category</code> (see DATA_PROVENANCE.md, “Material selection”) and pqg#26 made that array input-ordered instead of arbitrary. So flat <code>facet_summaries</code> material counts moved (e.g.&nbsp;soil 32,149 → 13,806) and ~110 <code>facet_cross_filter</code> rows changed; (c) <code>place_name</code> differs for 11,114 located samples in capitalisation only (e.g.&nbsp;<code>UTAH</code> → <code>Utah</code>; all 11,114 are equal case-insensitively). Unchanged: tree facet summaries and tree cross-filter (row for row); sample coordinates (0 of 6,026,242 moved); H3 cells with the same per-cell sample count, dominant source and source count (centres within 0.000001°, rounding); located-sample and per-source counts</td>
 </tr>
 </tbody>
 </table>
@@ -423,6 +429,14 @@ ul.task-list li input[type="checkbox"] {
 <td><code>*.csv</code> twins of lite/H3 (~640 MB)</td>
 <td>Convenience exports; parquet is authoritative; excluded from Zenodo by design</td>
 </tr>
+<tr class="odd">
+<td><code>staging/isamples_202609/*</code></td>
+<td>Pre-cutover rehearsal copy of the §1 set (hash-verified against the build). NOT loaded by the Explorer; safe to delete once the real keys are verified</td>
+</tr>
+<tr class="even">
+<td><code>staging/isamples-0909-smoketest/*</code></td>
+<td>Upload-tool smoke test (4 small files). Not referenced anywhere; safe to delete</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -431,7 +445,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li>Move §2’s superseded versions and the 202606 pipeline intermediate to an <code>/attic/</code> prefix on R2 (don’t delete — old notebooks/links may reference them). Needs R2 write credentials.</li>
 <li>Collapse the facet family only alongside a real pipeline rework — the current 9 files trade storage (cheap) for browser CPU (scarce); collapsing them is an engineering project, not cleanup.</li>
-<li>If a fresher export ever lands (#320), cut ONE coherent generation and retire 202608 wholesale via the manifest. <!-- cc:2026.07.23 --></li>
+<li>If a fresher export ever lands (#320), cut ONE coherent generation and retire the then-live generation wholesale via the manifest. (202609 is not that fresher cut — it rebuilt the same sample records reproducibly.) <!-- cc:2026.07.23 --></li>
 </ol>
 
 
