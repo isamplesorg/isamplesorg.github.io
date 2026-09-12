@@ -2,6 +2,9 @@ project:
   type: website
   output-dir: docs
   resources:
+    - isamples_202609_release_manifest.json
+    # Superseded release's manifest stays deployed so already-published links and
+    # cached older Explorer renders keep resolving (CANONICAL.md §3).
     - isamples_202608_release_manifest.json
     - assets/js/source-palette.js
     - assets/js/sql-builders.js

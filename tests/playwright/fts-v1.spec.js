@@ -1,12 +1,13 @@
 // #171/#172: substrate search path (DEFAULT since 2026-07-17; ?fts=off
 // escape hatch, ?fts=v1 still accepted) — end-to-end against the published
-// index at data.isamples.org/isamples_202608_search_index_v1/.
+// index at data.isamples.org/isamples_202609_search_index_v1/.
 //
 // Run:  BASE_URL=https://rdhyee.github.io/isamplesorg.github.io \
 //       npx playwright test tests/playwright/fts-v1.spec.js
 //
-// Ground truths are properties of the 202608 index (see PR #329's
-// committed build stats): 'axial seamount summit caldera' → 284;
+// Ground truths were first recorded on the 202608 index (see PR #329's
+// committed build stats) and re-observed unchanged on the 202609 index
+// (2026-09-10, in-browser): 'axial seamount summit caldera' → 284;
 // 'pottery Cyprus' → 1,305; 'basalt' alone → 785.
 
 const { test, expect } = require('@playwright/test');
@@ -113,7 +114,7 @@ test.describe('default-flip routing (#172)', () => {
       window.__searchFilter && window.__searchFilter.substrate === true,
       null, { timeout: 120_000 });
     const total = await page.evaluate(() => window.__searchFilter.total);
-    expect(total).toBe(785);   // == 'basalt' ground truth for the 202608 index
+    expect(total).toBe(785);   // == 'basalt' ground truth (202608 and 202609 indexes)
   });
 
   test('escape hatch: ?fts=off → interim search', async ({ page }) => {

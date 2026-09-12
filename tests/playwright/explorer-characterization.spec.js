@@ -3,7 +3,7 @@
  *
  * These tests (all tagged [data]) pin the behaviors that Codex review of the
  * PR1 smoke gate named as missing characterization coverage. They depend on
- * remote parquet loads from data.isamples.org (202608 dataset) and are
+ * remote parquet loads from data.isamples.org (202609 dataset) and are
  * intentionally NOT in the CI smoke gate (explorer-e2e.yml stays unchanged).
  * Run manually or via workflow_dispatch with spec_filter=explorer-characterization.
  *

@@ -15,7 +15,7 @@
 //   window.__clickSearchPin(i) → replays the on-globe result-pin click ceremony
 //                                (shared helper + pid hash push) by index, since
 //                                Cesium canvas picking isn't feasible in Playwright.
-// Ground truths reuse the FTS suite's 202608 index facts: 'pottery Cyprus' →
+// Ground truths reuse the FTS suite's index facts (same in 202608/202609): 'pottery Cyprus' →
 // 1,305 matches; 'basalt' → 785 — both exceed the LIMIT 50 display cap, so the
 // displayed (and pinned) set is capped at 50. 'ark:/28722/k2000hz7r' is the FTS
 // suite's known-present single pid.
