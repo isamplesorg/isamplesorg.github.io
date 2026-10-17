@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -77,10 +77,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-1c0535d037eb8813b585731018da8aa3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-761fc14e25ebc0e942fc86aa4dfe65fb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -454,7 +454,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>∗ <code>/current/wide.parquet</code> is a stable alias that HTTP 302-redirects to the latest dated file (currently <a href="https://data.isamples.org/isamples_202604_wide.parquet"><code>isamples_202604_wide.parquet</code></a>, enriched with ~47 K OpenContext thumbnails). The dated filename is immutable; the alias rotates atomically when we rebuild. Use the alias for interactive work, the dated URL when you want a pinned, reproducible reference. The original <a href="https://data.isamples.org/isamples_202601_wide.parquet"><code>isamples_202601_wide.parquet</code></a> (292 MB, no thumbnails) is kept available for historical pinning.</p>
+<p>∗ <code>/current/wide.parquet</code> is a stable alias that HTTP 302-redirects to a dated file (currently <a href="https://data.isamples.org/isamples_202604_wide.parquet"><code>isamples_202604_wide.parquet</code></a>, enriched with ~47 K OpenContext thumbnails). That is the April 2026 file these tutorials were written against, not the newest release: the Interactive Explorer reads the September 2026 <code>isamples_202609_*</code> files. The dated filename is immutable. Use the alias for interactive work, the dated URL when you want a pinned, reproducible reference. The original <a href="https://data.isamples.org/isamples_202601_wide.parquet"><code>isamples_202601_wide.parquet</code></a> (292 MB, no thumbnails) is kept available for historical pinning.</p>
 <p>All three represent the same underlying data (SESAR + OpenContext + GEOME + Smithsonian) with identical semantics — they differ only in serialization strategy. See the <a href="./tutorials/narrow_vs_wide_performance.html">Technical: Narrow vs Wide tutorial</a> for a performance comparison.</p>
 </section>
 <section id="pre-aggregated-helpers" class="level3 unnumbered">

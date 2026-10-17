@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="iSamples team">
-<meta name="dcterms.date" content="2026-09-14">
+<meta name="dcterms.date" content="2026-10-17">
 
 <title>iSamples Data Serializations – iSamples</title>
 <style>
@@ -79,10 +79,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-1c0535d037eb8813b585731018da8aa3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-761fc14e25ebc0e942fc86aa4dfe65fb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -323,7 +323,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 14, 2026</p>
+      <p class="date">October 17, 2026</p>
     </div>
   </div>
   
@@ -820,7 +820,7 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 </section>
 <section id="per-file-detail" class="level2" data-number="4">
 <h2 data-number="4" data-anchor-id="per-file-detail"><span class="header-section-number">4</span> 4. Per-file detail</h2>
-<p>URL convention: each file is available at <code>https://data.isamples.org/&lt;filename&gt;</code> (versioned, 1-yr immutable cache) and, where applicable, at <code>https://data.isamples.org/current/&lt;alias&gt;</code> (302 redirect, 5-min cache). Examples below use the versioned URL; swap for the alias when you want “latest.”</p>
+<p>URL convention: each file is available at <code>https://data.isamples.org/&lt;filename&gt;</code> (versioned, 1-yr immutable cache) and, where applicable, at <code>https://data.isamples.org/current/&lt;alias&gt;</code> (302 redirect, 5-min cache). Examples below use the versioned URL. The alias is a stable address, not a promise of the newest release — see §5 for what it currently points at.</p>
 <section id="zenodo-export-source-of-truth" class="level3" data-number="4.1">
 <h3 data-number="4.1" data-anchor-id="zenodo-export-source-of-truth"><span class="header-section-number">4.1</span> 4.1 Zenodo export (source of truth)</h3>
 <ul>
@@ -979,7 +979,7 @@ vocab_labels.parquet           (58 KB, 537 SKOS concepts)
 <p>All substrate files live under <code>https://data.isamples.org/</code> — a Cloudflare Worker fronting an R2 bucket. The Worker provides:</p>
 <ul>
 <li><strong>Versioned URLs</strong> <code>https://data.isamples.org/isamples_&lt;YYYYMM&gt;_&lt;variant&gt;.parquet</code> — 1-year immutable cache. Safe to pin in papers, Zenodo manifests, reproducibility notebooks.</li>
-<li><strong>Alias URLs</strong> <code>https://data.isamples.org/current/&lt;alias&gt;</code> — 302 redirect with 5-min cache; always resolves to the latest snapshot. Use for “always fresh” consumers. Currently <code>current/wide.parquet → isamples_202604_wide.parquet</code>.</li>
+<li><strong>Alias URLs</strong> <code>https://data.isamples.org/current/&lt;alias&gt;</code> — 302 redirect with 5-min cache to a dated file. Currently <code>current/wide.parquet → isamples_202604_wide.parquet</code>, the April 2026 wide file the tutorials were written against. It was deliberately left there when the Explorer moved to the <code>isamples_202609_*</code> release (September 2026), so it is not the newest snapshot.</li>
 </ul>
 <p><strong>Never reference the raw <code>pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...</code> URL.</strong> It bypasses the Worker and defeats both the alias layer and the Cache-Control headers that DuckDB-WASM relies on for HTTP range requests.</p>
 <p>OpenContext-specific variants live at <code>https://storage.googleapis.com/opencontext-parquet/</code> and are maintained outside this convention.</p>
