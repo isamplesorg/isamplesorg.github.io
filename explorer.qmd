@@ -450,6 +450,34 @@ format:
         position: relative;
         z-index: 1100;
     }
+    /* The rule above has a side effect, found 2026-10-07 by clicking every
+       toolbar button on the live site: the wrapper now sits above its
+       later siblings even while the picker is COLLAPSED, and its box
+       extends over the two buttons below it (the hidden 2D/Columbus
+       buttons still occupy that space). So the imagery picker and the
+       "?" help button received no clicks at all. Let clicks fall through
+       the wrapper and its hidden buttons; the visible ones still take
+       them, so #324 stays fixed. */
+    .cesium-sceneModePicker-wrapper { pointer-events: none; }
+    .cesium-sceneModePicker-wrapper > button { pointer-events: auto; }
+    .cesium-sceneModePicker-wrapper > button.cesium-sceneModePicker-hidden { pointer-events: none; }
+    /* Navigation help ("?") panel. Cesium anchors it to the button's RIGHT
+       edge and opens leftwards, which suits its default top-right toolbar.
+       Our toolbar is top-left, so the panel opened 184px off the left edge
+       of the globe and only a clipped stub was visible. Open it to the
+       right of the toolbar instead, lifted so it fits inside the
+       450px-high globe. */
+    .cesium-navigation-help {
+        left: 40px !important;
+        right: auto !important;
+        top: -150px !important;
+        transform-origin: 0 150px !important;
+        z-index: 1100;
+        /* Cesium fixes the panel at 250px. On a phone-width globe that
+           plus the 40px offset would run off the right edge, so let it
+           shrink to what the viewport can hold. */
+        max-width: calc(100vw - 96px);
+    }
     .search-bar { display: flex; gap: 6px; }
     .search-bar input {
         flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;
@@ -2484,6 +2512,9 @@ viewer = {
         timeline: false,
         animation: false,
         baseLayerPicker: true,
+        // Cesium auto-opens the navigation help on a visitor's first load.
+        // Keep the first view of the globe clear; "?" still opens it.
+        navigationInstructionsInitiallyVisible: false,
         fullscreenElement: "cesiumContainer",
         terrain: Cesium.Terrain.fromWorldTerrain()
     });

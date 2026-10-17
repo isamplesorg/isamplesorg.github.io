@@ -333,8 +333,11 @@ Worker in front of the R2 bucket). Two layers:
 
 - **Versioned** `/isamples_YYYYMM_<file>.parquet` — 1-yr immutable cache,
   safe to pin in papers, spec examples, or reproducibility notebooks.
-- **Alias** `/current/<alias>` — 302 redirect with 5-minute cache; tracks
-  whatever the latest snapshot is. Use for "always fresh" consumers.
+- **Alias** `/current/<alias>` — 302 redirect with 5-minute cache to a
+  dated file. As of October 2026 `/current/wide.parquet` is pinned to
+  `isamples_202604_wide.parquet` (the file the tutorials use); it does
+  **not** follow the Explorer's newer `isamples_202609_*` release. Pin a
+  versioned URL when the exact snapshot matters.
 
 Never reference the raw `pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...`
 URL — it bypasses the Worker and defeats the alias layer.

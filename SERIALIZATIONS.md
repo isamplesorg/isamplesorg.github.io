@@ -180,8 +180,9 @@ from a sidecar. A future `isamples_202601_oc_sidecar.parquet` (keyed on
 URL convention: each file is available at
 `https://data.isamples.org/<filename>` (versioned, 1-yr immutable cache)
 and, where applicable, at `https://data.isamples.org/current/<alias>`
-(302 redirect, 5-min cache). Examples below use the versioned URL; swap
-for the alias when you want "latest."
+(302 redirect, 5-min cache). Examples below use the versioned URL. The
+alias is a stable address, not a promise of the newest release — see §5
+for what it currently points at.
 
 ### 4.1 Zenodo export (source of truth)
 
@@ -407,9 +408,11 @@ Cloudflare Worker fronting an R2 bucket. The Worker provides:
   — 1-year immutable cache. Safe to pin in papers, Zenodo manifests,
   reproducibility notebooks.
 - **Alias URLs** `https://data.isamples.org/current/<alias>` — 302
-  redirect with 5-min cache; always resolves to the latest snapshot.
-  Use for "always fresh" consumers. Currently
-  `current/wide.parquet → isamples_202604_wide.parquet`.
+  redirect with 5-min cache to a dated file. Currently
+  `current/wide.parquet → isamples_202604_wide.parquet`, the April 2026
+  wide file the tutorials were written against. It was deliberately left
+  there when the Explorer moved to the `isamples_202609_*` release
+  (September 2026), so it is not the newest snapshot.
 
 **Never reference the raw
 `pub-a18234d962364c22a50c787b7ca09fa5.r2.dev/...` URL.** It bypasses

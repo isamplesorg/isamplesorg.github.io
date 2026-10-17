@@ -79,11 +79,13 @@ The two main files carrying the sample records themselves:
 | [`isamples_202601_wide_h3.parquet`](https://data.isamples.org/isamples_202601_wide_h3.parquet) | 307 MB | Wide + H3 BIGINT indices (`h3_res4`, `h3_res6`, `h3_res8`) | 20.7 M | Geospatial queries with H3 clustering at arbitrary zoom |
 | [`isamples_202512_narrow.parquet`](https://data.isamples.org/isamples_202512_narrow.parquet) | 860 MB | Narrow (graph: nodes + explicit `_edge_` rows, s/p/o/n fields) | 101,387,180 | Graph traversals, relationship-centric analysis, PQG work |
 
-∗ `/current/wide.parquet` is a stable alias that HTTP 302-redirects to the
-latest dated file (currently
+∗ `/current/wide.parquet` is a stable alias that HTTP 302-redirects to a
+dated file (currently
 [`isamples_202604_wide.parquet`](https://data.isamples.org/isamples_202604_wide.parquet),
-enriched with ~47 K OpenContext thumbnails). The dated filename is
-immutable; the alias rotates atomically when we rebuild. Use the alias for
+enriched with ~47 K OpenContext thumbnails). That is the April 2026 file
+these tutorials were written against, not the newest release: the
+Interactive Explorer reads the September 2026 `isamples_202609_*` files.
+The dated filename is immutable. Use the alias for
 interactive work, the dated URL when you want a pinned, reproducible
 reference. The original
 [`isamples_202601_wide.parquet`](https://data.isamples.org/isamples_202601_wide.parquet)

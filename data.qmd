@@ -49,8 +49,13 @@ Two places depending on what you need:
   Cloudflare R2. HTTP range requests supported; DuckDB and DuckDB-WASM
   work directly against URLs. Two layers:
   - `/<versioned-file>.parquet` — 1-year immutable cache. Pin in papers.
-  - `/current/<alias>.parquet` — 302 redirect to the latest snapshot.
-    Use for "always fresh." Currently aliases:
+  - `/current/<alias>.parquet` — 302 redirect to a dated file, so
+    tutorials and notebooks have one stable address. It is **not** the
+    newest release: it is pinned to the April 2026 wide file the
+    tutorials were written against, while the Explorer reads the
+    `isamples_202609_*` files (see the
+    [release manifest](https://isamples.org/isamples_202609_release_manifest.json)).
+    Currently aliases:
     - `/current/wide.parquet` → `isamples_202604_wide.parquet`
 - **[iSamples Zenodo community](https://zenodo.org/communities/isamples)**
   — long-term archival with DOIs. The raw aggregated export is
